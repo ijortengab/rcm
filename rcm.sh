@@ -11,29 +11,62 @@
 # - temporary variable (return string from function) prefix with _underscore.
 # - function is camelCase.
 # - indent is 4 spaces.
+_new_arguments=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --interactive|-i) interactive=1; shift ;;
+        --last-one|-l) through=0; shift ;;
+        --number=*|-n=*) numbering="${1#*=}"; shift ;;
+        --number|-n) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then numbering="$2"; shift; fi; shift ;;
+        --preview|-p) preview=1; shift ;;
+        --public-key=*|-k=*) public_key="${1#*=}"; shift ;;
+        --public-key|-k) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then public_key="$2"; shift; fi; shift ;;
+        --quiet|-q) verbose=0; shift ;;
+        --style=*|-s=*) style="${1#*=}"; shift ;;
+        --style|-s) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then style="$2"; shift; fi; shift ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
+done
+
+set -- "${_new_arguments[@]}"
+
+_new_arguments=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -[^-]*) OPTIND=1
+            while getopts ":iln:pk:qs:" opt; do
+                case $opt in
+                    i) interactive=1 ;;
+                    l) through=0 ;;
+                    n) numbering="$OPTARG" ;;
+                    p) preview=1 ;;
+                    k) public_key="$OPTARG" ;;
+                    q) verbose=0 ;;
+                    s) style="$OPTARG" ;;
+                esac
+            done
+            shift "$((OPTIND-1))"
+            ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
+done
+
+set -- "${_new_arguments[@]}"
+
+unset _new_arguments
 
 # Define.
 RCM_ROOT=$HOME/.config/rcm
 RCM_DIR_PORTS=$RCM_ROOT/ports
+RCM_DIR_ROUTE=$RCM_ROOT/route
 RCM_EXE=$RCM_ROOT/exe
 RCM_PORT_START=49152
-
-# Default value of options.
-options=()
-verbose=1
-preview=0
-through=1
-style=auto
-public_key=auto
-numbering=auto
 
 # Default value of flag.
 add_func_get_pid_cygwin=0
 add_var_tunnel_success=0
-
-# Developer only.
-# Flag untuk mengaktifkan fungsi varDump.
-debug=0
 
 # Informasi Global Variables.
 # ---------------------------
@@ -73,47 +106,38 @@ debug=0
 # $command = "login"
 # ```
 #
-# $verbose - Default value true (1). Options `--quiet` atau `-q` akan
+# $verbose - Default value adalah ''. Options `--quiet` atau `-q` akan
 # mengubahnya menjadi false (0). Apabila bernilai false (0) maka rcm akan
 # menggenerate code yang menghasilkan standard output.
 #
-# $preview - Default value false (0). Options `--preview` atau `-p` akan
+# $preview - Default value adalah ''. Options `--preview` atau `-p` akan
 # mengubahnya menjadi true (1). Apabila bernilai true (1) maka rcm akan
 # menampilkan generate code sebagai standard output dan tidak mengeksekusi
 # generate code tersebut.
 #
-# $through - Default value true (1). Options `--last-one` atau `-l` akan
+# $through - Default value adalah ''. Options `--last-one` atau `-l` akan
 # mengubahnya menjadi false (0). Command yang menggunakan variable ini adalah
-# `send-key`. Apabila bernilai true (1), maka seluruh address (host) yang
+# `send-key`. Apabila bernilai not false (!0), maka seluruh address (host) yang
 # berada pada $route akan diberi tindakan sesuai command (dalam hal ini adalah
 # send public key). Apabila bernilai false (0), maka hanya address (host)
 # destination saja yang akan diberi tindakan sesuai command.
 #
-# $style - Default value adalah "auto". Value tersedia adalah "auto", "jump",
+# $style - Default value adalah ''. Value tersedia adalah "", "jump",
 # dan "tunnel". Options `--style` atau `-s` tersedia untuk mengubah default
 # value. Apabila bernilai `jump`, maka generate code akan menggunakan option
 # ssh bernama ProxyJump untuk melakukan lompatan koneksi, sementara apabila
 # bernilai `tunnel`, maka generate code akan membuat tunnel (local port
-# forwarding) untuk melakukan lompatan koneksi. Jika bernilai `auto`, maka
+# forwarding) untuk melakukan lompatan koneksi. Jika bernilai ``, maka
 # akan menggunakan style `jump` jika open-ssh client berada pada versi 7.3
 # keatas, selain itu maka akan menggunakan style `tunnel`.
 #
-# $public_key - Default value adalah "auto". Command yang menggunakan variable
-# ini adalah `send-key`. Jika bernilai auto, maka `rcm` akan mencari public key
+# $public_key - Default value adalah ''. Command yang menggunakan variable
+# ini adalah `send-key`. Jika bernilai '', maka `rcm` akan mencari public key
 # sesuai urutan dari ssh client (lihat pada validatePublicKey::tester).
 #
-# $numbering - Default value adalah "auto". Command yang menggunakan variable
+# $numbering - Default value adalah ''. Command yang menggunakan variable
 # ini adalah `open-port`. Command open-port menggunakan option ini untuk
 # mengeset port number.
-#
-# ```
-# $verbose = "1"
-# $preview = "0"
-# $through = "1"
-# $style = "auto"
-# $public_key = "auto"
-# $numbering = "auto"
-# ```
 #
 # $route* - Array. Kumpulan dari address yang dilalui. Tiap address memiliki
 # format `[USER@]HOST[:PORT]`. Jika route hanya terdiri dari satu address,
@@ -124,9 +148,13 @@ debug=0
 #
 # ```
 # $route = ( "staff-it@company.com:80" "ijortengab@office.lan:2223" "guest@virtualmachine.vm" )
+# $route_string = "guest@virtualmachine.vm via ijortengab@office.lan:2223 via staff-it@company.com:80"
 # $route_hosts = ( "company.com" "office.lan" "virtualmachine.vm" )
 # $route_users = ( "staff-it" "ijortengab" "guest" )
 # $route_ports = ( "80" "2223" "22" )
+# $destination_host = "virtualmachine.vm"
+# $destination_user = "guest"
+# $destination_port = "22"
 # ```
 #
 # Variable khusus jika dibutuhkan Jump:
@@ -190,127 +218,6 @@ debug=0
 # $ssh_route_mass_arguments = ( "staff-it@company.com" "ijortengab@localhost" "guest@localhost" )
 # ```
 
-# Mencetak variable untuk keperluan debug (pengecekan dan fixasi).
-# Pencetakan disertai syntax highlighting dan hanya berlaku jika variable
-# $debug=1 (default). Dapat mencetak array maupun non array (string/number).
-#
-# Options:
-#   -f: Force print, tanpa mengindahkan variable $debug sebagai controller
-#       fungsi ini.
-#
-# Globals:
-#   Used: debug
-#
-# Arguments:
-#   $@: Semua variable yang masuk akan dianggap sebagai parameter atau value
-#        untuk kemudian dicetak.
-#
-# Returns:
-#   1: Fungsi dibatalkan karena global variable $debug sebagai control bernilai
-#      0 (false).
-#
-# Argument yang masuk akan dianggap parameter. Contoh:
-#
-# ```
-# tujuan=Jakarta
-# rute=("Jakarta" "Surabaya")
-# varDump tujuan rute
-# ```
-#
-# Hasil yang diperoleh (stdout) adalah:
-#
-# ```
-# $tujuan = "Jakarta"
-# $rute = ( "Jakarta" "Surabaya" )
-# ```
-#
-# Untuk argument berupa variable numeric, maka sebaiknya menggunakan format
-# label namun hanya berlaku untuk non array. Contoh:
-#
-# ```
-# rute=("Jakarta" "Semarang" "Yogyakarta" "Surabaya")
-# set -- ${rute[@]}
-# varDump '<$1>'"$1" '<$2_before>'"$2"
-# echo Proses disini
-# varDump '<$2_after>'"$2"
-# ```
-#
-# Hasil yang diperoleh (stdout) adalah:
-#
-# ```
-# $1 = "Jakarta"
-# $2_before = "Semarang"
-# Proses disini
-# $2_after = "Semarang"
-# ```
-#
-# Argument yang tidak valid sebagai parameter, maka akan dicetak dengan
-# mengganggap sebagai value.
-varDump() {
-    local i
-    local globalVarName globalVarValue label value
-    local normal red yellow cyan magenta
-    if [[ $1 == '-f' ]];then
-        shift
-    elif [[ $debug == 0 ]];then
-        return 1
-    fi
-    normal="$(tput sgr0)"
-    red="$(tput setaf 1)"
-    yellow="$(tput setaf 3)"
-    cyan="$(tput setaf 6)"
-    magenta="$(tput setaf 5)"
-    while [[ $# -gt 0 ]]; do
-        # Jika argument memiliki format khusus untuk labelling.
-        # Yakni <...>....
-        # Contoh:
-        # ```
-        # kondisi=mentah
-        # varDump '<$tempe>'"$kondisi"
-        # ```
-        # Hasilnya adalah `$tempe = mentah`
-        if [[ $1 =~ ^\<.*\> ]];then
-            label=$(echo $1 | cut -d'>' -f1 | cut -c2-)
-            value=$(echo $1 | cut -d'>' -f2 )
-            printf "${cyan}$label${normal}${red} = ${normal}"
-            printf "\"${yellow}$value${normal}\" \n"
-            shift
-            continue
-        fi
-        # Jika argument tidak valid sebagai parameter.
-        if [[ $1 =~ [^0-9a-zA-Z_] ]];then
-            printf "${magenta}$1${normal}\n"
-            shift
-            continue
-        fi
-        # Check jika variable tidak pernah diset.
-        eval isset=\$\(if \[ -z \$\{$1+x\} \]\; then echo 0\; else echo 1\; fi\)
-        if [ $isset == 0 ];then
-            printf "${yellow}$1${normal}\n"
-            shift
-            continue
-        fi
-        # Check variable jika merupakan array.
-        eval check=\$\(declare -p $1\)
-        if [[ "$check" =~ "declare -a" ]]; then
-            eval globalVarValue=\(\"\${$1[@]}\"\)
-            printf "${cyan}\$$1${normal}${red} = ( ${normal}"
-            for (( i=0; i < ${#globalVarValue[@]} ; i++ )); do
-                printf "\"${yellow}${globalVarValue[$i]}${normal}\" "
-            done
-            printf "${red})${normal}\n"
-            shift
-            continue
-        fi
-        # Variable selain itu.
-        globalVarName=$1
-        globalVarValue=${!globalVarName}
-        printf "${cyan}\$$globalVarName${normal}${red} = ${normal}"
-        printf "\"${yellow}$globalVarValue${normal}\" \n"
-        shift
-    done
-}
-
 # Mencetak versi dari program ssh yang sekarang sedang digunakan. Memparse
 # output dari ssh -V mengembalikan nilai float. Contoh output: 7.2, 7.4
 #
@@ -369,26 +276,6 @@ vercomp () {
         fi
     done
     return 0
-}
-
-# Mengecek apakah sebuah value sudah ada di dalam array.
-# Credit: https://stackoverflow.com/a/8574392/7074586
-#
-# Globals:
-#   None
-#
-# Arguments:
-#   $1: Value yang akan dicek
-#   $2: Array sebagai referensi
-#
-# Returns:
-#   0: Value berada pada array
-#   1: Value tidak berada pada array
-inArray () {
-    local e match="$1"
-    shift
-    for e; do [[ "$e" == "$match" ]] && return 0; done
-    return 1
 }
 
 # Mengecek bilangan adalah genap.
@@ -510,75 +397,6 @@ isPortFree() {
     return 1
 }
 
-# Mengeset options pada argument kedalam variable terkait.
-#
-# Globals:
-#   Used: arguments
-#   Modified: arguments, preview, verbose, through, style
-#
-# Arguments:
-#   $1: Tipe looping (once or none)
-#       Once artinya jika bertemu mass argument maka penge-set-an options
-#       dihentikan.
-#
-# Returns:
-#   None
-setOptions() {
-    local loop
-    varDump 'Begin of function setOptions()'
-    loop=$1
-    set -- "${arguments[@]}"
-    arguments=()
-    # Set options.
-    while [[ $# -gt 0 ]]; do
-        varDump '<$1>'"$1"
-        case $1 in
-        -) shift;;
-        --preview|-p) preview=1 ; shift;;
-        --quiet|-q) verbose=0 ; shift;;
-        --last-one|-l) through=0 ; shift;;
-        --style=*) style="$(echo $1 | cut -c9-)"; shift ;;
-        --public-key=*) public_key="$(echo $1 | cut -c14-)"; shift ;;
-        --number=*) numbering="$(echo $1 | cut -c10-)"; shift ;;
-        -s) style=$2; shift; shift ;;
-        -k) public_key=$2; shift; shift ;;
-        -n) numbering=$2; shift; shift ;;
-        *)
-            if [[ $1 =~ ^- ]];then
-                # Reset builtin function getopts.
-                OPTIND=1
-                while getopts ":pqls:k:n:" opt; do
-                    varDump '<$opt>'"$opt"
-                    case $opt in
-                        p) preview=1 ;;
-                        q) verbose=0 ;;
-                        l) through=0 ;;
-                        s) style="$OPTARG" ;;
-                        k) public_key="$OPTARG" ;;
-                        n) numbering="$OPTARG" ;;
-                        \?) echo "Invalid option: -$OPTARG" >&2 ;;
-                        :) echo "Option -$OPTARG requires an argument." >&2 ;;
-                    esac
-                done
-                shift $((OPTIND-1))
-            else
-                # Mass arguments dikembalikan ke variable semula.
-                if [[ $loop == once ]];then
-                    while [[ $# -gt 0 ]]; do
-                        arguments+=("$1")
-                        shift
-                    done
-                    break
-                else
-                    arguments+=("$1")
-                    shift
-                fi
-            fi
-        esac
-    done
-    varDump 'End of function setOptions()'
-}
-
 # Validasi options yang diinput oleh user pada argument.
 # Saat ini baru memvalidasi input style.
 #
@@ -593,13 +411,11 @@ setOptions() {
 validateOptions() {
     local is_right
     # Variable $style yang dibolehkan adalah 'jump', 'tunnel', atau 'auto'.
-    varDump 'Begin of function validateOptions()'
-    varDump '<$style before>'"$style"
     is_right=0
     case $style in
         jump) is_right=1 ;;
         tunnel) is_right=1 ;;
-        auto)
+        *)
             is_right=1
             vercomp `getSshVersion` 7.3
             if [[ $? -lt 2 ]];then
@@ -613,14 +429,13 @@ validateOptions() {
     if [[ $is_right == 0 ]]; then
         error "Argument tidak dikenali pada opsi style: '${style}'."
     fi
-    varDump '<$style after>'"$style"
-    varDump 'End of function validateOptions()'
 }
 
 # Validasi mass argument yang digunakan oleh internal command.
 #
 # Globals:
 #   Used: arguments
+#   Modified: route_string
 #
 # Arguments:
 #   None
@@ -628,7 +443,11 @@ validateOptions() {
 # Returns:
 #   None
 validateArgumentsBeforePopulateRoute() {
-    local i j
+    local i j string
+    for string in ${arguments[@]}; do
+        route_string+="$string "
+    done
+    route_string=`echo "$route_string" | sed 's/\ $//'`
     for (( i=0; i < ${#arguments[@]} ; i++ )); do
         j=$(( $i + 1 ))
         if [[ ${arguments[$i]} =~ " " ]];then
@@ -674,7 +493,7 @@ validateMinimalArgument() {
 validatePublicKey() {
     local tester is_exists
     is_exists=0
-    if [[ $public_key == 'auto' ]];then
+    if [[ $public_key == '' ]];then
         tester=("$HOME/.ssh/id_rsa.pub" "$HOME/.ssh/id_dsa.pub"
                 "$HOME/.ssh/id_ecdsa.pub" "$HOME/.ssh/id_ed25519.pub")
     else
@@ -709,7 +528,7 @@ validatePublicKey() {
 #   None
 validateNumberingOpenPort() {
     local host_port z
-    if [[ $numbering == 'auto' ]];then
+    if [[ $numbering == '' ]];then
         return 0
     fi
     if [[ ! $numbering =~ ^[1-9]+[0-9]*$ ]];then
@@ -762,23 +581,21 @@ error() {
 # Returns:
 #   None
 execute() {
-    varDump 'Begin of function execute()'
-    varDump command
     case $command in
-        login)
+        login|l)
             validateMinimalArgument 1
             validateArgumentsBeforePopulateRoute
             populateRoute
             executeLogin
             ;;
-        send-key)
+        send-key|sk)
             validateMinimalArgument 1
             validatePublicKey
             validateArgumentsBeforePopulateRoute
             populateRoute
             executeSendKey
             ;;
-        open-port)
+        open-port|op)
             validateMinimalArgument 2
             prepareFirstArgumentAsPort
             validateArgumentsBeforePopulateRoute
@@ -786,8 +603,10 @@ execute() {
             validateNumberingOpenPort
             modifyRouteBeforeOpenPort
             executeOpenPort
+            ;;
+        history|h)
+            executeHistory
     esac
-    varDump 'End of function execute()'
 }
 
 # Eksekusi command login.
@@ -803,7 +622,6 @@ execute() {
 # Returns:
 #   None
 executeLogin() {
-    varDump 'Begin of function executeLogin()'
     local z last_route ssh_options ssh_mass_arguments
     z=$(( ${#route[@]} - 1 )) # last index of route.
     case $style in
@@ -821,8 +639,8 @@ executeLogin() {
     last_route=${route[$z]}
     writeLinesVerbose 'echo -e "\e[93m'"SSH Connect to ${last_route}"'\e[39m"'
     writeLines "ssh${ssh_options} ${ssh_mass_arguments}"
+    saveHistory
     generateCode
-    varDump 'End of function executeLogin()'
 }
 
 # Eksekusi command send-key dengan menggenerate code.
@@ -839,7 +657,6 @@ executeLogin() {
 #   None
 executeSendKey() {
     local i z destination ssh_options ssh_mass_arguments
-    varDump 'Begin of function executeSendKey()'
     case $style in
         tunnel)
             route_tunnel=(${route[@]})
@@ -850,7 +667,7 @@ executeSendKey() {
                 ssh_options=${ssh_route_options[$i]}
                 ssh_mass_arguments=${ssh_route_mass_arguments[$i]}
                 if [[ ! $i == $z ]];then
-                    if [[ $through == "1" ]];then
+                    if [[ ! $through == "0" ]];then
                         writeLinesSendKey "$destination" "$ssh_options" "$ssh_mass_arguments"
                         writeLines ''
                     fi
@@ -870,7 +687,7 @@ executeSendKey() {
                 ssh_options=${ssh_route_options[$i]}
                 ssh_mass_arguments=${ssh_route_mass_arguments[$i]}
                 if [[ ! $i == $z ]];then
-                    if [[ $through == "1" ]];then
+                    if [[ ! $through == "0" ]];then
                         writeLinesSendKey "$destination" "$ssh_options" "$ssh_mass_arguments"
                         writeLines ''
                     fi
@@ -879,8 +696,8 @@ executeSendKey() {
                 fi
             done
     esac
+    saveHistory
     generateCode
-    varDump 'End of function executeSendKey()'
 }
 
 # Eksekusi command open-port dengan menggenerate code.
@@ -895,7 +712,6 @@ executeSendKey() {
 # Returns:
 #   None
 executeOpenPort() {
-    varDump 'Begin of function executeOpenPort()'
     local h i n y z line last y last_host last_port
     local ssh_options ssh_mass_arguments local_port
     z=$(( ${#route[@]} - 1 ))
@@ -928,8 +744,33 @@ executeOpenPort() {
         # Output minimal ketika quiet adalah result dari open port.
         writeLines 'echo '$destination_port' >&1'
     fi
+    saveHistory
     generateCode
-    varDump 'End of function executeOpenPort()'
+}
+
+# Eksekusi command history.
+#
+# Globals:
+#   Used: RCM_DIR_ROUTE, interactive
+#
+# Arguments:
+#   None
+#
+# Returns:
+#   None
+executeHistory() {
+    local files_by_name string
+    if [[ ! $interactive == 1 ]];then
+        mkdir -p $RCM_DIR_ROUTE
+        cd $RCM_DIR_ROUTE
+        files_by_name=(`ls -vr $RCM_DIR_ROUTE | head -10`)
+        for string in "${files_by_name[@]}"
+        do
+            cat "$string" >&1
+        done
+    else
+        echo 'Coming soon.'
+    fi
 }
 
 # Mengisi value dari variable $route* dan lainnya yang terkait.
@@ -946,7 +787,6 @@ executeOpenPort() {
 populateRoute() {
     local i z
     local _host _user _port
-    varDump 'Begin of function populateRoute()'
     z=$(( ${#arguments[@]} - 1 ))
     for (( i=$z; i >= 0 ; i-- )); do
         if isOdd $i;then
@@ -958,8 +798,10 @@ populateRoute() {
         route_users+=("$_user")
         route_ports+=("$_port")
     done
-    varDump route route_hosts route_users route_ports
-    varDump 'End of function populateRoute()'
+    z=$(( ${#route[@]} - 1 ))
+    destination_host="${route_hosts[$z]}"
+    destination_user="${route_users[$z]}"
+    destination_port="${route_ports[$z]}"
 }
 
 # Mengisi value dari variable $ssh_route_jumps dan lainnya yang terkait.
@@ -976,7 +818,6 @@ populateRoute() {
 populateJump() {
     local h i first second last
     local cmd ssh_options ssh_mass_arguments _host _user _port
-    varDump 'Begin of function populateJump()'
     first=0
     second=1
     last=$(( ${#route[@]} - 1 ))
@@ -1006,8 +847,6 @@ populateJump() {
         ssh_route_options+=("$ssh_options")
         ssh_route_mass_arguments+=("$ssh_mass_arguments")
     done
-    varDump ssh_route_jumps ssh_route_options ssh_route_mass_arguments
-    varDump 'End of function populateJump()'
 }
 
 # Mengisi value dari variable $tunnel* dan lainnya yang terkait.
@@ -1032,14 +871,10 @@ populateTunnel() {
     local h i j n first_index last_index
     local _host _user _port hosts users ports ssh_options ssh_mass_arguments
     local cmd set_random_port
-    varDump 'Begin of function populateTunnel()'
-    varDump route_tunnel
     first_index=0
     tunnel_count=$(( ${#route_tunnel[@]} - 1 ))
     last_index=$(( ${#route_tunnel[@]} - 1 )) # Last index of route_tunnel
-    varDump 'Populate variable.'
     for (( i=0; i < ${#route_tunnel[@]} ; i++ )); do
-        varDump '<$i>'"$i"
         h=$(( $i - 1))
         explodeAddress "${route_tunnel[$i]}"
         if [[ $i == $first_index ]];then
@@ -1048,7 +883,7 @@ populateTunnel() {
         else
             set_random_port=1
             if [[ $i == $last_index ]];then
-                if [[ ! $numbering == 'auto' ]];then
+                if [[ ! $numbering == '' ]];then
                     set_random_port=0
                     _local_port=$numbering
                 fi
@@ -1072,22 +907,12 @@ populateTunnel() {
             destination_port="$tunnel_port"
         fi
     done
-    varDump tunnel_count
-    varDump tunnel_hosts tunnel_users tunnel_ports
-    varDump destination_host destination_user destination_port
-    varDump tunnel_fwd_local_ports tunnel_fwd_target_hosts tunnel_fwd_target_ports
-    varDump 'Begin of Pengecekan port.'
-    varDump '--'
-    varDump tunnel_ports destination_port
-    varDump '--'
     # Populate ssh for tunnel and make sure port not used.
     last_index=$(( $tunnel_count - 1 )) # Last index of tunnel.
     for (( i=0; i < $tunnel_count ; i++ )); do
-        varDump '<$i Line 1032>'"$i"
         j=$(( $i+1 ))
         constructSshTunnelCommand $i
         pid=`getPid "${_command}"`
-        varDump '<$pid>'"$pid"
         if [[ $pid == '' ]];then
             n=1
             max=10
@@ -1101,7 +926,6 @@ populateTunnel() {
                     break
                 fi
                 pid=`getPid "${_command}"`
-                varDump '<$pid>'"$pid"
                 if [[ ! $pid == '' ]];then
                     port_used=0
                     break
@@ -1119,10 +943,6 @@ populateTunnel() {
                     break
                 fi
             done
-            varDump '<$n>'"$n"
-            varDump '<$port_used>'"$port_used"
-            varDump '<$port_changed>'"$port_changed"
-            varDump '<$command (final)>'"$_command"
             if [[ $port_used == 1 ]];then
                 error "Local port untuk koneksi ke ${tunnel_fwd_target_hosts[$i]} tidak dapat diciptakan. Pengecekan $max kali."
             fi
@@ -1141,13 +961,6 @@ populateTunnel() {
     done
     # Populate ssh for destination.
     # maybe gak diperlukan lagi.
-    varDump 'Hasil final port tersedia.'
-    varDump '--'
-    varDump tunnel_ports destination_port
-    varDump '--'
-    varDump 'End of Pengecekan port.'
-    varDump ssh_tunnel_options ssh_tunnel_mass_arguments
-    varDump ssh_tunnel_command ssh_tunnel_command_info_route
 
 
     # Populate ssh_route_options, ssh_route_mass_arguments.
@@ -1174,8 +987,6 @@ populateTunnel() {
         ssh_route_options+=("$ssh_options")
         ssh_route_mass_arguments+=("$ssh_mass_arguments")
     done
-    varDump ssh_route_options ssh_route_mass_arguments
-    varDump 'End of function populateTunnel()'
 }
 
 # Mengisi variable $local_port berdasarkan host.
@@ -1195,13 +1006,32 @@ populateTunnel() {
 # tunnel. Oleh karena itu dibuat global variable $local_ports sebagai
 # penyimpanan referensi berbagai local port yang telah dibuat.
 getRandomLocalPorts() {
-    varDump 'Begin of function getRandomLocalPorts()'
     local string files port file
+
+    # Mengecek apakah sebuah value sudah ada di dalam array.
+    # Credit: https://stackoverflow.com/a/8574392/7074586
+    #
+    # Globals:
+    #   None
+    #
+    # Arguments:
+    #   $1: Value yang akan dicek
+    #   $2: Array sebagai referensi
+    #
+    # Returns:
+    #   0: Value berada pada array
+    #   1: Value tidak berada pada array
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+
     mkdir -p "${RCM_DIR_PORTS}"
     cd "${RCM_DIR_PORTS}"
-    varDump '<$1>'"$1"
-    files=(`grep -r $1 | cut -d: -f1 | sort -n`)
-    varDump files
+    # Mencari file berdasarkan contain.
+    files=(`grep -r -E '^'"$1"'$' | cut -d: -f1 | sort -n`)
     port=
     for string in "${files[@]}"
     do
@@ -1227,8 +1057,6 @@ getRandomLocalPorts() {
     fi
     _local_port="$port"
     local_ports+=("$port")
-    varDump _local_port local_ports
-    varDump 'End of function getRandomLocalPorts()'
 }
 
 # Mempersiapkan kondisi jika argument pertama diketahui sebagai port.
@@ -1243,7 +1071,6 @@ getRandomLocalPorts() {
 # Returns:
 #   None
 prepareFirstArgumentAsPort() {
-    varDump 'Begin of function prepareFirstArgumentAsPort() '
     set -- "${arguments[@]}"
     if [[ $1 =~ ^[0-9]+$ ]];then
         _argument_port="$1"
@@ -1254,8 +1081,6 @@ prepareFirstArgumentAsPort() {
             shift
         done
     fi
-    varDump '<$_argument_port>'"$_argument_port" arguments
-    varDump 'End of function prepareFirstArgumentAsPort() '
 }
 
 # Melakukan modifikasi rute terkait subcommand open-port.
@@ -1270,7 +1095,6 @@ prepareFirstArgumentAsPort() {
 # Returns:
 #   None
 modifyRouteBeforeOpenPort() {
-    varDump 'Begin of function modifyRouteBeforeOpenPort() '
     local last_index _host _port _user next
     if [[ ! $_argument_port == '' ]];then
         last_index=$(( ${#route[@]} -1 ))
@@ -1282,9 +1106,7 @@ modifyRouteBeforeOpenPort() {
         route_hosts+=("$_host")
         route_users+=("$_user")
         route_ports+=("$_port")
-        varDump route route_hosts route_users route_ports
     fi
-    varDump 'End of function modifyRouteBeforeOpenPort() '
 }
 
 # Memecah address dengan format [USER@]HOST[:PORT] dengan mengisi variable
@@ -1346,6 +1168,40 @@ implodeAddress() {
     echo $host
 }
 
+# Memecah penamaan filename history dengan format
+# [HIT_COUNT]_[DESTINATION_HOST]_[VARIATION] dengan mengisi variable
+# terkait yakni $_hit, $_host, $_variation.
+#
+# Globals:
+#   Modified: _hit, _host, _variation
+#
+# Arguments:
+#   $1: Filename
+#
+# Returns:
+#   None
+explodeFileHistory() {
+    _hit=$(echo $1 | grep -E -o '^[0-9]+' )
+    _variation=$(echo $1 | grep -E -o '[0-9]+$' )
+    _host=$(echo $1 | sed 's/^'$_hit'_//' | sed 's/_'$_variation'$//')
+}
+
+# Merakit kemudian mencetak filename history dari element hit, host, variation.
+#
+# Globals:
+#   None
+#
+# Arguments:
+#   $1: Hit
+#   $2: Host
+#   $3: Variation
+#
+# Returns:
+#   None
+implodeFileHistory() {
+    echo "$1"_"$2"_"$3"
+}
+
 # Merakit kemudian mencetak ssh command untuk membuat tunnel.
 #
 # Globals:
@@ -1362,8 +1218,6 @@ implodeAddress() {
 #   None
 constructSshTunnelCommand() {
     local i
-    varDump 'Begin of function constructSshTunnelCommand()'
-    varDump '<Tunnel index $1>'"$1"
     # Reset.
     _ssh_options=
     _ssh_mass_arguments=
@@ -1378,8 +1232,6 @@ constructSshTunnelCommand() {
     fi
     _ssh_options+=" -fN -L ${tunnel_fwd_local_ports[$i]}:${tunnel_fwd_target_hosts[$i]}:${tunnel_fwd_target_ports[$i]}"
     _command="ssh${_ssh_options} ${_ssh_mass_arguments}"
-    varDump _command _ssh_options _ssh_mass_arguments
-    varDump 'End of function constructSshTunnelCommand()'
 }
 
 # Menulis baris-baris code (ssh command) untuk membuat dan menghapus tunnel.
@@ -1526,6 +1378,7 @@ writeLinesAddGetPidCygwin() {
     lines_function+=("    done")
     lines_function+=("    IFS=\$ifs")
     lines_function+=("}")
+    lines_function+=("")
 }
 
 # Menyimpan code kedalam variable $lines*
@@ -1559,7 +1412,7 @@ writeLines() {
 # Returns:
 #   None
 writeLinesVerbose() {
-    if [[ $verbose == 1 ]];then
+    if [[ ! $verbose == 0 ]];then
         writeLines "$1" "$2"
     fi
 }
@@ -1608,6 +1461,53 @@ writeLinesSendKey() {
     writeLines        'fi'
 }
 
+# Menyimpan history route kedalam file text.
+#
+# Globals:
+#   Used: RCM_DIR_ROUTE, preview, route_string
+#
+# Arguments:
+#   None
+#
+# Returns:
+#   None
+saveHistory() {
+    local filename files_by_name files_by_contains
+    local _hit _host _variation
+    if [[ $preview == 0 ]];then
+        mkdir -p $RCM_DIR_ROUTE
+        cd $RCM_DIR_ROUTE
+        # Mencari file berdasarkan contain.
+        files_by_contains=(`grep -r -E '^'"${route_string}"'$' | cut -d: -f1 | sort -n`)
+        if [[ ${#files_by_contains[@]} == 0 ]];then
+            filename="1_${destination_host}_1"
+            files_by_name=(`ls -U | grep -E '^[0-9]+'_"${destination_host}"'_[0-9]+$'`)
+            if [[ ${#files_by_name[@]} -gt 0 ]];then
+                n=1
+                while :
+                do
+                    files_by_name=(`ls -U | grep -E '^[0-9]+'_"${destination_host}"'_'"$n"'$'`)
+                    if [[ ${#files_by_name[@]} == 0 ]];then
+                        break
+                    else
+                        let n++
+                    fi
+                done
+                filename="1_${destination_host}_${n}"
+            fi
+            echo $route_string > $filename
+        elif [[ ${#files_by_contains[@]} -gt 1 ]];then
+            # Coming soon. Manage duplicate entry.
+            error "Duplicate entry."
+        else
+            explodeFileHistory ${files_by_contains[0]}
+            let _hit++
+            filename=`implodeFileHistory $_hit $_host $_variation`
+            mv ${files_by_contains[0]} $filename
+        fi
+    fi
+}
+
 # Generate code kemudian preview atau eksekusi.
 #
 # Globals:
@@ -1622,7 +1522,6 @@ writeLinesSendKey() {
 #   None
 generateCode() {
     local execute=1 string compileLines
-    varDump 'Begin of function generateCode()'
     if [[ $add_func_get_pid_cygwin == 1 ]];then
         writeLinesAddGetPidCygwin
     fi
@@ -1669,51 +1568,24 @@ generateCode() {
         done
         chmod u+x $RCM_EXE
         /bin/bash $RCM_EXE
+        # setsid sh -c '$RCM_EXE'
     fi
-    varDump 'End of function generateCode()'
 }
 
-# Jika dari terminal. Contoh: `rcm ssh user@localhost`.
-if [ -t 0 ]; then
-    # Process Reguler via terminal.
-    # Jika tidak ada argument.
-    if [[ $1 == "" ]];then
-        # clear
-        # Coming Soon.
-        exit
-    fi
-# Jika dari standard input. Contoh: `echo ssh user@localhost | rcm`.
-else
-    set -- ${@:-$(</dev/stdin)}
-    # Process Standard Input.
+# Jika tidak ada argument.
+if [[ $1 == "" ]];then
+    # Coming Soon.
+    # clear
+    exit
 fi
-# Parse options (locate between rcm and command).
-while [[ $# -gt 0 ]]; do
-    # varDump '<$1>'"$1"
-    arguments+=("$1")
-    shift
-done
-# varDump arguments
-setOptions once
-# varDump arguments
-set -- "${arguments[@]}"
-if [[ $# == 0 ]];then
-    error "Command not found."
-fi
-case "$1" in
-    login|send-key|push|pull|manage|open-port|mount)
-        command="$1"
-        shift
-        ;;
-    *)
-        error "Command unknown: '$1'."
+command="$1";
+case $command in
+    login|l) shift ;;
+    send-key|sk) shift ;;
+    open-port|op) shift ;;
+    history|h) shift ;;
+    *) error "Command unknown: '$1'."
 esac
-# Parse options (locate after command).
 arguments=("$@")
-varDump arguments
-setOptions
-varDump arguments
-varDump verbose preview through style public_key numbering
 validateOptions
-varDump arguments
 execute
