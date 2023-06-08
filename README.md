@@ -32,3 +32,10 @@ Just execute.
 ```
 Usage: rcm [options] [<command> [ -- [options]]]
 ```
+
+## Use Case
+
+Projects that implements `rcm`:
+
+ - https://github.com/ijortengab/ispconfig-autoinstaller
+ - https://github.com/ijortengab/drupal-autoinstaller-
