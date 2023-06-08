@@ -24,7 +24,7 @@ command="$1"; shift
 
 # Functions.
 [[ $(type -t RcmDependencyDownloader_printVersion) == function ]] || RcmDependencyDownloader_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDependencyDownloader_printHelp) == function ]] || RcmDependencyDownloader_printHelp() {
     cat << EOF
@@ -78,6 +78,21 @@ EOF
 [[ $(type -t ____) == function ]] || ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
+[[ $(type -t resolve_relative_path) == function ]] || resolve_relative_path() (
+    # Credit: https://www.baeldung.com/linux/bash-expand-relative-path
+    # Info: https://github.com/ijortengab/bash/blob/master/commands/resolve-relative-path.sh
+    if [ -d "$1" ]; then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ]; then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+)
 [[ $(type -t fileMustExists) == function ]] || fileMustExists() {
     # global used:
     # global modified:
@@ -177,7 +192,8 @@ delay=.5; [ -n "$fast" ] && unset delay
 [ -n "$command" ] && commands_required=("$command")
 code 'commands_required=('"${commands_required[@]}"')'
 [[ ${#commands_required[@]} -eq 0 ]] && { red Argument command required; x; }
-__DIR__=$(dirname "$0")
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 ____
@@ -232,8 +248,15 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
         fi
         if [ ! -f "$BINARY_DIRECTORY/$each" ];then
             __ Memulai download.
-            __; magenta wget https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"
+            # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
+            if [[ "$each" =~ ^rcm- ]];then
+                url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
+            elif [[ "$each" =~ \.sh$ ]];then
+                # Command dengan suffix .sh, kita anggap dari repository `ijortengab/bash`.
+                url=https://github.com/ijortengab/bash/raw/master/commands/"$each"
+            fi
+            __; magenta wget "$url" -O "$BINARY_DIRECTORY/$each"; _.
+            wget -q "$url" -O "$BINARY_DIRECTORY/$each"
             if [ ! -s "$BINARY_DIRECTORY/$each" ];then
                 __; magenta rm "$BINARY_DIRECTORY/$each"; _.
                 rm "$BINARY_DIRECTORY/$each"
@@ -249,7 +272,7 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
         fileMustExists "$BINARY_DIRECTORY/$each"
 
         commands_exists+=("$each")
-        _dependency=$("$BINARY_DIRECTORY/$each" --help | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep ^rcm-)
+        _dependency=$("$BINARY_DIRECTORY/$each" --help | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
         if [ -n "$_dependency" ];then
             _dependency=($_dependency)
             ArrayDiff _dependency[@] commands_exists[@]
@@ -261,7 +284,6 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
         fi
     done
     ____
-
 
     chapter Dump variable.
     ArrayUnique _commands_required[@]
