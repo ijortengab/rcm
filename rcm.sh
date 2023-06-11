@@ -28,16 +28,18 @@ unset _new_arguments
 # Command.
 command="$1"; shift
 if [ -n "$command" ];then
-    if [[ ! "$command" =~ ^rcm-.*\.sh ]];then
-        echo -e "\e[91m" "Command ${command} is unknown." "\e[39m"; exit 1
-    fi
+    case "$command" in
+        dependency-downloader) ;;
+        rcm-*.sh) ;;
+        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
+    esac
 else
     command=list
 fi
 
 # Functions.
 [[ $(type -t Rcm_printVersion) == function ]] || Rcm_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
@@ -48,6 +50,9 @@ Version `Rcm_printVersion`
 EOF
     cat << 'EOF'
 Usage: rcm.sh [file]
+       rcm.sh [command]
+
+Available commands: dependency-downloader.
 
 Options:
 
@@ -63,7 +68,7 @@ Global Options:
 
 Environment Variables:
    BINARY_DIRECTORY
-        Default to $(dirname "$0")
+        Default to $__DIR__
 EOF
 }
 
@@ -91,6 +96,21 @@ EOF
 [[ $(type -t ____) == function ]] || ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
+[[ $(type -t resolve_relative_path) == function ]] || resolve_relative_path() (
+    # Credit: https://www.baeldung.com/linux/bash-expand-relative-path
+    # Info: https://github.com/ijortengab/bash/blob/master/commands/resolve-relative-path.sh
+    if [ -d "$1" ]; then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ]; then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+)
 [[ $(type -t fileMustExists) == function ]] || fileMustExists() {
     # global used:
     # global modified:
@@ -234,6 +254,7 @@ EOF
 }
 
 # Execute command.
+# git ls-files | grep '\.sh$' | grep -v rcm\.sh | grep -v rcm-dependency-downloader\.sh | cut -d/ -f2
 if [ $command == list ];then
     cat << 'EOF'
 rcm-amavis-setup-ispconfig.sh
@@ -299,7 +320,7 @@ fi
 # Prompt.
 if [ -z "$fast" ];then
     yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=5
+    countdown=2
     while [ "$countdown" -ge 0 ]; do
         printf "\r\033[K" >&2
         printf %"$countdown"s | tr " " "." >&2
@@ -319,7 +340,8 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
-__DIR__=$(dirname "$0")
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 ____
@@ -358,6 +380,12 @@ if [ -z "$binary_directory_exists_sure" ];then
         fi
         ____
     fi
+fi
+
+if [ $command == dependency-downloader ];then
+    PATH="${BINARY_DIRECTORY}:${PATH}"
+    Rcm_download rcm-dependency-downloader.sh
+    exit
 fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
@@ -399,9 +427,9 @@ ____
 
 _ -----------------------------------------------------------------------;_.;_.;
 command -v "rcm-dependency-downloader.sh" >/dev/null || { red "Unable to proceed, rcm-dependency-downloader.sh command not found." "\e[39m"; x; }
-INDENT="    " rcm-dependency-downloader.sh $command $isfast --root-sure --binary-directory-exists-sure
+INDENT="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm-dependency-downloader.sh $command $isfast --root-sure --binary-directory-exists-sure
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
-INDENT="    " $command $isfast --root-sure "$@"
+INDENT="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
 _ -----------------------------------------------------------------------;_.;_.;
 
 chapter Timer Finish.
