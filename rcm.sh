@@ -39,7 +39,7 @@ fi
 
 # Functions.
 [[ $(type -t Rcm_printVersion) == function ]] || Rcm_printVersion() {
-    echo '0.1.3'
+    echo '0.1.4'
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
@@ -174,6 +174,11 @@ EOF
                 parameter="${parameter::-1}"
                 parameter=`xargs <<< "$parameter"`
             fi
+            if [[ "$parameter" == '--' ]];then
+                is_required=
+                is_flag=
+                value_addon=multivalue
+            fi
             label=`sed -n 2p <<< "$options" | xargs`
             if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$label";then
                 value_addon=multivalue
@@ -213,6 +218,12 @@ EOF
                         argument_pass+=("${parameter}")
                     fi
                 fi
+            elif [[ "$parameter" == '--' ]];then
+                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                read -p "Type the value: " value
+                if [ -n "$value" ];then
+                    argument_pass+=("${parameter} ${value}")
+                fi
             else
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
                 read -p "Type the value: " value
@@ -239,6 +250,9 @@ EOF
                     if [[ "$value" =~ ^[yY]$ ]]; then
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
+                        elif [[ "$parameter" == '--' ]];then
+                            read -p "Type the value: " value
+                            [ -n "$value" ] && argument_pass+=("${value}")
                         else
                             read -p "Type the value: " value
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
