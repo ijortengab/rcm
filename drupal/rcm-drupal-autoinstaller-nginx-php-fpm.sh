@@ -12,6 +12,8 @@ while [[ $# -gt 0 ]]; do
         --domain-strict) domain_strict=1; shift ;;
         --drupal-version=*) drupal_version="${1#*=}"; shift ;;
         --drupal-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drupal_version="$2"; shift; fi; shift ;;
+        --drush-version=*) drush_version="${1#*=}"; shift ;;
+        --drush-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drush_version="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
@@ -29,7 +31,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -226,6 +228,7 @@ vercomp 8 "$drupal_version"
 if [[ $? -lt 2 ]];then
     red Hanya mendukung Drupal versi >= 8.; x
 fi
+code 'drush_version="'$drush_version'"'
 code 'php_version="'$php_version'"'
 project_dir="$project_name"
 drupal_nginx_config_file=drupal_"$project_name"
@@ -409,14 +412,20 @@ ____
 if [ -n "$notfound" ];then
     chapter Memasang '`'Drush'`' menggunakan Composer.
     cd /var/www/project/$project_dir/drupal
-    code composer -v require drush/drush
+    # Jika version hanya angka 9 atau 10, maka ubah menjadi ^9 atau ^10.
+    if [[ "$drush_version" =~ ^[0-9]+$ ]];then
+        _drush_version="$drush_version"
+        drush_version="^${drush_version}"
+    fi
+    code composer -v require drush/drush "$drush_version"
     # sudo -u $user_nginx HOME='/tmp' -s composer -v require drush/drush
-    sudo -u $user_nginx HOME='/tmp' -E bash -c 'composer -v require drush/drush'
+    sudo -u $user_nginx HOME='/tmp' -E bash -c 'composer -v require drush/drush '"$drush_version"
     if [ -f /var/www/project/$project_dir/drupal/vendor/bin/drush ];then
         __; green Binary Drush is exists.
     else
         __; red Binary Drush is not exists.; x
     fi
+    drush_version="$_drush_version"
     cd - >/dev/null
     ____
 fi
@@ -666,6 +675,7 @@ ____
 # )
 # VALUE=(
 # --drupal-version
+# --drush-version
 # --php-version
 # --project-name
 # --project-parent-name

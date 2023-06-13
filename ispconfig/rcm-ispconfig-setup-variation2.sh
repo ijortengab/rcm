@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupVariation1_printVersion) == function ]] || RcmIspconfigSetupVariation1_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigSetupVariation1_printHelp) == function ]] || RcmIspconfigSetupVariation1_printHelp() {
     cat << EOF
@@ -275,14 +275,12 @@ else
     echo "$digitalocean_token" > $HOME/.digitalocean-token.txt
 fi
 fileMustExists $HOME/.digitalocean-token.txt
-
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 INDENT+="    "
 source $(command -v rcm-ubuntu-22.04-setup-basic.sh)
 INDENT=${INDENT::-4}
-
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek FQDN '(Fully-Qualified Domain Name)'
 code fqdn="$fqdn"
@@ -308,8 +306,7 @@ if [[ -n "$adjust" ]];then
     fi
     ____
 fi
-
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 INDENT+="    ";
 source $(command -v rcm-mariadb-autoinstaller.sh)
@@ -367,7 +364,7 @@ source $(command -v rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh) --digita
 domain="$_domain" # Restore variable.
 source $(command -v rcm-ispconfig-setup-dump-variables.sh)
 INDENT=${INDENT::-4}
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:

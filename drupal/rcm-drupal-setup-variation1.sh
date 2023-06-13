@@ -29,7 +29,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalSetupVariation1_printVersion) == function ]] || RcmDrupalSetupVariation1_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDrupalSetupVariation1_printHelp) == function ]] || RcmDrupalSetupVariation1_printHelp() {
     cat << EOF
@@ -159,8 +159,7 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 INDENT+="    "
 source $(command -v rcm-debian-11-setup-basic.sh)
@@ -186,7 +185,7 @@ fi
 source $(command -v rcm-drupal-setup-drush-alias.sh)
 source $(command -v rcm-drupal-setup-dump-variables.sh)
 INDENT=${INDENT::-4}
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:

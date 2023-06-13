@@ -39,7 +39,7 @@ fi
 
 # Functions.
 [[ $(type -t Rcm_printVersion) == function ]] || Rcm_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
@@ -425,12 +425,15 @@ e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
 
-_ -----------------------------------------------------------------------;_.;_.;
+_ _______________________________________________________________________;_.;_.;
+
+INDENT+="    "
 command -v "rcm-dependency-downloader.sh" >/dev/null || { red "Unable to proceed, rcm-dependency-downloader.sh command not found." "\e[39m"; x; }
-INDENT="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm-dependency-downloader.sh $command $isfast --root-sure --binary-directory-exists-sure
+INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm-dependency-downloader.sh $command $isfast --root-sure --binary-directory-exists-sure
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
-INDENT="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
+INDENT=${INDENT::-4}
+_ _______________________________________________________________________;_.;_.;
 
 chapter Timer Finish.
 e End: $(date +%Y%m%d-%H%M%S)

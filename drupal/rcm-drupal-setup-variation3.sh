@@ -29,7 +29,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalSetupVariation3_printVersion) == function ]] || RcmDrupalSetupVariation3_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDrupalSetupVariation3_printHelp) == function ]] || RcmDrupalSetupVariation3_printHelp() {
     cat << EOF
@@ -136,6 +136,8 @@ php_version=8.2
 code php_version="$php_version"
 drupal_version=10
 code drupal_version="$drupal_version"
+drush_version=12
+code drush_version="$drush_version"
 until [[ -n "$project_name" ]];do
     read -p "Argument --project-name required: " project_name
 done
@@ -159,8 +161,7 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 INDENT+="    "
 source $(command -v rcm-ubuntu-22.04-setup-basic.sh)
@@ -186,7 +187,7 @@ fi
 source $(command -v rcm-drupal-setup-drush-alias.sh)
 source $(command -v rcm-drupal-setup-dump-variables.sh)
 INDENT=${INDENT::-4}
-_;_, ____________________________________________________________________;_.;_.;
+_ _______________________________________________________________________;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
