@@ -24,7 +24,7 @@ command="$1"; shift
 
 # Functions.
 [[ $(type -t RcmDependencyDownloader_printVersion) == function ]] || RcmDependencyDownloader_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmDependencyDownloader_printHelp) == function ]] || RcmDependencyDownloader_printHelp() {
     cat << EOF
@@ -50,7 +50,7 @@ Global Options.
 
 Environment Variables:
    BINARY_DIRECTORY
-        Default to $(dirname "$0")
+        Default to $__DIR__
 EOF
 }
 
@@ -234,45 +234,51 @@ if [ -z "$binary_directory_exists_sure" ];then
     fi
 fi
 
+PATH="${BINARY_DIRECTORY}:${PATH}"
 commands_exists=()
 commands_downloaded=()
 until [[ ${#commands_required[@]} -eq 0 ]];do
     _commands_required=()
     chapter Requires command.
     for each in "${commands_required[@]}"; do
-        __ Requires command: "$each".
-        if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
-            __ Empty file detected.
-            __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-            rm "$BINARY_DIRECTORY/$each"
-        fi
-        if [ ! -f "$BINARY_DIRECTORY/$each" ];then
-            __ Memulai download.
-            # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
-            if [[ "$each" =~ ^rcm- ]];then
-                url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
-            elif [[ "$each" =~ \.sh$ ]];then
-                # Command dengan suffix .sh, kita anggap dari repository `ijortengab/bash`.
-                url=https://github.com/ijortengab/bash/raw/master/commands/"$each"
-            fi
-            __; magenta wget "$url" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q "$url" -O "$BINARY_DIRECTORY/$each"
-            if [ ! -s "$BINARY_DIRECTORY/$each" ];then
+        _ Requires command: "$each"
+        if command -v "$each" > /dev/null;then
+            _, ' [FOUND].'; _.
+            # __ Command "$each" ditemukan.
+        else
+            _, ' [NOTFOUND].'; _.
+            if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
+                __ Empty file detected.
                 __; magenta rm "$BINARY_DIRECTORY/$each"; _.
                 rm "$BINARY_DIRECTORY/$each"
-                __; red HTTP Response: 404 Not Found; x
             fi
-            __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-            chmod a+x "$BINARY_DIRECTORY/$each"
-            commands_downloaded+=("$each")
-        elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
-            __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-            chmod a+x "$BINARY_DIRECTORY/$each"
+            if [ ! -f "$BINARY_DIRECTORY/$each" ];then
+                __ Memulai download.
+                # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
+                if [[ "$each" =~ ^rcm- ]];then
+                    url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
+                elif [[ "$each" =~ \.sh$ ]];then
+                    # Command dengan suffix .sh, kita anggap dari repository `ijortengab/bash`.
+                    url=https://github.com/ijortengab/bash/raw/master/commands/"$each"
+                fi
+                __; magenta wget "$url" -O "$BINARY_DIRECTORY/$each"; _.
+                wget -q "$url" -O "$BINARY_DIRECTORY/$each"
+                if [ ! -s "$BINARY_DIRECTORY/$each" ];then
+                    __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+                    rm "$BINARY_DIRECTORY/$each"
+                    __; red HTTP Response: 404 Not Found; x
+                fi
+                __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                chmod a+x "$BINARY_DIRECTORY/$each"
+                commands_downloaded+=("$each")
+            elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
+                __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                chmod a+x "$BINARY_DIRECTORY/$each"
+            fi
+            fileMustExists "$BINARY_DIRECTORY/$each"
         fi
-        fileMustExists "$BINARY_DIRECTORY/$each"
-
         commands_exists+=("$each")
-        _dependency=$("$BINARY_DIRECTORY/$each" --help | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
+        _dependency=$("$each" --help 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
         if [ -n "$_dependency" ];then
             _dependency=($_dependency)
             ArrayDiff _dependency[@] commands_exists[@]
@@ -295,7 +301,6 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
 done
 
 chapter Finish.
-PATH="${BINARY_DIRECTORY}:${PATH}"
 __ Total sebanyak "${#commands_downloaded[@]}" file yang di download.
 for each in "${commands_downloaded[@]}"; do
     __; _, '- '; green "$each"; _, ' '; yellow `"$each" --version`; _.

@@ -32,7 +32,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmCertbotSetupNginx_printVersion) == function ]] || RcmCertbotSetupNginx_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmCertbotSetupNginx_printHelp) == function ]] || RcmCertbotSetupNginx_printHelp() {
     cat << EOF
@@ -47,15 +47,15 @@ EOF
 Usage: rcm-certbot-setup-nginx.sh [options]
 
 Options:
-   --domain
+   --domain *
         Main domain to obtain certificate.
    --email
-        Email of cerbot registered account.
-   --non-interactive
+        Email of cerbot registered account. Try --email=auto.
+   --non-interactive ^
         Skip confirmation of --email=auto.
    --
         Every arguments after double dash will pass to certbot command.
-        Example: rcm-certbot-setup-nginx.sh -- -d domain2.com
+
 Global Options:
    --fast
         No delay every subtask.
@@ -65,6 +65,9 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
+
+Example:
+     rcm-certbot-setup-nginx.sh -- -d domain2.com
 
 Dependency:
    certbot

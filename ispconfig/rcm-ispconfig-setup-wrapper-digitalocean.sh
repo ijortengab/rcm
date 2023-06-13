@@ -12,6 +12,7 @@ while [[ $# -gt 0 ]]; do
         --digitalocean-domain-exists-sure) digitalocean_domain_exists_sure=1; shift ;;
         --dns-record=*) dns_record="${1#*=}"; shift ;;
         --dns-record) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then dns_record="$2"; shift; fi; shift ;;
+        --dns-record-auto) dns_record_auto=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --email=*) email="${1#*=}"; shift ;;
@@ -34,7 +35,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperDigitalocean_printVersion) == function ]] || RcmIspconfigSetupWrapperDigitalocean_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigSetupWrapperDigitalocean_printHelp) == function ]] || RcmIspconfigSetupWrapperDigitalocean_printHelp() {
     cat << EOF
@@ -272,6 +273,7 @@ fi
 # --root-sure
 # --ispconfig-domain-exists-sure
 # --digitalocean-domain-exists-sure
+# --dns-record-auto
 # )
 # VALUE=(
 # --domain

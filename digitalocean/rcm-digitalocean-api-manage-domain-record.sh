@@ -40,13 +40,13 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         add|delete) ;;
-        *) echo -e "\e[91m" "Command ${command} is unknown." "\e[39m"; exit 1
+        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
     esac
 fi
 
 # Functions.
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printVersion) == function ]] || RcmDigitaloceanApiManageDomainRecord_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printHelp) == function ]] || RcmDigitaloceanApiManageDomainRecord_printHelp() {
     cat << EOF

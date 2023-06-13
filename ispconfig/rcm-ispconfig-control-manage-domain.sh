@@ -25,13 +25,13 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         add|delete|isset|get_dns_record) ;;
-        *) echo -e "\e[91m" "Command ${command} is unknown." "\e[39m"; exit 1
+        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
     esac
 fi
 
 # Functions.
 [[ $(type -t RcmIspconfigControlManageDomain_printVersion) == function ]] || RcmIspconfigControlManageDomain_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigControlManageDomain_printHelp) == function ]] || RcmIspconfigControlManageDomain_printHelp() {
     cat << EOF

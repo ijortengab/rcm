@@ -39,7 +39,7 @@ fi
 
 # Functions.
 [[ $(type -t Rcm_printVersion) == function ]] || Rcm_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
@@ -308,7 +308,7 @@ rcm-wsl-setup-lemp-stack.sh
 EOF
     ____
 
-    read -p "Type the command to execute: " command
+    read -p "Type the command to execute (or blank to skip): " command
     ____
 
     if [ -z "$command" ];then
