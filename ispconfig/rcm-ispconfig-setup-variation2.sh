@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupVariation1_printVersion) == function ]] || RcmIspconfigSetupVariation1_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmIspconfigSetupVariation1_printHelp) == function ]] || RcmIspconfigSetupVariation1_printHelp() {
     cat << EOF
@@ -296,7 +296,7 @@ ____
 
 if [[ -n "$adjust" ]];then
     chapter Adjust FQDN.
-    echo "127.0.1.1"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
+    echo "127.0.1.2"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
     sleep .5
     current_fqdn=$(hostname -f 2>/dev/null)
     if [[ "$current_fqdn" == "$fqdn" ]];then
@@ -342,8 +342,8 @@ source $(command -v rcm-ispconfig-control-manage-email-alias.sh) --name="$MAILBO
 _hostname="$hostname" # Backup variable.
 source $(command -v rcm-digitalocean-api-manage-domain.sh) add
 source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type a     --hostname=@
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type cname --hostname=server2
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type a     --hostname=server2
+source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type cname --hostname="$_hostname"
+source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type a     --hostname="$_hostname"
 source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type a     --hostname="$SUBDOMAIN_ISPCONFIG"
 source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type cname --hostname="$SUBDOMAIN_ISPCONFIG"
 source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type a     --hostname="$SUBDOMAIN_PHPMYADMIN"
