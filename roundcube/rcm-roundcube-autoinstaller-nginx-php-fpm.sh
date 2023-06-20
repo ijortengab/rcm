@@ -24,7 +24,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -471,7 +471,7 @@ code curl http://127.0.0.1 -H '"'Host: ${ROUNDCUBE_FQDN_LOCALHOST}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
     http://127.0.0.1 -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}")
-[ $code -eq 200 ] && {
+[[ $code =~ ^[2,3] ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x

@@ -31,7 +31,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -646,7 +646,7 @@ code curl http://127.0.0.1 -H '"'Host: ${drupal_fqdn_localhost}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
     http://127.0.0.1 -H "Host: ${drupal_fqdn_localhost}")
-[ $code -eq 200 ] && {
+[[ $code =~ ^[2,3] ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x

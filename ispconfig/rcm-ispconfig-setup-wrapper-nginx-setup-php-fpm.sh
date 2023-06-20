@@ -28,7 +28,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperNginxSetupPhpFpm_printVersion) == function ]] || RcmIspconfigSetupWrapperNginxSetupPhpFpm_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigSetupWrapperNginxSetupPhpFpm_printHelp) == function ]] || RcmIspconfigSetupWrapperNginxSetupPhpFpm_printHelp() {
     cat << EOF
@@ -201,7 +201,7 @@ code curl http://127.0.0.1 -H '"'Host: ${fqdn_project}'"'
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
     http://127.0.0.1 -H "Host: ${fqdn_project}")
-[ $code -eq 200 ] && {
+[[ $code =~ ^[2,3] ]] && {
     __ HTTP Response code '`'$code'`' '('Required')'.
 } || {
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
