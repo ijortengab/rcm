@@ -31,7 +31,7 @@ fi
 
 # Functions.
 [[ $(type -t RcmIspconfigControlManageDomain_printVersion) == function ]] || RcmIspconfigControlManageDomain_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmIspconfigControlManageDomain_printHelp) == function ]] || RcmIspconfigControlManageDomain_printHelp() {
     cat << EOF
@@ -201,7 +201,7 @@ if [ -z "$notfound" ];then
         __; red Terdapat perbedaan antara dkim_selector versi database dengan user input.; _.
         __; red Menggunakan value versi database.; _.
         DKIM_SELECTOR="$_dkim_selector"
-        __; code DKIM_SELECTOR="$DKIM_SELECTOR"
+        __; magenta DKIM_SELECTOR="$DKIM_SELECTOR"; _.
     fi
     # Populate Global Variable
     dns_record=$(echo "$dkim_public" | sed -e "/-----BEGIN PUBLIC KEY-----/d" -e "/-----END PUBLIC KEY-----/d" | tr '\n' ' ' | sed 's/\ //g')
@@ -218,7 +218,7 @@ else
 fi
 
 __ Cleaning temporary file.
-__; code rm "$template_temp_path"
+__; magenta rm "$template_temp_path"; _.
 rm "$template_temp_path"
 ____
 
@@ -253,7 +253,7 @@ EOF
     __ Standard Output.
     magenta "$json"; _.
     __ Cleaning temporary file.
-    __; code rm "$temp_ajax_get_json"
+    __; magenta rm "$temp_ajax_get_json"; _.
     rm "${dirname}/${temp_ajax_get_json}"
     ____
 fi
@@ -298,7 +298,7 @@ if [[ $command == add && -n "$json" ]];then
     magenta "$contents"; _.
     ispconfig.sh php "$template_temp"
     __ Cleaning temporary file.
-    __; code rm "$template_temp_path"
+    __; magenta rm "$template_temp_path"; _.
     rm "$template_temp_path"
     __ Verifikasi:
     php=$(cat <<-'EOF'

@@ -20,7 +20,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmNginxSetupIspconfig_printVersion) == function ]] || RcmNginxSetupIspconfig_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmNginxSetupIspconfig_printHelp) == function ]] || RcmNginxSetupIspconfig_printHelp() {
     cat << EOF
@@ -210,7 +210,7 @@ EOF
     fi
     cd - >/dev/null
 fi
-    __; code curl http://127.0.0.1
+    __; magenta curl http://127.0.0.1; _.
 code=$(curl -L \
     -o /dev/null -s -w "%{http_code}\n" \
     http://127.0.0.1)

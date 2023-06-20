@@ -22,7 +22,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDebian11SetupBasic_printVersion) == function ]] || RcmDebian11SetupBasic_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDebian11SetupBasic_printHelp) == function ]] || RcmDebian11SetupBasic_printHelp() {
     cat << EOF
@@ -205,7 +205,7 @@ if [[ -n "$notfound" ]];then
     PATH=/usr/local/sbin:/usr/sbin:/sbin:$PATH
     if grep -q '/usr/sbin' <<< "$PATH";then
       __; green '$PATH' sudah lengkap.; _.
-      __; code PATH="$PATH"
+      __; magenta PATH="$PATH"; _.
     else
       __; red '$PATH' belum lengkap.; x
     fi
@@ -267,7 +267,7 @@ if [[ -n "$adjust" ]];then
     chapter Adjust timezone.
     __ Backup file '`'/etc/localtime'`'
     backupFile move /etc/localtime
-    __; code ln -s /usr/share/zoneinfo/$timezone /etc/localtime
+    __; magenta ln -s /usr/share/zoneinfo/$timezone /etc/localtime; _.
     ln -s /usr/share/zoneinfo/$timezone /etc/localtime
     current_timezone=$(realpath /etc/localtime | cut -d/ -f5,6)
     if [[ "$current_timezone" == "$timezone" ]];then

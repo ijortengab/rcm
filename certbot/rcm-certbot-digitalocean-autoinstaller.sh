@@ -19,7 +19,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmCertbotDigitaloceanAutoinstaller_printVersion) == function ]] || RcmCertbotDigitaloceanAutoinstaller_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmCertbotDigitaloceanAutoinstaller_printHelp) == function ]] || RcmCertbotDigitaloceanAutoinstaller_printHelp() {
     cat << EOF
@@ -137,7 +137,7 @@ if [[ -n "$notfound" ]];then
     PATH=/snap/bin:$PATH
     if grep -q '/snap/bin' <<< "$PATH";then
       __; green '$PATH' sudah lengkap.; _.
-      __; code PATH="$PATH"
+      __; magenta PATH="$PATH"; _.
 
     else
       __; red '$PATH' belum lengkap.; x

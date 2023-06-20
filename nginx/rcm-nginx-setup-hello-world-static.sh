@@ -22,7 +22,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmNginxSetupHelloWorldStatic_printVersion) == function ]] || RcmNginxSetupHelloWorldStatic_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmNginxSetupHelloWorldStatic_printHelp) == function ]] || RcmNginxSetupHelloWorldStatic_printHelp() {
     cat << EOF
@@ -160,7 +160,7 @@ INDENT=${INDENT::-4}
 _ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mempersiapkan web root directory.
-__; code root='"'$root'"'
+__; magenta root='"'$root'"'; _.
 notfound=
 if [ -d "$root" ];then
     __ Direktori '`'$root'`' ditemukan.

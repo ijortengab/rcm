@@ -29,7 +29,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigControlManageEmailAlias_printVersion) == function ]] || RcmIspconfigControlManageEmailAlias_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigControlManageEmailAlias_printHelp) == function ]] || RcmIspconfigControlManageEmailAlias_printHelp() {
     cat << EOF
@@ -230,7 +230,7 @@ EOF
     if [[ -z "$mailbox_user_password" ]];then
         __; red Informasi credentials tidak lengkap: '`'/usr/local/share/credential/mailbox/$host/$user'`'.; x
     else
-        __; code mailbox_user_password="$mailbox_user_password"
+        __; magenta mailbox_user_password="$mailbox_user_password"; _.
     fi
     __ Create PHP Script from template '`'mail_user_add'`'.
     template=mail_user_add
@@ -288,7 +288,7 @@ EOF
     code "$contents"
     ispconfig.sh php "$template_temp"
     __ Cleaning Temporary File.
-    __; code rm "$template_temp_path"
+    __; magenta rm "$template_temp_path"; _.
     rm "$template_temp_path"
     mailuser_id=$(getMailUserIdIspconfigByEmail "$1" "$2")
     if [ -n "$mailuser_id" ];then
@@ -558,7 +558,7 @@ EOF
     code "$contents"
     ispconfig.sh php "$template_temp"
     __ Cleaning temporary file.
-    __; code rm "$template_temp_path"
+    __; magenta rm "$template_temp_path"; _.
     rm "$template_temp_path"
     forwarding_id=$(getForwardingIdIspconfigByEmailAlias "$source" "$destination")
     if [ -n "$forwarding_id" ];then
@@ -676,10 +676,10 @@ source="$name"@"$domain"
 chapter Mengecek alias of "$source"
 if isEmailAliasIspconfigExist "$source" "$destination";then
     __ Email "$source" alias of "$destination" already exists.
-    __; code forwarding_id=$forwarding_id
+    __; magenta forwarding_id=$forwarding_id; _.
 elif insertEmailAliasIspconfig "$source" "$destination";then
     __; green Email "$source" alias of "$destination" created.; _.
-    __; code forwarding_id=$forwarding_id
+    __; magenta forwarding_id=$forwarding_id; _.
 else
     __; red Email "$source" alias of "$destination" failed to create.; x
 fi
@@ -689,10 +689,10 @@ username="$destination_name"@"$destination_domain"
 chapter Mengecek username destination "$username" di Roundcube.
 if isUsernameRoundcubeExist "$username";then
     __ Username "$username" already exists.
-    __; code user_id=$user_id
+    __; magenta user_id=$user_id; _.
 elif insertUsernameRoundcube "$username";then
     __; green Username "$username" created.; _.
-    __; code user_id=$user_id
+    __; magenta user_id=$user_id; _.
 else
     __; red Username "$username" failed to create.; x
 fi
@@ -702,10 +702,10 @@ username="$destination_name"@"$destination_domain"
 chapter Mengecek Identities destination "$username" di Roundcube.
 if isIdentitiesRoundcubeExist 1 "$username" "$user_id";then
     __ Identities "$username" already exists.
-    __; code identity_id=$identity_id
+    __; magenta identity_id=$identity_id; _.
 elif insertIdentitiesRoundcube 1 "$username" "$user_id" "$mailbox_admin";then
     __; green Identities "$username" created.; _.
-    __; code identity_id=$identity_id
+    __; magenta identity_id=$identity_id; _.
 else
     __; red Identities "$username" failed to create.; x
 fi
@@ -714,13 +714,13 @@ ____
 source="$name"@"$domain"
 destination="$destination_name"@"$destination_domain"
 chapter Mengecek Identities "$source" di Roundcube.
-__; code source=$source
+__; magenta source=$source; _.
 if isIdentitiesRoundcubeExist 0 "$source" "$user_id";then
     __ Identities "$source" alias of "$destination" already exists.
-    __; code identity_id=$identity_id
+    __; magenta identity_id=$identity_id; _.
 elif insertIdentitiesRoundcube 0 "$source" "$user_id";then
     __; green Identities "$source" alias of "$destination" created.; _.
-    __; code identity_id=$identity_id
+    __; magenta identity_id=$identity_id; _.
 else
     __; red Identities "$source" alias of "$user_id" failed to create.; x
 fi

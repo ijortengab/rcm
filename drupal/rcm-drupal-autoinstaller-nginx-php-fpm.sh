@@ -31,7 +31,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -328,9 +328,9 @@ cat << 'EOF' > "${root}/.well-known/__getuser.php"
 echo $_SERVER['USER'];
 EOF
 __ Eksekusi file script.
-__; code curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${drupal_fqdn_localhost}"
+__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${drupal_fqdn_localhost}"; _.
 user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${drupal_fqdn_localhost}")
-__; code user_nginx="$user_nginx"
+__; magenta user_nginx="$user_nginx"; _.
 if [ -z "$user_nginx" ];then
     error PHP-FPM User tidak ditemukan; x
 fi

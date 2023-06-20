@@ -39,7 +39,7 @@ fi
 
 # Functions.
 [[ $(type -t Rcm_printVersion) == function ]] || Rcm_printVersion() {
-    echo '0.1.4'
+    echo '0.1.5'
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
@@ -372,7 +372,7 @@ fi
 
 if [ -z "$binary_directory_exists_sure" ];then
     chapter Mempersiapkan directory binary.
-    __; code BINARY_DIRECTORY=$BINARY_DIRECTORY
+    __; magenta BINARY_DIRECTORY=$BINARY_DIRECTORY; _.
     notfound=
     if [ -d "$BINARY_DIRECTORY" ];then
         __ Direktori '`'$BINARY_DIRECTORY'`' ditemukan.

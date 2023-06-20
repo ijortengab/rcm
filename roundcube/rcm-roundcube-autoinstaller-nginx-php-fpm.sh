@@ -24,7 +24,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -308,9 +308,9 @@ cat << 'EOF' > "${root}/.well-known/__getuser.php"
 echo $_SERVER['USER'];
 EOF
 __ Eksekusi file script.
-__; code curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}"
+__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}"; _.
 user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}")
-__; code user_nginx="$user_nginx"
+__; magenta user_nginx="$user_nginx"; _.
 if [ -z "$user_nginx" ];then
     error PHP-FPM User tidak ditemukan; x
 fi

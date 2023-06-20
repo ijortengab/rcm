@@ -20,7 +20,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmAmavisSetupIspconfig_printVersion) == function ]] || RcmAmavisSetupIspconfig_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmAmavisSetupIspconfig_printHelp) == function ]] || RcmAmavisSetupIspconfig_printHelp() {
     cat << EOF
@@ -81,11 +81,11 @@ done <<< `RcmAmavisSetupIspconfig_printHelp | sed -n '/^Dependency:/,$p' | sed -
 
 # Functions.
 [[ $(type -t RcmAmavisSetupIspconfig_startTweak) == function ]] || RcmAmavisSetupIspconfig_startTweak() {
-    __; code chown -R root:amavis /etc/amavis/
-    __; code chmod 644 /etc/amavis/50-user~
-    __; code chmod 644 /etc/amavis/conf.d/50-user
-    __; code service amavis restart
-    __; code chmod 750 /etc/amavis/conf.d
+    __; magenta chown -R root:amavis /etc/amavis/; _.
+    __; magenta chmod 644 /etc/amavis/50-user~; _.
+    __; magenta chmod 644 /etc/amavis/conf.d/50-user; _.
+    __; magenta service amavis restart; _.
+    __; magenta chmod 750 /etc/amavis/conf.d; _.
     tweak=
     restart=
     if [ $(stat /etc/amavis -c %G) == amavis ];then
@@ -162,7 +162,7 @@ done <<< `RcmAmavisSetupIspconfig_printHelp | sed -n '/^Dependency:/,$p' | sed -
         restart=1
     fi
     if [ -n "$restart" ];then
-        __; code restart="$restart"
+        __; magenta restart="$restart"; _.
         __ Merestart amavis.
         code systemctl restart amavis.service
         systemctl restart amavis.service

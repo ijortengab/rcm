@@ -20,7 +20,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmRoundcubeSetupIspconfigIntegration_printVersion) == function ]] || RcmRoundcubeSetupIspconfigIntegration_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmRoundcubeSetupIspconfigIntegration_printHelp) == function ]] || RcmRoundcubeSetupIspconfigIntegration_printHelp() {
     cat << EOF
@@ -369,7 +369,7 @@ ____
 filename_path=$roundcube_install_dir/plugins/ispconfig3_account/config/config.inc.php
 filename=$(basename "$filename_path")
 chapter Mengecek existing '`'$filename'`'
-__; code filename_path=$filename_path
+__; magenta filename_path=$filename_path; _.
 isFileExists "$filename_path"
 ____
 
@@ -396,8 +396,8 @@ remoteUserCredentialIspconfig $ISPCONFIG_REMOTE_USER_ROUNDCUBE
 if [[ -z "$ispconfig_remote_user_password" ]];then
     __; red Informasi credentials tidak lengkap: '`'/usr/local/share/ispconfig/credential/remote/$ISPCONFIG_REMOTE_USER_ROUNDCUBE'`'.; x
 else
-    __; code ISPCONFIG_REMOTE_USER_ROUNDCUBE="$ISPCONFIG_REMOTE_USER_ROUNDCUBE"
-    __; code ispconfig_remote_user_password="$ispconfig_remote_user_password"
+    __; magenta ISPCONFIG_REMOTE_USER_ROUNDCUBE="$ISPCONFIG_REMOTE_USER_ROUNDCUBE"; _.
+    __; magenta ispconfig_remote_user_password="$ispconfig_remote_user_password"; _.
 fi
 ____
 
@@ -473,7 +473,7 @@ fi
 filename_path=$roundcube_install_dir/config/config.inc.php
 filename=$(basename "$filename_path")
 chapter Mengecek existing '`'$filename'`'
-__; code filename_path=$filename_path
+__; magenta filename_path=$filename_path; _.
 isFileExists "$filename_path"
 ____
 

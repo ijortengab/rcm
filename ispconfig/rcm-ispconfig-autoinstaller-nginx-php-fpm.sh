@@ -28,7 +28,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmIspconfigAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmIspconfigAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -348,9 +348,9 @@ cat << 'EOF' > "${root}/.well-known/__getuser.php"
 echo $_SERVER['USER'];
 EOF
 __ Eksekusi file script.
-__; code curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}"
+__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}"; _.
 user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ISPCONFIG_FQDN_LOCALHOST}")
-__; code user_nginx="$user_nginx"
+__; magenta user_nginx="$user_nginx"; _.
 if [ -z "$user_nginx" ];then
     error PHP-FPM User tidak ditemukan; x
 fi
@@ -380,7 +380,7 @@ EOF
 filename_path="$ISPCONFIG_INSTALL_DIR/interface/web/index.php"
 filename=$(basename "$filename_path")
 chapter Mengecek existing '`'$filename'`'
-__; code filename_path=$filename_path
+__; magenta filename_path=$filename_path; _.
 isFileExists "$filename_path"
 do_install=
 do_postinstall=
@@ -516,7 +516,7 @@ EOF
     ____
 
     __ Mengubah kepemilikan directory '`'ISPConfig'`'.
-    __; code chown -R $user_nginx:$user_nginx /usr/local/ispconfig
+    __; magenta chown -R $user_nginx:$user_nginx /usr/local/ispconfig; _.
     chown -R $user_nginx:$user_nginx /usr/local/ispconfig
 fi
 

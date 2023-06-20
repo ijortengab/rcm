@@ -24,7 +24,7 @@ command="$1"; shift
 
 # Functions.
 [[ $(type -t RcmDependencyDownloader_printVersion) == function ]] || RcmDependencyDownloader_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmDependencyDownloader_printHelp) == function ]] || RcmDependencyDownloader_printHelp() {
     cat << EOF
@@ -210,7 +210,7 @@ fi
 
 if [ -z "$binary_directory_exists_sure" ];then
     chapter Mempersiapkan directory binary.
-    __; code BINARY_DIRECTORY=$BINARY_DIRECTORY
+    __; magenta BINARY_DIRECTORY=$BINARY_DIRECTORY; _.
     notfound=
     if [ -d "$BINARY_DIRECTORY" ];then
         __ Direktori '`'$BINARY_DIRECTORY'`' ditemukan.

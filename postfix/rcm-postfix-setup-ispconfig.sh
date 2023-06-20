@@ -20,7 +20,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmPostfixSetupIspconfig_printVersion) == function ]] || RcmPostfixSetupIspconfig_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmPostfixSetupIspconfig_printHelp) == function ]] || RcmPostfixSetupIspconfig_printHelp() {
     cat << EOF
@@ -404,7 +404,7 @@ if [ -n "$is_different" ];then
         __; red Modifikasi file '`'$POSTFIX_CONFIG_FILE'`' gagal.; x
     else
         __; green Modifikasi file '`'$POSTFIX_CONFIG_FILE'`' berhasil.; _.
-        __; code systemctl restart postfix
+        __; magenta systemctl restart postfix; _.
         systemctl restart postfix
     fi
     ____

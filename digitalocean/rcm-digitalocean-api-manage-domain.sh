@@ -33,7 +33,7 @@ fi
 
 # Functions.
 [[ $(type -t RcmDigitaloceanApiManageDomain_printVersion) == function ]] || RcmDigitaloceanApiManageDomain_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmDigitaloceanApiManageDomain_printHelp) == function ]] || RcmDigitaloceanApiManageDomain_printHelp() {
     cat << EOF
@@ -198,7 +198,7 @@ fi
 chapter Mengecek Token
 fileMustExists "$TOKEN"
 digitalocean_token=$(<$TOKEN)
-__; code 'digitalocean_token="'$digitalocean_token'"'
+__; magenta 'digitalocean_token="'$digitalocean_token'"'; _.
 ____
 
 chapter Query DNS Record for Domain '`'${domain}'`'

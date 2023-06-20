@@ -26,7 +26,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperCertbotSetupNginx_printVersion) == function ]] || RcmIspconfigSetupWrapperCertbotSetupNginx_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigSetupWrapperCertbotSetupNginx_printHelp) == function ]] || RcmIspconfigSetupWrapperCertbotSetupNginx_printHelp() {
     cat << EOF
@@ -182,7 +182,7 @@ if [[ "$dns_authenticator" == 'digitalocean' ]]; then
     chapter Mengecek Token
     fileMustExists "$TOKEN"
     digitalocean_token=$(<$TOKEN)
-    __; code 'digitalocean_token="'$digitalocean_token'"'
+    __; magenta 'digitalocean_token="'$digitalocean_token'"'; _.
     isFileExists "$TOKEN_INI"
     if [ -n "$notfound" ];then
         __ Membuat file "$TOKEN_INI"

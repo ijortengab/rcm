@@ -46,7 +46,7 @@ fi
 
 # Functions.
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printVersion) == function ]] || RcmDigitaloceanApiManageDomainRecord_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printHelp) == function ]] || RcmDigitaloceanApiManageDomainRecord_printHelp() {
     cat << EOF
@@ -340,7 +340,7 @@ fi
 chapter Mengecek Token
 fileMustExists "$TOKEN"
 digitalocean_token=$(<$TOKEN)
-__; code 'digitalocean_token="'$digitalocean_token'"'
+__; magenta 'digitalocean_token="'$digitalocean_token'"'; _.
 ____
 
 if [ -z "$digitalocean_domain_exists_sure" ];then
