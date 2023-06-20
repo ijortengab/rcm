@@ -46,7 +46,7 @@ fi
 
 # Functions.
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printVersion) == function ]] || RcmDigitaloceanApiManageDomainRecord_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmDigitaloceanApiManageDomainRecord_printHelp) == function ]] || RcmDigitaloceanApiManageDomainRecord_printHelp() {
     cat << EOF
@@ -148,7 +148,7 @@ done <<< `RcmDigitaloceanApiManageDomainRecord_printHelp | sed -n '/^Dependency:
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     __ Standard Output.
-    code "$json_pretty"
+    magenta "$json_pretty"; _.
     if [[ $code == 200 ]];then
         return 0
     elif [[ $code == 404 ]];then
@@ -173,7 +173,7 @@ done <<< `RcmDigitaloceanApiManageDomainRecord_printHelp | sed -n '/^Dependency:
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     __ Standard Output.
-    code "$json_pretty"
+    magenta "$json_pretty"; _.
     if [[ ! $code == 200 ]];then
         error Unexpected result with response code: $code.; x
     fi
@@ -225,7 +225,7 @@ EOF
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     __ Standard Output.
-    code "$json_pretty"
+    magenta "$json_pretty"; _.
     if [[ $code == 201 ]];then
         return 0
     fi
@@ -245,7 +245,7 @@ EOF
     json=$(<"$dumpfile")
     json_pretty=$(php -r "echo json_encode(json_decode(fgets(STDIN)), JSON_PRETTY_PRINT).PHP_EOL;" <<< "$json")
     __ Standard Output.
-    code "$json_pretty"
+    magenta "$json_pretty"; _.
     if [[ $code == 204 ]];then
         return 0
     fi
