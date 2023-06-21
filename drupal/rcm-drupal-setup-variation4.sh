@@ -149,6 +149,14 @@ if [ -n "$project_parent_name" ];then
 fi
 code 'domain_strict="'$domain_strict'"'
 code 'domain="'$domain'"'
+is_wsl=
+if [ -f /proc/sys/kernel/osrelease ];then
+    read osrelease </proc/sys/kernel/osrelease
+    if [[ "$osrelease" =~ microsoft || "$osrelease" =~ Microsoft ]];then
+        is_wsl=1
+    fi
+fi
+code 'is_wsl="'$is_wsl'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
@@ -171,11 +179,8 @@ source $(command -v rcm-mariadb-autoinstaller.sh)
 source $(command -v rcm-php-autoinstaller.sh)
 source $(command -v rcm-php-setup-adjust-cli-version.sh)
 source $(command -v rcm-php-setup-drupal.sh)
-if [ -f /proc/sys/kernel/osrelease ];then
-    read osrelease </proc/sys/kernel/osrelease
-    if [[ "$osrelease" =~ microsoft || "$osrelease" =~ Microsoft ]];then
-        source $(command -v rcm-wsl-setup-lemp-stack.sh)
-    fi
+if [ -n "$is_wsl" ];then
+    source $(command -v rcm-wsl-setup-lemp-stack.sh)
 fi
 source $(command -v rcm-composer-autoinstaller.sh)
 source $(command -v rcm-drupal-autoinstaller-nginx-php-fpm.sh)
