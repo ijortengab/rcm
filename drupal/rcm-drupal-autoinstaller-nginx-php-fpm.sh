@@ -31,7 +31,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.3'
+    echo '0.1.4'
 }
 [[ $(type -t RcmDrupalAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmDrupalAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -290,12 +290,16 @@ code filename="$filename"
 server_name="$drupal_fqdn_localhost"
 code server_name="$server_name"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-INDENT+="    "
-source $(command -v rcm-nginx-setup-drupal.sh)
-INDENT=${INDENT::-4}
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-drupal.sh \
+    --root="$root" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    --php-version="$php_version" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek subdomain '`'$drupal_fqdn_localhost'`'.
 notfound=
@@ -542,13 +546,16 @@ code db_user_password="$db_user_password"
 db_user_host="$DRUPAL_DB_USER_HOST"
 code db_user_host="$db_user_host"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_;_, ____________________________________________________________________;_.;_.;
-
-INDENT+="    "
-source $(command -v rcm-mariadb-setup-database.sh)
-INDENT=${INDENT::-4}
-_;_, ____________________________________________________________________;_.;_.;
+INDENT+="    " \
+rcm-mariadb-setup-database.sh \
+    --db-name="$db_name" \
+    --db-user="$db_user" \
+    --db-user-host="$db_user_host" \
+    --db-user-password="$db_user_password" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek website credentials: '`'/var/www/project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
 websiteCredentialDrupal
@@ -657,6 +664,8 @@ code=$(curl -L \
     http://127.0.0.1 -H "Host: ${drupal_fqdn_localhost}")
 __ HTTP Response code '`'$code'`'.
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

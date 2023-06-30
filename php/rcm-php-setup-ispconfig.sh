@@ -163,6 +163,8 @@ downloadApplication php"$php_version"-{common,gd,mysql,imap,cli,fpm,curl,intl,ps
 validateApplication php"$php_version"-{common,gd,mysql,imap,cli,fpm,curl,intl,pspell,sqlite3,tidy,xmlrpc,xsl,zip,mbstring,soap,opcache}
 ____
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

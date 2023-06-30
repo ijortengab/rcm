@@ -12,6 +12,10 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --hostname=*) hostname="${1#*=}"; shift ;;
+        --hostname) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then hostname="$2"; shift; fi; shift ;;
+        --ip-address=*) ip_address="${1#*=}"; shift ;;
+        --ip-address) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ip_address="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -35,8 +39,12 @@ EOF
 Usage: rcm-ispconfig-setup-dump-variables.sh [options]
 
 Options:
-   --domain
+   --domain *
         Set the domain to setup.
+   --hostname
+        Set the hostname.
+   --ip-address
+        Set the IP Address.
 
 Global Options:
    --fast
@@ -243,6 +251,10 @@ until [[ -n "$domain" ]];do
     read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
+code 'ip_address="'$ip_address'"'
+code 'hostname="'$hostname'"'
+fqdn="${hostname}.${domain}"
+code fqdn="$fqdn"
 ____
 
 if [ -z "$root_sure" ];then
@@ -311,8 +323,8 @@ if [ -n "$ip_address" ];then
     if [[ ! $(dig -x $ip_address +short) == ${fqdn}. ]];then
         error Attention
         e Your PTR Record is different with your variable of FQDN.
-        __; magenta fqdn="$fqdn"
-        __; magenta dig -x $ip_address +short' # ' $(dig -x $ip_address +short)
+        __; magenta fqdn="$fqdn"; _.
+        __; magenta dig -x $ip_address +short' # ' $(dig -x $ip_address +short); _.
         e "But it doesn't matter if ${domain} is addon domain."
         ____
         chapter Suggestion.
@@ -321,6 +333,8 @@ if [ -n "$ip_address" ];then
         ____
     fi
 fi
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \
@@ -337,7 +351,9 @@ fi
 # --root-sure
 # )
 # VALUE=(
+# --hostname
 # --domain
+# --ip-address
 # )
 # MULTIVALUE=(
 # )

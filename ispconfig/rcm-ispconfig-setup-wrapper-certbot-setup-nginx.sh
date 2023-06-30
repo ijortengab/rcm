@@ -26,7 +26,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperCertbotSetupNginx_printVersion) == function ]] || RcmIspconfigSetupWrapperCertbotSetupNginx_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmIspconfigSetupWrapperCertbotSetupNginx_printHelp) == function ]] || RcmIspconfigSetupWrapperCertbotSetupNginx_printHelp() {
     cat << EOF
@@ -131,6 +131,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 delay=.5; [ -n "$fast" ] && unset delay
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
@@ -217,13 +218,21 @@ EOF
     code 'email="'$email'"'
     domain="$fqdn_project"
     code 'domain="'$fqdn_project'"'
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v "rcm-certbot-setup-nginx.sh") -- --dns-digitalocean --dns-digitalocean-credentials "$TOKEN_INI"
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    PATH=/snap/bin:$PATH \
+    rcm-certbot-setup-nginx.sh $isfast --root-sure \
+        --domain="$domain" \
+        --email="$email" \
+        -- \
+        --dns-digitalocean \
+        --dns-digitalocean-credentials="$TOKEN_INI" \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 fi
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

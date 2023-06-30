@@ -284,6 +284,8 @@ downloadApplication $application
 validateApplication $application
 ____
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

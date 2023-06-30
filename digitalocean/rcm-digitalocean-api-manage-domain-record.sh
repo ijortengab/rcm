@@ -77,7 +77,7 @@ Options:
         Set the value of TXT record.
    --value-summarize
         Set the summarize value of TXT record. Just for notification.
-   --digitalocean-domain-exists-sure
+   --digitalocean-domain-exists-sure ^
         Bypass domain exists checking.
 
 Global Options:
@@ -393,13 +393,13 @@ if [[ $type == mx ]];then
         # "request_id": "5cbdf147-e0de-476c-870f-95aa76d9b360"
     # }
     # Unexpected result with response code: 422.
-    data="$data".
+    datadot="$data".
     [[ "$hostname" == '@' ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
     chapter Query $type_uppercase Record for FQDN '`'${fqdn_string}'`'
     if isRecordExist $type_uppercase $domain $fqdn_string "$data" $mktemp;then
         record_found=1
         __ DNS $type_uppercase Record of '`'$fqdn_string'`' handled by '`'${mail_provider}'`' found in DNS Digital Ocean.
-    elif insertRecord $type_uppercase $domain $hostname "$data";then
+    elif insertRecord $type_uppercase $domain $hostname "$datadot";then
         __; green DNS $type_uppercase Record of '`'$fqdn_string'`' handled by '`'${mail_provider}'`' created in DNS Digital Ocean.; _.
     fi
     ____
@@ -427,6 +427,8 @@ if [[ "$command" == delete && -n "$record_found" ]];then
     done <<< $(getIdRecords "$mktemp")
     ____
 fi
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

@@ -123,6 +123,8 @@ downloadApplication mariadb-server mariadb-client
 validateApplication mariadb-server mariadb-client
 ____
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

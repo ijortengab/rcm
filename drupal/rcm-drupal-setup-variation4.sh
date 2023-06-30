@@ -29,17 +29,17 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalSetupVariation4_printVersion) == function ]] || RcmDrupalSetupVariation4_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmDrupalSetupVariation4_printHelp) == function ]] || RcmDrupalSetupVariation4_printHelp() {
     cat << EOF
 RCM Drupal Setup
-Variation 3. Ubuntu 22.04, Drupal 10, PHP 8.2.
+Variation 4. Ubuntu 22.04, Drupal 9, PHP 8.1.
 Version `RcmDrupalSetupVariation4_printVersion`
 
 EOF
     cat << 'EOF'
-Usage: rcm-drupal-setup-variation3.sh [options]
+Usage: rcm-drupal-setup-variation4.sh [options]
 
 Options:
    --project-name *
@@ -126,12 +126,13 @@ done <<< `RcmDrupalSetupVariation4_printHelp | sed -n '/^Dependency:/,$p' | sed 
 
 # Title.
 title RCM Drupal Setup
-_ 'Variation '; yellow 3; _, . Ubuntu 22.04, Drupal 10, PHP 8.2. ; _.
+_ 'Variation '; yellow 4; _, . Ubuntu 22.04, Drupal 9, PHP 8.1. ; _.
 _ 'Version '; yellow `RcmDrupalSetupVariation4_printVersion`; _.
 ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 php_version=8.1
 code php_version="$php_version"
 drupal_version=9
@@ -169,36 +170,75 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-
 _ _______________________________________________________________________;_.;_.;
 
-INDENT+="    "
-source $(command -v rcm-ubuntu-22.04-setup-basic.sh)
-source $(command -v rcm-nginx-autoinstaller.sh)
-source $(command -v rcm-mariadb-autoinstaller.sh)
-source $(command -v rcm-php-autoinstaller.sh)
-source $(command -v rcm-php-setup-adjust-cli-version.sh)
-source $(command -v rcm-php-setup-drupal.sh)
+INDENT+="    " \
+rcm-ubuntu-22.04-setup-basic.sh $isfast --root-sure \
+    --timezone="$timezone" \
+    && INDENT+="    " \
+rcm-nginx-autoinstaller.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-mariadb-autoinstaller.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-php-autoinstaller.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-php-setup-adjust-cli-version.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-php-setup-drupal.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    ; [ ! $? -eq 0 ] && x
 if [ -n "$is_wsl" ];then
-    source $(command -v rcm-wsl-setup-lemp-stack.sh)
+    INDENT+="    " \
+    rcm-wsl-setup-lemp-stack.sh $isfast --root-sure \
+        ; [ ! $? -eq 0 ] && x
 fi
-source $(command -v rcm-composer-autoinstaller.sh)
-source $(command -v rcm-drupal-autoinstaller-nginx-php-fpm.sh)
+INDENT+="    " \
+rcm-composer-autoinstaller.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-drupal-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --drupal-version="$drupal_version" \
+    --drush-version="$drush_version" \
+    --php-version="$php_version" \
+    --project-name="$project_name" \
+    --project-parent-name="$project_parent_name" \
+    ; [ ! $? -eq 0 ] && x
 if [ -n "$domain" ];then
-    _domain="$domain" # Backup variable.
-    source $(command -v rcm-drupal-setup-wrapper-nginx-setup-drupal.sh) --domain="${_domain}"
-    source $(command -v rcm-drupal-setup-wrapper-nginx-setup-drupal.sh) --subdomain="${_domain}" --domain="localhost"
-    domain="$_domain" # Restore variable.
+    INDENT+="    " \
+    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
+        --php-version="$php_version" \
+        --project-name="$project_name" \
+        --project-parent-name="$project_parent_name" \
+        --domain="$domain" \
+        && INDENT+="    " \
+    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
+        --php-version="$php_version" \
+        --project-name="$project_name" \
+        --project-parent-name="$project_parent_name" \
+        --subdomain="$domain" \
+        --domain="localhost" \
+        ; [ ! $? -eq 0 ] && x
 fi
-source $(command -v rcm-drupal-setup-drush-alias.sh)
-source $(command -v rcm-drupal-setup-dump-variables.sh)
-INDENT=${INDENT::-4}
+INDENT+="    " \
+rcm-drupal-setup-drush-alias.sh $isfast --root-sure \
+    --project-name="$project_name" \
+    --project-parent-name="$project_parent_name" \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
+    --project-name="$project_name" \
+    --project-parent-name="$project_parent_name" \
+    --domain="$domain" \
+    ; [ ! $? -eq 0 ] && x
 _ _______________________________________________________________________;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
 code sudo -E $(command -v rcm-drupal-setup-dump-variables.sh)
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

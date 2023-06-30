@@ -261,6 +261,8 @@ if [ -n "$arguments" ];then
     echo sed $arguments -i "$config_file" | sh
 fi
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

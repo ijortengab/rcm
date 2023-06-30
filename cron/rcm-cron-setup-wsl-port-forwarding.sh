@@ -264,6 +264,8 @@ chapter Dump crontab.
 code crontab -l
 e $'\n'; crontab -l
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

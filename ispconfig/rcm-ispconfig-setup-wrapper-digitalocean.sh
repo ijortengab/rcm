@@ -20,6 +20,8 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then hostname="$2"; shift; fi; shift ;;
+        --ip-address=*) ip_address="${1#*=}"; shift ;;
+        --ip-address) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ip_address="$2"; shift; fi; shift ;;
         --ispconfig-domain-exists-sure) ispconfig_domain_exists_sure=1; shift ;;
         --mail-provider=*) mail_provider="${1#*=}"; shift ;;
         --mail-provider) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then mail_provider="$2"; shift; fi; shift ;;
@@ -35,7 +37,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperDigitalocean_printVersion) == function ]] || RcmIspconfigSetupWrapperDigitalocean_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmIspconfigSetupWrapperDigitalocean_printHelp) == function ]] || RcmIspconfigSetupWrapperDigitalocean_printHelp() {
     cat << EOF
@@ -60,9 +62,11 @@ Options:
         Required by DMARC.
    --dns-record
         Required by DKIM.
-   --ispconfig-domain-exists-sure
+   --dns-record-auto ^
+        Get DNS record automatically.
+   --ispconfig-domain-exists-sure ^
         Bypass domain exists checking by ISPConfig SOAP.
-   --digitalocean-domain-exists-sure
+   --digitalocean-domain-exists-sure ^
         Bypass domain exists checking by DigitalOcean API.
 
 Global Options:
@@ -81,6 +85,8 @@ Environment Variables:
 
 Dependency:
    ispconfig.sh
+   rcm-ispconfig-control-manage-domain.sh
+   rcm-digitalocean-api-manage-domain.sh
    php
 EOF
 }
@@ -133,6 +139,7 @@ ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
 code 'action="'$action'"'
@@ -188,30 +195,31 @@ if [ -z "$root_sure" ];then
 fi
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-ispconfig-control-manage-domain.sh)
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+        isset \
+        --domain="$domain" \
+        ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
+    _ ___________________________________________________________________;_.;_.;
 
     if [ -n "$ispconfig_domain_exists_sure" ];then
         __; green Domain is exists.; _.
     else
         __; red Domain is not exists.; x
     fi
-    if [ -z "$dns_record" ];then
-        __; red DNS record not found.; x
-    fi
 fi
 
 if [ -z "$digitalocean_domain_exists_sure" ];then
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-digitalocean-api-manage-domain.sh)
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-digitalocean-api-manage-domain.sh $isfast --root-sure \
+        --domain="$domain" \
+        --ip-address="$ip_address" \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 
     if [ -n "$digitalocean_domain_exists_sure" ];then
         __; green Domain '`'"$domain"'`' found in DNS Digital Ocean.; _.
@@ -230,33 +238,59 @@ EOF
 if [[ $type == spf ]];then
     data="v=spf1 a:${mail_provider} ~all"
     data=$(php -r "$php" "$data" )
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add --type txt --hostname=@ --value="$data" --value-summarize="SPF"
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+        add \
+        --domain="$domain" \
+        --type=txt \
+        --hostname=@ \
+        --value="$data" \
+        --value-summarize=SPF \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 fi
 if [[ $type == dmarc ]];then
     data="v=DMARC1; p=none; rua=${email}"
     data=$(php -r "$php" "$data" )
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add --type txt --hostname=_dmarc --value="$data" --value-summarize="DMARC"
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+        add \
+        --domain="$domain" \
+        --type=txt \
+        --hostname=_dmarc \
+        --value="$data" \
+        --value-summarize=DMARC \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 fi
 if [[ $type == dkim ]];then
+    if [ -n "$dns_record_auto" ];then
+        dns_record=$(rcm-ispconfig-control-manage-domain.sh $isfast --root-sure --domain="$domain" get_dns_record)
+    fi
+    if [ -z "$dns_record" ];then
+        __; red DNS record not found.; x
+    fi
     data="v=DKIM1; t=s; p=${dns_record}"
     data=$(php -r "$php" "$data" )
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add --type txt --hostname=$DKIM_SELECTOR._domainkey --value="$data" --value-summarize="DKIM"
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+        add \
+        --domain="$domain" \
+        --type=txt \
+        --hostname=$DKIM_SELECTOR._domainkey \
+        --value="$data" \
+        --value-summarize=DKIM \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 fi
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \
@@ -282,6 +316,7 @@ fi
 # --mail-provider
 # --email
 # --dns-record
+# --ip-address
 # )
 # FLAG_VALUE=(
 # )

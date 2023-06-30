@@ -176,6 +176,8 @@ if [ -n "$notfound" ];then
     fi
 fi
 
+exit 0
+
 # parse-options.sh \
 # --compact \
 # --clean \

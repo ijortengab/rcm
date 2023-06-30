@@ -28,7 +28,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupWrapperNginxSetupPhpFpm_printVersion) == function ]] || RcmIspconfigSetupWrapperNginxSetupPhpFpm_printVersion() {
-    echo '0.1.1'
+    echo '0.1.2'
 }
 [[ $(type -t RcmIspconfigSetupWrapperNginxSetupPhpFpm_printHelp) == function ]] || RcmIspconfigSetupWrapperNginxSetupPhpFpm_printHelp() {
     cat << EOF
@@ -128,6 +128,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 delay=.5; [ -n "$fast" ] && unset delay
 case "$project" in
     ispconfig|phpmyadmin|roundcube) ;;
@@ -187,14 +188,16 @@ code filename="$filename"
 server_name="$fqdn_project"
 code server_name="$server_name"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-
-INDENT+="    ";
-source $(command -v rcm-nginx-setup-php-fpm.sh)
-INDENT=${INDENT::-4}
-
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --root="$root" \
+    --php-version="$php_version" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek HTTP Response Code.
 code curl http://127.0.0.1 -H '"'Host: ${fqdn_project}'"'
@@ -207,6 +210,8 @@ code=$(curl -L \
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
 }
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

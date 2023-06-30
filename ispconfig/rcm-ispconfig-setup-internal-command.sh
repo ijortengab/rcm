@@ -720,6 +720,8 @@ code 'ispconfig.sh php login.php'
 ispconfig.sh php login.php
 ____
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

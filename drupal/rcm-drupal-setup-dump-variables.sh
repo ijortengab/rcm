@@ -207,6 +207,8 @@ for uri in "${list_uri[@]}";do
     fi
 done
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

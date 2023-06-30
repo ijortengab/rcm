@@ -25,7 +25,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigControlManageEmailMailbox_printVersion) == function ]] || RcmIspconfigControlManageEmailMailbox_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmIspconfigControlManageEmailMailbox_printHelp) == function ]] || RcmIspconfigControlManageEmailMailbox_printHelp() {
     cat << EOF
@@ -42,7 +42,7 @@ Options:
         The name of mailbox.
    --domain
         The domain of mailbox.
-   --ispconfig-domain-exists-sure
+   --ispconfig-domain-exists-sure ^
         Bypass domain exists checking.
 
 Global Options:
@@ -276,6 +276,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 until [[ -n "$domain" ]];do
     read -p "Argument --domain required: " domain
@@ -299,12 +300,14 @@ if [ -z "$root_sure" ];then
 fi
 
 if [ -z "$ispconfig_domain_exists_sure" ];then
-    _;_, ____________________________________________________________________;_.;_.;
+    _ ___________________________________________________________________;_.;_.;
 
-    INDENT+="    ";
-    source $(command -v rcm-ispconfig-control-manage-domain.sh)
-    INDENT=${INDENT::-4}
-    _;_, ____________________________________________________________________;_.;_.;
+    INDENT+="    " \
+    rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+        isset \
+        --domain="$domain" \
+        ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
+    _ ___________________________________________________________________;_.;_.;
 
     if [ -n "$ispconfig_domain_exists_sure" ];then
         __; green Domain is exists.; _.
@@ -351,6 +354,8 @@ else
     __; magenta mailbox_user_password="$mailbox_user_password"; _.
 fi
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

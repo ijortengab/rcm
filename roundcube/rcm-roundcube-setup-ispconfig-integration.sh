@@ -567,6 +567,8 @@ if [ -n "$is_different" ];then
     ____
 fi
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

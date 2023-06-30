@@ -165,6 +165,7 @@ EOF
             is_flag=
             value_addon=
             is_flagvalue=
+            save_history=1
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
@@ -187,9 +188,55 @@ EOF
                 value_addon=canhavevalue
             fi
             options=`sed -n '3,$p' <<< "$options"`
+            value=
+            backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+            history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             if [ -n "$is_required" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
-                value=
+                if [ -n "$backup_value" ];then
+                    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _. #There are values available from history. Press the yellow key to select.
+                    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+                    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+                    while true; do
+                        read -rsn 1 -p "Select: " char; echo
+                        if [ -z "$char" ];then
+                            char=y
+                        fi
+                        case $char in
+                            y|Y)
+                                _ Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
+                                value="$backup_value"; break ;;
+                            n|N) break ;;
+                            $'\33') break ;;
+                        esac
+                    done
+                fi
+                if [ -z "$value" ];then
+                    if [ -n "$history_value" ];then
+                        count_max=$(wc -l <<< "$history_value")
+                        unset count
+                        declare -i count
+                        count=0
+                        __ There are values available from history. Press the yellow key to select.
+                        while read opt; do
+                            count+=1
+                            __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
+                        done <<< "$history_value"
+                        __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
+                        while true; do
+                            read -rsn 1 -p "Select: " char; echo
+                            case $char in
+                                $'\33') break ;;
+                                n|N) break ;;
+                                [1-$count_max])
+                                    value=$(sed -n ${char}p <<< "$history_value")
+                                    _ Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+                                    save_history=
+                                    break;
+                            esac
+                        done
+                    fi
+                fi
                 until [[ -n "$value" ]];do
                     read -p "Type the value: " value
                 done
@@ -226,7 +273,53 @@ EOF
                 fi
             else
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                read -p "Type the value: " value
+                if [ -n "$backup_value" ];then
+                    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _. #There are values available from history. Press the yellow key to select.
+                    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+                    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+                    while true; do
+                        read -rsn 1 -p "Select: " char; echo
+                        if [ -z "$char" ];then
+                            char=y
+                        fi
+                        case $char in
+                            y|Y)
+                                _ Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
+                                value="$backup_value"; break ;;
+                            n|N) break ;;
+                            $'\33') break ;;
+                        esac
+                    done
+                fi
+                if [ -z "$value" ];then
+                    if [ -n "$history_value" ];then
+                        count_max=$(wc -l <<< "$history_value")
+                        unset count
+                        declare -i count
+                        count=0
+                        __ There are values available from history. Press the yellow key to select.
+                        while read opt; do
+                            count+=1
+                            __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
+                        done <<< "$history_value"
+                        __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
+                        while true; do
+                            read -rsn 1 -p "Select: " char; echo
+                            case $char in
+                                $'\33') break ;;
+                                n|N) break ;;
+                                [1-$count_max])
+                                    value=$(sed -n ${char}p <<< "$history_value")
+                                    _ Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+                                    save_history=
+                                    break;
+                            esac
+                        done
+                    fi
+                fi
+                if [ -z "$value" ];then
+                    read -p "Type the value: " value
+                fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
                 fi
@@ -261,6 +354,13 @@ EOF
                         again=
                     fi
                 done
+            fi
+            # Backup to text file.
+            if [ -n "$value" ];then
+                echo "${parameter}=${value}" >> "$backup_storage"
+                if [ -n "$save_history" ];then
+                    echo "${parameter}=${value}" >> "$history_storage"
+                fi
             fi
         done
         ____
@@ -358,6 +458,7 @@ __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+declare -i countdown
 ____
 
 if [ -z "$root_sure" ];then
@@ -408,11 +509,16 @@ Rcm_download rcm-dependency-downloader.sh
 Rcm_download $command true
 
 if [ $# -eq 0 ];then
+    backup_storage=$HOME'/.rcm.'$command'.bak'
+    history_storage=$HOME'/.rcm.'$command'.history'
+    touch "$backup_storage"
+    touch "$history_storage"
     Rcm_prompt $command
     if [[ "${#argument_pass[@]}" -gt 0 ]];then
         set -- "${argument_pass[@]}"
         unset argument_pass
     fi
+    rm "$backup_storage"
 fi
 
 chapter Execute:
@@ -457,6 +563,8 @@ hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (
 runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
 _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
 ____
+
+exit 0
 
 # parse-options.sh \
 # --compact \

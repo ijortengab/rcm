@@ -28,7 +28,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmIspconfigAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmIspconfigAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmIspconfigAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -219,20 +219,20 @@ EOF
     }
     case "$switch" in
         yes) [[ "$is_password" == yes ]] && return 0 || {
-            __; _ Password MySQL untuk root sedang dipasang:' '
+            __; _, Password MySQL untuk root sedang dipasang:' '
             if mysql \
                 -e "set password for root@localhost=PASSWORD('$mysql_root_passwd');" > /dev/null 2>&1;then
-                success Password berhasil dipasang;
+                green Password berhasil dipasang; _.
             else
                 error Password gagal dipasang; x
             fi
         } ;;
         no) [[ "$is_password" == no ]] && return 0 || {
-            __; _ Password MySQL untuk root sedang dicopot:' '
+            __; _, Password MySQL untuk root sedang dicopot:' '
             if mysql \
                 --defaults-extra-file="$MYSQL_ROOT_PASSWD_INI" \
                 -e "set password for root@localhost=PASSWORD('');" > /dev/null 2>&1;then
-                success Password berhasil dicopot.
+                green Password berhasil dicopot.; _.
             else
                 error Password gagal dicopot.; x
             fi
@@ -248,6 +248,7 @@ ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 MYSQL_ROOT_PASSWD=${MYSQL_ROOT_PASSWD:=$HOME/.mysql-root-passwd.txt}
@@ -311,15 +312,20 @@ code filename="$filename"
 server_name="$ISPCONFIG_FQDN_LOCALHOST"
 code server_name="$server_name"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-INDENT+="    "
-source $(command -v rcm-nginx-setup-php-fpm.sh)
-INDENT=${INDENT::-4}
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --root="$root" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    --php-version="$php_version" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek subdomain '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
 notfound=
+string="$ISPCONFIG_FQDN_LOCALHOST"
 string_quoted=$(sed "s/\./\\\./g" <<< "$string")
 if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
     __ Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.
@@ -420,11 +426,11 @@ if [ -n "$do_install" ];then
     if [ ! -f /tmp/ISPConfig-$ispconfig_version.tar.gz ];then
         wget https://www.ispconfig.org/downloads/ISPConfig-$ispconfig_version.tar.gz
     fi
-    cd - >/dev/null
     fileMustExists /tmp/ISPConfig-$ispconfig_version.tar.gz
     if [ ! -f /tmp/ispconfig3_install/install/install.php ];then
         tar xfz ISPConfig-$ispconfig_version.tar.gz
     fi
+    cd - >/dev/null
     fileMustExists /tmp/ispconfig3_install/install/install.php
     if [ ! -f /tmp/ispconfig3_install/install/autoinstall.ini ];then
         __ Membuat file '`'autoinstall.ini'`'.
@@ -435,7 +441,7 @@ if [ -n "$do_install" ];then
             /tmp/ispconfig3_install/install/autoinstall.ini
     fi
     fileMustExists /tmp/ispconfig3_install/install/autoinstall.ini
-    __; _ Verifikasi file '`'autoinstall.ini'`':' '
+    __; _, Verifikasi file '`'autoinstall.ini'`':' '
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
     reference="$(php -r "echo serialize([
         'install_mode' => 'expert',
@@ -452,15 +458,15 @@ if [ -n "$do_install" ];then
         /tmp/ispconfig3_install/install/autoinstall.ini \
         "$reference";then
         is_different=1
-        _ Diperlukan modifikasi file '`'autoinstall.ini'`'.;_.
+        _, Diperlukan modifikasi file '`'autoinstall.ini'`'.;_.
     else
         if [ $? -eq 255 ];then
             error Terjadi kesalahan dalam parsing file '`'autoinstall.ini'`'.; x
         fi
-        _ File '`'autoinstall.ini'`' tidak ada perubahan.; _.
+        _, File '`'autoinstall.ini'`' tidak ada perubahan.; _.
     fi
     if [ -n "$is_different" ];then
-        __; _ Memodifikasi file '`'autoinstall.ini'`':' '
+        __; _, Memodifikasi file '`'autoinstall.ini'`':' '
         backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
         sed -e "s,^install_mode=.*$,install_mode=expert," \
             -e "s,^configure_webserver=.*$,configure_webserver=n," \
@@ -476,7 +482,7 @@ if [ -n "$do_install" ];then
             "$reference";then
             error Modifikasi file '`'autoinstall.ini'`' gagal.; x
         else
-            success Modifikasi file '`'autoinstall.ini'`' berhasil.
+            green Modifikasi file '`'autoinstall.ini'`' berhasil.; _.
         fi
     fi
     __ Memasang password MySQL untuk root
@@ -570,6 +576,8 @@ if [ -n "$reload" ];then
     fi
     ____
 fi
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

@@ -161,6 +161,8 @@ if [ -n "$wsl" ];then
 fi
 ____
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \

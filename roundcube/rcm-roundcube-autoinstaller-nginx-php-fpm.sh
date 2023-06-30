@@ -24,7 +24,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp) == function ]] || RcmRoundcubeAutoinstallerNginxPhpFpm_printHelp() {
     cat << EOF
@@ -155,6 +155,7 @@ ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
 ROUNDCUBE_DB_NAME=${ROUNDCUBE_DB_NAME:=roundcubemail}
@@ -270,12 +271,16 @@ code filename="$filename"
 server_name="$ROUNDCUBE_FQDN_LOCALHOST"
 code server_name="$server_name"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-INDENT+="    "
-source $(command -v rcm-nginx-setup-php-fpm.sh)
-INDENT=${INDENT::-4}
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --root="$root" \
+    --php-version="$php_version" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek subdomain '`'$ROUNDCUBE_FQDN_LOCALHOST'`'.
 notfound=
@@ -482,6 +487,8 @@ code=$(curl -L \
     http://127.0.0.1 -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}")
 __ HTTP Response code '`'$code'`'.
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

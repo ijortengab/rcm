@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmDrupalSetupWrapperNginxSetupDrupal_printVersion) == function ]] || RcmDrupalSetupWrapperNginxSetupDrupal_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmDrupalSetupWrapperNginxSetupDrupal_printHelp) == function ]] || RcmDrupalSetupWrapperNginxSetupDrupal_printHelp() {
     cat << EOF
@@ -121,6 +121,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'php_version="'$php_version'"'
 until [[ -n "$project_name" ]];do
     read -p "Argument --project-name required: " project_name
@@ -146,34 +147,6 @@ project_dir="$project_name"
 [ -n "$project_parent_name" ] && {
     project_dir="$project_parent_name"
 }
-
-# until [[ -n "$filename" ]];do
-    # read -p "Argument --filename required: " filename
-# done
-# code 'filename="'$filename'"'
-# until [[ -n "$root" ]];do
-    # read -p "Argument --root required: " root
-# done
-# code 'root="'$root'"'
-# until [[ ${#server_name[@]} -gt 0 ]];do
-    # read -p "Argument --server-name required: " _server_name
-    # [ -n "$_server_name" ] && server_name+=("$_server_name")
-# done
-# code 'server_name=('"${server_name[@]}"')'
-# code 'php_version="'$php_version'"'
-# case "$type" in
-    # a|cname|txt|mx) ;;
-    # *) type=
-# esac
-# until [[ -n "$type" ]];do
-    # _ Available value:' '; yellow a, cname, mx, txt.; _.
-    # read -p "Argument --type required: " type
-    # case "$type" in
-        # a|cname|txt|mx) ;;
-        # *) type=
-    # esac
-# done
-# code 'type="'$type'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
@@ -204,12 +177,18 @@ code filename="$filename"
 server_name="$fqdn_project"
 code server_name="$server_name"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-INDENT+="    "
-source $(command -v rcm-nginx-setup-drupal.sh)
-INDENT=${INDENT::-4}
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-drupal.sh $isfast --root-sure \
+    --root="$root" \
+    --php-version="$php_version" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

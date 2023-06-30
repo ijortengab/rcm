@@ -166,14 +166,21 @@ done <<< `RcmAmavisSetupIspconfig_printHelp | sed -n '/^Dependency:/,$p' | sed -
         __ Merestart amavis.
         code systemctl restart amavis.service
         systemctl restart amavis.service
-        sleep 2
+        countdown=5
+        while [ "$countdown" -ge 0 ]; do
+            printf "\r\033[K" >&2
+            printf %"$countdown"s | tr " " "." >&2
+            printf "\r"
+            countdown=$((countdown - 1))
+            sleep .8
+        done
     fi
-        stdout=$(netstat -tpn --listening | grep 10026 | grep amavisd)
-        if [ -z "$stdout" ];then
-            __; red Port 10026 tidak ditemukan.; x
-        else
-            __; green Port 10026 ditemukan.; _.
-        fi
+    stdout=$(netstat -tpn --listening | grep 10026 | grep amavisd)
+    if [ -z "$stdout" ];then
+        __; red Port 10026 tidak ditemukan.; x
+    else
+        __; green Port 10026 ditemukan.; _.
+    fi
     ____
 }
 [[ $(type -t downloadApplication) == function ]] || downloadApplication() {
@@ -215,6 +222,7 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+declare -i countdown
 ____
 
 if [ -z "$root_sure" ];then
@@ -246,6 +254,8 @@ else
     RcmAmavisSetupIspconfig_startTweak
 fi
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

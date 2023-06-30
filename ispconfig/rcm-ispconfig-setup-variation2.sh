@@ -30,7 +30,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmIspconfigSetupVariation1_printVersion) == function ]] || RcmIspconfigSetupVariation1_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmIspconfigSetupVariation1_printHelp) == function ]] || RcmIspconfigSetupVariation1_printHelp() {
     cat << EOF
@@ -50,7 +50,7 @@ Options:
         Hostname of the server.
    --ip-address *
         Set the IP Address. Use with A record while registered. Tips: Try --ip-address=auto.
-   --digitalocean-token *
+   --digitalocean-token
         Token access from digitalocean.com to consume DigitalOcean API.
    --non-interactive ^
         Skip confirmation of --ip-address=auto.
@@ -189,6 +189,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 SUBDOMAIN_ISPCONFIG=${SUBDOMAIN_ISPCONFIG:=cp}
 code 'SUBDOMAIN_ISPCONFIG="'$SUBDOMAIN_ISPCONFIG'"'
 SUBDOMAIN_PHPMYADMIN=${SUBDOMAIN_PHPMYADMIN:=db}
@@ -216,9 +217,6 @@ done
 code 'hostname="'$hostname'"'
 fqdn="${hostname}.${domain}"
 code fqdn="$fqdn"
-until [[ -n "$digitalocean_token" ]];do
-    read -p "Argument --digitalocean-token required: " digitalocean_token
-done
 code 'digitalocean_token="'$digitalocean_token'"'
 code non_interactive="$non_interactive"
 php_version=7.4
@@ -263,23 +261,27 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Menyimpan DigitalOcean Token sebagai file text.
-if [ -f $HOME/.digitalocean-token.txt ];then
-    _token=$(<$HOME/.digitalocean-token.txt)
-    if [[ ! "$_token" == "$digitalocean_token" ]];then
-        __ Backup file $HOME/.digitalocean-token.txt
-        backupFile move $HOME/.digitalocean-token.txt
+if [ -n "$digitalocean_token" ];then
+    chapter Menyimpan DigitalOcean Token sebagai file text.
+    if [ -f $HOME/.digitalocean-token.txt ];then
+        _token=$(<$HOME/.digitalocean-token.txt)
+        if [[ ! "$_token" == "$digitalocean_token" ]];then
+            __ Backup file $HOME/.digitalocean-token.txt
+            backupFile move $HOME/.digitalocean-token.txt
+            echo "$digitalocean_token" > $HOME/.digitalocean-token.txt
+        fi
+    else
         echo "$digitalocean_token" > $HOME/.digitalocean-token.txt
     fi
-else
-    echo "$digitalocean_token" > $HOME/.digitalocean-token.txt
+    fileMustExists $HOME/.digitalocean-token.txt
+    ____
 fi
-fileMustExists $HOME/.digitalocean-token.txt
 _ _______________________________________________________________________;_.;_.;
 
-INDENT+="    "
-source $(command -v rcm-ubuntu-22.04-setup-basic.sh)
-INDENT=${INDENT::-4}
+INDENT+="    " \
+rcm-ubuntu-22.04-setup-basic.sh $isfast --root-sure \
+    --timezone="$timezone" \
+    ; [ ! $? -eq 0 ] && x
 _ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek FQDN '(Fully-Qualified Domain Name)'
@@ -296,7 +298,7 @@ ____
 
 if [[ -n "$adjust" ]];then
     chapter Adjust FQDN.
-    echo "127.0.1.2"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
+    echo "127.0.1.1"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
     sleep .5
     current_fqdn=$(hostname -f 2>/dev/null)
     if [[ "$current_fqdn" == "$fqdn" ]];then
@@ -308,68 +310,247 @@ if [[ -n "$adjust" ]];then
 fi
 _ _______________________________________________________________________;_.;_.;
 
-INDENT+="    ";
-source $(command -v rcm-mariadb-autoinstaller.sh)
-source $(command -v rcm-mariadb-setup-ispconfig.sh)
-source $(command -v rcm-nginx-autoinstaller.sh)
-source $(command -v rcm-nginx-setup-ispconfig.sh)
-source $(command -v rcm-php-autoinstaller.sh)
-source $(command -v rcm-php-setup-adjust-cli-version.sh)
-source $(command -v rcm-php-setup-ispconfig.sh)
-source $(command -v rcm-postfix-autoinstaller.sh)
-source $(command -v rcm-postfix-setup-ispconfig.sh)
-source $(command -v rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh)
-source $(command -v rcm-roundcube-autoinstaller-nginx-php-fpm.sh)
-source $(command -v rcm-ispconfig-autoinstaller-nginx-php-fpm.sh)
-source $(command -v rcm-ispconfig-setup-internal-command.sh)
-source $(command -v rcm-roundcube-setup-ispconfig-integration.sh)
-source $(command -v rcm-amavis-setup-ispconfig.sh)
-source $(command -v rcm-roundcube-setup-ispconfig-integration.sh)
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=ispconfig --subdomain="$SUBDOMAIN_ISPCONFIG"
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=roundcube --subdomain="$SUBDOMAIN_ROUNDCUBE"
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=phpmyadmin --subdomain="$SUBDOMAIN_PHPMYADMIN"
-_domain="$domain" # Backup variable.
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=ispconfig --subdomain="${SUBDOMAIN_ISPCONFIG}.${_domain}" --domain="localhost"
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=roundcube --subdomain="${SUBDOMAIN_ROUNDCUBE}.${_domain}" --domain="localhost"
-source $(command -v rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh) --project=phpmyadmin --subdomain="${SUBDOMAIN_PHPMYADMIN}.${_domain}" --domain="localhost"
-domain="$_domain" # Restore variable.
-source $(command -v rcm-ispconfig-control-manage-domain.sh) add
-source $(command -v rcm-ispconfig-control-manage-email-mailbox.sh) --name="$MAILBOX_ADMIN"
-source $(command -v rcm-ispconfig-control-manage-email-mailbox.sh) --name="$MAILBOX_SUPPORT"
-source $(command -v rcm-ispconfig-control-manage-email-alias.sh) --name="$MAILBOX_HOST" --destination-name="$MAILBOX_ADMIN" --destination-domain="$domain"
-source $(command -v rcm-ispconfig-control-manage-email-alias.sh) --name="$MAILBOX_POST" --destination-name="$MAILBOX_ADMIN" --destination-domain="$domain"
-source $(command -v rcm-ispconfig-control-manage-email-alias.sh) --name="$MAILBOX_WEB" --destination-name="$MAILBOX_ADMIN" --destination-domain="$domain"
-_hostname="$hostname" # Backup variable.
-source $(command -v rcm-digitalocean-api-manage-domain.sh) add
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type a     --hostname=@
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type cname --hostname="$_hostname"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type a     --hostname="$_hostname"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type a     --hostname="$SUBDOMAIN_ISPCONFIG"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type cname --hostname="$SUBDOMAIN_ISPCONFIG"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type a     --hostname="$SUBDOMAIN_PHPMYADMIN"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type cname --hostname="$SUBDOMAIN_PHPMYADMIN"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) delete --type a     --hostname="$SUBDOMAIN_ROUNDCUBE"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type cname --hostname="$SUBDOMAIN_ROUNDCUBE"
-source $(command -v rcm-digitalocean-api-manage-domain-record.sh) add    --type mx    --hostname=@ --mail-provider="$fqdn"
-source $(command -v rcm-ispconfig-setup-wrapper-digitalocean.sh) --type spf   --hostname=@ --mail-provider="$fqdn"
-source $(command -v rcm-ispconfig-setup-wrapper-digitalocean.sh) --type dmarc --email="${MAILBOX_POST}@${domain}"
-source $(command -v rcm-ispconfig-setup-wrapper-digitalocean.sh) --type dkim  --dns-record-auto
-hostname="$_hostname" # Restore variable.
-source $(command -v rcm-certbot-autoinstaller.sh)
-source $(command -v rcm-certbot-digitalocean-autoinstaller.sh)
-_domain="$domain" # Backup variable.
-source $(command -v rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh) --digitalocean --domain="$_domain" --subdomain="$SUBDOMAIN_ISPCONFIG"
-source $(command -v rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh) --digitalocean --domain="$_domain" --subdomain="$SUBDOMAIN_PHPMYADMIN"
-source $(command -v rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh) --digitalocean --domain="$_domain" --subdomain="$SUBDOMAIN_ROUNDCUBE"
-domain="$_domain" # Restore variable.
-source $(command -v rcm-ispconfig-setup-dump-variables.sh)
-INDENT=${INDENT::-4}
+INDENT+="    " \
+rcm-mariadb-autoinstaller.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-mariadb-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-nginx-autoinstaller.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-nginx-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-php-autoinstaller.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-php-setup-adjust-cli-version.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-php-setup-ispconfig.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-postfix-autoinstaller.sh $isfast --root-sure \
+    --hostname="$hostname" \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-postfix-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --phpmyadmin-version="$phpmyadmin_version" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-roundcube-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --roundcube-version="$roundcube_version" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --hostname="$hostname" \
+    --domain="$domain" \
+    --ispconfig-version="$ispconfig_version" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-internal-command.sh $isfast --root-sure \
+    --phpmyadmin-version="$phpmyadmin_version" \
+    --roundcube-version="$roundcube_version" \
+    --ispconfig-version="$ispconfig_version" \
+    && INDENT+="    " \
+rcm-roundcube-setup-ispconfig-integration.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-amavis-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-roundcube-setup-ispconfig-integration.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=ispconfig \
+    --subdomain="$SUBDOMAIN_ISPCONFIG" \
+    --domain="$domain" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=roundcube \
+    --subdomain="$SUBDOMAIN_ROUNDCUBE" \
+    --domain="$domain" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=phpmyadmin \
+    --subdomain="$SUBDOMAIN_PHPMYADMIN" \
+    --domain="$domain" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=ispconfig \
+    --subdomain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
+    --domain="localhost" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=roundcube \
+    --subdomain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
+    --domain="localhost" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+    --project=phpmyadmin \
+    --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
+    --domain="localhost" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+    add \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-email-mailbox.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+    --name="$MAILBOX_ADMIN" \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-email-mailbox.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+    --name="$MAILBOX_SUPPORT" \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+    --name="$MAILBOX_HOST" \
+    --domain="$domain" \
+    --destination-name="$MAILBOX_ADMIN" \
+    --destination-domain="$domain" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+    --name="$MAILBOX_POST" \
+    --domain="$domain" \
+    --destination-name="$MAILBOX_ADMIN" \
+    --destination-domain="$domain" \
+    && INDENT+="    " \
+rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+    --name="$MAILBOX_WEB" \
+    --domain="$domain" \
+    --destination-name="$MAILBOX_ADMIN" \
+    --destination-domain="$domain" \
+    ; [ ! $? -eq 0 ] && x
+if [ -n "$digitalocean_token" ];then
+    INDENT+="    " \
+    rcm-digitalocean-api-manage-domain.sh $isfast --root-sure \
+        add \
+        --domain="$domain" \
+        --ip-address="$ip_address" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=a \
+        --ip-address="$ip_address" \
+        --hostname=@ \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        delete \
+        --domain="$domain" \
+        --type=cname \
+        --hostname="$hostname" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=a \
+        --ip-address="$ip_address" \
+        --hostname="$hostname" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        delete \
+        --domain="$domain" \
+        --type=a \
+        --ip-address="$ip_address" \
+        --hostname="$SUBDOMAIN_ISPCONFIG" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=cname \
+        --hostname="$SUBDOMAIN_ISPCONFIG" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        delete \
+        --domain="$domain" \
+        --type=a \
+        --ip-address="$ip_address" \
+        --hostname="$SUBDOMAIN_PHPMYADMIN" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=cname \
+        --hostname="$SUBDOMAIN_PHPMYADMIN" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        delete \
+        --domain="$domain" \
+        --type=a \
+        --ip-address="$ip_address" \
+        --hostname="$SUBDOMAIN_ROUNDCUBE" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=cname \
+        --hostname="$SUBDOMAIN_ROUNDCUBE" \
+        && INDENT+="    " \
+    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        add \
+        --domain="$domain" \
+        --type=mx \
+        --hostname=@ \
+        --mail-provider="$fqdn" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-digitalocean.sh $isfast --root-sure --digitalocean-domain-exists-sure \
+        --ip-address="$ip_address" \
+        --domain="$domain" \
+        --type=spf \
+        --hostname=@ \
+        --mail-provider="$fqdn" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-digitalocean.sh $isfast --root-sure --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
+        --ip-address="$ip_address" \
+        --domain="$domain" \
+        --type=dmarc \
+        --email="${MAILBOX_POST}@${domain}" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-digitalocean.sh $isfast --root-sure --digitalocean-domain-exists-sure --ispconfig-domain-exists-sure \
+        --ip-address="$ip_address" \
+        --domain="$domain" \
+        --type=dkim  \
+        --dns-record-auto \
+        && INDENT+="    " \
+    rcm-certbot-autoinstaller.sh $isfast --root-sure \
+        && INDENT+="    " \
+    rcm-certbot-digitalocean-autoinstaller.sh $isfast --root-sure \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+        --digitalocean \
+        --domain="$domain" \
+        --subdomain="$SUBDOMAIN_ISPCONFIG" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+        --digitalocean \
+        --domain="$domain" \
+        --subdomain="$SUBDOMAIN_PHPMYADMIN" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+        --digitalocean \
+        --domain="$domain" \
+        --subdomain="$SUBDOMAIN_ROUNDCUBE" \
+        ; [ ! $? -eq 0 ] && x
+fi
+INDENT+="    " \
+rcm-ispconfig-setup-dump-variables.sh $isfast --root-sure \
+    --domain="$domain" \
+    --hostname="$hostname" \
+    --ip-address="$ip_address" \
+    ; [ ! $? -eq 0 ] && x
 _ _______________________________________________________________________;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code sudo -E $(command -v rcm-ispconfig-setup-dump-variables.sh)
+code sudo -E rcm-ispconfig-setup-dump-variables.sh
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \

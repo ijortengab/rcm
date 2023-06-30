@@ -22,7 +22,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmNginxSetupHelloWorldStatic_printVersion) == function ]] || RcmNginxSetupHelloWorldStatic_printVersion() {
-    echo '0.1.2'
+    echo '0.1.3'
 }
 [[ $(type -t RcmNginxSetupHelloWorldStatic_printHelp) == function ]] || RcmNginxSetupHelloWorldStatic_printHelp() {
     cat << EOF
@@ -125,6 +125,7 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 until [[ -n "$domain" ]];do
     read -p "Argument --domain required: " domain
 done
@@ -150,14 +151,15 @@ code filename="$filename"
 server_name=("$domain")
 code server_name="${server_name[@]}"
 ____
+_ _______________________________________________________________________;_.;_.;
 
-_ -----------------------------------------------------------------------;_.;_.;
-
-INDENT+="    ";
-source $(command -v rcm-nginx-setup-static.sh)
-INDENT=${INDENT::-4}
-
-_ -----------------------------------------------------------------------;_.;_.;
+INDENT+="    " \
+rcm-nginx-setup-static.sh $isfast --root-sure \
+    --root="$root" \
+    --filename="$filename" \
+    --server-name="$server_name" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mempersiapkan web root directory.
 __; magenta root='"'$root'"'; _.
@@ -212,6 +214,8 @@ code=$(curl -L \
     __; red Terjadi kesalahan. HTTP Response code '`'$code'`'.; x
 }
 ____
+
+exit 0
 
 # parse-options.sh \
 # --without-end-options-double-dash \
