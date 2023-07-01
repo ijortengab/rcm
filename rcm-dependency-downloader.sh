@@ -265,6 +265,7 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
                     __ Memulai download.
                     __; magenta wget "$url"; _.
                     wget -q "$url" -O "$BINARY_DIRECTORY/$each"
+                    fileMustExists "$BINARY_DIRECTORY/$each"
                     if [ ! -s "$BINARY_DIRECTORY/$each" ];then
                         __; magenta rm "$BINARY_DIRECTORY/$each"; _.
                         rm "$BINARY_DIRECTORY/$each"
@@ -278,7 +279,6 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
                 __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
                 chmod a+x "$BINARY_DIRECTORY/$each"
             fi
-            fileMustExists "$BINARY_DIRECTORY/$each"
         fi
         commands_exists+=("$each")
         _help=$("$each" --help 2>/dev/null)

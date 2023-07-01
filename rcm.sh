@@ -153,6 +153,74 @@ EOF
     fileMustExists "$BINARY_DIRECTORY/$each"
     ____
 }
+[[ $(type -t userInputBooleanDefaultNo) == function ]] || userInputBooleanDefaultNo() {
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+    boolean=
+    while true; do
+        __; read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            char=n
+        fi
+        case $char in
+            y|Y) echo "$char"; boolean=1; break;;
+            n|N) echo "$char"; break ;;
+            *) echo
+        esac
+    done
+}
+[[ $(type -t userInputBooleanDefaultYes) == function ]] || userInputBooleanDefaultYes() {
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+    boolean=
+    while true; do
+        __; read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            char=y
+        fi
+        case $char in
+            y|Y) echo "$char"; boolean=1; break;;
+            n|N) echo "$char"; break ;;
+            $'\33') echo "n"; break ;;
+            *) echo
+        esac
+    done
+}
+[[ $(type -t printBackupDialog) == function ]] || printBackupDialog() {
+    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _.
+    userInputBooleanDefaultYes
+    if [ -n "$boolean" ];then
+        __; _, Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
+        value="$backup_value";
+    fi
+}
+[[ $(type -t printHistoryDialog) == function ]] || printHistoryDialog() {
+    count_max=$(wc -l <<< "$history_value")
+    unset count
+    declare -i count
+    count=0
+    __ There are values available from history. Press the yellow key to select.
+    while read opt; do
+        count+=1
+        __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
+    done <<< "$history_value"
+    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
+    while true; do
+        __; read -rsn 1 -p "Select: " char;
+        case $char in
+            $'\33') echo "n"; break ;;
+            n|N) echo "$char"; break ;;
+            [1-$count_max])
+                echo "$char"
+                value=$(sed -n ${char}p <<< "$history_value")
+                __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+                save_history=
+                break ;;
+            *) echo
+        esac
+    done
+
+}
 [[ $(type -t Rcm_prompt) == function ]] || Rcm_prompt() {
     command="$1"
     argument_pass=()
@@ -194,69 +262,37 @@ EOF
             if [ -n "$is_required" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
                 if [ -n "$backup_value" ];then
-                    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _. #There are values available from history. Press the yellow key to select.
-                    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-                    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-                    while true; do
-                        read -rsn 1 -p "Select: " char; echo
-                        if [ -z "$char" ];then
-                            char=y
-                        fi
-                        case $char in
-                            y|Y)
-                                _ Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
-                                value="$backup_value"; break ;;
-                            n|N) break ;;
-                            $'\33') break ;;
-                        esac
-                    done
+                    printBackupDialog
                 fi
                 if [ -z "$value" ];then
                     if [ -n "$history_value" ];then
-                        count_max=$(wc -l <<< "$history_value")
-                        unset count
-                        declare -i count
-                        count=0
-                        __ There are values available from history. Press the yellow key to select.
-                        while read opt; do
-                            count+=1
-                            __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
-                        done <<< "$history_value"
-                        __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
-                        while true; do
-                            read -rsn 1 -p "Select: " char; echo
-                            case $char in
-                                $'\33') break ;;
-                                n|N) break ;;
-                                [1-$count_max])
-                                    value=$(sed -n ${char}p <<< "$history_value")
-                                    _ Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
-                                    save_history=
-                                    break;
-                            esac
-                        done
+                        printHistoryDialog
                     fi
                 fi
                 until [[ -n "$value" ]];do
-                    read -p "Type the value: " value
+                    __; read -p "Type the value: " value
                 done
                 argument_pass+=("${parameter}=${value}")
             elif [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                read -p "Add this argument [yN]? " value
-                until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                    echo "$value: invalid selection."
-                    read -p "Add this argument [yN]? " value
-                done
-                if [[ "$value" =~ ^[yY]$ ]]; then
+                __; _, Add this argument?; _.
+                userInputBooleanDefaultNo
+                if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
-                        read -p "Do you want fill with value [yN]? " value
-                        until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                            echo "$value: invalid selection."
-                            read -p "Do you want fill with value [yN]? " value
-                        done
-                        if [[ "$value" =~ ^[yY]$ ]]; then
-                            read -p "Type the value: " value
+                        __; _, Do you want fill with value?; _.
+                        userInputBooleanDefaultNo
+                        if [ -n "$boolean" ]; then
+                            if [ -n "$backup_value" ];then
+                                printBackupDialog
+                            fi
+                            if [ -z "$value" ];then
+                                if [ -n "$history_value" ];then
+                                    printHistoryDialog
+                                fi
+                            fi
+                            until [[ -n "$value" ]];do
+                                __; read -p "Type the value: " value
+                            done
                             argument_pass+=("${parameter}=${value}")
                         else
                             argument_pass+=("${parameter}")
@@ -267,58 +303,22 @@ EOF
                 fi
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                read -p "Type the value: " value
+                __; read -p "Type the value: " value
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter} ${value}")
                 fi
             else
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
                 if [ -n "$backup_value" ];then
-                    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _. #There are values available from history. Press the yellow key to select.
-                    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-                    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-                    while true; do
-                        read -rsn 1 -p "Select: " char; echo
-                        if [ -z "$char" ];then
-                            char=y
-                        fi
-                        case $char in
-                            y|Y)
-                                _ Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
-                                value="$backup_value"; break ;;
-                            n|N) break ;;
-                            $'\33') break ;;
-                        esac
-                    done
+                    printBackupDialog
                 fi
                 if [ -z "$value" ];then
                     if [ -n "$history_value" ];then
-                        count_max=$(wc -l <<< "$history_value")
-                        unset count
-                        declare -i count
-                        count=0
-                        __ There are values available from history. Press the yellow key to select.
-                        while read opt; do
-                            count+=1
-                            __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
-                        done <<< "$history_value"
-                        __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
-                        while true; do
-                            read -rsn 1 -p "Select: " char; echo
-                            case $char in
-                                $'\33') break ;;
-                                n|N) break ;;
-                                [1-$count_max])
-                                    value=$(sed -n ${char}p <<< "$history_value")
-                                    _ Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
-                                    save_history=
-                                    break;
-                            esac
-                        done
+                        printHistoryDialog
                     fi
                 fi
                 if [ -z "$value" ];then
-                    read -p "Type the value: " value
+                    __; read -p "Type the value: " value
                 fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
@@ -344,10 +344,10 @@ EOF
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                         elif [[ "$parameter" == '--' ]];then
-                            read -p "Type the value: " value
+                            __; read -p "Type the value: " value
                             [ -n "$value" ] && argument_pass+=("${value}")
                         else
-                            read -p "Type the value: " value
+                            __; read -p "Type the value: " value
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
                         fi
                     else
