@@ -26,7 +26,7 @@ unset _new_arguments
 
 # Functions.
 [[ $(type -t RcmSshSetupOpenSshTunnel_printVersion) == function ]] || RcmSshSetupOpenSshTunnel_printVersion() {
-    echo '0.1.0'
+    echo '0.1.1'
 }
 [[ $(type -t RcmSshSetupOpenSshTunnel_printHelp) == function ]] || RcmSshSetupOpenSshTunnel_printHelp() {
     cat << EOF
@@ -64,6 +64,9 @@ Environment Variables:
 
 Dependency:
    ssh-keep-alive-symlink-reference.sh
+
+Download:
+   [ssh-keep-alive-symlink-reference.sh](https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh)
 EOF
 }
 

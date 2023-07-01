@@ -24,11 +24,11 @@ command="$1"; shift
 
 # Functions.
 [[ $(type -t RcmDependencyDownloader_printVersion) == function ]] || RcmDependencyDownloader_printVersion() {
-    echo '0.1.3'
+    echo '0.1.4'
 }
 [[ $(type -t RcmDependencyDownloader_printHelp) == function ]] || RcmDependencyDownloader_printHelp() {
     cat << EOF
-RCM Dependency Manager
+RCM Dependency Downloader
 Variation Default
 Version `RcmDependencyDownloader_printVersion`
 
@@ -181,7 +181,7 @@ EOF
 }
 
 # Title.
-title RCM Dependency Manager
+title RCM Dependency Downloader
 _ 'Variation '; yellow Default; _.
 _ 'Version '; yellow `RcmDependencyDownloader_printVersion`; _.
 ____
@@ -237,6 +237,7 @@ fi
 PATH="${BINARY_DIRECTORY}:${PATH}"
 commands_exists=()
 commands_downloaded=()
+table_downloads=
 until [[ ${#commands_required[@]} -eq 0 ]];do
     _commands_required=()
     chapter Requires command.
@@ -258,8 +259,8 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
                 if [[ "$each" =~ ^rcm- ]];then
                     url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
                 elif [[ "$each" =~ \.sh$ ]];then
-                    # Command dengan suffix .sh, kita anggap dari repository `ijortengab/bash`.
-                    url=https://github.com/ijortengab/bash/raw/master/commands/"$each"
+                    url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                    [ -z "$url" ] && { __; red URL for command $each is unknown.; x; }
                 fi
                 __; magenta wget "$url" -O "$BINARY_DIRECTORY/$each"; _.
                 wget -q "$url" -O "$BINARY_DIRECTORY/$each"
@@ -278,7 +279,16 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
             fileMustExists "$BINARY_DIRECTORY/$each"
         fi
         commands_exists+=("$each")
-        _dependency=$("$each" --help 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
+        _help=$("$each" --help 2>/dev/null)
+        # Hanya mendownload dependency dengan akhiran .sh (shell script).
+        _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
+        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g')
+        if [ -n "$_dependency" ];then
+            [ -n "$table_downloads" ] && table_downloads+=$'\n'
+            table_downloads+="$_download"
+        fi
+        unset _download
+        unset _help
         if [ -n "$_dependency" ];then
             _dependency=($_dependency)
             ArrayDiff _dependency[@] commands_exists[@]
