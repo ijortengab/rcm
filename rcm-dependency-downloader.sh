@@ -254,24 +254,26 @@ until [[ ${#commands_required[@]} -eq 0 ]];do
                 rm "$BINARY_DIRECTORY/$each"
             fi
             if [ ! -f "$BINARY_DIRECTORY/$each" ];then
-                __ Memulai download.
+                url=
                 # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
                 if [[ "$each" =~ ^rcm- ]];then
                     url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
                 elif [[ "$each" =~ \.sh$ ]];then
                     url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
-                    [ -z "$url" ] && { __; red URL for command $each is unknown.; x; }
                 fi
-                __; magenta wget "$url" -O "$BINARY_DIRECTORY/$each"; _.
-                wget -q "$url" -O "$BINARY_DIRECTORY/$each"
-                if [ ! -s "$BINARY_DIRECTORY/$each" ];then
-                    __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-                    rm "$BINARY_DIRECTORY/$each"
-                    __; red HTTP Response: 404 Not Found; x
+                if [ -n "$url" ];then
+                    __ Memulai download.
+                    __; magenta wget "$url"; _.
+                    wget -q "$url" -O "$BINARY_DIRECTORY/$each"
+                    if [ ! -s "$BINARY_DIRECTORY/$each" ];then
+                        __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+                        rm "$BINARY_DIRECTORY/$each"
+                        __; red HTTP Response: 404 Not Found; x
+                    fi
+                    __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                    chmod a+x "$BINARY_DIRECTORY/$each"
+                    commands_downloaded+=("$each")
                 fi
-                __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-                chmod a+x "$BINARY_DIRECTORY/$each"
-                commands_downloaded+=("$each")
             elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
                 __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
                 chmod a+x "$BINARY_DIRECTORY/$each"
