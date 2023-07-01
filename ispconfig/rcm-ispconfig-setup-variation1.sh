@@ -179,6 +179,22 @@ done <<< `RcmIspconfigSetupVariation1_printHelp | sed -n '/^Dependency:/,$p' | s
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
+[[ $(type -t userInputBooleanDefaultNo) == function ]] || userInputBooleanDefaultNo() {
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+    boolean=
+    while true; do
+        __; read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            char=n
+        fi
+        case $char in
+            y|Y) echo "$char"; boolean=1; break;;
+            n|N) echo "$char"; break ;;
+            *) echo
+        esac
+    done
+}
 
 # Title.
 title RCM ISPConfig Setup
@@ -232,11 +248,12 @@ if [[ $ip_address == auto ]];then
     _ip_address=$(wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/")
     if [ -n "$_ip_address" ];then
         if [ -n "$non_interactive" ];then
-            selected=y
+            boolean=1
         else
-            read -p "Do you wish to use this IP Address: ${_ip_address}? [y/N]: " selected
+            __; _, Do you wish to use this IP Address: "$_ip_address"?; _.
+            userInputBooleanDefaultNo
         fi
-        if [[ "$selected" =~ ^[yY]$ ]]; then
+        if [ -n "$boolean" ]; then
             ip_address="$_ip_address"
         fi
     fi
