@@ -315,6 +315,8 @@ ____
 
 if [[ -n "$adjust" ]];then
     chapter Adjust FQDN.
+    code hostnamectl set-hostname "${hostname}"
+    hostnamectl set-hostname "${hostname}"
     echo "127.0.1.1"$'\t'"${fqdn}"$'\t'"${hostname}" >> /etc/hosts
     sleep .5
     current_fqdn=$(hostname -f 2>/dev/null)
