@@ -457,7 +457,7 @@ EOF
 
     fi
     _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
-    _ '['; yellow Enter; _, ']'; _, ' Show all commands (Tips. Press arrow key to navigate, press q to quit).'; _.
+    _ '['; yellow Enter; _, ']'; _, ' Show all commands. (Tips navigate: press space key for next page, press q to quit.)'; _.
     while true; do
         read -rsn 1 -p "Select: " char
         if [ -z "$char" ];then
