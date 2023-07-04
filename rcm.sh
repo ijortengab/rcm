@@ -43,7 +43,7 @@ fi
 }
 [[ $(type -t Rcm_printHelp) == function ]] || Rcm_printHelp() {
     cat << EOF
-RCM Wrapper
+Rapid Construct Massive
 Variation Default
 Version `Rcm_printVersion`
 
@@ -367,16 +367,34 @@ EOF
     fi
 }
 
+# Prompt.
+if [ -z "$fast" ];then
+    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    if [[ $command =~ ^rcm ]];then
+        countdown=2
+        while [ "$countdown" -ge 0 ]; do
+            printf "\r\033[K" >&2
+            printf %"$countdown"s | tr " " "." >&2
+            printf "\r"
+            countdown=$((countdown - 1))
+            sleep .8
+        done
+    fi
+    ____
+fi
+
 # Execute command.
 # git ls-files | grep '\.sh$' | grep -v rcm\.sh | grep -v rcm-dependency-downloader\.sh | cut -d/ -f2
 if [ $command == list ];then
-    cat << 'EOF'
+    command_list=$(cat << 'EOF'
 rcm-amavis-setup-ispconfig.sh
 rcm-certbot-autoinstaller.sh
 rcm-certbot-digitalocean-autoinstaller.sh
 rcm-certbot-setup-nginx.sh
 rcm-composer-autoinstaller.sh
-rcm-cygwin-setup-cron-wsl-autorun-sshd.sh
+rcm-cron-setup-wsl-autorun-crond.sh
+rcm-cron-setup-wsl-autorun-sshd.sh
+rcm-cron-setup-wsl-port-forwarding.sh
 rcm-debian-11-setup-basic.sh
 rcm-digitalocean-api-manage-domain-record.sh
 rcm-digitalocean-api-manage-domain.sh
@@ -386,6 +404,7 @@ rcm-drupal-setup-dump-variables.sh
 rcm-drupal-setup-variation1.sh
 rcm-drupal-setup-variation2.sh
 rcm-drupal-setup-variation3.sh
+rcm-drupal-setup-variation4.sh
 rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
 rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
 rcm-ispconfig-control-manage-domain.sh
@@ -416,33 +435,94 @@ rcm-postfix-autoinstaller.sh
 rcm-postfix-setup-ispconfig.sh
 rcm-roundcube-autoinstaller-nginx-php-fpm.sh
 rcm-roundcube-setup-ispconfig-integration.sh
+rcm-ssh-setup-open-ssh-tunnel.sh
 rcm-ssh-setup-sshd-listen-port.sh
 rcm-ubuntu-22.04-setup-basic.sh
 rcm-wsl-setup-lemp-stack.sh
 EOF
-    ____
+    )
+    e Press the yellow key to select.;
+    history_storage=$HOME'/.rcm.history'
+    save_history=1
+    if [ -f "$history_storage" ];then
+        history_value=$(tail -9 "$history_storage")
+        count_max=$(wc -l <<< "$history_value")
+        unset count
+        declare -i count
+        count=0
+        while read opt; do
+            count+=1
+            _ '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
+        done <<< "$history_value"
 
-    read -p "Type the command to execute (or blank to skip): " command
-    ____
-
-    if [ -z "$command" ];then
-        exit
     fi
-
-fi
-
-# Prompt.
-if [ -z "$fast" ];then
-    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=2
-    while [ "$countdown" -ge 0 ]; do
-        printf "\r\033[K" >&2
-        printf %"$countdown"s | tr " " "." >&2
-        printf "\r"
-        countdown=$((countdown - 1))
-        sleep .8
+    _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
+    _ '['; yellow Enter; _, ']'; _, ' Show all commands (Tips. Press arrow key to navigate, press q to quit).'; _.
+    while true; do
+        read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            printf "\r\033[K" >&2
+            echo "$command_list" | less -N -X
+            break
+        fi
+        case $char in
+            $'\33') echo "q"; exit ;;
+            q|Q) echo "$char"; exit ;;
+            [1-$count_max])
+                echo "$char"
+                command_selected=$(sed -n ${char}p <<< "$history_value")
+                save_history=
+                break
+                ;;
+            *) echo
+        esac
     done
+    printDialogSecondary=
+    until [ -n "$command_selected" ];do
+        if [ -n "$printDialogSecondary" ];then
+            printDialogSecondary=
+            e Press the yellow key to select.;
+            _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
+            _ '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
+            _ '['; yellow Enter; _, ']'; _, ' Type the number of command to select.'; _.
+            while true; do
+                read -rsn 1 -p "Select: " char
+                if [ -z "$char" ];then
+                    printf "\r\033[K" >&2
+                    break
+                fi
+                case $char in
+                    $'\33') echo "q"; exit ;;
+                    q|Q) echo "$char"; exit ;;
+                    $'\177')
+                        printf "\r\033[K" >&2
+                        echo "$command_list" | less -N -X
+                        break
+                        ;;
+                    *) echo
+                esac
+            done
+        fi
+        read -p "Number of command to select: " number
+        if [ -z "$number" ];then
+            error The number is required.; _.
+        elif [[ "$number" =~ ^[0-9]+$ ]];then
+            command_selected=$(sed -n ${number}p <<< "$command_list")
+            if [ -z "$command_selected" ];then
+                error The number is out of range.; _.
+            fi
+        else
+            error Input is not valid.; _.
+        fi
+        printDialogSecondary=1
+    done
+    _ Command' '; magenta $command_selected; _, ' 'selected.; _.
+    command=$command_selected
     ____
+
+    if [ -n "$save_history" ];then
+        echo "$command_selected" >> "$history_storage"
+    fi
 fi
 
 # Title.
