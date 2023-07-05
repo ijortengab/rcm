@@ -23,7 +23,7 @@ unset _new_arguments
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.2.1'
 }
 printHelp() {
     cat << EOF
@@ -96,6 +96,60 @@ __() { echo -n "$INDENT" >&2; echo -n '    ' >&2; [ -n "$1" ] && echo "$@" >&2 |
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local create
+    _success=
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t isFileExists) == function ]] || { error Function isFileExists not found.; x; }
+
+    chapter Memeriksa file '`'$target'`'
+    isFileExists "$target"
+    if [ -n "$notfound" ];then
+        create=1
+    else
+        if [ -h "$target" ];then
+            __; _, Mengecek apakah file merujuk ke '`'$source'`':
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                _, ' 'Merujuk.; _.
+            else
+                _, ' 'Tidak Merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ File bukan merupakan symbolic link.
+            __ Melakukan backup.
+            backupFile move "$target"
+            create=1
+        fi
+    fi
+    ____
+
+    if [ -n "$create" ];then
+        chapter Membuat symbolic link '`'$target'`'.
+        code ln -s \"$source\" \"$target\"
+        ln -s "$source" "$target"
+        __ Verifikasi
+        if [ -h "$target" ];then
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                __; green Symbolic link berhasil dibuat.; _.
+                _success=1
+            else
+                __; red Symbolic link gagal dibuat.; x
+            fi
+        fi
+        ____
+    fi
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -119,32 +173,6 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-
-# Functions.
 isFileExists() {
     # global used:
     # global modified: found, notfound
@@ -229,48 +257,7 @@ ____
 
 filename_string="${prefix_directory}/${pattern}.sh"
 shell_script="$filename_string"
-chapter Memeriksa file '`'$filename_string'`'
-isFileExists "$filename_string"
-if [ -n "$notfound" ];then
-    create=1
-else
-    if [ -h "$filename_string" ];then
-        __; _, Mengecek apakah file merujuk ke '`'ssh-keep-alive-symlink-reference.sh'`':
-        _dereference=$(stat --cached=never "$filename_string" -c %N)
-        match="'$filename_string' -> '$full_path'"
-        if [[ "$_dereference" == "$match" ]];then
-            _, ' 'Merujuk.; _.
-        else
-            _, ' 'Tidak Merujuk.; _.
-            __ Melakukan backup.
-            backupFile move "$filename_string"
-            create=1
-        fi
-    else
-        __ File bukan merupakan symbolic link.
-        __ Melakukan backup.
-        backupFile move "$filename_string"
-        create=1
-    fi
-fi
-____
-
-if [ -n "$create" ];then
-    chapter Membuat symbolic link '`'$filename_string'`'.
-    code ln -s \"$full_path\" \"$filename_string\"
-    ln -s "$full_path" "$filename_string"
-    __ Verifikasi
-    if [ -h "$filename_string" ];then
-        _dereference=$(stat --cached=never "$filename_string" -c %N)
-        match="'$filename_string' -> '$full_path'"
-        if [[ "$_dereference" == "$match" ]];then
-            __; green Symbolic link berhasil dibuat.; _.
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    fi
-    ____
-fi
+link_symbolic "$full_path" "$shell_script"
 
 if [[ "$autorun" == cron && -n "$is_cygwin" ]];then
     ## Cron pada Cygwin hanya memberikan informasi PATH sbb:
