@@ -64,7 +64,6 @@ __() { echo -n "$INDENT" >&2; echo -n '    ' >&2; [ -n "$1" ] && echo "$@" >&2 |
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
-# Functions.
 downloadApplication() {
     local aptnotfound=
     chapter Melakukan instalasi aplikasi "$@".

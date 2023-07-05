@@ -110,6 +110,7 @@ Dependency:
    rcm-certbot-autoinstaller.sh
    rcm-certbot-digitalocean-autoinstaller.sh
    rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
+   rcm-ispconfig-setup-smtpd-certificate.sh
    rcm-ispconfig-setup-dump-variables.sh
 EOF
 }
@@ -551,6 +552,10 @@ if [ -n "$digitalocean_token" ];then
         --digitalocean \
         --domain="$domain" \
         --subdomain="$SUBDOMAIN_ROUNDCUBE" \
+        && INDENT+="    " \
+    rcm-ispconfig-setup-smtpd-certificate.sh $isfast --root-sure \
+        --digitalocean \
+        --domain="$domain" \
         ; [ ! $? -eq 0 ] && x
 fi
 INDENT+="    " \

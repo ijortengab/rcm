@@ -171,6 +171,7 @@ if [ -n "$notfound" ];then
     else
         __; red Certificate not found.; x
     fi
+    ____
 fi
 
 exit 0

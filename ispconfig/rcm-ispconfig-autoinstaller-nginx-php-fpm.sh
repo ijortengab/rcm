@@ -489,6 +489,10 @@ if [ -n "$do_install" ];then
     rmdir $ISPCONFIG_INSTALL_DIR/interface/web/
     rmdir $ISPCONFIG_INSTALL_DIR/interface/
     rmdir $ISPCONFIG_INSTALL_DIR/
+    if grep -q -F '$inst->configure_postfix();' /tmp/ispconfig3_install/install/install.php;then
+        sed 's|$inst->configure_postfix();|$inst->configure_postfix("dont-create-certs");|' \
+            -i /tmp/ispconfig3_install/install/install.php
+    fi
     sleep 2
     php /tmp/ispconfig3_install/install/install.php \
          --autoinstall=/tmp/ispconfig3_install/install/autoinstall.ini
