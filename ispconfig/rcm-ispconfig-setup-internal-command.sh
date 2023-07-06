@@ -23,7 +23,7 @@ unset _new_arguments
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.2.1'
 }
 printHelp() {
     cat << EOF
@@ -403,7 +403,7 @@ if [ -n "$notfound" ];then
     mkdir -p /usr/local/share/ispconfig/bin
     cat << 'EOF' > /usr/local/share/ispconfig/bin/ispconfig.sh
 #!/bin/bash
-s=|scripts_dir|
+s=__SCRIPTS_DIR__
 Usage() {
     echo -e "Usage: ispconfig.sh \e[33m<command>\e[0m [<args>]" >&2
     echo >&2
@@ -420,67 +420,66 @@ Usage() {
 }
 if [ -z "$1" ];then
     Usage
-    exit
+else
+    case "$1" in
+        -h|--help)
+            Usage
+            ;;
+        ls)
+            if [ -z "$2" ];then
+                ls "$s"
+            else
+                cd "$s"
+                ls "$2"*
+            fi
+            ;;
+        mktemp)
+            if [ -f "$s/$2" ];then
+                filename="${2%.*}"
+                temp=$(mktemp -p "$s" \
+                    -t "$filename"_temp_XXXXX.php)
+                cd "$s"
+                cp "$2" "$temp"
+                echo $(basename $temp)
+            fi
+            ;;
+        editor)
+            if [ -f "$s/$2" ];then
+                editor "$s/$2"
+            fi
+            ;;
+        php)
+            if [ -f "$s/$2" ];then
+                php "$s/$2"
+            fi
+            ;;
+        cat)
+            if [ -f "$s/$2" ];then
+                cat "$s/$2"
+            fi
+            ;;
+        realpath)
+            if [ -f "$s/$2" ];then
+                echo "$s/$2"
+            fi
+            ;;
+        export)
+            echo phpmyadmin_install_dir=__PHPMYADMIN_INSTALL_DIR__
+            echo roundcube_install_dir=__ROUNDCUBE_INSTALL_DIR__
+            echo ispconfig_install_dir=__ISPCONFIG_INSTALL_DIR__
+            echo scripts_dir=__SCRIPTS_DIR__
+            phpmyadmin_install_dir=__PHPMYADMIN_INSTALL_DIR__
+            roundcube_install_dir=__ROUNDCUBE_INSTALL_DIR__
+            ispconfig_install_dir=__ISPCONFIG_INSTALL_DIR__
+            scripts_dir=__SCRIPTS_DIR__
+    esac
 fi
-case "$1" in
-    -h|--help)
-        Usage
-        exit
-        ;;
-    ls)
-        if [ -z "$2" ];then
-            ls "$s"
-        else
-            cd "$s"
-            ls "$2"*
-        fi
-        ;;
-    mktemp)
-        if [ -f "$s/$2" ];then
-            filename="${2%.*}"
-            temp=$(mktemp -p "$s" \
-                -t "$filename"_temp_XXXXX.php)
-            cd "$s"
-            cp "$2" "$temp"
-            echo $(basename $temp)
-        fi
-        ;;
-    editor)
-        if [ -f "$s/$2" ];then
-            editor "$s/$2"
-        fi
-        ;;
-    php)
-        if [ -f "$s/$2" ];then
-            php "$s/$2"
-        fi
-        ;;
-    cat)
-        if [ -f "$s/$2" ];then
-            cat "$s/$2"
-        fi
-        ;;
-    realpath)
-        if [ -f "$s/$2" ];then
-            echo "$s/$2"
-        fi
-        ;;
-    export)
-        echo phpmyadmin_install_dir=|phpmyadmin_install_dir|
-        echo roundcube_install_dir=|roundcube_install_dir|
-        echo ispconfig_install_dir=|ispconfig_install_dir|
-        echo scripts_dir=|scripts_dir|
-        phpmyadmin_install_dir=|phpmyadmin_install_dir|
-        roundcube_install_dir=|roundcube_install_dir|
-        ispconfig_install_dir=|ispconfig_install_dir|
-        scripts_dir=|scripts_dir|
-esac
 EOF
     chmod a+x /usr/local/share/ispconfig/bin/ispconfig.sh
-    sed -i 's,|phpmyadmin_install_dir|,'"${phpmyadmin_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
-    sed -i 's,|roundcube_install_dir|,'"${roundcube_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
-    sed -i 's,|ispconfig_install_dir|,'"${ISPCONFIG_INSTALL_DIR}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
-    sed -i 's,|scripts_dir|,'"${scripts_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,__PHPMYADMIN_INSTALL_DIR__,'"${phpmyadmin_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,__ROUNDCUBE_INSTALL_DIR__,'"${roundcube_install_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,__ISPCONFIG_INSTALL_DIR__,'"${ISPCONFIG_INSTALL_DIR}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
+    sed -i 's,__SCRIPTS_DIR__,'"${scripts_dir}"',' /usr/local/share/ispconfig/bin/ispconfig.sh
     ln -sf /usr/local/share/ispconfig/bin/ispconfig.sh /usr/local/bin/ispconfig.sh
     if command -v "ispconfig.sh" >/dev/null;then
         __; green Command found.; _.
