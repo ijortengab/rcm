@@ -26,12 +26,11 @@ unset _new_arguments
 command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
-        dependency-downloader) ;;
         rcm-*.sh) ;;
         *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
     esac
 else
-    command=list
+    command=list # internal only.
 fi
 
 # Functions.
@@ -48,8 +47,6 @@ EOF
     cat << 'EOF'
 Usage: rcm.sh [file]
        rcm.sh [command]
-
-Available commands: dependency-downloader.
 
 Options:
 
@@ -94,8 +91,6 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 resolve_relative_path() (
-    # Credit: https://www.baeldung.com/linux/bash-expand-relative-path
-    # Info: https://github.com/ijortengab/bash/blob/master/commands/resolve-relative-path.sh
     if [ -d "$1" ]; then
         cd "$1" || return 1
         pwd
@@ -117,38 +112,6 @@ fileMustExists() {
     else
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
-}
-Rcm_download() {
-    each="$1"
-    inside_directory="$2"
-    chapter Requires command: "$each".
-    if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
-        __ Empty file detected.
-        __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-        rm "$BINARY_DIRECTORY/$each"
-    fi
-    if [ ! -f "$BINARY_DIRECTORY/$each" ];then
-        __ Memulai download.
-        if [ -z "$inside_directory" ];then
-            __; magenta wget https://github.com/ijortengab/rcm/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q https://github.com/ijortengab/rcm/raw/master/"$each" -O "$BINARY_DIRECTORY/$each"
-        else
-            __; magenta wget https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"; _.
-            wget -q https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each" -O "$BINARY_DIRECTORY/$each"
-        fi
-        if [ ! -s "$BINARY_DIRECTORY/$each" ];then
-            __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-            rm "$BINARY_DIRECTORY/$each"
-            __; red HTTP Response: 404 Not Found; x
-        fi
-        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-        chmod a+x "$BINARY_DIRECTORY/$each"
-    elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
-        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-        chmod a+x "$BINARY_DIRECTORY/$each"
-    fi
-    fileMustExists "$BINARY_DIRECTORY/$each"
-    ____
 }
 userInputBooleanDefaultNo() {
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
@@ -217,6 +180,162 @@ printHistoryDialog() {
         esac
     done
 
+}
+ArrayDiff() {
+    # Computes the difference of arrays.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = Parameter of the array to compare from.
+    #   2 = Parameter of the array to compare against.
+    #
+    # Returns:
+    #   None
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   yours=("cherry" "blackberry")
+    #   ArrayDiff my[@] yours[@]
+    #   # Get result in variable `$_return`.
+    #   # _return=("manggo" "manggo")
+    #   ```
+    local e
+    local source=("${!1}")
+    local reference=("${!2}")
+    _return=()
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    if [[ "${#reference[@]}" -gt 0 ]];then
+        for e in "${source[@]}";do
+            if ! inArray "$e" "${reference[@]}";then
+                _return+=("$e")
+            fi
+        done
+    else
+        _return=("${source[@]}")
+    fi
+}
+ArrayUnique() {
+    # Removes duplicate values from an array.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = Parameter of the input array.
+    #
+    # Returns:
+    #   None
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   ArrayUnique my[@]
+    #   # Get result in variable `$_return`.
+    #   # _return=("cherry" "manggo" "blackberry")
+    #   ```
+    local e source=("${!1}")
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    _return=()
+    for e in "${source[@]}";do
+        if ! inArray "$e" "${_return[@]}";then
+            _return+=("$e")
+        fi
+    done
+}
+Rcm_download() {
+    commands_required=("$1")
+    PATH="${BINARY_DIRECTORY}:${PATH}"
+    commands_exists=()
+    commands_downloaded=()
+    table_downloads=
+    until [[ ${#commands_required[@]} -eq 0 ]];do
+        _commands_required=()
+        chapter Requires command.
+        for each in "${commands_required[@]}"; do
+            _ Requires command: "$each"
+            if command -v "$each" > /dev/null;then
+                _, ' [FOUND].'; _.
+                # __ Command "$each" ditemukan.
+            else
+                _, ' [NOTFOUND].'; _.
+                if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
+                    __ Empty file detected.
+                    __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+                    rm "$BINARY_DIRECTORY/$each"
+                fi
+                if [ ! -f "$BINARY_DIRECTORY/$each" ];then
+                    url=
+                    # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
+                    if [[ "$each" =~ ^rcm- ]];then
+                        url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
+                    elif [[ "$each" =~ \.sh$ ]];then
+                        url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                    fi
+                    if [ -n "$url" ];then
+                        __ Memulai download.
+                        __; magenta wget "$url"; _.
+                        wget -q "$url" -O "$BINARY_DIRECTORY/$each"
+                        fileMustExists "$BINARY_DIRECTORY/$each"
+                        if [ ! -s "$BINARY_DIRECTORY/$each" ];then
+                            __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+                            rm "$BINARY_DIRECTORY/$each"
+                            __; red HTTP Response: 404 Not Found; x
+                        fi
+                        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                        chmod a+x "$BINARY_DIRECTORY/$each"
+                        commands_downloaded+=("$each")
+                    fi
+                elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
+                    __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                    chmod a+x "$BINARY_DIRECTORY/$each"
+                fi
+            fi
+            commands_exists+=("$each")
+            _help=$("$each" --help 2>/dev/null)
+            # Hanya mendownload dependency dengan akhiran .sh (shell script).
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
+            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g')
+            if [ -n "$_dependency" ];then
+                [ -n "$table_downloads" ] && table_downloads+=$'\n'
+                table_downloads+="$_download"
+            fi
+            unset _download
+            unset _help
+            if [ -n "$_dependency" ];then
+                _dependency=($_dependency)
+                ArrayDiff _dependency[@] commands_exists[@]
+                if [[ ${#_return[@]} -gt 0 ]];then
+                    _commands_required+=("${_return[@]}")
+                    unset _return
+                fi
+                unset _dependency
+            fi
+        done
+        ____
+
+        chapter Dump variable.
+        ArrayUnique _commands_required[@]
+        commands_required=("${_return[@]}")
+        unset _return
+        unset _commands_required
+        code 'commands_required=('"${commands_required[@]}"')'
+        ____
+    done
 }
 Rcm_prompt() {
     command="$1"
@@ -381,7 +500,7 @@ if [ -z "$fast" ];then
 fi
 
 # Execute command.
-# git ls-files | grep '\.sh$' | grep -v rcm\.sh | grep -v rcm-dependency-downloader\.sh | cut -d/ -f2
+# git ls-files | grep '\.sh$' | grep -v rcm\.sh | cut -d/ -f2
 if [ $command == list ];then
     command_list=$(cat << 'EOF'
 rcm-amavis-setup-ispconfig.sh
@@ -572,16 +691,9 @@ if [ -z "$binary_directory_exists_sure" ];then
     fi
 fi
 
-if [ $command == dependency-downloader ];then
-    PATH="${BINARY_DIRECTORY}:${PATH}"
-    Rcm_download rcm-dependency-downloader.sh
-    exit
-fi
-
 PATH="${BINARY_DIRECTORY}:${PATH}"
-Rcm_download rcm-dependency-downloader.sh
 
-Rcm_download $command true
+Rcm_download $command
 
 if [ $# -eq 0 ];then
     backup_storage=$HOME'/.rcm.'$command'.bak'
@@ -598,7 +710,6 @@ fi
 
 chapter Execute:
 [ -n "$fast" ] && isfast='--fast ' || isfast=''
-code rcm-dependency-downloader.sh ${isfast}${command}
 code ${command} ${isfast}"$@"
 ____
 
@@ -623,8 +734,6 @@ ____
 _ _______________________________________________________________________;_.;_.;
 
 INDENT+="    "
-command -v "rcm-dependency-downloader.sh" >/dev/null || { red "Unable to proceed, rcm-dependency-downloader.sh command not found." "\e[39m"; x; }
-INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" rcm-dependency-downloader.sh $command $isfast --root-sure --binary-directory-exists-sure
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
 INDENT=${INDENT::-4}
