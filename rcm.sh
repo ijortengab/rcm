@@ -35,7 +35,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.2.1'
 }
 printHelp() {
     cat << EOF
@@ -45,7 +45,7 @@ Version `printVersion`
 
 EOF
     cat << 'EOF'
-Usage: rcm.sh [file]
+Usage: rcm.sh
        rcm.sh [command]
 
 Options:
@@ -91,10 +91,10 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 resolve_relative_path() (
-    if [ -d "$1" ]; then
+    if [ -d "$1" ];then
         cd "$1" || return 1
         pwd
-    elif [ -e "$1" ]; then
+    elif [ -e "$1" ];then
         if [ ! "${1%/*}" = "$1" ]; then
             cd "${1%/*}" || return 1
         fi
@@ -487,7 +487,7 @@ Rcm_prompt() {
 if [ -z "$fast" ];then
     yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
     if [[ $command =~ ^rcm ]];then
-        countdown=2
+        countdown=1
         while [ "$countdown" -ge 0 ]; do
             printf "\r\033[K" >&2
             printf %"$countdown"s | tr " " "." >&2
@@ -715,7 +715,7 @@ ____
 
 if [ -z "$fast" ];then
     yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=5
+    countdown=2
     while [ "$countdown" -ge 0 ]; do
         printf "\r\033[K" >&2
         printf %"$countdown"s | tr " " "." >&2
@@ -730,7 +730,6 @@ chapter Timer Start.
 e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
-
 _ _______________________________________________________________________;_.;_.;
 
 INDENT+="    "

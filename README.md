@@ -16,8 +16,7 @@ wget git.io/rcm
 chmod a+x rcm
 ```
 
-You can put `rcm` file anywhere in $PATH or make your own alias so you can
-execute with command `rcm`.
+You can put `rcm` file anywhere in $PATH:
 
 ```
 sudo mv rcm -t /usr/local/bin
@@ -30,6 +29,10 @@ sudo mv rcm -t /usr/local/bin
 Just execute.
 
 ```
+rcm --fast
+```
+
+```
 Usage: rcm [options] [<command> [ -- [options]]]
 ```
 
@@ -38,4 +41,4 @@ Usage: rcm [options] [<command> [ -- [options]]]
 Projects that implements `rcm`:
 
  - https://github.com/ijortengab/ispconfig-autoinstaller
- - https://github.com/ijortengab/drupal-autoinstaller-
+ - https://github.com/ijortengab/drupal-autoinstaller
