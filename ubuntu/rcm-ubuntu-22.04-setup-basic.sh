@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Ubuntu 22.04 Setup Server
+    _ 'Variation '; yellow Basic; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Ubuntu 22.04 Setup Server
-Variation Basic
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -125,9 +125,7 @@ backupFile() {
 }
 
 # Title.
-title RCM Ubuntu 22.04 Setup Server
-_ 'Variation '; yellow Basic; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ubuntu-22.04-setup-basic.sh
 ____
 
 # Requirement, validate, and populate value.

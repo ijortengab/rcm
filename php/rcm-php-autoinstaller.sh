@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM PHP Auto-Installer
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM PHP Auto-Installer
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -186,9 +186,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 }
 
 # Title.
-title RCM PHP Auto-Installer
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-php-autoinstaller.sh
 ____
 
 # Requirement, validate, and populate value.

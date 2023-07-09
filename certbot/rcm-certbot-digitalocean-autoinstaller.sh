@@ -38,10 +38,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Certbot DigitalOcean Autoinstaller
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Certbot DigitalOcean Autoinstaller
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -74,9 +74,7 @@ done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *
 # Functions.
 
 # Title.
-title RCM Certbot DigitalOcean Autoinstaller
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-certbot-digitalocean-autoinstaller.sh
 ____
 
 # Require, validate, and populate value.

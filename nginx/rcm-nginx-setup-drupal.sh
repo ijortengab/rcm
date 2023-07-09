@@ -47,10 +47,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Nginx Setup
+    _ 'Variation '; yellow Drupal; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Nginx Setup
-Variation Drupal
-Version `printVersion`
 
 Reference:
 https://www.drupal.org/project/drupal/issues/2937161
@@ -112,9 +112,7 @@ backupFile() {
 }
 
 # Title.
-title RCM Nginx Setup
-_ 'Variation '; yellow Drupal; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-nginx-setup-drupal.sh
 ____
 
 # Require, validate, and populate value.

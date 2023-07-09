@@ -49,10 +49,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Setup
+    _ 'Variation '; yellow 2; _, . Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, ; _.
+    e PHP 7.4, DigitalOcean DNS.
     cat << EOF
-RCM ISPConfig Setup
-Variation 2. Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0,
-PHP 7.4, DigitalOcean DNS.
 Version `printVersion`
 
 EOF
@@ -195,9 +195,7 @@ userInputBooleanDefaultNo() {
 }
 
 # Title.
-title RCM ISPConfig Setup
-_ 'Variation '; yellow 2; _, . Ubuntu 22.04, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, ; _.
-e PHP 7.4, DigitalOcean DNS.
+title rcm-ispconfig-setup-variation2.sh
 _ 'Version '; yellow `printVersion`; _.
 ____
 

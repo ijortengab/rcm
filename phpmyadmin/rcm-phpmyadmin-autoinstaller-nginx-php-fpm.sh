@@ -43,10 +43,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM PHPMyAdmin Auto-Installer
+    _ 'Variation '; yellow Nginx PHP-FPM; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM PHPMyAdmin Auto-Installer
-Variation Nginx PHP-FPM
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -145,9 +145,7 @@ EOF
 }
 
 # Title.
-title RCM PHPMyAdmin Auto-Installer
-_ 'Variation '; yellow Nginx PHP-FPM; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh
 ____
 
 # Requirement, validate, and populate value.

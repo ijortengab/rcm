@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Setup
+    _ 'Variation '; yellow Drush Alias; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Setup
-Variation Drush Alias
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -85,9 +85,7 @@ EOF
 # Functions.
 
 # Title.
-title RCM Drupal Setup
-_ 'Variation '; yellow Drush Alias; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-setup-drush-alias.sh
 ____
 
 # Require, validate, and populate value.

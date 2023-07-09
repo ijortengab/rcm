@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Nginx Setup
+    _ 'Variation '; yellow ISPConfig Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Nginx Setup
-Variation ISPConfig Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -98,9 +98,7 @@ backupFile() {
 }
 
 # Title.
-title RCM Nginx Setup
-_ 'Variation '; yellow ISPConfig Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-nginx-setup-ispconfig.sh
 ____
 
 # Require, validate, and populate value.

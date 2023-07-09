@@ -56,10 +56,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Setup
+    _ 'Variation '; yellow Wrapper DigitalOcean; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Setup
-Variation Wrapper DigitalOcean
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -129,9 +129,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM ISPConfig Setup
-_ 'Variation '; yellow Wrapper DigitalOcean; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-setup-wrapper-digitalocean.sh
 ____
 
 # Requirement, validate, and populate value.

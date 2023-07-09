@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Roundcube Setup
+    _ 'Variation '; yellow ISPConfig Integration; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Roundcube Setup
-Variation ISPConfig Integration
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -254,9 +254,7 @@ EOF
 }
 
 # Title.
-title RCM Roundcube Setup
-_ 'Variation '; yellow ISPConfig Integration; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-roundcube-setup-ispconfig-integration.sh
 ____
 
 # Requirement, validate, and populate value.

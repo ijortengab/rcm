@@ -50,10 +50,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Auto-Installer
+    _ 'Variation '; yellow Nginx PHP-FPM; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Auto-Installer
-Variation Nginx PHP-FPM
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -196,9 +196,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM Drupal Auto-Installer
-_ 'Variation '; yellow Nginx PHP-FPM; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-autoinstaller-nginx-php-fpm.sh
 ____
 
 # Requirement, validate, and populate value.

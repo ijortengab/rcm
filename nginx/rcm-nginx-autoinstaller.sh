@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Nginx Auto-Installer
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Nginx Auto-Installer
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -104,9 +104,7 @@ validateApplication() {
 }
 
 # Title.
-title RCM Nginx Auto-Installer
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-nginx-autoinstaller.sh
 ____
 
 # Requirement, validate, and populate value.

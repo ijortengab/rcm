@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.1'
 }
 printHelp() {
+    title RCM SSH Setup
+    _ 'Variation '; yellow Open SSH Tunnel; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Wrapper
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -199,9 +199,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM SSH Setup
-_ 'Variation '; yellow Open SSH Tunnel; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ssh-setup-open-ssh-tunnel.sh
 ____
 
 # Requirement, validate, and populate value.

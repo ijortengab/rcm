@@ -48,10 +48,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Control
+    _ 'Variation '; yellow Manage Email Alias; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Control
-Variation Manage Email Alias
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -565,9 +565,7 @@ insertEmailAliasIspconfig() {
 }
 
 # Title.
-title RCM ISPConfig Control
-_ 'Variation '; yellow Manage Email Alias; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-control-manage-email-alias.sh
 ____
 
 # Require, validate, and populate value.

@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.1'
 }
 printHelp() {
+    title RCM ISPConfig Setup
+    _ 'Variation '; yellow Internal Command; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Setup
-Variation Internal Command
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -266,9 +266,7 @@ EOF
 }
 
 # Title.
-title RCM ISPConfig Setup
-_ 'Variation '; yellow Internal Command; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-setup-internal-command.sh
 ____
 
 # Requirement, validate, and populate value.

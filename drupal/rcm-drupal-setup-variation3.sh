@@ -48,10 +48,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Setup
+    _ 'Variation '; yellow 3; _, . Ubuntu 22.04, Drupal 10, PHP 8.2. ; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Setup
-Variation 3. Ubuntu 22.04, Drupal 10, PHP 8.2.
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -122,9 +122,7 @@ validateMachineName() {
 }
 
 # Title.
-title RCM Drupal Setup
-_ 'Variation '; yellow 3; _, . Ubuntu 22.04, Drupal 10, PHP 8.2. ; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-setup-variation3.sh
 ____
 
 # Requirement, validate, and populate value.

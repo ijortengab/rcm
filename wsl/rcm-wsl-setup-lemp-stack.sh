@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM WSL Setup
+    _ 'Variation '; yellow LEMP Stack; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM WSL Setup
-Variation LEMP Stack
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -112,9 +112,7 @@ makeSureRunning() {
 }
 
 # Title.
-title RCM WSL Setup
-_ 'Variation '; yellow LEMP Stack; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-wsl-setup-lemp-stack.sh
 ____
 
 # Require, validate, and populate value.

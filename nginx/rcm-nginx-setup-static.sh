@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Nginx Setup
+    _ 'Variation '; yellow Static; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Nginx Setup
-Variation Static
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -112,9 +112,7 @@ backupFile() {
 }
 
 # Title.
-title RCM Nginx Setup
-_ 'Variation '; yellow Static; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-nginx-setup-static.sh
 ____
 
 # Require, validate, and populate value.

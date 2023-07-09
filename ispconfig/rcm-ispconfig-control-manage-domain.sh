@@ -50,10 +50,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Control
+    _ 'Variation '; yellow Manage Domain; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Control
-Variation Manage Domain
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -107,9 +107,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM ISPConfig Control
-_ 'Variation '; yellow Manage Domain; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-control-manage-domain.sh
 ____
 
 # Requirement, validate, and populate value.

@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM PHP Setup
+    _ 'Variation '; yellow Adjust CLI Version; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM PHP Setup
-Variation Adjust CLI Version
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -71,9 +71,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title RCM PHP Setup
-_ 'Variation '; yellow Adjust CLI Version; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-php-setup-adjust-cli-version.sh
 
 ____
 

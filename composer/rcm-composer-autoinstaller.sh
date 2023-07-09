@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Composer Auto-Installer
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Composer Auto-Installer
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -70,9 +70,7 @@ command -v "php" >/dev/null || { echo -e "\e[91m" "Unable to proceed, php comman
 # Functions.
 
 # Title.
-title RCM Composer Auto-Installer
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-composer-autoinstaller.sh
 ____
 
 # Require, validate, and populate value.

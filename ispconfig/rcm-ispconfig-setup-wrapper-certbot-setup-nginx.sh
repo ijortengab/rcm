@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Setup
+    _ 'Variation '; yellow Wrapper Certbot Setup Nginx; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Setup
-Variation Wrapper Certbot Setup Nginx
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -121,9 +121,7 @@ isFileExists() {
 }
 
 # Title.
-title RCM ISPConfig Setup
-_ 'Variation '; yellow Wrapper Certbot Setup Nginx; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
 ____
 
 # Require, validate, and populate value.

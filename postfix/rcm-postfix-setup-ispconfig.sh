@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Postfix Setup
+    _ 'Variation '; yellow ISPConfig; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Postfix Setup
-Variation ISPConfig
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -294,9 +294,7 @@ postfixConfigEditor() {
 }
 
 # Title.
-title RCM Postfix Setup
-_ 'Variation '; yellow ISPConfig; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-postfix-setup-ispconfig.sh
 ____
 
 # Requirement, validate, and populate value.

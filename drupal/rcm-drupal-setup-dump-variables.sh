@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Setup
+    _ 'Variation '; yellow Dump Variables; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Setup
-Variation Dump Variables
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -126,9 +126,7 @@ EOF
 }
 
 # Title.
-title RCM Drupal Setup
-_ 'Variation '; yellow Dump Variables; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-setup-dump-variables.sh
 ____
 
 # Require, validate, and populate value.

@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Setup
+    _ 'Variation '; yellow SMTPD Certificate; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Setup
-Variation Wrapper SMTPD Certificate
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -198,9 +198,7 @@ link_symbolic() {
 }
 
 # Title.
-title RCM ISPConfig Setup
-_ 'Variation '; yellow SMTPD Certificate; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-setup-smtpd-certificate.sh
 ____
 
 # Require, validate, and populate value.

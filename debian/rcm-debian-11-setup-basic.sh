@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Debian 11 Setup Server
+    _ 'Variation '; yellow Basic; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Debian 11 Setup Server
-Variation Basic
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -125,9 +125,7 @@ backupFile() {
 }
 
 # Title.
-title RCM Debian 11 Setup Server
-_ 'Variation '; yellow Basic; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-debian-11-setup-basic.sh
 ____
 
 # Requirement, validate, and populate value.

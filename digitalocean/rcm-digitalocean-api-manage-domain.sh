@@ -52,10 +52,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM DigitalOcean API
+    _ 'Variation '; yellow Manage Domain; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM DigitalOcean API
-Variation Manage Domain
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -158,9 +158,7 @@ insertDomain() {
 }
 
 # Title.
-title RCM DigitalOcean API
-_ 'Variation '; yellow Manage Domain; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-digitalocean-api-manage-domain.sh
 ____
 
 # Require, validate, and populate value.

@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM MariaDB Auto-Installer
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM MariaDB Auto-Installer
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -96,9 +96,7 @@ validateApplication() {
 }
 
 # Title.
-title RCM MariaDB Auto-Installer
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-mariadb-autoinstaller.sh
 ____
 
 # Requirement, validate, and populate value.

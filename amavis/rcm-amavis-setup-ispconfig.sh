@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Amavis Setup
+    _ 'Variation '; yellow ISPConfig; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Amavis Setup
-Variation ISPConfig
-Version `printVersion`
 
 Troubleshooter for Amavis that not running Port 10026.
 Reference: https://www.howtoforge.com/community/threads/bullseye-for-ispconfig.87450/page-2#post-427169
@@ -211,9 +211,7 @@ validateApplication() {
 }
 
 # Title.
-title RCM Amavis Setup
-_ 'Variation '; yellow ISPConfig; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-amavis-setup-ispconfig.sh
 ____
 
 # Requirement, validate, and populate value.

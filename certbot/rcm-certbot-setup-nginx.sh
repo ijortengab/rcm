@@ -51,10 +51,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Certbot Setup
+    _ 'Variation '; yellow Nginx; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Certbot Setup
-Variation Nginx
-Version `printVersion`
 
 Shortcut version of cerbot --nginx.
 
@@ -102,9 +102,7 @@ done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *
 # Functions.
 
 # Title.
-title RCM Certbot Setup
-_ 'Variation '; yellow Nginx; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-certbot-setup-nginx.sh
 ____
 
 # Require, validate, and populate value.

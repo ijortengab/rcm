@@ -48,10 +48,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM MariaDB Setup Database
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM MariaDB Setup Database
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -94,9 +94,7 @@ while IFS= read -r line; do
 done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Title.
-title RCM MariaDB Setup Database
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-mariadb-setup-database.sh
 ____
 
 # Requirement, validate, and populate value.

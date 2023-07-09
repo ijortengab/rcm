@@ -47,10 +47,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Auto-Installer
+    _ 'Variation '; yellow Nginx PHP-FPM; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Auto-Installer
-Variation Nginx PHP-FPM
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -238,9 +238,7 @@ toggleMysqlRootPassword() {
 }
 
 # Title.
-title RCM ISPConfig Auto-Installer
-_ 'Variation '; yellow Nginx PHP-FPM; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
 ____
 
 # Requirement, validate, and populate value.

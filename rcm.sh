@@ -57,10 +57,10 @@ printVersion() {
     echo '0.2.1'
 }
 printHelp() {
+    title Rapid Construct Massive
+    _ 'Variation '; yellow Default; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-Rapid Construct Massive
-Variation Default
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -642,9 +642,7 @@ EOF
 fi
 
 # Title.
-title Rapid Construct Massive
-_ 'Variation '; yellow Default; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm.sh
 ____
 
 # Requirement, validate, and populate value.

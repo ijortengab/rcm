@@ -44,10 +44,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM ISPConfig Control
+    _ 'Variation '; yellow Manage Email Mailbox; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM ISPConfig Control
-Variation Manage Email Mailbox
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -266,9 +266,7 @@ insertEmailIspconfig() {
 }
 
 # Title.
-title RCM ISPConfig Control
-_ 'Variation '; yellow Manage Email Mailbox; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ispconfig-control-manage-email-mailbox.sh
 ____
 
 # Require, validate, and populate value.

@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Nginx Setup
+    _ 'Variation '; yellow Hello World Static; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Nginx Setup
-Variation Hello World Static
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -115,9 +115,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM Nginx Setup
-_ 'Variation '; yellow Hello World Static; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-nginx-setup-hello-world-static.sh
 ____
 
 # Require, validate, and populate value.

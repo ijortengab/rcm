@@ -48,10 +48,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Setup
+    _ 'Variation '; yellow 2; _, . Debian 11, Drupal 9, PHP 8.1. ; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Setup
-Variation 2. Debian 11, Drupal 9, PHP 8.1.
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -122,9 +122,7 @@ validateMachineName() {
 }
 
 # Title.
-title RCM Drupal Setup
-_ 'Variation '; yellow 2; _, . Debian 11, Drupal 9, PHP 8.1. ; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-setup-variation2.sh
 ____
 
 # Requirement, validate, and populate value.

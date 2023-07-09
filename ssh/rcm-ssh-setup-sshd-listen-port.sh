@@ -45,10 +45,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM SSH Setup
+    _ 'Variation '; yellow SSHD Listen Port; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM SSH Setup
-Variation SSHD Listen Port
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -109,9 +109,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM SSH Setup
-_ 'Variation '; yellow SSHD Listen Port; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-ssh-setup-sshd-listen-port.sh
 ____
 
 # Require, validate, and populate value.

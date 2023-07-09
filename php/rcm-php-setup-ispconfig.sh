@@ -41,10 +41,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM PHP Setup
+    _ 'Variation '; yellow ISPConfig; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM PHP Setup
-Variation ISPConfig
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -134,9 +134,7 @@ addRepositoryPpaOndrejPhp() {
 }
 
 # Title.
-title RCM PHP Setup
-_ 'Variation '; yellow ISPConfig; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-php-setup-ispconfig.sh
 ____
 
 # Require, validate, and populate value.

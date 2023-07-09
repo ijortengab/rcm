@@ -49,10 +49,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Drupal Setup
+    _ 'Variation '; yellow Wrapper Nginx Setup Drupal; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Drupal Setup
-Variation Wrapper Nginx Setup Drupal
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -111,9 +111,7 @@ validateMachineName() {
 }
 
 # Title.
-title RCM Drupal Setup
-_ 'Variation '; yellow Wrapper Nginx Setup Drupal; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
 ____
 
 # Require, validate, and populate value.

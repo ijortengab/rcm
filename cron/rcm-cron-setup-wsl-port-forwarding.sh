@@ -43,10 +43,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM Cron Setup
+    _ 'Variation '; yellow WSL Port Forwarding; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM Cron Setup
-Variation WSL Port Forwarding
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -113,9 +113,7 @@ fileMustExists() {
 }
 
 # Title.
-title RCM Cron Setup
-_ 'Variation '; yellow WSL Port Forwarding; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-cron-setup-wsl-port-forwarding.sh
 ____
 
 # Require, validate, and populate value.

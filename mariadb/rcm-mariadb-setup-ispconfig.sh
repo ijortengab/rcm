@@ -39,10 +39,10 @@ printVersion() {
     echo '0.2.0'
 }
 printHelp() {
+    title RCM MariaDB Setup
+    _ 'Variation '; yellow ISPConfig; _.
+    _ 'Version '; yellow `printVersion`; _.
     cat << EOF
-RCM MariaDB Setup
-Variation ISPConfig
-Version `printVersion`
 
 EOF
     cat << 'EOF'
@@ -81,9 +81,7 @@ done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *
 # Functions.
 
 # Title.
-title RCM MariaDB Setup
-_ 'Variation '; yellow ISPConfig; _.
-_ 'Version '; yellow `printVersion`; _.
+title rcm-mariadb-setup-ispconfig.sh
 ____
 
 # Requirement, validate, and populate value.
