@@ -44,9 +44,7 @@ printHelp() {
     title RCM Ubuntu 22.04 Setup Server
     _ 'Variation '; yellow Basic; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-ubuntu-22.04-setup-basic.sh [options]
 

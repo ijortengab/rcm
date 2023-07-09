@@ -42,9 +42,7 @@ printHelp() {
     title RCM MariaDB Auto-Installer
     _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-mariadb-autoinstaller.sh [options]
 

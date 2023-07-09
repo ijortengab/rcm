@@ -48,9 +48,7 @@ printHelp() {
     title RCM Drupal Setup
     _ 'Variation '; yellow Drush Alias; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-drupal-setup-drush-alias.sh [options]
 

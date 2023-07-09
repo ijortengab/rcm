@@ -44,9 +44,7 @@ printHelp() {
     title RCM Debian 11 Setup Server
     _ 'Variation '; yellow Basic; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-debian-11-setup-basic.sh [options]
 

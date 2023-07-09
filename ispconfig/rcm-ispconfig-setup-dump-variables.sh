@@ -48,9 +48,7 @@ printHelp() {
     title RCM ISPConfig Setup
     _ 'Variation '; yellow Dump Variables; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-ispconfig-setup-dump-variables.sh [options]
 

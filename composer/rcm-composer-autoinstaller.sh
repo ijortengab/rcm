@@ -42,9 +42,7 @@ printHelp() {
     title RCM Composer Auto-Installer
     _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-composer-autoinstaller.sh [options]
 

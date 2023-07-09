@@ -46,9 +46,7 @@ printHelp() {
     title RCM PHPMyAdmin Auto-Installer
     _ 'Variation '; yellow Nginx PHP-FPM; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh [options]
 
@@ -95,8 +93,8 @@ EOF
 
 # Dependency.
 while IFS= read -r line; do
-    command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
-done <<< `printHelp | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
+    [[ -z "$line" ]] || command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Functions.
 backupFile() {

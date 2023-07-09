@@ -41,9 +41,7 @@ printHelp() {
     title RCM Certbot Autoinstaller
     _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-certbot-autoinstaller.sh [options]
 

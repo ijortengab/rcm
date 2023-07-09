@@ -44,9 +44,7 @@ printHelp() {
     title RCM PHP Setup
     _ 'Variation '; yellow ISPConfig; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-EOF
+    _.
     cat << 'EOF'
 Usage: rcm-php-setup-ispconfig.sh [options]
 
