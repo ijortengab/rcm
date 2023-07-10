@@ -62,7 +62,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM DigitalOcean API
@@ -366,14 +366,18 @@ if [[ $type == a ]];then
 fi
 if [[ $type == cname ]];then
     data='@'
-    [ -n "$hostname_origin" ] && data="$hostname_origin"
+    datadot='@'
+    [ -n "$hostname_origin" ] && {
+        data="$hostname_origin"
+        datadot="$data".
+    }
     [ -n "$hostname_origin" ] && alias_to="$hostname_origin" || alias_to="$domain"
     fqdn_string="${hostname}.${domain}"
     chapter Query $type_uppercase Record for FQDN '`'${fqdn_string}'`'
     if isRecordExist $type_uppercase $domain $fqdn_string $data $mktemp;then
         record_found=1
         __ DNS $type_uppercase Record of '`'$fqdn_string'`' alias to '`'${alias_to}'`' found in DNS Digital Ocean.
-    elif insertRecord $type_uppercase $domain $hostname $data;then
+    elif insertRecord $type_uppercase $domain $hostname "$datadot";then
         __; green DNS $type_uppercase Record of '`'$fqdn_string'`' alias to '`'${alias_to}'`' created in DNS Digital Ocean.; _.
     fi
     ____
