@@ -527,6 +527,13 @@ Rcm_prompt() {
                     argument_pass+=("${parameter}=${value}")
                 fi
             fi
+            # Backup to text file.
+            if [ -n "$value" ];then
+                echo "${parameter}=${value}" >> "$backup_storage"
+                if [ -n "$save_history" ];then
+                    echo "${parameter}=${value}" >> "$history_storage"
+                fi
+            fi
             if [[ "$value_addon" == 'multivalue' ]];then
                 again=1
                 until [ -z "$again" ]; do
@@ -550,14 +557,14 @@ Rcm_prompt() {
                     else
                         again=
                     fi
+                    # Backup to text file.
+                    if [ -n "$value" ];then
+                        echo "${parameter}=${value}" >> "$backup_storage"
+                        if [ -n "$save_history" ];then
+                            echo "${parameter}=${value}" >> "$history_storage"
+                        fi
+                    fi
                 done
-            fi
-            # Backup to text file.
-            if [ -n "$value" ];then
-                echo "${parameter}=${value}" >> "$backup_storage"
-                if [ -n "$save_history" ];then
-                    echo "${parameter}=${value}" >> "$history_storage"
-                fi
             fi
         done
         ____
