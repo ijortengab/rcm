@@ -501,9 +501,13 @@ Rcm_prompt() {
                 fi
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
-                __; read -p "Type the value: " value
-                if [ -n "$value" ];then
-                    argument_pass+=("${parameter} ${value}")
+                __; _, Add value?; _.
+                userInputBooleanDefaultNo
+                if [ -n "$boolean" ]; then
+                    __; read -p "Type the value: " value
+                    if [ -n "$value" ];then
+                        argument_pass+=("${parameter} ${value}")
+                    fi
                 fi
             else
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
