@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -380,8 +380,6 @@ Rcm_download() {
         ____
     done
 }
-
-echo @hack sememtara; source ~/github.com/ijortengab/bash/functions/var-dump.function.sh;
 
 Rcm_prompt() {
     local command="$1"
