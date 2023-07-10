@@ -531,19 +531,13 @@ Rcm_prompt() {
                 again=1
                 until [ -z "$again" ]; do
                     if [ -n "$is_flag" ];then
-                        read -p "Add this argument again [yN]? " value
+                        __ Add this argument again?
+                        userInputBooleanDefaultNo
                     else
-                        read -p "Add other value [yN]? " value
+                        __ Add other value?
+                        userInputBooleanDefaultNo
                     fi
-                    until [[ "$value" =~ ^[yYnN]*$ ]]; do
-                        echo "$value: invalid selection."
-                        if [ -n "$is_flag" ];then
-                            read -p "Add this argument again [yN]? " value
-                        else
-                            read -p "Add other value [yN]? " value
-                        fi
-                    done
-                    if [[ "$value" =~ ^[yY]$ ]]; then
+                    if [ -n "$boolean" ];then
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                         elif [[ "$parameter" == '--' ]];then
