@@ -184,6 +184,46 @@ printHistoryDialog() {
     done
 
 }
+printSelectDialog() {
+    local prefix="$1"
+    local source=("${!2}")
+    local what="$3"
+    local first=1 e reference_key
+    if [ -z "$what" ];then
+        what=value
+        if [ "${#source[@]}" -gt 1 ];then
+            what=values
+        fi
+    fi
+    value=
+    _ "$prefix"; _, Available $what:; for e in "${source[@]}"; do
+        if [ -n "$first" ];then first=; else _, ','; fi
+        _, ' '; yellow "$e"
+    done; _, '.'; _.
+    while true; do
+        __; read -p "Type the value: " value
+        if [ -n "$value" ];then
+            ArraySearch "$value" source[@]
+            reference_key="$_return"; unset _return; # Clear.
+            if [ -n "$reference_key" ];then
+                break
+            fi
+        else
+            break
+        fi
+    done
+}
+
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
 ArrayDiff() {
     # Computes the difference of arrays.
     #
@@ -340,12 +380,36 @@ Rcm_download() {
         ____
     done
 }
+
+echo @hack sememtara; source ~/github.com/ijortengab/bash/functions/var-dump.function.sh;
+
 Rcm_prompt() {
-    command="$1"
+    local command="$1"
+    local chapter_printed=
     argument_pass=()
-    options=`$command --help | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^$/p'`
-    if [ -n "$options" ];then
+    available_subcommands=()
+    _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
+    if [ -n "$_available_subcommands" ];then
+        available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
+    fi
+    if [ "${#available_subcommands[@]}" -gt 0 ];then
         chapter Prepare argument for command '`'$command'`'.
+        chapter_printed=1
+        what=subcommand
+        if [ "${#available_subcommands[@]}" -gt 1 ];then
+            what=subcommands
+        fi
+        printSelectDialog '' available_subcommands[@] "$what"
+        if [ -n "$value" ];then
+            argument_pass+=("${value}")
+        fi
+    fi
+
+    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^$/p'`
+    if [ -n "$options" ];then
+        if [ -z "$chapter_printed" ];then
+            chapter Prepare argument for command '`'$command'`'.
+        fi
         until [[ -z "$options" ]];do
             parameter=`sed -n 1p <<< "$options" | xargs`
             is_required=
@@ -378,6 +442,11 @@ Rcm_prompt() {
             value=
             backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+            available_values=()
+            _available_values=`echo "$label" | sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
+            if [ -n "$_available_values" ];then
+                available_values=(`echo $_available_values | tr ',' ' '`)
+            fi
             if [ -n "$is_required" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
                 if [ -n "$backup_value" ];then
@@ -386,6 +455,11 @@ Rcm_prompt() {
                 if [ -z "$value" ];then
                     if [ -n "$history_value" ];then
                         printHistoryDialog
+                    fi
+                fi
+                if [ -z "$value" ];then
+                    if [ "${#available_values[@]}" -gt 0 ];then
+                        printSelectDialog "`__`" available_values[@]
                     fi
                 fi
                 until [[ -n "$value" ]];do
@@ -407,6 +481,11 @@ Rcm_prompt() {
                             if [ -z "$value" ];then
                                 if [ -n "$history_value" ];then
                                     printHistoryDialog
+                                fi
+                            fi
+                            if [ -z "$value" ];then
+                                if [ "${#available_values[@]}" -gt 0 ];then
+                                    printSelectDialog "`__`" available_values[@]
                                 fi
                             fi
                             until [[ -n "$value" ]];do
@@ -434,6 +513,11 @@ Rcm_prompt() {
                 if [ -z "$value" ];then
                     if [ -n "$history_value" ];then
                         printHistoryDialog
+                    fi
+                fi
+                if [ -z "$value" ];then
+                    if [ "${#available_values[@]}" -gt 0 ];then
+                        printSelectDialog "`__`" available_values[@]
                     fi
                 fi
                 if [ -z "$value" ];then
@@ -485,6 +569,10 @@ Rcm_prompt() {
         ____
     fi
 }
+
+# Title.
+title rcm.sh
+____
 
 # Prompt.
 if [ -z "$fast" ];then
@@ -643,10 +731,6 @@ EOF
         echo "$command_selected" >> "$history_storage"
     fi
 fi
-
-# Title.
-title rcm.sh
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
