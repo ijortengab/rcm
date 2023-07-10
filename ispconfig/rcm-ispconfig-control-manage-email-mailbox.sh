@@ -41,7 +41,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM ISPConfig Control
@@ -272,11 +272,11 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$name" ]];do
-    read -p "Argument --name required: " name
+    _; read -p "Argument --name required: " name
 done
 code 'name="'$name'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'

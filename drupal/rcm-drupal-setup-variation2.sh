@@ -45,7 +45,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Drupal Setup
@@ -133,7 +133,7 @@ code drupal_version="$drupal_version"
 drush_version=11
 code drush_version="$drush_version"
 until [[ -n "$project_name" ]];do
-    read -p "Argument --project-name required: " project_name
+    _; read -p "Argument --project-name required: " project_name
 done
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi

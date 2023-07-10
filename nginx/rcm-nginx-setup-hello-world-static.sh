@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Nginx Setup
@@ -120,7 +120,7 @@ ____
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 delay=.5; [ -n "$fast" ] && unset delay

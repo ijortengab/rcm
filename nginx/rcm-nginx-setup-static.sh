@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Nginx Setup
@@ -116,15 +116,15 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 until [[ -n "$filename" ]];do
-    read -p "Argument --filename required: " filename
+    _; read -p "Argument --filename required: " filename
 done
 code 'filename="'$filename'"'
 until [[ -n "$root" ]];do
-    read -p "Argument --root required: " root
+    _; read -p "Argument --root required: " root
 done
 code 'root="'$root'"'
 until [[ ${#server_name[@]} -gt 0 ]];do
-    read -p "Argument --server-name required: " _server_name
+    _; read -p "Argument --server-name required: " _server_name
     [ -n "$_server_name" ] && server_name+=("$_server_name")
 done
 code 'server_name=('"${server_name[@]}"')'

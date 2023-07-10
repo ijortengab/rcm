@@ -47,7 +47,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM ISPConfig Control
@@ -117,7 +117,7 @@ ispconfig_domain_exists_sure=
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 ____

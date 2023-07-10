@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM PHPMyAdmin Auto-Installer
@@ -161,7 +161,7 @@ PHPMYADMIN_NGINX_CONFIG_FILE=${PHPMYADMIN_NGINX_CONFIG_FILE:=phpmyadmin}
 code 'PHPMYADMIN_NGINX_CONFIG_FILE="'$PHPMYADMIN_NGINX_CONFIG_FILE'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$phpmyadmin_version" ]];do
-    read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
+    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
 done
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'php_version="'$php_version'"'

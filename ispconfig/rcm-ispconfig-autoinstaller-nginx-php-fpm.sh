@@ -44,7 +44,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM ISPConfig Auto-Installer
@@ -256,16 +256,16 @@ ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
 code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$ispconfig_version" ]];do
-    read -p "Argument --ispconfig-version required: " ispconfig_version
+    _; read -p "Argument --ispconfig-version required: " ispconfig_version
 done
 code 'ispconfig_version="'$ispconfig_version'"'
 code 'php_version="'$php_version'"'
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$hostname" ]];do
-    read -p "Argument --hostname required: " hostname
+    _; read -p "Argument --hostname required: " hostname
 done
 code 'hostname="'$hostname'"'
 fqdn="${hostname}.${domain}"

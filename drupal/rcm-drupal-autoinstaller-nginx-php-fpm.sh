@@ -47,7 +47,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Drupal Auto-Installer
@@ -202,7 +202,7 @@ chapter Dump variable.
 DRUPAL_DB_USER_HOST=${DRUPAL_DB_USER_HOST:=localhost}
 code 'DRUPAL_DB_USER_HOST="'$DRUPAL_DB_USER_HOST'"'
 until [[ -n "$project_name" ]];do
-    read -p "Argument --project-name required: " project_name
+    _; read -p "Argument --project-name required: " project_name
 done
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi
@@ -214,7 +214,7 @@ code 'domain_strict="'$domain_strict'"'
 
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$drupal_version" ]];do
-    read -p "Argument --drupal-version required: " drupal_version
+    _; read -p "Argument --drupal-version required: " drupal_version
 done
 code 'drupal_version="'$drupal_version'"'
 vercomp 8 "$drupal_version"

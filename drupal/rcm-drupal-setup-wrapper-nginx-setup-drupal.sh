@@ -46,7 +46,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Drupal Setup
@@ -117,7 +117,7 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'php_version="'$php_version'"'
 until [[ -n "$project_name" ]];do
-    read -p "Argument --project-name required: " project_name
+    _; read -p "Argument --project-name required: " project_name
 done
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi
@@ -127,7 +127,7 @@ if [ -n "$project_parent_name" ];then
 fi
 code 'subdomain="'$subdomain'"'
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then

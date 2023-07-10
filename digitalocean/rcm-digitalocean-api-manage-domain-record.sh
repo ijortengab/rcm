@@ -62,7 +62,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM DigitalOcean API
@@ -276,7 +276,7 @@ case "$type" in
 esac
 until [[ -n "$type" ]];do
     _ Available value:' '; yellow a, cname, mx, txt.; _.
-    read -p "Argument --type required: " type
+    _; read -p "Argument --type required: " type
     case "$type" in
         a|cname|txt|mx) ;;
         *) type=
@@ -287,31 +287,31 @@ type_uppercase=${type^^}
 case "$type" in
     a)
         until [[ -n "$ip_address" ]];do
-            read -p "Argument --ip-address required: " ip_address
+            _; read -p "Argument --ip-address required: " ip_address
         done
         ;;
     mx)
         until [[ -n "$mail_provider" ]];do
-            read -p "Argument --mail-provider required: " mail_provider
+            _; read -p "Argument --mail-provider required: " mail_provider
         done
         ;;
     cname)
         until [[ -n "$hostname" ]];do
-            read -p "Argument --hostname required: " hostname
+            _; read -p "Argument --hostname required: " hostname
         done
         ;;
     txt)
         until [[ -n "$hostname" ]];do
-            read -p "Argument --hostname required: " hostname
+            _; read -p "Argument --hostname required: " hostname
         done
         until [[ -n "$value" ]];do
-            read -p "Argument --value required: " value
+            _; read -p "Argument --value required: " value
         done
         ;;
 esac
 code 'type_uppercase="'$type_uppercase'"'
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 code 'ip_address="'$ip_address'"'

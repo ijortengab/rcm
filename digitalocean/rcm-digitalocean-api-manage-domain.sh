@@ -49,7 +49,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM DigitalOcean API
@@ -162,7 +162,7 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 TOKEN=${TOKEN:=$HOME/.digitalocean-token.txt}
@@ -172,7 +172,7 @@ if [[ "$command" == delete ]];then
 fi
 if [[ "$command" == add ]];then
     until [[ -n "$ip_address" ]];do
-        read -p "Argument --ip-address required: " ip_address
+        _; read -p "Argument --ip-address required: " ip_address
     done
     code 'ip_address="'$ip_address'"'
 fi

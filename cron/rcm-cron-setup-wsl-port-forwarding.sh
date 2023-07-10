@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Cron Setup
@@ -119,11 +119,11 @@ chapter Dump variable.
 BASENAME=${BASENAME:=host-port-__HOST_PORT__-forward-guest-port-__GUEST_PORT__}
 code 'BASENAME="'$BASENAME'"'
 until [[ -n "$host_port" ]];do
-    read -p "Argument --host-port required: " host_port
+    _; read -p "Argument --host-port required: " host_port
 done
 code 'host_port="'$host_port'"'
 until [[ -n "$guest_port" ]];do
-    read -p "Argument --guest-port required: " guest_port
+    _; read -p "Argument --guest-port required: " guest_port
 done
 code 'guest_port="'$guest_port'"'
 basename_string=$(sed -e "s,__HOST_PORT__,$host_port," -e "s,__GUEST_PORT__,$guest_port," <<< "$BASENAME" )

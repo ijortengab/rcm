@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.1'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM SSH Setup
@@ -208,7 +208,7 @@ code 'PREFIX_DIRECTORY="'$PREFIX_DIRECTORY'"'
 prefix_directory=${PREFIX_DIRECTORY%/} # remove suffix.
 code 'prefix_directory="'$prefix_directory'"'
 until [[ -n "$pattern" ]];do
-    read -p "Argument --pattern required: " pattern
+    _; read -p "Argument --pattern required: " pattern
 done
 code 'pattern="'$pattern'"'
 code 'timeout_trigger_command="'$timeout_trigger_command'"'
@@ -219,7 +219,7 @@ if [ -n "$autorun" ];then
     esac
     until [[ -n "$autorun" ]];do
         _ Available value:' '; yellow cron, systemd.; _.
-        read -p "Argument --autorun required: " autorun
+        _; read -p "Argument --autorun required: " autorun
         case "$autorun" in
             cron|systemd) ;;
             *) autorun=

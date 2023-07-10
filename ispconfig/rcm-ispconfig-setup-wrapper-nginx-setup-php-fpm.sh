@@ -44,7 +44,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM ISPConfig Setup
@@ -129,7 +129,7 @@ case "$project" in
 esac
 until [[ -n "$project" ]];do
     _ Available value:' '; yellow ispconfig, phpmyadmin, roundcube.; _.
-    read -p "Argument --project required: " project
+    _; read -p "Argument --project required: " project
     case "$project" in
         ispconfig|phpmyadmin|roundcube) ;;
         *) project=
@@ -138,7 +138,7 @@ done
 code 'project="'$project'"'
 code 'subdomain="'$subdomain'"'
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then

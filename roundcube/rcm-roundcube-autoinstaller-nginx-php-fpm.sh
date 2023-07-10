@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM RoundCube Auto-Installer
@@ -161,7 +161,7 @@ ROUNDCUBE_NGINX_CONFIG_FILE=${ROUNDCUBE_NGINX_CONFIG_FILE:=roundcube}
 code 'ROUNDCUBE_NGINX_CONFIG_FILE="'$ROUNDCUBE_NGINX_CONFIG_FILE'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$roundcube_version" ]];do
-    read -p "Argument --roundcube-version required: " roundcube_version
+    _; read -p "Argument --roundcube-version required: " roundcube_version
 done
 code 'php_version="'$php_version'"'
 ____

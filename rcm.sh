@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.2.1'
+    echo '0.3.0'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -727,7 +727,7 @@ EOF
                 esac
             done
         fi
-        read -p "Number of command to select: " number
+        _; read -p "Number of command to select: " number
         if [ -z "$number" ];then
             error The number is required.; _.
         elif [[ "$number" =~ ^[0-9]+$ ]];then

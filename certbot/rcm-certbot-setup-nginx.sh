@@ -48,7 +48,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM Certbot Setup
@@ -116,7 +116,7 @@ if [[ $email == auto ]];then
         if [ -n "$non_interactive" ];then
             selected=y
         else
-            read -p "Do you wish to use this email: ${_email}? [y/N]: " selected
+            _; read -p "Do you wish to use this email: ${_email}? [y/N]: " selected
         fi
         if [[ "$selected" =~ ^[yY]$ ]]; then
             email="$_email"
@@ -125,7 +125,7 @@ if [[ $email == auto ]];then
 fi
 until [[ -n "$email" ]];do
     e Tips: Try --email=auto
-    read -p "Argument --email required: " email
+    _; read -p "Argument --email required: " email
 done
 code 'email="'$email'"'
 regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
@@ -133,7 +133,7 @@ if [[ ! $email =~ $regex ]] ; then
     error Email format is not valid; x
 fi
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 code '-- '"$@"

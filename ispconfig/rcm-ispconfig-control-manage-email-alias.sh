@@ -45,7 +45,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.2.0'
+    echo '0.3.0'
 }
 printHelp() {
     title RCM ISPConfig Control
@@ -574,19 +574,19 @@ ROUNDCUBE_DB_NAME=${ROUNDCUBE_DB_NAME:=roundcubemail}
 code 'ROUNDCUBE_DB_NAME="'$ROUNDCUBE_DB_NAME'"'
 ROUNDCUBE_DB_USER_HOST=${ROUNDCUBE_DB_USER_HOST:=localhost}
 until [[ -n "$domain" ]];do
-    read -p "Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$name" ]];do
-    read -p "Argument --name required: " name
+    _; read -p "Argument --name required: " name
 done
 code 'name="'$name'"'
 until [[ -n "$destination_name" ]];do
-    read -p "Argument --destination-name required: " destination_name
+    _; read -p "Argument --destination-name required: " destination_name
 done
 code 'destination_name="'$destination_name'"'
 until [[ -n "$destination_domain" ]];do
-    read -p "Argument --destination-domain required: " destination_domain
+    _; read -p "Argument --destination-domain required: " destination_domain
 done
 code 'destination_domain="'$destination_domain'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
