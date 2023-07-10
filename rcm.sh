@@ -504,7 +504,12 @@ Rcm_prompt() {
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
-                    __; read -p "Type the value: " value
+                    if [ -n "$history_value" ];then
+                        printHistoryDialog
+                    fi
+                    if [ -z "$value" ];then
+                        __; read -p "Type the value: " value
+                    fi
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
                     fi
@@ -552,21 +557,28 @@ Rcm_prompt() {
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                         elif [[ "$parameter" == '--' ]];then
-                            __; read -p "Type the value: " value
-                            [ -n "$value" ] && argument_pass+=("${value}")
+                            if [ -n "$history_value" ];then
+                                printHistoryDialog
+                            fi
+                            if [ -z "$value" ];then
+                                __; read -p "Type the value: " value
+                            fi
+                            if [ -n "$value" ];then
+                                argument_pass+=("${value}")
+                            fi
                         else
                             __; read -p "Type the value: " value
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
                         fi
+                        # Backup to text file.
+                        if [ -n "$value" ];then
+                            echo "${parameter}=${value}" >> "$backup_storage"
+                            if [ -n "$save_history" ];then
+                                echo "${parameter}=${value}" >> "$history_storage"
+                            fi
+                        fi
                     else
                         again=
-                    fi
-                    # Backup to text file.
-                    if [ -n "$value" ];then
-                        echo "${parameter}=${value}" >> "$backup_storage"
-                        if [ -n "$save_history" ];then
-                            echo "${parameter}=${value}" >> "$history_storage"
-                        fi
                     fi
                 done
             fi
