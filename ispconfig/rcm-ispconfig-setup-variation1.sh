@@ -50,12 +50,9 @@ printVersion() {
 }
 printHelp() {
     title RCM ISPConfig Setup
-    _ 'Variation '; yellow 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, ; _.
-    e PHP 7.4, DigitalOcean DNS.
-    cat << EOF
-Version `printVersion`
-
-EOF
+    _ 'Variation '; yellow 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS.; _.
+    _ 'Version '; yellow `printVersion`; _.
+    _.
     cat << 'EOF'
 Usage: rcm-ispconfig-setup-variation1.sh [options]
 
@@ -196,7 +193,6 @@ userInputBooleanDefaultNo() {
 
 # Title.
 title rcm-ispconfig-setup-variation1.sh
-_ 'Version '; yellow `printVersion`; _.
 ____
 
 # Require, validate, and populate value.
