@@ -234,6 +234,10 @@ roundcube_version=1.6.0
 code roundcube_version="$roundcube_version"
 ispconfig_version=3.2.7
 code ispconfig_version="$ispconfig_version"
+until [[ -n "$ip_address" ]];do
+    e Tips: Try --ip-address=auto
+    _; read -p "Argument --ip-address required: " ip_address
+done
 if [[ $ip_address == auto ]];then
     ip_address=
     _ip_address=$(wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/")
@@ -250,7 +254,6 @@ if [[ $ip_address == auto ]];then
     fi
 fi
 until [[ -n "$ip_address" ]];do
-    e Tips: Try --ip-address=auto
     _; read -p "Argument --ip-address required: " ip_address
 done
 code ip_address="$ip_address"
