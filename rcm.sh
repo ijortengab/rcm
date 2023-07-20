@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.1'
+    echo '0.3.2'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -93,7 +93,7 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Functions.
-resolve_relative_path() (
+resolve_relative_path() {
     if [ -d "$1" ];then
         cd "$1" || return 1
         pwd
@@ -105,7 +105,7 @@ resolve_relative_path() (
     else
         return 1
     fi
-)
+}
 fileMustExists() {
     # global used:
     # global modified:
@@ -167,12 +167,14 @@ printHistoryDialog() {
         count+=1
         __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
     done <<< "$history_value"
-    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and type new value.'; _.
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow S; _, 'kip and continue.'; _.
     while true; do
         __; read -rsn 1 -p "Select: " char;
+        if [ -z "$char" ];then
+            char=s
+        fi
         case $char in
-            $'\33') echo "n"; break ;;
-            n|N) echo "$char"; break ;;
+            s|S) echo "$char"; break ;;
             [1-$count_max])
                 echo "$char"
                 value=$(sed -n ${char}p <<< "$history_value")
@@ -213,7 +215,6 @@ printSelectDialog() {
         fi
     done
 }
-
 ArraySearch() {
     local index match="$1"
     local source=("${!2}")
@@ -380,7 +381,6 @@ Rcm_download() {
         ____
     done
 }
-
 Rcm_prompt() {
     local command="$1"
     local chapter_printed=
