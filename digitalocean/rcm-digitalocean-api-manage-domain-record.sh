@@ -62,7 +62,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.1'
+    echo '0.3.2'
 }
 printHelp() {
     title RCM DigitalOcean API
@@ -354,6 +354,7 @@ fi
 record_found=
 if [[ $type == a ]];then
     data="$ip_address"
+    [ -z "$hostname" ] && hostname=@
     [[ "$hostname" == '@' ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
     chapter Query $type_uppercase Record for FQDN '`'${fqdn_string}'`'
     if isRecordExist $type_uppercase $domain $fqdn_string $data $mktemp;then
