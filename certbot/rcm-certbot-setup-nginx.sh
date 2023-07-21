@@ -109,6 +109,10 @@ ____
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 code non_interactive="$non_interactive"
+until [[ -n "$email" ]];do
+    e Tips: Try --email=auto
+    _; read -p "Argument --email required: " email
+done
 if [[ $email == auto ]];then
     email=
     _email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
@@ -121,10 +125,11 @@ if [[ $email == auto ]];then
         if [[ "$selected" =~ ^[yY]$ ]]; then
             email="$_email"
         fi
+    else
+        code email=
     fi
 fi
 until [[ -n "$email" ]];do
-    e Tips: Try --email=auto
     _; read -p "Argument --email required: " email
 done
 code 'email="'$email'"'
