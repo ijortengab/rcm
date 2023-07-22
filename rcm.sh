@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.2'
+    echo '0.3.3'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -606,7 +606,7 @@ if [ -z "$fast" ];then
 fi
 
 # Execute command.
-# git ls-files | grep '\.sh$' | grep -v rcm\.sh | cut -d/ -f2
+# git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2
 if [ $command == list ];then
     command_list=$(cat << 'EOF'
 rcm-amavis-setup-ispconfig.sh
@@ -634,6 +634,7 @@ rcm-ispconfig-control-manage-email-alias.sh
 rcm-ispconfig-control-manage-email-mailbox.sh
 rcm-ispconfig-setup-dump-variables.sh
 rcm-ispconfig-setup-internal-command.sh
+rcm-ispconfig-setup-smtpd-certificate.sh
 rcm-ispconfig-setup-variation1.sh
 rcm-ispconfig-setup-variation2.sh
 rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
@@ -644,6 +645,7 @@ rcm-mariadb-setup-database.sh
 rcm-mariadb-setup-ispconfig.sh
 rcm-nginx-autoinstaller.sh
 rcm-nginx-setup-drupal.sh
+rcm-nginx-setup-hello-world-php-fpm.sh
 rcm-nginx-setup-hello-world-static.sh
 rcm-nginx-setup-ispconfig.sh
 rcm-nginx-setup-php-fpm.sh
