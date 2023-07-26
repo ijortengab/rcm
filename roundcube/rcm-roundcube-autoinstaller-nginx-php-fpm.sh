@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM RoundCube Auto-Installer
@@ -53,7 +53,7 @@ Usage: rcm-roundcube-autoinstaller-nginx-php-fpm.sh [options]
 Options:
    --php-version
         Set the version of PHP FPM.
-   --roundcube-version
+   --roundcube-version *
         Set the version of RoundCube.
 
 Global Options:
@@ -163,6 +163,7 @@ delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$roundcube_version" ]];do
     _; read -p "Argument --roundcube-version required: " roundcube_version
 done
+code 'roundcube_version="'$roundcube_version'"'
 code 'php_version="'$php_version'"'
 ____
 
