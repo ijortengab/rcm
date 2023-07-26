@@ -18,6 +18,8 @@ else
     done
 fi
 
+echo -n cd /usr/local/bin'; '
+echo ln -sf rcm.sh rcm
 cd /usr/local/bin
 ln -sf rcm.sh rcm
 cd - >/dev/null
