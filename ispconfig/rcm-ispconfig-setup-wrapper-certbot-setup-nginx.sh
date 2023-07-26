@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM ISPConfig Setup
@@ -211,10 +211,35 @@ EOF
     code 'email="'$email'"'
     domain="$fqdn_project"
     code 'domain="'$fqdn_project'"'
+    ____
+
+    chapter Mengecek '$PATH'
+    code PATH="$PATH"
+    notfound=
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __ '$PATH' sudah lengkap.
+    else
+      __ '$PATH' belum lengkap.
+      notfound=1
+    fi
+    ____
+
+    if [[ -n "$notfound" ]];then
+        chapter Memperbaiki '$PATH'
+        PATH=/snap/bin:$PATH
+        if grep -q '/snap/bin' <<< "$PATH";then
+          __; green '$PATH' sudah lengkap.; _.
+          __; magenta PATH="$PATH"; _.
+
+        else
+          __; red '$PATH' belum lengkap.; x
+        fi
+        ____
+    fi
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    PATH=/snap/bin:$PATH \
+    PATH=$PATH \
     rcm-certbot-setup-nginx.sh $isfast --root-sure \
         --domain="$domain" \
         --email="$email" \
