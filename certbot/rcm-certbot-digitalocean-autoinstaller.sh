@@ -36,7 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM Certbot DigitalOcean Autoinstaller
@@ -114,30 +114,6 @@ if [ -n "$notfound" ];then
     fi
     ____
 fi
-
-chapter Mengecek '$PATH'
-code PATH="$PATH"
-notfound=
-if grep -q '/snap/bin' <<< "$PATH";then
-  __ '$PATH' sudah lengkap.
-else
-  __ '$PATH' belum lengkap.
-  notfound=1
-fi
-____
-
-if [[ -n "$notfound" ]];then
-    chapter Memperbaiki '$PATH'
-    PATH=/snap/bin:$PATH
-    if grep -q '/snap/bin' <<< "$PATH";then
-      __; green '$PATH' sudah lengkap.; _.
-      __; magenta PATH="$PATH"; _.
-
-    else
-      __; red '$PATH' belum lengkap.; x
-    fi
-fi
-____
 
 exit 0
 
