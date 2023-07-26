@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM ISPConfig Setup
@@ -79,7 +79,7 @@ Environment Variables:
         Default to $HOME/.$dns_authenticator-token.ini
 
 Dependency:
-   rcm-certbot-setup-nginx.sh
+   rcm-certbot-obtain-certificates-wildcard.sh
 EOF
 }
 
@@ -283,40 +283,41 @@ EOF
     code 'domain="'$fqdn_project'"'
     ____
 
-    chapter Mengecek certificates atas nama '`'$domain'`'
+    chapter Mengecek '$PATH'
+    code PATH="$PATH"
     notfound=
-    if certbot certificates 2>/dev/null | grep -q -o "Certificate Name: ${domain}";then
-        __ Certificate obtained.
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __ '$PATH' sudah lengkap.
     else
-        __ Certificate not found.
-        notfound=1
+      __ '$PATH' belum lengkap.
+      notfound=1
     fi
     ____
 
-    if [ -n "$notfound" ];then
-        chapter Prepare arguments.
-        email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
-        if [ -n "$email" ];then
-            __ Certbot account has found: "$email"
-        else
-            email="${MAILBOX_HOST}@${domain}"
-        fi
-        code 'email="'$email'"'
-        ____
+    if [[ -n "$notfound" ]];then
+        chapter Memperbaiki '$PATH'
+        PATH=/snap/bin:$PATH
+        if grep -q '/snap/bin' <<< "$PATH";then
+          __; green '$PATH' sudah lengkap.; _.
+          __; magenta PATH="$PATH"; _.
 
-        chapter Request Certificate.
-        code certbot certonly --non-interactive --agree-tos --email='"'$email'"' --domain='"'$domain'"' -d='"''*.'$domain'"' --dns-digitalocean --dns-digitalocean-credentials='"'$TOKEN_INI'"'
-        certbot certonly --non-interactive --agree-tos --email="$email" --domain="$domain" -d="*.$domain" --dns-digitalocean --dns-digitalocean-credentials="$TOKEN_INI"
-        sleep .5
-        if certbot certificates 2>/dev/null | grep -q -o "Certificate Name: ${domain}";then
-            __; green Certificate obtained.; _.
         else
-            __; red Certificate not found.; x
+          __; red '$PATH' belum lengkap.; x
         fi
         ____
     fi
+    _ ___________________________________________________________________;_.;_.;
+
+    INDENT+="    " \
+    PATH=$PATH \
+    rcm-certbot-obtain-certificates-wildcard.sh $isfast --root-sure \
+        --dns-authenticator="$dns_authenticator" \
+        --domain="$domain" \
+        ; [ ! $? -eq 0 ] && x
+    _ ___________________________________________________________________;_.;_.;
 
     certificate_name="$domain"
+    code 'certificate_name="'$certificate_name'"'
     restart=
     link_symbolic "/etc/letsencrypt/live/${certificate_name}/fullchain.pem" \
         /etc/postfix/smtpd.cert
