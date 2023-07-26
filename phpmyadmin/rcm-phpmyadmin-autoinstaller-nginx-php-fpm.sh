@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM PHPMyAdmin Auto-Installer
@@ -53,7 +53,7 @@ Usage: rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh [options]
 Options:
    --php-version
         Set the version of PHP FPM.
-   --phpmyadmin-version
+   --phpmyadmin-version *
         Set the version of PHPMyAdmin.
 
 Global Options:
@@ -401,7 +401,7 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-chapter Mengecek informasi file konfigurasi PHPMyAdmin pada server indeexit 1.
+chapter Mengecek informasi file konfigurasi PHPMyAdmin pada server index 1.
 php=$(cat <<'EOF'
 $mode = $_SERVER['argv'][1];
 $file = $_SERVER['argv'][2];
