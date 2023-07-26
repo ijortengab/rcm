@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM PHP Setup
@@ -98,36 +98,6 @@ validateApplication() {
     done
     if [ -n "$aptnotfound" ];then
         __; red Gagal menginstall aplikasi:"$aptnotfound"; x
-    fi
-}
-addRepositoryPpaOndrejPhp() {
-    local notfound=
-    local string string_quoted
-    chapter Mengecek source PPA ondrej/php
-    # Based on https://packages.sury.org/php/README.txt
-    cd /etc/apt/sources.list.d
-    string='https://packages.sury.org/php/'
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
-        __ Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.
-    else
-        notfound=1
-        __ Tidak terdapat di direktori '`'/etc/apt/sources.list.d'`'.
-    fi
-    cd - >/dev/null
-    ____
-
-    if [ -n "$notfound" ];then
-        chapter Menambahkan source PPA ondrej/php
-        curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
-        sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
-        apt update -y
-        if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
-            __; green Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.; _.
-        else
-            __; red Tidak terdapat di direktori '`'/etc/apt/sources.list.d'`'.;  x
-        fi
-        ____
     fi
 }
 
