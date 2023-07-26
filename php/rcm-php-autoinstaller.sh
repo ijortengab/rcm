@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM PHP Auto-Installer
@@ -226,6 +226,14 @@ else
                         7.4) eligible=1 ;;
                         8.1) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.2) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        *) error PHP Version "$php_version" not supported; x;
+                    esac
+                    ;;
+                12)
+                    case "$php_version" in
+                        7.4) eligible=1 addRepositoryPpaOndrejPhp ;;
+                        8.1) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.2) eligible=1 ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
