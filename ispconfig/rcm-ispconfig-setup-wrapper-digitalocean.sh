@@ -53,7 +53,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM ISPConfig Setup
@@ -176,6 +176,7 @@ done
 code 'domain="'$domain'"'
 code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
+____
 
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
