@@ -6,6 +6,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --digitalocean) dns_authenticator=digitalocean; shift ;;
+        --dns-authenticator=*) dns_authenticator="${1#*=}"; shift ;;
+        --dns-authenticator) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then dns_authenticator="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
@@ -15,7 +18,11 @@ while [[ $# -gt 0 ]]; do
         --ispconfig-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ispconfig_version="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
+        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
+        --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
+        --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -44,7 +51,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM ISPConfig Auto-Installer
@@ -61,8 +68,14 @@ Options:
         Domain name of the server.
    --php-version
         Set the version of PHP FPM.
-   --ispconfig-version
+   --ispconfig-version *
         Set the version of ISPConfig.
+   --roundcube-version *
+        Set the version of RoundCube.
+   --phpmyadmin-version *
+        Set the version of PHPMyAdmin.
+   --dns-authenticator
+        Available value: digitalocean.
 
 Global Options:
    --fast
@@ -94,6 +107,13 @@ Dependency:
    php
    curl
    nginx
+   rcm-mariadb-setup-ispconfig.sh
+   rcm-nginx-setup-ispconfig.sh
+   rcm-php-setup-ispconfig.sh
+   rcm-postfix-setup-ispconfig.sh
+   rcm-ispconfig-setup-smtpd-certificate.sh
+   rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh
+   rcm-roundcube-autoinstaller-nginx-php-fpm.sh
    rcm-nginx-setup-php-fpm.sh
 EOF
 }
@@ -234,6 +254,75 @@ toggleMysqlRootPassword() {
         } ;;
     esac
 }
+createFileDebian12() {
+    if [ ! -f /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php ];then
+        fileMustExists /tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
+        __ Membuat file '`'debian120.conf.php'`'.
+        cp /tmp/ispconfig3_install/install/dist/conf/debian110.conf.php \
+           /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
+        sed -i \
+            -e 's,Debian 11,Debian 12,g' \
+            -e 's,debian110,debian120,g' \
+            -e 's,"7\.4","'$php_version'",g' \
+            -e 's,/7\.4/,/'$php_version'/,g' \
+            -e 's,php7\.4,php'$php_version',g' \
+            /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
+        # Edit informasi cron yang terlewat.
+        file=/tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
+        string="//* cron"
+        number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
+        number_1plus=$((number_1 - 1))
+        number_1plus2=$((number_1 + 1))
+        part1=$(sed -n '1,'$number_1plus'p' "$file")
+        part2=$(sed -n $number_1plus2',$p' "$file")
+        additional=$(cat << 'EOF'
+
+//* ufw
+$conf['ufw']['installed'] = false;
+
+//* cron
+$conf['cron']['installed'] = false;
+EOF
+        )
+        echo "$part1"$'\n'"$additional"$'\n'"$part2" > "$file"
+    fi
+    fileMustExists /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
+}
+editInstallLibDebian12() {
+    file=/tmp/ispconfig3_install/install/lib/install.lib.php
+    string="elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '12')"
+    edit=1
+    if grep -q -F "$string" "$file";then
+        __ File sudah diedit agar terdapat informasi Debian 12: $(basename "$file").
+        edit=
+    fi
+    if [ -n "$edit" ];then
+        __ Mengedit file: $(basename "$file").
+        string="elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '11')"
+        number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
+        number_1plus=$((number_1 + 6))
+        number_1plus2=$((number_1 + 7))
+        part1=$(sed -n '1,'$number_1plus'p' "$file")
+        part2=$(sed -n $number_1plus2',$p' "$file")
+        additional=$(cat << 'EOF'
+            } elseif(substr(trim(file_get_contents('/etc/debian_version')),0,2) == '12') {
+                $distname = 'Debian';
+                $distver = 'Bookworm';
+                $distconfid = 'debian120';
+                $distid = 'debian60';
+                $distbaseid = 'debian';
+                swriteln("Operating System: Debian 12.0 (Bookworm) or compatible\n");
+EOF
+        )
+        echo "$part1"$'\n'"$additional"$'\n'"$part2" > "$file"
+        __ Verifikasi.
+        if grep -q -F "$string" "$file";then
+            __; green File berhasil diedit agar terdapat informasi Debian 12: $(basename "$file").; _.
+        else
+            __; red File gagal diedit: $(basename "$file"); _.
+        fi
+    fi
+}
 
 # Title.
 title rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
@@ -259,6 +348,14 @@ until [[ -n "$ispconfig_version" ]];do
     _; read -p "Argument --ispconfig-version required: " ispconfig_version
 done
 code 'ispconfig_version="'$ispconfig_version'"'
+until [[ -n "$roundcube_version" ]];do
+    _; read -p "Argument --roundcube-version required: " roundcube_version
+done
+code 'roundcube_version="'$roundcube_version'"'
+until [[ -n "$phpmyadmin_version" ]];do
+    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
+done
+code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'php_version="'$php_version'"'
 until [[ -n "$domain" ]];do
     _; read -p "Argument --domain required: " domain
@@ -268,8 +365,21 @@ until [[ -n "$hostname" ]];do
     _; read -p "Argument --hostname required: " hostname
 done
 code 'hostname="'$hostname'"'
-fqdn="${hostname}.${domain}"
-code fqdn="$fqdn"
+fqdn_project="${hostname}.${domain}"
+code fqdn_project="$fqdn_project"
+case "$dns_authenticator" in
+    digitalocean) ;;
+    *) dns_authenticator=
+esac
+until [[ -n "$dns_authenticator" ]];do
+    _ Available value:' '; yellow digitalocean.; _.
+    _; read -p "Argument --dns-authenticator required: " dns_authenticator
+    case "$dns_authenticator" in
+        digitalocean) ;;
+        *) dns_authenticator=
+    esac
+done
+code 'dns_authenticator="'$dns_authenticator'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -281,6 +391,31 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
+_ _______________________________________________________________________;_.;_.;
+
+INDENT+="    " \
+rcm-mariadb-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-nginx-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-php-setup-ispconfig.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-postfix-setup-ispconfig.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-ispconfig-setup-smtpd-certificate.sh $isfast --root-sure \
+    --dns-authenticator="$dns_authenticator" \
+    --domain="$domain" \
+    && INDENT+="    " \
+rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --phpmyadmin-version="$phpmyadmin_version" \
+    --php-version="$php_version" \
+    && INDENT+="    " \
+rcm-roundcube-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+    --roundcube-version="$roundcube_version" \
+    --php-version="$php_version" \
+    ; [ ! $? -eq 0 ] && x
+_ _______________________________________________________________________;_.;_.;
 
 chapter Mengecek credentials ISPConfig.
 databaseCredentialIspconfig
@@ -425,6 +560,48 @@ if [ -n "$do_install" ];then
     fi
     cd - >/dev/null
     fileMustExists /tmp/ispconfig3_install/install/install.php
+
+    if [ -f /etc/os-release ];then
+        . /etc/os-release
+    fi
+    code 'ID="'$ID'"'
+    code 'VERSION_ID="'$VERSION_ID'"'
+    code 'ispconfig_version="'$ispconfig_version'"'
+    eligible=0
+    case $ID in
+        debian)
+            case "$VERSION_ID" in
+                11)
+                    case "$ispconfig_version" in
+                        3.2.7) eligible=1 ;;
+                        *) error ISPConfig Version "$ispconfig_version" not supported; x;
+                    esac
+                    ;;
+                12)
+                    case "$ispconfig_version" in
+                        3.2.9) eligible=1; createFileDebian12; editInstallLibDebian12 ;;
+                        *) error ISPConfig Version "$ispconfig_version" not supported; x;
+                    esac
+                    ;;
+                *)
+                    error OS "$ID" Version "$VERSION_ID" not supported; x;
+            esac
+            ;;
+        ubuntu)
+            case "$VERSION_ID" in
+                22.04)
+                    case "$ispconfig_version" in
+                        3.2.7) eligible=1;;
+                        *) error ISPConfig Version "$ispconfig_version" not supported; x;
+                    esac
+                    ;;
+                *)
+                    error OS "$ID" Version "$VERSION_ID" not supported; x;
+            esac
+            ;;
+        *) error OS "$ID" not supported; x;
+    esac
+
     if [ ! -f /tmp/ispconfig3_install/install/autoinstall.ini ];then
         __ Membuat file '`'autoinstall.ini'`'.
         cp /tmp/ispconfig3_install/docs/autoinstall_samples/autoinstall.ini.sample \
@@ -435,11 +612,12 @@ if [ -n "$do_install" ];then
     fi
     fileMustExists /tmp/ispconfig3_install/install/autoinstall.ini
     __; _, Verifikasi file '`'autoinstall.ini'`':' '
+
     mysql_root_passwd="$(<$MYSQL_ROOT_PASSWD)"
     reference="$(php -r "echo serialize([
         'install_mode' => 'expert',
         'configure_webserver' => 'n',
-        'hostname' => '$fqdn',
+        'hostname' => '$fqdn_project',
         'mysql_root_password' => '$mysql_root_passwd',
         'http_server' => 'nginx',
         'ispconfig_use_ssl' => 'n',
@@ -463,7 +641,7 @@ if [ -n "$do_install" ];then
         backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
         sed -e "s,^install_mode=.*$,install_mode=expert," \
             -e "s,^configure_webserver=.*$,configure_webserver=n," \
-            -e "s,^hostname=.*$,hostname=${fqdn}," \
+            -e "s,^hostname=.*$,hostname=${fqdn_project}," \
             -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
             -e "s,^http_server=.*$,http_server=nginx," \
             -e "s,^ispconfig_use_ssl=.*$,ispconfig_use_ssl=n," \
@@ -478,6 +656,7 @@ if [ -n "$do_install" ];then
             green Modifikasi file '`'autoinstall.ini'`' berhasil.; _.
         fi
     fi
+
     __ Memasang password MySQL untuk root
     toggleMysqlRootPassword yes
 
@@ -595,8 +774,14 @@ exit 0
 # --domain
 # --ispconfig-version
 # --php-version
+# --dns-authenticator
+# --phpmyadmin-version
+# --roundcube-version
 # )
 # FLAG_VALUE=(
+# )
+# CSV=(
+    # long:--digitalocean,parameter:dns_authenticator,type:flag,flag_option:true=digitalocean
 # )
 # EOF
 # clear
