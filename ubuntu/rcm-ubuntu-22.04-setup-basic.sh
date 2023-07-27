@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM Ubuntu 22.04 Setup Server
@@ -249,8 +249,6 @@ if [[ -n "$adjust" ]];then
 fi
 
 chapter Update Repository
-
-repository_required='# Trigger initialize update.'$'\n'"$repository_required"
 while IFS= read -r string; do
     if [[ -n $(grep "# $string" /etc/apt/sources.list) ]];then
         sed -i 's,^# '"$string"','"$string"',' /etc/apt/sources.list
@@ -266,11 +264,14 @@ done <<< "$repository_required"
     echo "$CONTENT" >> /etc/apt/sources.list
 }
 if [[ $update_now == 1 ]];then
-    code apt -y update
-    apt -y update
+    echo -n # For next feature.
 else
-    __ Repository updated.
+    echo -n # For next feature.
 fi
+code apt -y update
+code apt -y upgrade
+apt -y update
+apt -y upgrade
 ____
 
 downloadApplication $application
