@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.3'
+    echo '0.3.4'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -584,6 +584,17 @@ Rcm_prompt() {
         ____
     fi
 }
+sleepExtended() {
+    local countdown=$1
+    countdown=$((countdown - 1))
+    while [ "$countdown" -ge 0 ]; do
+        printf "\r\033[K" >&2
+        printf %"$countdown"s | tr " " "." >&2
+        printf "\r"
+        countdown=$((countdown - 1))
+        sleep .9
+    done
+}
 
 # Title.
 title rcm.sh
@@ -593,14 +604,7 @@ ____
 if [ -z "$fast" ];then
     yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
     if [[ $command =~ ^rcm ]];then
-        countdown=1
-        while [ "$countdown" -ge 0 ]; do
-            printf "\r\033[K" >&2
-            printf %"$countdown"s | tr " " "." >&2
-            printf "\r"
-            countdown=$((countdown - 1))
-            sleep .8
-        done
+        sleepExtended 2
     fi
     ____
 fi
