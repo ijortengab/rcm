@@ -47,7 +47,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM ISPConfig Control
@@ -76,6 +76,8 @@ Global Options:
 Environment Variables:
    DKIM_SELECTOR
         Default to default.
+   MAILBOX_WEB
+        Default to webmaster
 
 Dependency:
    ispconfig.sh
@@ -103,6 +105,97 @@ fileMustExists() {
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
+backupFile() {
+    local mode="$1"
+    local oldpath="$2" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -f "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -f "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    case $mode in
+        move)
+            mv "$oldpath" "$newpath" ;;
+        copy)
+            local user=$(stat -c "%U" "$oldpath")
+            local group=$(stat -c "%G" "$oldpath")
+            cp "$oldpath" "$newpath"
+            chown ${user}:${group} "$newpath"
+    esac
+}
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local create
+    _success=
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t isFileExists) == function ]] || { error Function isFileExists not found.; x; }
+
+    chapter Memeriksa file '`'$target'`'
+    isFileExists "$target"
+    if [ -n "$notfound" ];then
+        create=1
+    else
+        if [ -h "$target" ];then
+            __; _, Mengecek apakah file merujuk ke '`'$source'`':
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                _, ' 'Merujuk.; _.
+            else
+                _, ' 'Tidak Merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ File bukan merupakan symbolic link.
+            __ Melakukan backup.
+            backupFile move "$target"
+            create=1
+        fi
+    fi
+    ____
+
+    if [ -n "$create" ];then
+        chapter Membuat symbolic link '`'$target'`'.
+        code ln -s \"$source\" \"$target\"
+        ln -s "$source" "$target"
+        __ Verifikasi
+        if [ -h "$target" ];then
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                __; green Symbolic link berhasil dibuat.; _.
+                _success=1
+            else
+                __; red Symbolic link gagal dibuat.; x
+            fi
+        fi
+        ____
+    fi
+}
 
 # Title.
 title rcm-ispconfig-control-manage-domain.sh
@@ -112,6 +205,8 @@ ____
 chapter Dump variable.
 DKIM_SELECTOR=${DKIM_SELECTOR:=default}
 code 'DKIM_SELECTOR="'$DKIM_SELECTOR'"'
+MAILBOX_WEB=${MAILBOX_WEB:=webmaster}
+code 'MAILBOX_WEB="'$MAILBOX_WEB'"'
 code 'command="'$command'"'
 ispconfig_domain_exists_sure=
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
@@ -229,6 +324,7 @@ if [[ $command == add && -n "$notfound" ]];then
     __ Mempersiapkan file '`'${dirname}/${temp_ajax_get_json}'`'
     fileMustExists "${dirname}/${temp_ajax_get_json}"
     sed -i "/\$app->auth->check_module_permissions('mail');/d" "${dirname}/${temp_ajax_get_json}"
+    sed -i "s,if (\$dkim_strength==''),if (\$dkim_strength==0),g" "${dirname}/${temp_ajax_get_json}"
     php=$(cat <<- 'EOF'
 $dirname = $_SERVER['argv'][1];
 $file = $_SERVER['argv'][2];
@@ -321,6 +417,19 @@ EOF
     else
         __; green Domain berhasil terdaftar.; _.
     fi
+    ____
+
+    chapter Membuat welcome mail.
+    filename='/usr/local/share/ispconfig/mail/welcome_email_'$domain'.html'
+    mkdir -p $(dirname "$filename")
+    cat <<-EOF > "$filename"
+From: Webmaster <$MAILBOX_WEB@$domain>
+Subject: Welcome to your new email account.
+
+<p>Welcome to your new email account. Your webmaster.</p>
+
+EOF
+    link_symbolic "$filename" "$ispconfig_install_dir/server/conf-custom/mail/welcome_email_${domain}.html"
     ____
 fi
 
