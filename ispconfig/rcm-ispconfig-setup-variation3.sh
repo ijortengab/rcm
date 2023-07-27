@@ -50,7 +50,7 @@ printVersion() {
 }
 printHelp() {
     title RCM ISPConfig Setup
-    _ 'Variation '; yellow 1; _, . Debian 11, ISPConfig 3.2.7, PHPMyAdmin 5.2.0, Roundcube 1.6.0, PHP 7.4, DigitalOcean DNS.; _.
+    _ 'Variation '; yellow 3; _, . Debian 12, ISPConfig 3.2.10, PHPMyAdmin 5.2.1, Roundcube 1.6.2, PHP 8.1, DigitalOcean DNS.; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
@@ -239,7 +239,7 @@ phpmyadmin_version=5.2.1
 code phpmyadmin_version="$phpmyadmin_version"
 roundcube_version=1.6.2
 code roundcube_version="$roundcube_version"
-ispconfig_version=3.2.9
+ispconfig_version=3.2.10
 code ispconfig_version="$ispconfig_version"
 until [[ -n "$ip_address" ]];do
     e Tips: Try --ip-address=auto
