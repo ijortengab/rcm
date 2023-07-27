@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.4'
+    echo '0.3.5'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -441,7 +441,7 @@ Rcm_prompt() {
             backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             available_values=()
-            _available_values=`echo "$label" | sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
+            _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
             if [ -n "$_available_values" ];then
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
