@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.3.1'
 }
 printHelp() {
     title RCM Debian 11 Setup Server
@@ -151,6 +151,7 @@ deb-src http://deb.debian.org/debian bullseye-updates main
 EOF
 )
                 application=
+                application+=' cron dnsutils'
                 application+=' lsb-release apt-transport-https ca-certificates software-properties-common'
                 application+=' sudo patch curl wget net-tools apache2-utils openssl rkhunter'
                 application+=' binutils dnsutils pwgen daemon apt-listchanges lrzip p7zip'
@@ -182,28 +183,6 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-
-chapter Mengecek '$PATH'
-code PATH="$PATH"
-notfound=
-if grep -q '/usr/sbin' <<< "$PATH";then
-  __ '$PATH' sudah lengkap.
-else
-  __ '$PATH' belum lengkap.
-  notfound=1
-fi
-
-if [[ -n "$notfound" ]];then
-    chapter Memperbaiki '$PATH'
-    PATH=/usr/local/sbin:/usr/sbin:/sbin:$PATH
-    if grep -q '/usr/sbin' <<< "$PATH";then
-      __; green '$PATH' sudah lengkap.; _.
-      __; magenta PATH="$PATH"; _.
-    else
-      __; red '$PATH' belum lengkap.; x
-    fi
-fi
-____
 
 chapter Mengecek shell default
 is_dash=
@@ -272,8 +251,6 @@ if [[ -n "$adjust" ]];then
 fi
 
 chapter Update Repository
-
-repository_required='# Trigger initialize update.'$'\n'"$repository_required"
 while IFS= read -r string; do
     if [[ -n $(grep "# $string" /etc/apt/sources.list) ]];then
         sed -i 's,^# '"$string"','"$string"',' /etc/apt/sources.list
@@ -289,11 +266,14 @@ done <<< "$repository_required"
     echo "$CONTENT" >> /etc/apt/sources.list
 }
 if [[ $update_now == 1 ]];then
-    code apt -y update
-    apt -y update
+    echo -n # For next feature.
 else
-    __ Repository updated.
+    echo -n # For next feature.
 fi
+code apt -y update
+code apt -y upgrade
+apt -y update
+apt -y upgrade
 ____
 
 downloadApplication $application
