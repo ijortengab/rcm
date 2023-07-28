@@ -51,7 +51,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.1'
+    echo '0.3.2'
 }
 printHelp() {
     title RCM ISPConfig Auto-Installer
@@ -580,6 +580,7 @@ if [ -n "$do_install" ];then
                 12)
                     case "$ispconfig_version" in
                         3.2.9) eligible=1; createFileDebian12; editInstallLibDebian12 ;;
+                        3.2.10) eligible=1; createFileDebian12; editInstallLibDebian12 ;;
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
                     ;;
