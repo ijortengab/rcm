@@ -612,10 +612,15 @@ rcm-ispconfig-setup-dump-variables.sh $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 _ _______________________________________________________________________;_.;_.;
 
+chapter Send Welcome email.
+code postqueue -f
+sleepExtended 3
+postqueue -f
+____
+
 chapter Finish
 e If you want to see the credentials again, please execute this command:
 code rcm-ispconfig-setup-dump-variables.sh --domain=$domain
-sleepExtended 3
 ____
 
 exit 0
