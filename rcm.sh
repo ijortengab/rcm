@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.5'
+    echo '0.3.6'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -760,7 +760,6 @@ __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-declare -i countdown
 ____
 
 if [ -z "$root_sure" ];then
@@ -821,14 +820,7 @@ ____
 
 if [ -z "$fast" ];then
     yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    countdown=2
-    while [ "$countdown" -ge 0 ]; do
-        printf "\r\033[K" >&2
-        printf %"$countdown"s | tr " " "." >&2
-        printf "\r"
-        countdown=$((countdown - 1))
-        sleep .8
-    done
+    sleepExtended 2
     ____
 fi
 
