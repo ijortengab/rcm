@@ -62,7 +62,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.2'
+    echo '0.3.3'
 }
 printHelp() {
     title RCM DigitalOcean API
@@ -82,7 +82,7 @@ Options:
    --ip-address
         Set the IP Address of A record.
    --hostname
-        Set the hostname of CNAME or TXT record.
+        Set the hostname.
    --hostname-origin
         Set the source alias of CNAME record.
    --mail-provider
@@ -360,7 +360,7 @@ if [[ $type == a ]];then
     if isRecordExist $type_uppercase $domain $fqdn_string $data $mktemp;then
         record_found=1
         __ DNS $type_uppercase Record of '`'${fqdn_string}'`' point to IP '`'${ip_address}'`' found in DNS Digital Ocean.
-    elif insertRecord $type_uppercase $domain $hostname $data;then
+    elif insertRecord $type_uppercase $domain "$hostname" $data;then
         __; green DNS $type_uppercase Record of '`'${fqdn_string}'`' point to IP '`'${ip_address}'`' created in DNS Digital Ocean.; _.
     fi
     ____
@@ -378,7 +378,7 @@ if [[ $type == cname ]];then
     if isRecordExist $type_uppercase $domain $fqdn_string $data $mktemp;then
         record_found=1
         __ DNS $type_uppercase Record of '`'$fqdn_string'`' alias to '`'${alias_to}'`' found in DNS Digital Ocean.
-    elif insertRecord $type_uppercase $domain $hostname "$datadot";then
+    elif insertRecord $type_uppercase $domain "$hostname" "$datadot";then
         __; green DNS $type_uppercase Record of '`'$fqdn_string'`' alias to '`'${alias_to}'`' created in DNS Digital Ocean.; _.
     fi
     ____
@@ -397,7 +397,7 @@ if [[ $type == mx ]];then
     if isRecordExist $type_uppercase $domain $fqdn_string "$data" $mktemp;then
         record_found=1
         __ DNS $type_uppercase Record of '`'$fqdn_string'`' handled by '`'${mail_provider}'`' found in DNS Digital Ocean.
-    elif insertRecord $type_uppercase $domain $hostname "$datadot";then
+    elif insertRecord $type_uppercase $domain "$hostname" "$datadot";then
         __; green DNS $type_uppercase Record of '`'$fqdn_string'`' handled by '`'${mail_provider}'`' created in DNS Digital Ocean.; _.
     fi
     ____
@@ -410,7 +410,7 @@ if [[ $type == txt ]];then
         record_found=1
         __; _, DNS $type_uppercase Record of '`'$fqdn_string'`' found in DNS Digital Ocean.
         [ -n "$value_summarize" ] && _, ' The value is about '"$value_summarize".; _.;
-    elif insertRecord $type_uppercase $domain $hostname "$data";then
+    elif insertRecord $type_uppercase $domain "$hostname" "$data";then
         __; green DNS $type_uppercase Record of '`'$fqdn_string'`' created in DNS Digital Ocean.
         [ -n "$value_summarize" ] && _, ' The value is about '"$value_summarize".; _.;
     fi
@@ -420,7 +420,7 @@ if [[ "$command" == delete && -n "$record_found" ]];then
     while IFS= read -r line; do
         __ Delete record id "$line" of domain "$domain"
         if deleteRecord $domain $line;then
-            __; green DNS $type_uppercase Record of '`'$hostname'`' from '`'${domain}'`' deleted in DNS Digital Ocean.; _.
+            __; green DNS $type_uppercase Record of '`'"$hostname"'`' from '`'${domain}'`' deleted in DNS Digital Ocean.; _.
         fi
     done <<< $(getIdRecords "$mktemp")
     ____
