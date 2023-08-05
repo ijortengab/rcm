@@ -616,12 +616,14 @@ if [ $command == list ];then
 rcm-amavis-setup-ispconfig.sh
 rcm-certbot-autoinstaller.sh
 rcm-certbot-digitalocean-autoinstaller.sh
+rcm-certbot-obtain-certificates-wildcard.sh
 rcm-certbot-setup-nginx.sh
 rcm-composer-autoinstaller.sh
 rcm-cron-setup-wsl-autorun-crond.sh
 rcm-cron-setup-wsl-autorun-sshd.sh
 rcm-cron-setup-wsl-port-forwarding.sh
 rcm-debian-11-setup-basic.sh
+rcm-debian-12-setup-basic.sh
 rcm-digitalocean-api-manage-domain-record.sh
 rcm-digitalocean-api-manage-domain.sh
 rcm-drupal-autoinstaller-nginx-php-fpm.sh
@@ -631,6 +633,8 @@ rcm-drupal-setup-variation1.sh
 rcm-drupal-setup-variation2.sh
 rcm-drupal-setup-variation3.sh
 rcm-drupal-setup-variation4.sh
+rcm-drupal-setup-variation5.sh
+rcm-drupal-setup-variation6.sh
 rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
 rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
 rcm-ispconfig-control-manage-domain.sh
@@ -641,6 +645,7 @@ rcm-ispconfig-setup-internal-command.sh
 rcm-ispconfig-setup-smtpd-certificate.sh
 rcm-ispconfig-setup-variation1.sh
 rcm-ispconfig-setup-variation2.sh
+rcm-ispconfig-setup-variation3.sh
 rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
 rcm-ispconfig-setup-wrapper-digitalocean.sh
 rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh
