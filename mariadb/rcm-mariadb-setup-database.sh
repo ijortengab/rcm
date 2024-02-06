@@ -98,17 +98,17 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 until [[ -n "$db_name" ]];do
-    _; read -p "Argument --db-name required: " db_name
+    _; read -p "# Argument --db-name required: " db_name
 done
 code 'db_name="'$db_name'"'
 code 'db_user="'$db_user'"'
 if [ -n "$db_user" ];then
     until [[ -n "$db_user_password" ]];do
-        _; read -p "Argument --db-user-password required: " db_user_password
+        _; read -p "# Argument --db-user-password required: " db_user_password
     done
     code 'db_user_password="'$db_user_password'"'
     until [[ -n "$db_user_host" ]];do
-        _; read -p "Argument --db-user-host required: " db_user_host
+        _; read -p "# Argument --db-user-host required: " db_user_host
     done
     code 'db_user_host="'$db_user_host'"'
 fi

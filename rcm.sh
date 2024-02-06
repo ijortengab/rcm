@@ -203,7 +203,7 @@ printSelectDialog() {
         _, ' '; yellow "$e"
     done; _, '.'; _.
     while true; do
-        __; read -p "Type the value: " value
+        __; read -p "# Type the value: " value
         if [ -n "$value" ];then
             ArraySearch "$value" source[@]
             reference_key="$_return"; unset _return; # Clear.
@@ -461,7 +461,7 @@ Rcm_prompt() {
                     fi
                 fi
                 until [[ -n "$value" ]];do
-                    __; read -p "Type the value: " value
+                    __; read -p "# Type the value: " value
                 done
                 argument_pass+=("${parameter}=${value}")
             elif [ -n "$is_flag" ];then
@@ -487,7 +487,7 @@ Rcm_prompt() {
                                 fi
                             fi
                             until [[ -n "$value" ]];do
-                                __; read -p "Type the value: " value
+                                __; read -p "# Type the value: " value
                             done
                             argument_pass+=("${parameter}=${value}")
                         else
@@ -506,7 +506,7 @@ Rcm_prompt() {
                         printHistoryDialog
                     fi
                     if [ -z "$value" ];then
-                        __; read -p "Type the value: " value
+                        __; read -p "# Type the value: " value
                     fi
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
@@ -528,7 +528,7 @@ Rcm_prompt() {
                     fi
                 fi
                 if [ -z "$value" ];then
-                    __; read -p "Type the value: " value
+                    __; read -p "# Type the value: " value
                 fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
@@ -559,13 +559,13 @@ Rcm_prompt() {
                                 printHistoryDialog
                             fi
                             if [ -z "$value" ];then
-                                __; read -p "Type the value: " value
+                                __; read -p "# Type the value: " value
                             fi
                             if [ -n "$value" ];then
                                 argument_pass+=("${value}")
                             fi
                         else
-                            __; read -p "Type the value: " value
+                            __; read -p "# Type the value: " value
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
                         fi
                         # Backup to text file.
@@ -736,7 +736,7 @@ EOF
                 esac
             done
         fi
-        _; read -p "Number of command to select: " number
+        _; read -p "# Number of command to select: " number
         if [ -z "$number" ];then
             error The number is required.; _.
         elif [[ "$number" =~ ^[0-9]+$ ]];then

@@ -118,15 +118,15 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 until [[ -n "$filename" ]];do
-    _; read -p "Argument --filename required: " filename
+    _; read -p "# Argument --filename required: " filename
 done
 code 'filename="'$filename'"'
 until [[ -n "$root" ]];do
-    _; read -p "Argument --root required: " root
+    _; read -p "# Argument --root required: " root
 done
 code 'root="'$root'"'
 until [[ ${#server_name[@]} -gt 0 ]];do
-    _; read -p "Argument --server-name required: " _server_name
+    _; read -p "# Argument --server-name required: " _server_name
     [ -n "$_server_name" ] && server_name+=("$_server_name")
 done
 code 'server_name=('"${server_name[@]}"')'

@@ -278,15 +278,15 @@ code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
 until [[ -n "$phpmyadmin_version" ]];do
-    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
+    _; read -p "# Argument --phpmyadmin-version required: " phpmyadmin_version
 done
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 until [[ -n "$roundcube_version" ]];do
-    _; read -p "Argument --roundcube-version required: " roundcube_version
+    _; read -p "# Argument --roundcube-version required: " roundcube_version
 done
 code 'roundcube_version="'$roundcube_version'"'
 until [[ -n "$ispconfig_version" ]];do
-    _; read -p "Argument --ispconfig-version required: " ispconfig_version
+    _; read -p "# Argument --ispconfig-version required: " ispconfig_version
 done
 code 'ispconfig_version="'$ispconfig_version'"'
 delay=.5; [ -n "$fast" ] && unset delay

@@ -212,7 +212,7 @@ ispconfig_domain_exists_sure=
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
+    _; read -p "# Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 ____

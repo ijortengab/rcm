@@ -161,7 +161,7 @@ PHPMYADMIN_NGINX_CONFIG_FILE=${PHPMYADMIN_NGINX_CONFIG_FILE:=phpmyadmin}
 code 'PHPMYADMIN_NGINX_CONFIG_FILE="'$PHPMYADMIN_NGINX_CONFIG_FILE'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$phpmyadmin_version" ]];do
-    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
+    _; read -p "# Argument --phpmyadmin-version required: " phpmyadmin_version
 done
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'php_version="'$php_version'"'

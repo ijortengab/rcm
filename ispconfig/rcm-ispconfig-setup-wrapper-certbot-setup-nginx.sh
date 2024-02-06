@@ -130,7 +130,7 @@ MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'subdomain="'$subdomain'"'
 until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
+    _; read -p "# Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then
@@ -145,7 +145,7 @@ case "$dns_authenticator" in
 esac
 until [[ -n "$dns_authenticator" ]];do
     _ Available value:' '; yellow digitalocean.; _.
-    _; read -p "Argument --dns-authenticator required: " dns_authenticator
+    _; read -p "# Argument --dns-authenticator required: " dns_authenticator
     case "$dns_authenticator" in
         digitalocean) ;;
         *) dns_authenticator=

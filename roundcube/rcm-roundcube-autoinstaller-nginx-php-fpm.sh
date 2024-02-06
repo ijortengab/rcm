@@ -161,7 +161,7 @@ ROUNDCUBE_NGINX_CONFIG_FILE=${ROUNDCUBE_NGINX_CONFIG_FILE:=roundcube}
 code 'ROUNDCUBE_NGINX_CONFIG_FILE="'$ROUNDCUBE_NGINX_CONFIG_FILE'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$roundcube_version" ]];do
-    _; read -p "Argument --roundcube-version required: " roundcube_version
+    _; read -p "# Argument --roundcube-version required: " roundcube_version
 done
 code 'roundcube_version="'$roundcube_version'"'
 code 'php_version="'$php_version'"'
