@@ -602,7 +602,7 @@ ____
 
 # Prompt.
 if [ -z "$fast" ];then
-    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
     if [[ $command =~ ^rcm ]];then
         sleepExtended 2
     fi
@@ -692,7 +692,7 @@ EOF
     _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
     _ '['; yellow Enter; _, ']'; _, ' Show all commands. (Tips navigate: press space key for next page, press q to quit.)'; _.
     while true; do
-        read -rsn 1 -p "Select: " char
+        _ ''; read -rsn 1 -p "Select: " char
         if [ -z "$char" ];then
             printf "\r\033[K" >&2
             echo "$command_list" | less -N -X
@@ -719,7 +719,7 @@ EOF
             _ '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
             _ '['; yellow Enter; _, ']'; _, ' Type the number of command to select.'; _.
             while true; do
-                read -rsn 1 -p "Select: " char
+                _ ''; read -rsn 1 -p "Select: " char
                 if [ -z "$char" ];then
                     printf "\r\033[K" >&2
                     break
@@ -824,7 +824,7 @@ code ${command} ${isfast}"$@"
 ____
 
 if [ -z "$fast" ];then
-    yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
     sleepExtended 2
     ____
 fi
