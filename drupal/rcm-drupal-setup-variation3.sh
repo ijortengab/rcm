@@ -133,7 +133,7 @@ code drupal_version="$drupal_version"
 drush_version=12
 code drush_version="$drush_version"
 until [[ -n "$project_name" ]];do
-    _; read -p "# Argument --project-name required: " project_name
+    _; read -p "Argument --project-name required: " project_name
 done
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi

@@ -119,11 +119,11 @@ ____
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$hostname" ]];do
-    _; read -p "# Argument --hostname required: " hostname
+    _; read -p "Argument --hostname required: " hostname
 done
 code 'hostname="'$hostname'"'
 fqdn_string="${hostname}.${domain}"

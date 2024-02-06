@@ -91,7 +91,7 @@ chapter Dump variable.
 HOME_DIRECTORY=${HOME_DIRECTORY:=$HOME}
 code 'HOME_DIRECTORY="'$HOME_DIRECTORY'"'
 until [[ -n "$project_name" ]];do
-    _; read -p "# Argument --project-name required: " project_name
+    _; read -p "Argument --project-name required: " project_name
 done
 code 'domain="'$domain'"'
 code 'project_name="'$project_name'"'

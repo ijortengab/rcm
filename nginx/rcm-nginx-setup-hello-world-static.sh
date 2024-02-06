@@ -120,7 +120,7 @@ ____
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 delay=.5; [ -n "$fast" ] && unset delay

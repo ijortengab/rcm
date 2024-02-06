@@ -142,7 +142,7 @@ case "$type" in
 esac
 until [[ -n "$type" ]];do
     _ Available value:' '; yellow spf, dkim, dmarc.; _.
-    _; read -p "# Argument --type required: " type
+    _; read -p "Argument --type required: " type
     case "$type" in
         spf|dkim|dmarc) ;;
         *) type=
@@ -152,17 +152,17 @@ code 'type="'$type'"'
 case "$type" in
     spf)
         until [[ -n "$mail_provider" ]];do
-            _; read -p "# Argument --mail-provider required: " mail_provider
+            _; read -p "Argument --mail-provider required: " mail_provider
         done
         ;;
     dmarc)
         until [[ -n "$email" ]];do
-            _; read -p "# Argument --email required: " email
+            _; read -p "Argument --email required: " email
         done
         ;;
     dkim)
         until [[ -n "$dns_record" || -n "$dns_record_auto" ]];do
-            _; read -p "# Argument --dns-record required: " dns_record
+            _; read -p "Argument --dns-record required: " dns_record
         done
         ;;
 esac
@@ -171,7 +171,7 @@ code 'hostname="'$hostname'"'
 code 'mail_provider="'$mail_provider'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'

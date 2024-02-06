@@ -219,15 +219,15 @@ MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 code 'timezone="'$timezone'"'
 until [[ -n "$digitalocean_token" ]];do
-    _; read -p "# Argument --digitalocean-token required: " digitalocean_token
+    _; read -p "Argument --digitalocean-token required: " digitalocean_token
 done
 code 'digitalocean_token="'$digitalocean_token'"'
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$hostname" ]];do
-    _; read -p "# Argument --hostname required: " hostname
+    _; read -p "Argument --hostname required: " hostname
 done
 code 'hostname="'$hostname'"'
 fqdn="${hostname}.${domain}"
@@ -243,7 +243,7 @@ ispconfig_version=3.2.10
 code ispconfig_version="$ispconfig_version"
 until [[ -n "$ip_address" ]];do
     e Tips: Try --ip-address=auto
-    _; read -p "# Argument --ip-address required: " ip_address
+    _; read -p "Argument --ip-address required: " ip_address
 done
 if [[ $ip_address == auto ]];then
     ip_address=
@@ -261,7 +261,7 @@ if [[ $ip_address == auto ]];then
     fi
 fi
 until [[ -n "$ip_address" ]];do
-    _; read -p "# Argument --ip-address required: " ip_address
+    _; read -p "Argument --ip-address required: " ip_address
 done
 code ip_address="$ip_address"
 if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<<  "$ip_address" ;then

@@ -272,11 +272,11 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$name" ]];do
-    _; read -p "# Argument --name required: " name
+    _; read -p "Argument --name required: " name
 done
 code 'name="'$name'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'

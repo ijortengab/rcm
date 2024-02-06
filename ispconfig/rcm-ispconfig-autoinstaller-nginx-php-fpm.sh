@@ -345,24 +345,24 @@ ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
 code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
 delay=.5; [ -n "$fast" ] && unset delay
 until [[ -n "$ispconfig_version" ]];do
-    _; read -p "# Argument --ispconfig-version required: " ispconfig_version
+    _; read -p "Argument --ispconfig-version required: " ispconfig_version
 done
 code 'ispconfig_version="'$ispconfig_version'"'
 until [[ -n "$roundcube_version" ]];do
-    _; read -p "# Argument --roundcube-version required: " roundcube_version
+    _; read -p "Argument --roundcube-version required: " roundcube_version
 done
 code 'roundcube_version="'$roundcube_version'"'
 until [[ -n "$phpmyadmin_version" ]];do
-    _; read -p "# Argument --phpmyadmin-version required: " phpmyadmin_version
+    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
 done
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'php_version="'$php_version'"'
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 until [[ -n "$hostname" ]];do
-    _; read -p "# Argument --hostname required: " hostname
+    _; read -p "Argument --hostname required: " hostname
 done
 code 'hostname="'$hostname'"'
 fqdn_project="${hostname}.${domain}"
@@ -373,7 +373,7 @@ case "$dns_authenticator" in
 esac
 until [[ -n "$dns_authenticator" ]];do
     _ Available value:' '; yellow digitalocean.; _.
-    _; read -p "# Argument --dns-authenticator required: " dns_authenticator
+    _; read -p "Argument --dns-authenticator required: " dns_authenticator
     case "$dns_authenticator" in
         digitalocean) ;;
         *) dns_authenticator=

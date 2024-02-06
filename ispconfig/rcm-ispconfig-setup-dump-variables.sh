@@ -241,7 +241,7 @@ code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 until [[ -n "$domain" ]];do
-    _; read -p "# Argument --domain required: " domain
+    _; read -p "Argument --domain required: " domain
 done
 code 'domain="'$domain'"'
 code 'ip_address="'$ip_address'"'
