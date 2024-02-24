@@ -185,6 +185,7 @@ rcm-php-setup-drupal.sh $isfast --root-sure \
 if [ -n "$is_wsl" ];then
     INDENT+="    " \
     rcm-wsl-setup-lemp-stack.sh $isfast --root-sure \
+        --php-version="$php_version" \
         ; [ ! $? -eq 0 ] && x
 fi
 INDENT+="    " \
