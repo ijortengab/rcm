@@ -151,7 +151,7 @@ deb-src http://deb.debian.org/debian bookworm-updates main
 EOF
 )
                 application=
-                application+=' cron dnsutils'
+                application+=' cron'
                 application+=' lsb-release apt-transport-https ca-certificates software-properties-common'
                 application+=' sudo patch curl wget net-tools apache2-utils openssl rkhunter'
                 application+=' binutils dnsutils pwgen daemon apt-listchanges lrzip p7zip'
