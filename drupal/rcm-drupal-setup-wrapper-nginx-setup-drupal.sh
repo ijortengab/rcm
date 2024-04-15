@@ -170,7 +170,7 @@ code filename="$filename"
 server_name="$fqdn_project"
 code server_name="$server_name"
 ____
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-drupal.sh $isfast --root-sure \
@@ -179,7 +179,7 @@ rcm-nginx-setup-drupal.sh $isfast --root-sure \
     --filename="$filename" \
     --server-name="$server_name" \
     ; [ ! $? -eq 0 ] && x
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 exit 0
 

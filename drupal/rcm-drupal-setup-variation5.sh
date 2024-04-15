@@ -163,7 +163,7 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-debian-12-setup-basic.sh $isfast --root-sure \
@@ -225,7 +225,7 @@ rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
     --project-parent-name="$project_parent_name" \
     --domain="$domain" \
     ; [ ! $? -eq 0 ] && x
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:

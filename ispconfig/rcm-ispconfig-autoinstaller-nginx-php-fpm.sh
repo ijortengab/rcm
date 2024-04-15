@@ -391,7 +391,7 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-mariadb-setup-ispconfig.sh $isfast --root-sure \
@@ -415,7 +415,7 @@ rcm-roundcube-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
     --roundcube-version="$roundcube_version" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek credentials ISPConfig.
 databaseCredentialIspconfig
@@ -440,7 +440,7 @@ code filename="$filename"
 server_name="$ISPCONFIG_FQDN_LOCALHOST"
 code server_name="$server_name"
 ____
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
@@ -449,7 +449,7 @@ rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
     --server-name="$server_name" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek subdomain '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
 notfound=

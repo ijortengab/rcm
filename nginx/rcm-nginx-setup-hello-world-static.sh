@@ -144,7 +144,7 @@ code filename="$filename"
 server_name=("$domain")
 code server_name="${server_name[@]}"
 ____
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-static.sh $isfast --root-sure \
@@ -152,7 +152,7 @@ rcm-nginx-setup-static.sh $isfast --root-sure \
     --filename="$filename" \
     --server-name="$server_name" \
     ; [ ! $? -eq 0 ] && x
-_ _______________________________________________________________________;_.;_.;
+_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mempersiapkan web root directory.
 __; magenta root='"'$root'"'; _.
