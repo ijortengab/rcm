@@ -81,7 +81,8 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' 
 downloadApplication() {
     local aptnotfound=
     local string_quoted
-    chapter Melakukan instalasi aplikasi "$@".
+    chapter Melakukan instalasi aplikasi.
+    code apt install "$@"
     [ -z "$aptinstalled" ] && aptinstalled=$(apt --installed list 2>/dev/null)
     for i in "$@"; do
         string_quoted=$(sed "s/\./\\\./g" <<< "$i")

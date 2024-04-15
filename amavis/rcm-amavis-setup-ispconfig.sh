@@ -182,7 +182,8 @@ RcmAmavisSetupIspconfig_startTweak() {
 }
 downloadApplication() {
     local aptnotfound=
-    chapter Melakukan instalasi aplikasi "$@".
+    chapter Melakukan instalasi aplikasi.
+    code apt install "$@"
     [ -z "$aptinstalled" ] && aptinstalled=$(apt --installed list 2>/dev/null)
     for i in "$@"; do
         if ! grep -q "^$i/" <<< "$aptinstalled";then
