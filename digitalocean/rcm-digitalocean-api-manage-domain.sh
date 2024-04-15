@@ -161,9 +161,9 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 TOKEN=${TOKEN:=$HOME/.digitalocean-token.txt}
 code 'TOKEN="'$TOKEN'"'

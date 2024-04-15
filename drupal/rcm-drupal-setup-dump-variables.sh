@@ -131,9 +131,9 @@ ____
 chapter Dump variable.
 HOME_DIRECTORY=${HOME_DIRECTORY:=$HOME}
 code 'HOME_DIRECTORY="'$HOME_DIRECTORY'"'
-until [[ -n "$project_name" ]];do
-    _; read -p "Argument --project-name required: " project_name
-done
+if [ -z "$project_name" ];then
+    error "Argument --project-name required."; x
+fi
 code 'domain="'$domain'"'
 code 'project_name="'$project_name'"'
 code 'project_parent_name="'$project_parent_name'"'

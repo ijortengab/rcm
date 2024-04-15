@@ -218,17 +218,17 @@ code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
 code 'timezone="'$timezone'"'
-until [[ -n "$digitalocean_token" ]];do
-    _; read -p "Argument --digitalocean-token required: " digitalocean_token
-done
+if [ -z "$digitalocean_token" ];then
+    error "Argument --digitalocean-token required."; x
+fi
 code 'digitalocean_token="'$digitalocean_token'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
-until [[ -n "$hostname" ]];do
-    _; read -p "Argument --hostname required: " hostname
-done
+if [ -z "$hostname" ];then
+    error "Argument --hostname required."; x
+fi
 code 'hostname="'$hostname'"'
 fqdn="${hostname}.${domain}"
 code fqdn="$fqdn"
@@ -260,9 +260,9 @@ if [[ $ip_address == auto ]];then
         fi
     fi
 fi
-until [[ -n "$ip_address" ]];do
-    _; read -p "Argument --ip-address required: " ip_address
-done
+if [ -z "$ip_address" ];then
+    error "Argument --ip-address required."; x
+fi
 code ip_address="$ip_address"
 if ! grep -q -m 1 -oE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$' <<<  "$ip_address" ;then
     error IP Address version 4 format is not valid; x

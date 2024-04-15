@@ -170,9 +170,9 @@ hostname=${hostname:=@}
 code 'hostname="'$hostname'"'
 code 'mail_provider="'$mail_provider'"'
 delay=.5; [ -n "$fast" ] && unset delay
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 code 'digitalocean_domain_exists_sure="'$digitalocean_domain_exists_sure'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'

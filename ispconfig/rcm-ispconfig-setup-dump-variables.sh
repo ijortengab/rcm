@@ -240,9 +240,9 @@ MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 MAILBOX_POST=${MAILBOX_POST:=postmaster}
 code 'MAILBOX_POST="'$MAILBOX_POST'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 code 'ip_address="'$ip_address'"'
 code 'hostname="'$hostname'"'

@@ -119,9 +119,9 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____

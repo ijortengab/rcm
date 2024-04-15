@@ -277,17 +277,17 @@ ISPCONFIG_REMOTE_USER_ROOT=${ISPCONFIG_REMOTE_USER_ROOT:=root}
 code 'ISPCONFIG_REMOTE_USER_ROOT="'$ISPCONFIG_REMOTE_USER_ROOT'"'
 ISPCONFIG_FQDN_LOCALHOST=${ISPCONFIG_FQDN_LOCALHOST:=ispconfig.localhost}
 code 'ISPCONFIG_FQDN_LOCALHOST="'$ISPCONFIG_FQDN_LOCALHOST'"'
-until [[ -n "$phpmyadmin_version" ]];do
-    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
-done
+if [ -z "$phpmyadmin_version" ];then
+    error "Argument --phpmyadmin-version required."; x
+fi
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
-until [[ -n "$roundcube_version" ]];do
-    _; read -p "Argument --roundcube-version required: " roundcube_version
-done
+if [ -z "$roundcube_version" ];then
+    error "Argument --roundcube-version required."; x
+fi
 code 'roundcube_version="'$roundcube_version'"'
-until [[ -n "$ispconfig_version" ]];do
-    _; read -p "Argument --ispconfig-version required: " ispconfig_version
-done
+if [ -z "$ispconfig_version" ];then
+    error "Argument --ispconfig-version required."; x
+fi
 code 'ispconfig_version="'$ispconfig_version'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____

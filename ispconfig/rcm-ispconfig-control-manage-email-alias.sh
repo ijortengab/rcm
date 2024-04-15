@@ -573,21 +573,21 @@ ISPCONFIG_DB_USER_HOST=${ISPCONFIG_DB_USER_HOST:=localhost}
 ROUNDCUBE_DB_NAME=${ROUNDCUBE_DB_NAME:=roundcubemail}
 code 'ROUNDCUBE_DB_NAME="'$ROUNDCUBE_DB_NAME'"'
 ROUNDCUBE_DB_USER_HOST=${ROUNDCUBE_DB_USER_HOST:=localhost}
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
-until [[ -n "$name" ]];do
-    _; read -p "Argument --name required: " name
-done
+if [ -z "$name" ];then
+    error "Argument --name required."; x
+fi
 code 'name="'$name'"'
-until [[ -n "$destination_name" ]];do
-    _; read -p "Argument --destination-name required: " destination_name
-done
+if [ -z "$destination_name" ];then
+    error "Argument --destination-name required."; x
+fi
 code 'destination_name="'$destination_name'"'
-until [[ -n "$destination_domain" ]];do
-    _; read -p "Argument --destination-domain required: " destination_domain
-done
+if [ -z "$destination_domain" ];then
+    error "Argument --destination-domain required."; x
+fi
 code 'destination_domain="'$destination_domain'"'
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 ____

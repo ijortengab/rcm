@@ -116,9 +116,9 @@ ____
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'php_version="'$php_version'"'
-until [[ -n "$project_name" ]];do
-    _; read -p "Argument --project-name required: " project_name
-done
+if [ -z "$project_name" ];then
+    error "Argument --project-name required."; x
+fi
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi
 code 'project_parent_name="'$project_parent_name'"'
@@ -126,9 +126,9 @@ if [ -n "$project_parent_name" ];then
     if ! validateMachineName "$project_parent_name" project_parent_name;then x; fi
 fi
 code 'subdomain="'$subdomain'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then
     fqdn_project="${subdomain}.${domain}"

@@ -118,13 +118,13 @@ ____
 chapter Dump variable.
 BASENAME=${BASENAME:=host-port-__HOST_PORT__-forward-guest-port-__GUEST_PORT__}
 code 'BASENAME="'$BASENAME'"'
-until [[ -n "$host_port" ]];do
-    _; read -p "Argument --host-port required: " host_port
-done
+if [ -z "$host_port" ];then
+    error "Argument --host-port required."; x
+fi
 code 'host_port="'$host_port'"'
-until [[ -n "$guest_port" ]];do
-    _; read -p "Argument --guest-port required: " guest_port
-done
+if [ -z "$guest_port" ];then
+    error "Argument --guest-port required."; x
+fi
 code 'guest_port="'$guest_port'"'
 basename_string=$(sed -e "s,__HOST_PORT__,$host_port," -e "s,__GUEST_PORT__,$guest_port," <<< "$BASENAME" )
 code 'basename_string="'$basename_string'"'

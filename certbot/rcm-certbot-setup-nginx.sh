@@ -129,17 +129,17 @@ if [[ $email == auto ]];then
         code email=
     fi
 fi
-until [[ -n "$email" ]];do
-    _; read -p "Argument --email required: " email
-done
+if [ -z "$email" ];then
+    error "Argument --email required."; x
+fi
 code 'email="'$email'"'
 regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
 if [[ ! $email =~ $regex ]] ; then
     error Email format is not valid; x
 fi
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 code '-- '"$@"
 ____

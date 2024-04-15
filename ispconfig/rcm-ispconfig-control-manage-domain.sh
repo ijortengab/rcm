@@ -211,9 +211,9 @@ code 'command="'$command'"'
 ispconfig_domain_exists_sure=
 code 'ispconfig_domain_exists_sure="'$ispconfig_domain_exists_sure'"'
 delay=.5; [ -n "$fast" ] && unset delay
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 ____
 

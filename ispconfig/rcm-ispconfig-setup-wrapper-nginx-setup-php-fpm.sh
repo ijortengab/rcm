@@ -137,9 +137,9 @@ until [[ -n "$project" ]];do
 done
 code 'project="'$project'"'
 code 'subdomain="'$subdomain'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then
     fqdn_project="${subdomain}.${domain}"

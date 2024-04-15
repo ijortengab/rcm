@@ -118,13 +118,13 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
-until [[ -n "$hostname" ]];do
-    _; read -p "Argument --hostname required: " hostname
-done
+if [ -z "$hostname" ];then
+    error "Argument --hostname required."; x
+fi
 code 'hostname="'$hostname'"'
 fqdn_string="${hostname}.${domain}"
 code fqdn_string="$fqdn_string"

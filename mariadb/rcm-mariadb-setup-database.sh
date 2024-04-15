@@ -97,9 +97,9 @@ ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-until [[ -n "$db_name" ]];do
-    _; read -p "Argument --db-name required: " db_name
-done
+if [ -z "$db_name" ];then
+    error "Argument --db-name required."; x
+fi
 code 'db_name="'$db_name'"'
 code 'db_user="'$db_user'"'
 if [ -n "$db_user" ];then

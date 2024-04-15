@@ -207,9 +207,9 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 code 'PREFIX_DIRECTORY="'$PREFIX_DIRECTORY'"'
 prefix_directory=${PREFIX_DIRECTORY%/} # remove suffix.
 code 'prefix_directory="'$prefix_directory'"'
-until [[ -n "$pattern" ]];do
-    _; read -p "Argument --pattern required: " pattern
-done
+if [ -z "$pattern" ];then
+    error "Argument --pattern required."; x
+fi
 code 'pattern="'$pattern'"'
 code 'timeout_trigger_command="'$timeout_trigger_command'"'
 if [ -n "$autorun" ];then

@@ -132,9 +132,9 @@ drupal_version=10
 code drupal_version="$drupal_version"
 drush_version=12
 code drush_version="$drush_version"
-until [[ -n "$project_name" ]];do
-    _; read -p "Argument --project-name required: " project_name
-done
+if [ -z "$project_name" ];then
+    error "Argument --project-name required."; x
+fi
 code 'project_name="'$project_name'"'
 if ! validateMachineName "$project_name" project_name;then x; fi
 code 'project_parent_name="'$project_parent_name'"'

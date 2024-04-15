@@ -117,13 +117,13 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
-until [[ -n "$filename" ]];do
-    _; read -p "Argument --filename required: " filename
-done
+if [ -z "$filename" ];then
+    error "Argument --filename required."; x
+fi
 code 'filename="'$filename'"'
-until [[ -n "$root" ]];do
-    _; read -p "Argument --root required: " root
-done
+if [ -z "$root" ];then
+    error "Argument --root required."; x
+fi
 code 'root="'$root'"'
 until [[ ${#server_name[@]} -gt 0 ]];do
     _; read -p "Argument --server-name required: " _server_name

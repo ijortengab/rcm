@@ -310,9 +310,9 @@ case "$type" in
         ;;
 esac
 code 'type_uppercase="'$type_uppercase'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 code 'ip_address="'$ip_address'"'
 code 'hostname="'$hostname'"'

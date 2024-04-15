@@ -129,9 +129,9 @@ delay=.5; [ -n "$fast" ] && unset delay
 MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'subdomain="'$subdomain'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
 if [ -n "$subdomain" ];then
     fqdn_project="${subdomain}.${domain}"

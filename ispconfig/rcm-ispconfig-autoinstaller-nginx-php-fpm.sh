@@ -344,26 +344,26 @@ code 'ISPCONFIG_NGINX_CONFIG_FILE="'$ISPCONFIG_NGINX_CONFIG_FILE'"'
 ISPCONFIG_INSTALL_DIR=${ISPCONFIG_INSTALL_DIR:=/usr/local/ispconfig}
 code 'ISPCONFIG_INSTALL_DIR="'$ISPCONFIG_INSTALL_DIR'"'
 delay=.5; [ -n "$fast" ] && unset delay
-until [[ -n "$ispconfig_version" ]];do
-    _; read -p "Argument --ispconfig-version required: " ispconfig_version
-done
+if [ -z "$ispconfig_version" ];then
+    error "Argument --ispconfig-version required."; x
+fi
 code 'ispconfig_version="'$ispconfig_version'"'
-until [[ -n "$roundcube_version" ]];do
-    _; read -p "Argument --roundcube-version required: " roundcube_version
-done
+if [ -z "$roundcube_version" ];then
+    error "Argument --roundcube-version required."; x
+fi
 code 'roundcube_version="'$roundcube_version'"'
-until [[ -n "$phpmyadmin_version" ]];do
-    _; read -p "Argument --phpmyadmin-version required: " phpmyadmin_version
-done
+if [ -z "$phpmyadmin_version" ];then
+    error "Argument --phpmyadmin-version required."; x
+fi
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
 code 'php_version="'$php_version'"'
-until [[ -n "$domain" ]];do
-    _; read -p "Argument --domain required: " domain
-done
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
 code 'domain="'$domain'"'
-until [[ -n "$hostname" ]];do
-    _; read -p "Argument --hostname required: " hostname
-done
+if [ -z "$hostname" ];then
+    error "Argument --hostname required."; x
+fi
 code 'hostname="'$hostname'"'
 fqdn_project="${hostname}.${domain}"
 code fqdn_project="$fqdn_project"
