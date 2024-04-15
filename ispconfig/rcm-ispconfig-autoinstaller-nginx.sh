@@ -55,11 +55,11 @@ printVersion() {
 }
 printHelp() {
     title RCM ISPConfig Auto-Installer
-    _ 'Variation '; yellow Nginx PHP-FPM; _.
+    _ 'Variation '; yellow Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-autoinstaller-nginx-php-fpm.sh [options]
+Usage: rcm-ispconfig-autoinstaller-nginx.sh [options]
 
 Options:
    --hostname
@@ -112,8 +112,8 @@ Dependency:
    rcm-php-setup-ispconfig.sh
    rcm-postfix-setup-ispconfig.sh
    rcm-ispconfig-setup-smtpd-certificate.sh
-   rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh
-   rcm-roundcube-autoinstaller-nginx-php-fpm.sh
+   rcm-phpmyadmin-autoinstaller-nginx.sh
+   rcm-roundcube-autoinstaller-nginx.sh
    rcm-nginx-setup-php-fpm.sh
 EOF
 }
@@ -325,7 +325,7 @@ EOF
 }
 
 # Title.
-title rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
+title rcm-ispconfig-autoinstaller-nginx.sh
 ____
 
 # Requirement, validate, and populate value.
@@ -407,11 +407,11 @@ rcm-ispconfig-setup-smtpd-certificate.sh $isfast --root-sure \
     --dns-authenticator="$dns_authenticator" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+rcm-phpmyadmin-autoinstaller-nginx.sh $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-roundcube-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+rcm-roundcube-autoinstaller-nginx.sh $isfast --root-sure \
     --roundcube-version="$roundcube_version" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x

@@ -636,7 +636,7 @@ rcm-drupal-setup-variation4.sh
 rcm-drupal-setup-variation5.sh
 rcm-drupal-setup-variation6.sh
 rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
-rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
+rcm-ispconfig-autoinstaller-nginx.sh
 rcm-ispconfig-control-manage-domain.sh
 rcm-ispconfig-control-manage-email-alias.sh
 rcm-ispconfig-control-manage-email-mailbox.sh
@@ -663,10 +663,10 @@ rcm-php-autoinstaller.sh
 rcm-php-setup-adjust-cli-version.sh
 rcm-php-setup-drupal.sh
 rcm-php-setup-ispconfig.sh
-rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh
+rcm-phpmyadmin-autoinstaller-nginx.sh
 rcm-postfix-autoinstaller.sh
 rcm-postfix-setup-ispconfig.sh
-rcm-roundcube-autoinstaller-nginx-php-fpm.sh
+rcm-roundcube-autoinstaller-nginx.sh
 rcm-roundcube-setup-ispconfig-integration.sh
 rcm-ssh-setup-open-ssh-tunnel.sh
 rcm-ssh-setup-sshd-listen-port.sh

@@ -44,11 +44,11 @@ printVersion() {
 }
 printHelp() {
     title RCM PHPMyAdmin Auto-Installer
-    _ 'Variation '; yellow Nginx PHP-FPM; _.
+    _ 'Variation '; yellow Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh [options]
+Usage: rcm-phpmyadmin-autoinstaller-nginx.sh [options]
 
 Options:
    --php-version
@@ -143,7 +143,7 @@ EOF
 }
 
 # Title.
-title rcm-phpmyadmin-autoinstaller-nginx-php-fpm.sh
+title rcm-phpmyadmin-autoinstaller-nginx.sh
 ____
 
 # Requirement, validate, and populate value.

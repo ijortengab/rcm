@@ -110,7 +110,7 @@ Dependency:
    rcm-certbot-digitalocean-autoinstaller.sh
    rcm-digitalocean-api-manage-domain.sh
    rcm-digitalocean-api-manage-domain-record.sh
-   rcm-ispconfig-autoinstaller-nginx-php-fpm.sh
+   rcm-ispconfig-autoinstaller-nginx.sh
    rcm-ispconfig-setup-internal-command.sh
    rcm-roundcube-setup-ispconfig-integration.sh
    rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh
@@ -468,7 +468,7 @@ ____
 _ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
-rcm-ispconfig-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-autoinstaller-nginx.sh $isfast --root-sure \
     --digitalocean \
     --hostname="$hostname" \
     --domain="$domain" \
