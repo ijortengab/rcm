@@ -49,7 +49,7 @@ printHelp() {
 Usage: rcm-php-setup-ispconfig.sh [options]
 
 Options:
-   --php-version
+   --php-version *
         Set the version of PHP.
 
 Global Options:
@@ -106,6 +106,9 @@ title rcm-php-setup-ispconfig.sh
 ____
 
 # Require, validate, and populate value.
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 code 'php_version="'$php_version'"'
