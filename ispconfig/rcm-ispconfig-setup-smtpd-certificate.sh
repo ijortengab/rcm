@@ -79,7 +79,7 @@ Environment Variables:
         Default to $HOME/.$dns_authenticator-token.ini
 
 Dependency:
-   rcm-certbot-obtain-certificates-wildcard.sh
+   rcm-certbot-obtain-certificates.sh
 EOF
 }
 
