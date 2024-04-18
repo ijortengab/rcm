@@ -23,6 +23,7 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
         --roundcube-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then roundcube_version="$2"; shift; fi; shift ;;
+        --standalone) dns_authenticator=standalone; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -75,7 +76,7 @@ Options:
    --phpmyadmin-version *
         Set the version of PHPMyAdmin.
    --dns-authenticator
-        Available value: digitalocean.
+        Available value: digitalocean, standalone.
 
 Global Options:
    --fast
@@ -254,6 +255,34 @@ toggleMysqlRootPassword() {
         } ;;
     esac
 }
+modifyFileDebian11() {
+    fileMustExists /tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
+    if [[ ! "$php_version" == 7.4 ]];then
+        sed -i \
+            -e 's,"7\.4","'$php_version'",g' \
+            -e 's,/7\.4/,/'$php_version'/,g' \
+            -e 's,php7\.4,php'$php_version',g' \
+            /tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
+    fi
+    # Edit informasi cron dan ufw yang terlewat.
+    file=/tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
+    string="//* cron"
+    number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
+    number_1plus=$((number_1 - 1))
+    number_1plus2=$((number_1 + 1))
+    part1=$(sed -n '1,'$number_1plus'p' "$file")
+    part2=$(sed -n $number_1plus2',$p' "$file")
+    additional=$(cat << 'EOF'
+
+//* ufw
+$conf['ufw']['installed'] = false;
+
+//* cron
+$conf['cron']['installed'] = false;
+EOF
+        )
+    echo "$part1"$'\n'"$additional"$'\n'"$part2" > "$file"
+}
 createFileDebian12() {
     if [ ! -f /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php ];then
         fileMustExists /tmp/ispconfig3_install/install/dist/conf/debian110.conf.php
@@ -267,7 +296,7 @@ createFileDebian12() {
             -e 's,/7\.4/,/'$php_version'/,g' \
             -e 's,php7\.4,php'$php_version',g' \
             /tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
-        # Edit informasi cron yang terlewat.
+        # Edit informasi cron dan ufw yang terlewat.
         file=/tmp/ispconfig3_install/install/dist/conf/debian120.conf.php
         string="//* cron"
         number_1=$(grep -n -F "$string" "$file" | head -1 | cut -d: -f1)
@@ -369,16 +398,14 @@ fqdn_project="${hostname}.${domain}"
 code fqdn_project="$fqdn_project"
 case "$dns_authenticator" in
     digitalocean) ;;
+    standalone) ;;
     *) dns_authenticator=
 esac
-until [[ -n "$dns_authenticator" ]];do
-    _ Available value:' '; yellow digitalocean.; _.
-    _; read -p "Argument --dns-authenticator required: " dns_authenticator
-    case "$dns_authenticator" in
-        digitalocean) ;;
-        *) dns_authenticator=
-    esac
-done
+if [ -z "$dns_authenticator" ];then
+    error "Argument --dns-authenticator required.";
+    _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
+    x
+fi
 code 'dns_authenticator="'$dns_authenticator'"'
 ____
 
@@ -391,7 +418,6 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-mariadb-setup-ispconfig.sh $isfast --root-sure \
@@ -415,7 +441,6 @@ rcm-roundcube-autoinstaller-nginx.sh $isfast --root-sure \
     --roundcube-version="$roundcube_version" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek credentials ISPConfig.
 databaseCredentialIspconfig
@@ -440,7 +465,6 @@ code filename="$filename"
 server_name="$ISPCONFIG_FQDN_LOCALHOST"
 code server_name="$server_name"
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
@@ -449,7 +473,6 @@ rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
     --server-name="$server_name" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek subdomain '`'$ISPCONFIG_FQDN_LOCALHOST'`'.
 notfound=
@@ -574,15 +597,19 @@ if [ -n "$do_install" ];then
                 11)
                     case "$ispconfig_version" in
                         3.2.7) eligible=1 ;;
+                        3.2.11p2) eligible=1 ;;
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
+                    modifyFileDebian11
                     ;;
                 12)
                     case "$ispconfig_version" in
-                        3.2.9) eligible=1; createFileDebian12; editInstallLibDebian12 ;;
-                        3.2.10) eligible=1; createFileDebian12; editInstallLibDebian12 ;;
+                        3.2.9) eligible=1 ;;
+                        3.2.10) eligible=1 ;;
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
+                    createFileDebian12
+                    editInstallLibDebian12
                     ;;
                 *)
                     error OS "$ID" Version "$VERSION_ID" not supported; x;
@@ -618,6 +645,9 @@ if [ -n "$do_install" ];then
     reference="$(php -r "echo serialize([
         'install_mode' => 'expert',
         'configure_webserver' => 'n',
+        'configure_apache' => 'n',
+        'configure_nginx' => 'n',
+        'configure_firewall' => 'n',
         'hostname' => '$fqdn_project',
         'mysql_root_password' => '$mysql_root_passwd',
         'http_server' => 'nginx',
@@ -642,6 +672,9 @@ if [ -n "$do_install" ];then
         backupFile copy /tmp/ispconfig3_install/install/autoinstall.ini
         sed -e "s,^install_mode=.*$,install_mode=expert," \
             -e "s,^configure_webserver=.*$,configure_webserver=n," \
+            -e "s,^configure_apache=.*$,configure_apache=n," \
+            -e "s,^configure_nginx=.*$,configure_nginx=n," \
+            -e "s,^configure_firewall=.*$,configure_firewall=n," \
             -e "s,^hostname=.*$,hostname=${fqdn_project}," \
             -e "s,^mysql_root_password=.*$,mysql_root_password=${mysql_root_passwd}," \
             -e "s,^http_server=.*$,http_server=nginx," \
@@ -763,7 +796,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
+# --no-error-require-arguments << EOF
 # FLAG=(
 # --fast
 # --version
@@ -783,6 +816,6 @@ exit 0
 # )
 # CSV=(
     # long:--digitalocean,parameter:dns_authenticator,type:flag,flag_option:true=digitalocean
+    # long:--standalone,parameter:dns_authenticator,type:flag,flag_option:true=standalone
 # )
 # EOF
-# clear
