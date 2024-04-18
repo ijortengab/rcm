@@ -292,13 +292,11 @@ else
 fi
 fileMustExists $HOME/.digitalocean-token.txt
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-ubuntu-22.04-setup-basic.sh $isfast --root-sure \
     --timezone="$timezone" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek FQDN '(Fully-Qualified Domain Name)'
 code fqdn="$fqdn"
@@ -358,7 +356,6 @@ fi
 # ns1.digitalocean.com.
 # ns2.digitalocean.com.
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-mariadb-autoinstaller.sh $isfast --root-sure \
@@ -379,13 +376,11 @@ rcm-certbot-autoinstaller.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-certbot-digitalocean-autoinstaller.sh $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Take a break.
 e Lets play with DigitalOcean API.
 sleepExtended 3
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-digitalocean-api-manage-domain.sh $isfast --root-sure \
@@ -459,13 +454,11 @@ rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure --digitalocean-
     --hostname=@ \
     --mail-provider="$fqdn" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Take a break.
 e Begin to Install ISPConfig and Friends.
 sleepExtended 3
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-ispconfig-autoinstaller-nginx.sh $isfast --root-sure \
@@ -484,13 +477,11 @@ rcm-ispconfig-setup-internal-command.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-roundcube-setup-ispconfig-integration.sh $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Take a break.
 e Lets play with Certbot LetsEncrypt with Nginx Plugin.
 sleepExtended 3
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
@@ -545,13 +536,11 @@ rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
     ; [ ! $? -eq 0 ] && x
 
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Take a break.
 e Lets play with Mailbox.
 sleepExtended 3
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
@@ -610,7 +599,6 @@ rcm-ispconfig-setup-dump-variables.sh $isfast --root-sure \
     --hostname="$hostname" \
     --ip-address="$ip_address" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Send Welcome email.
 code postqueue -f

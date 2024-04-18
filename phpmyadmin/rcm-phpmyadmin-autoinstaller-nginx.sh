@@ -265,7 +265,6 @@ code filename="$filename"
 server_name="$PHPMYADMIN_FQDN_LOCALHOST"
 code server_name="$server_name"
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
@@ -274,7 +273,6 @@ rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
     --filename="$filename" \
     --server-name="$server_name" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek subdomain '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
 notfound=

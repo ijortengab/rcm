@@ -148,7 +148,6 @@ code filename="$filename"
 server_name=("$domain")
 code server_name="${server_name[@]}"
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
@@ -157,7 +156,6 @@ rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
     --server-name="$server_name" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mempersiapkan web root directory.
 __; magenta root='"'$root'"'; _.

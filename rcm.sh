@@ -833,13 +833,11 @@ chapter Timer Start.
 e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    "
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
 INDENT=${INDENT::-4}
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Timer Finish.
 e End: $(date +%Y%m%d-%H%M%S)

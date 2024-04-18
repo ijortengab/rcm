@@ -283,7 +283,6 @@ code filename="$filename"
 server_name="$drupal_fqdn_localhost"
 code server_name="$server_name"
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-nginx-setup-drupal.sh \
@@ -292,7 +291,6 @@ rcm-nginx-setup-drupal.sh \
     --server-name="$server_name" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek subdomain '`'$drupal_fqdn_localhost'`'.
 notfound=
@@ -539,7 +537,6 @@ code db_user_password="$db_user_password"
 db_user_host="$DRUPAL_DB_USER_HOST"
 code db_user_host="$db_user_host"
 ____
-_ -----------------------------------------------------------------------;_.;_.;
 
 INDENT+="    " \
 rcm-mariadb-setup-database.sh \
@@ -548,7 +545,6 @@ rcm-mariadb-setup-database.sh \
     --db-user-host="$db_user_host" \
     --db-user-password="$db_user_password" \
     ; [ ! $? -eq 0 ] && x
-_ -----------------------------------------------------------------------;_.;_.;
 
 chapter Mengecek website credentials: '`'/var/www/project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
 websiteCredentialDrupal
