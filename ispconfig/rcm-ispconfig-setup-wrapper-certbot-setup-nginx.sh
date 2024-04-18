@@ -12,6 +12,8 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --root-sure) root_sure=1; shift ;;
+        --standalone) dns_authenticator=standalone; shift ;;
         --subdomain=*) subdomain="${1#*=}"; shift ;;
         --subdomain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then subdomain="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -141,21 +143,21 @@ fi
 code 'fqdn_project="'$fqdn_project'"'
 case "$dns_authenticator" in
     digitalocean) ;;
+    standalone) ;;
     *) dns_authenticator=
 esac
-until [[ -n "$dns_authenticator" ]];do
-    _ Available value:' '; yellow digitalocean.; _.
-    _; read -p "Argument --dns-authenticator required: " dns_authenticator
-    case "$dns_authenticator" in
-        digitalocean) ;;
-        *) dns_authenticator=
-    esac
-done
+if [ -z "$dns_authenticator" ];then
+    error "Argument --dns-authenticator required.";
+    _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
+    x
+fi
 code 'dns_authenticator="'$dns_authenticator'"'
-TOKEN=${TOKEN:=$HOME/.$dns_authenticator-token.txt}
-code 'TOKEN="'$TOKEN'"'
-TOKEN_INI=${TOKEN_INI:=$HOME/.$dns_authenticator-token.ini}
-code 'TOKEN_INI="'$TOKEN_INI'"'
+if [[ "$dns_authenticator" == 'digitalocean' ]]; then
+    TOKEN=${TOKEN:=$HOME/.$dns_authenticator-token.txt}
+    code 'TOKEN="'$TOKEN'"'
+    TOKEN_INI=${TOKEN_INI:=$HOME/.$dns_authenticator-token.ini}
+    code 'TOKEN_INI="'$TOKEN_INI'"'
+fi
 ____
 
 if [ -z "$root_sure" ];then
@@ -168,11 +170,49 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-if [[ "$dns_authenticator" == 'digitalocean' ]]; then
-    chapter Mengecek DNS Authenticator
-    __ Menggunakan DNS Authenticator '`'digitalocean'`'
-    ____
+chapter Mengecek DNS Authenticator
+__ Menggunakan DNS Authenticator '`'$dns_authenticator'`'
+____
 
+chapter Prepare arguments.
+domain="$fqdn_project"
+code 'domain="'$fqdn_project'"'
+____
+
+chapter Mengecek '$PATH'
+code PATH="$PATH"
+notfound=
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
+else
+  __ '$PATH' belum lengkap.
+  notfound=1
+fi
+____
+
+if [[ -n "$notfound" ]];then
+    chapter Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __; green '$PATH' sudah lengkap.; _.
+      __; magenta PATH="$PATH"; _.
+
+    else
+      __; red '$PATH' belum lengkap.; x
+    fi
+    ____
+fi
+
+email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
+if [ -n "$email" ];then
+    __ Certbot account has found: "$email"
+else
+    email="${MAILBOX_HOST}@${domain}"
+fi
+code 'email="'$email'"'
+____
+
+if [[ "$dns_authenticator" == 'digitalocean' ]]; then
     chapter Mengecek Token
     fileMustExists "$TOKEN"
     digitalocean_token=$(<$TOKEN)
@@ -201,43 +241,6 @@ EOF
     fi
     ____
 
-    chapter Prepare arguments.
-    email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
-    if [ -n "$email" ];then
-        __ Certbot account has found: "$email"
-    else
-        email="${MAILBOX_HOST}@${domain}"
-    fi
-    code 'email="'$email'"'
-    domain="$fqdn_project"
-    code 'domain="'$fqdn_project'"'
-    ____
-
-    chapter Mengecek '$PATH'
-    code PATH="$PATH"
-    notfound=
-    if grep -q '/snap/bin' <<< "$PATH";then
-      __ '$PATH' sudah lengkap.
-    else
-      __ '$PATH' belum lengkap.
-      notfound=1
-    fi
-    ____
-
-    if [[ -n "$notfound" ]];then
-        chapter Memperbaiki '$PATH'
-        PATH=/snap/bin:$PATH
-        if grep -q '/snap/bin' <<< "$PATH";then
-          __; green '$PATH' sudah lengkap.; _.
-          __; magenta PATH="$PATH"; _.
-
-        else
-          __; red '$PATH' belum lengkap.; x
-        fi
-        ____
-    fi
-    _ ___________________________________________________________________;_.;_.;
-
     INDENT+="    " \
     PATH=$PATH \
     rcm-certbot-setup-nginx.sh $isfast --root-sure \
@@ -247,7 +250,25 @@ EOF
         --dns-digitalocean \
         --dns-digitalocean-credentials="$TOKEN_INI" \
         ; [ ! $? -eq 0 ] && x
-    _ ___________________________________________________________________;_.;_.;
+fi
+if [[ "$dns_authenticator" == 'standalone' ]]; then
+    chapter Memaksa mematikan proses yang me-listen port 80.
+    code 'kill $(lsof -i :80 -t)'
+    while IFS= read -r line; do
+        if [ -n "$line" ];then
+            kill -9 $line
+        fi
+    done <<< `lsof -i :80 -t`
+    ____
+
+    INDENT+="    " \
+    PATH=$PATH \
+    rcm-certbot-setup-nginx.sh $isfast --root-sure \
+        --domain="$domain" \
+        --email="$email" \
+        -- \
+        --standalone \
+        ; [ ! $? -eq 0 ] && x
 fi
 
 exit 0
@@ -259,7 +280,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
+# --no-error-require-arguments << EOF
 # FLAG=(
 # --fast
 # --version
@@ -277,6 +298,6 @@ exit 0
 # )
 # CSV=(
     # long:--digitalocean,parameter:dns_authenticator,type:flag,flag_option:true=digitalocean
+    # long:--standalone,parameter:dns_authenticator,type:flag,flag_option:true=standalone
 # )
 # EOF
-# clear
