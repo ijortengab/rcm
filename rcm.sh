@@ -646,6 +646,8 @@ rcm-ispconfig-setup-smtpd-certificate.sh
 rcm-ispconfig-setup-variation1.sh
 rcm-ispconfig-setup-variation2.sh
 rcm-ispconfig-setup-variation3.sh
+rcm-ispconfig-setup-variation4.sh
+rcm-ispconfig-setup-variation5.sh
 rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
 rcm-ispconfig-setup-wrapper-digitalocean.sh
 rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh
