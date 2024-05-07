@@ -606,6 +606,7 @@ if [ -n "$do_install" ];then
                     case "$ispconfig_version" in
                         3.2.9) eligible=1 ;;
                         3.2.10) eligible=1 ;;
+                        3.2.11p2) eligible=1 ;;
                         *) error ISPConfig Version "$ispconfig_version" not supported; x;
                     esac
                     createFileDebian12
