@@ -196,6 +196,16 @@ link_symbolic() {
         ____
     fi
 }
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
 
 # Title.
 title rcm-certbot-obtain-certificates.sh
@@ -326,6 +336,20 @@ EOF
     fi
 
     if [[ "$dns_authenticator" == 'standalone' ]]; then
+        chapter Mendeteksi command yang menggunakan port 80.
+        code 'lsof -i :80'
+        lsof -i :80
+        _commands_of_port80=()
+        while IFS= read -r line; do
+            if [ -n "$line" ];then
+                _command=$(ps -p $line -o comm -h)
+                if ! ArraySearch "$_command" _commands_of_port80[@];then
+                    _commands_of_port80+=("$_command")
+                fi
+            fi
+        done <<< `lsof -i :80 -t`
+        ____
+
         chapter Memaksa mematikan proses yang me-listen port 80.
         code 'kill $(lsof -i :80 -t)'
         while IFS= read -r line; do
@@ -344,6 +368,16 @@ EOF
         else
             __; red Certificate not found.; x
         fi
+        ____
+
+        chapter Menghidupkan kembali command yang me-listen port 80.
+        for _command in "${_commands_of_port80[@]}"; do
+            case "$_command" in
+                nginx)
+                    /etc/init.d/nginx start
+                    ;;
+            esac
+        done
         ____
     fi
 fi
