@@ -86,7 +86,7 @@ Dependency:
    rcm-php-setup-drupal.sh
    rcm-wsl-setup-lemp-stack.sh
    rcm-composer-autoinstaller.sh
-   rcm-drupal-autoinstaller-nginx-php-fpm.sh
+   rcm-drupal-autoinstaller-nginx.sh
    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
    rcm-drupal-setup-drush-alias.sh
@@ -190,7 +190,7 @@ fi
 INDENT+="    " \
 rcm-composer-autoinstaller.sh $isfast --root-sure \
     && INDENT+="    " \
-rcm-drupal-autoinstaller-nginx-php-fpm.sh $isfast --root-sure \
+rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
     --drupal-version="$drupal_version" \
     --drush-version="$drush_version" \
     --php-version="$php_version" \

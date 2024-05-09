@@ -626,7 +626,7 @@ rcm-debian-11-setup-basic.sh
 rcm-debian-12-setup-basic.sh
 rcm-digitalocean-api-manage-domain-record.sh
 rcm-digitalocean-api-manage-domain.sh
-rcm-drupal-autoinstaller-nginx-php-fpm.sh
+rcm-drupal-autoinstaller-nginx.sh
 rcm-drupal-setup-drush-alias.sh
 rcm-drupal-setup-dump-variables.sh
 rcm-drupal-setup-variation1.sh

@@ -55,7 +55,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-autoinstaller-nginx-php-fpm.sh [options]
+Usage: rcm-drupal-autoinstaller-nginx.sh [options]
 
 Options:
    --project-name
@@ -194,7 +194,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-drupal-autoinstaller-nginx-php-fpm.sh
+title rcm-drupal-autoinstaller-nginx.sh
 ____
 
 # Requirement, validate, and populate value.
