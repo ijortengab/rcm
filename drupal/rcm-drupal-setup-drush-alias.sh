@@ -140,8 +140,8 @@ for uri in "${list_uri[@]}";do
         __ Membuat file '`'$HOME_DIRECTORY/$each'`'.
         cat << 'EOF' > "$HOME_DIRECTORY/$each"
 [[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
-echo -e "\e[95m""cd /var/www/project/__PROJECT_DIR__/drupal""\e[39m"
-cd /var/www/project/__PROJECT_DIR__/drupal
+echo -e "\e[95m""cd /var/www/drupal-project/__PROJECT_DIR__/drupal""\e[39m"
+cd /var/www/drupal-project/__PROJECT_DIR__/drupal
 echo -e "\e[95m""alias drush='vendor/bin/drush --uri=__URI__'""\e[39m"
 alias drush='vendor/bin/drush --uri=__URI__'
 EOF

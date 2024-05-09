@@ -153,9 +153,9 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek direktori project '`'/var/www/project/$project_dir/drupal/web'`'.
+chapter Mengecek direktori project '`'/var/www/drupal-project/$project_dir/drupal/web'`'.
 notfound=
-if [ -d /var/www/project/$project_dir/drupal/web ] ;then
+if [ -d /var/www/drupal-project/$project_dir/drupal/web ] ;then
     __ Direktori ditemukan.
 else
     __; red Direktori tidak ditemukan.; x
@@ -163,7 +163,7 @@ fi
 ____
 
 chapter Prepare arguments.
-root="/var/www/project/$project_dir/drupal/web"
+root="/var/www/drupal-project/$project_dir/drupal/web"
 code root="$root"
 filename="$fqdn_project"
 code filename="$filename"
