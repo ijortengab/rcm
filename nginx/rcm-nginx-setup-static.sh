@@ -53,11 +53,11 @@ printHelp() {
 Usage: rcm-nginx-setup-static.sh [options]
 
 Options:
-   --filename
+   --filename *
         Set the filename to created inside /etc/nginx/sites-available directory.
-   --root
+   --root *
         Set the value of root directive.
-   --server-name
+   --server-name *
         Set the value of server_name directive. Multivalue.
 
 Global Options:
@@ -123,10 +123,9 @@ if [ -z "$root" ];then
     error "Argument --root required."; x
 fi
 code 'root="'$root'"'
-until [[ ${#server_name[@]} -gt 0 ]];do
-    _; read -p "Argument --server-name required: " _server_name
-    [ -n "$_server_name" ] && server_name+=("$_server_name")
-done
+if [[ ${#server_name[@]} -eq 0 ]];then
+    error "Argument --server-name required."; x
+fi
 code 'server_name=('"${server_name[@]}"')'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
