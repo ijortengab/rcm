@@ -113,7 +113,7 @@ Dependency:
    rcm-ispconfig-autoinstaller-nginx.sh
    rcm-ispconfig-setup-internal-command.sh
    rcm-roundcube-setup-ispconfig-integration.sh
-   rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh
+   rcm-ispconfig-setup-wrapper-nginx-setup-php.sh
    rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
    rcm-ispconfig-control-manage-domain.sh
    rcm-ispconfig-control-manage-email-mailbox.sh
@@ -484,37 +484,37 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=ispconfig \
     --subdomain="$SUBDOMAIN_ISPCONFIG" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=roundcube \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=phpmyadmin \
     --subdomain="$SUBDOMAIN_PHPMYADMIN" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=ispconfig \
     --subdomain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=roundcube \
     --subdomain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
     --project=phpmyadmin \
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \

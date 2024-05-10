@@ -83,7 +83,7 @@ Dependency:
    pwgen
    php
    curl
-   rcm-nginx-setup-php-fpm.sh
+   rcm-nginx-setup-php.sh
 EOF
 }
 
@@ -267,7 +267,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php-fpm.sh $isfast --root-sure \
+rcm-nginx-setup-php.sh $isfast --root-sure \
     --root="$root" \
     --php-version="$php_version" \
     --filename="$filename" \
