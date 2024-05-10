@@ -60,7 +60,7 @@ Options:
    --domain
         Set the domain.
    --dns-authenticator
-        Available value: digitalocean.
+        Available value: digitalocean, standalone.
 
 Global Options:
    --fast
@@ -151,13 +151,16 @@ else
     fqdn_project="${domain}"
 fi
 code 'fqdn_project="'$fqdn_project'"'
+if [ -z "$dns_authenticator" ];then
+    error "Argument --dns-authenticator required."; x
+fi
 case "$dns_authenticator" in
     digitalocean) ;;
     standalone) ;;
     *) dns_authenticator=
 esac
 if [ -z "$dns_authenticator" ];then
-    error "Argument --dns-authenticator required.";
+    error "Argument --dns-authenticator is not valid.";
     _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
     x
 fi

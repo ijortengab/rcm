@@ -228,23 +228,19 @@ else
     fqdn_project="${domain}"
 fi
 code 'fqdn_project="'$fqdn_project'"'
+if [ -z "$dns_authenticator" ];then
+    error "Argument --dns-authenticator required."; x
+fi
 case "$dns_authenticator" in
     digitalocean) ;;
     standalone) ;;
     *) dns_authenticator=
 esac
 if [ -z "$dns_authenticator" ];then
-    error "Argument --dns-authenticator required."; x
+    error "Argument --dns-authenticator is not valid.";
+    _ Available value:' '; yellow digitalocean; _, ', '; yellow standalone; _, .; _.
+    x
 fi
-
-until [[ -n "$dns_authenticator" ]];do
-    _ Available value:' '; yellow digitalocean.; _.
-    _; read -p "Argument --dns-authenticator required: " dns_authenticator
-    case "$dns_authenticator" in
-        digitalocean) ;;
-        *) dns_authenticator=
-    esac
-done
 code 'dns_authenticator="'$dns_authenticator'"'
 if [[ "$dns_authenticator" == 'digitalocean' ]]; then
     TOKEN=${TOKEN:=$HOME/.$dns_authenticator-token.txt}
