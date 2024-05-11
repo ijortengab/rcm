@@ -14,6 +14,7 @@ while [[ $# -gt 0 ]]; do
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then ip_address="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
+        --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -469,6 +470,7 @@ exit 0
 # --fast
 # --version
 # --help
+# --root-sure
 # --non-interactive
 # )
 # VALUE=(
