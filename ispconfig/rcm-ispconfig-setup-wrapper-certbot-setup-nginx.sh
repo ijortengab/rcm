@@ -82,6 +82,7 @@ Environment Variables:
 
 Dependency:
    rcm-certbot-setup-nginx.sh
+   systemctl
 EOF
 }
 
@@ -279,14 +280,22 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
     done <<< `lsof -i :80 -t`
     ____
 
-    chapter Memaksa mematikan proses yang me-listen port 80.
-    code 'kill $(lsof -i :80 -t)'
-    while IFS= read -r line; do
-        if [ -n "$line" ];then
-            kill -9 $line
-        fi
-    done <<< `lsof -i :80 -t`
+    chapter Mematikan command yang me-listen port 80.
+    for _command in "${_commands_of_port80[@]}"; do
+        case "$_command" in
+            nginx)
+                systemctl stop nginx
+                ;;
+        esac
+    done
     ____
+
+    if [[ ! $(lsof -i :80 -t | wc -l) -eq 0 ]];then
+        error Terdapat process yang masih me-listen port 80.
+        code lsof -i :80 -t
+        lsof -i :80 -t
+        x
+    fi
 
     INDENT+="    " \
     PATH=$PATH \
@@ -301,7 +310,7 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
     for _command in "${_commands_of_port80[@]}"; do
         case "$_command" in
             nginx)
-                /etc/init.d/nginx start
+                systemctl start nginx
                 ;;
         esac
     done
