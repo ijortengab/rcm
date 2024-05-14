@@ -97,6 +97,7 @@ Environment Variables:
 
 Dependency:
    wget
+   dig
    rcm-debian-11-setup-basic.sh
    rcm-mariadb-autoinstaller.sh
    rcm-nginx-autoinstaller.sh
@@ -267,6 +268,30 @@ if [ -z "$root_sure" ];then
     fi
     ____
 fi
+
+chapter Mengecek Name Server domain '`'$domain'`'
+code dig NS $domain +trace
+sleepExtended 3
+tempfile=$(mktemp -t rcm-ispconfig-setup-variation4.sh.XXXXXX)
+dig NS $domain +trace | tee "$tempfile"
+stdout=$(<"$tempfile")
+domain_escape=${domain//\./\\.}
+found=
+if grep -q -E --ignore-case ^"$domain_escape"\.'\s+''[0-9]+''\s+'IN'\s+'NS'\s+' <<< "$stdout";then
+    found=1
+fi
+if [ -n "$found" ];then
+    success Name Server pada domain "$domain" ditemukan pada jaringan DNS global.
+    grep -E --ignore-case ^"$domain_escape"\..*IN'\s+'NS'\s+' <<< "$stdout"
+    code dig NS $domain +short
+    dig NS $domain +short
+else
+    rm "$tempfile"
+    error Name Server pada domain "$domain" tidak ditemukan pada jaringan DNS global.
+    e Memerlukan manual edit pada registrar domain.; x
+fi
+rm "$tempfile"
+____
 
 INDENT+="    " \
 rcm-debian-11-setup-basic.sh $isfast --root-sure \
