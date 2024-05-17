@@ -284,6 +284,7 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
     for _command in "${_commands_of_port80[@]}"; do
         case "$_command" in
             nginx)
+                code systemctl stop nginx
                 systemctl stop nginx
                 ;;
         esac
@@ -307,9 +308,17 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
         ; [ ! $? -eq 0 ] && x
 
     chapter Menghidupkan kembali command yang me-listen port 80.
+    if [[ ! $(lsof -i :80 -t | wc -l) -eq 0 ]];then
+        __ Port 80 dari certbot masih exists.
+    fi
+    until [[ $(lsof -i :80 -t | wc -l) -eq 0 ]];do
+        sleep .5
+    done
+    __ Port 80 dari certbot sudah tidak exists.
     for _command in "${_commands_of_port80[@]}"; do
         case "$_command" in
             nginx)
+                code systemctl start nginx
                 systemctl start nginx
                 ;;
         esac
