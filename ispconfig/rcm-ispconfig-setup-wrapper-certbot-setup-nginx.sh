@@ -308,13 +308,16 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
         ; [ ! $? -eq 0 ] && x
 
     chapter Menghidupkan kembali command yang me-listen port 80.
+    code 'lsof -i :80'
+    lsof -i :80
     if [[ ! $(lsof -i :80 -t | wc -l) -eq 0 ]];then
         __ Port 80 dari certbot masih exists.
     fi
     until [[ $(lsof -i :80 -t | wc -l) -eq 0 ]];do
-        sleep .5
+        __ Memaksa mematikan proses yang me-listen port 80.
+        __; magenta kill -9 $(lsof -i :80 -t | head -1); _.
+        kill -9 $(lsof -i :80 -t | head -1)
     done
-    __ Port 80 dari certbot sudah tidak exists.
     for _command in "${_commands_of_port80[@]}"; do
         case "$_command" in
             nginx)
