@@ -201,7 +201,7 @@ server {
     index index.php;
     server_name ;
     location / {
-        try_files $uri $uri/ /__FRONT_CONTROLLER__$is_args$args;
+        try_files $uri /__FRONT_CONTROLLER__$is_args$args;
     }
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
