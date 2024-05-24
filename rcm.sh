@@ -616,7 +616,7 @@ if [ $command == list ];then
 rcm-amavis-setup-ispconfig.sh
 rcm-certbot-autoinstaller.sh
 rcm-certbot-digitalocean-autoinstaller.sh
-rcm-certbot-obtain-certificates-wildcard.sh
+rcm-certbot-obtain-certificates.sh
 rcm-certbot-setup-nginx.sh
 rcm-composer-autoinstaller.sh
 rcm-cron-setup-wsl-autorun-crond.sh
@@ -656,6 +656,7 @@ rcm-mariadb-setup-database.sh
 rcm-mariadb-setup-ispconfig.sh
 rcm-nginx-autoinstaller.sh
 rcm-nginx-setup-drupal.sh
+rcm-nginx-setup-front-controller-php.sh
 rcm-nginx-setup-hello-world-php.sh
 rcm-nginx-setup-hello-world-static.sh
 rcm-nginx-setup-ispconfig.sh
