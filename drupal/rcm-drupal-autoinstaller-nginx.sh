@@ -58,13 +58,15 @@ printHelp() {
 Usage: rcm-drupal-autoinstaller-nginx.sh [options]
 
 Options:
-   --project-name
+   --project-name *
         Set the project name. This should be in machine name format.
    --project-parent-name
         Set the project parent name. The parent is not have to installed before.
-   --php-version
+   --php-version *
         Set the version of PHP FPM.
-   --drupal-version
+   --drush-version *
+        Set the version of Drush.
+   --drupal-version *
         Set the version of Drupal.
 
 Global Options.
