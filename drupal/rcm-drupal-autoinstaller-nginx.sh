@@ -14,6 +14,8 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --prefix=*) prefix="${1#*=}"; shift ;;
+        --prefix) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then prefix="$2"; shift; fi; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
         --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
@@ -68,6 +70,8 @@ Options:
         Set the version of Drush.
    --drupal-version *
         Set the version of Drupal.
+   --prefix
+        Set prefix directory for project.
 
 Global Options.
    --fast
@@ -144,9 +148,9 @@ vercomp() {
     return 0
 }
 databaseCredentialDrupal() {
-    if [ -f /var/www/drupal-project/$project_dir/credential/database ];then
+    if [ -f "$prefix"/drupal-project/$project_dir/credential/database ];then
         local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
-        . /var/www/drupal-project/$project_dir/credential/database
+        . "$prefix"/drupal-project/$project_dir/credential/database
         drupal_db_user=$DRUPAL_DB_USER
         drupal_db_user_password=$DRUPAL_DB_USER_PASSWORD
     else
@@ -155,17 +159,17 @@ databaseCredentialDrupal() {
             drupal_db_user=$project_parent_name
         }
         drupal_db_user_password=$(pwgen -s 32 -1)
-        mkdir -p /var/www/drupal-project/$project_dir/credential
-        cat << EOF > /var/www/drupal-project/$project_dir/credential/database
+        mkdir -p "$prefix"/drupal-project/$project_dir/credential
+        cat << EOF > "$prefix"/drupal-project/$project_dir/credential/database
 DRUPAL_DB_USER=$drupal_db_user
 DRUPAL_DB_USER_PASSWORD=$drupal_db_user_password
 EOF
-        chmod 0500 /var/www/drupal-project/$project_dir/credential
-        chmod 0400 /var/www/drupal-project/$project_dir/credential/database
+        chmod 0500 "$prefix"/drupal-project/$project_dir/credential
+        chmod 0400 "$prefix"/drupal-project/$project_dir/credential/database
     fi
 }
 websiteCredentialDrupal() {
-    local file=/var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
+    local file="$prefix"/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
     if [ -f "$file" ];then
         local ACCOUNT_NAME ACCOUNT_PASS
         . "$file"
@@ -174,14 +178,14 @@ websiteCredentialDrupal() {
     else
         account_name=system
         account_pass=$(pwgen -s 32 -1)
-        mkdir -p /var/www/drupal-project/$project_dir/credential/drupal
+        mkdir -p "$prefix"/drupal-project/$project_dir/credential/drupal
         cat << EOF > "$file"
 ACCOUNT_NAME=$account_name
 ACCOUNT_PASS=$account_pass
 EOF
-        chmod 0500 /var/www/drupal-project/$project_dir/credential
-        chmod 0500 /var/www/drupal-project/$project_dir/credential/drupal
-        chmod 0400 /var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
+        chmod 0500 "$prefix"/drupal-project/$project_dir/credential
+        chmod 0500 "$prefix"/drupal-project/$project_dir/credential/drupal
+        chmod 0400 "$prefix"/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
     fi
 }
 fileMustExists() {
@@ -221,7 +225,7 @@ fi
 code 'drupal_version="'$drupal_version'"'
 vercomp 8 "$drupal_version"
 if [[ $? -lt 2 ]];then
-    red Hanya mendukung Drupal versi >= 8.; x
+    red Hanya mendukung Drupal versi '>=' 8.; x
 fi
 code 'drush_version="'$drush_version'"'
 code 'php_version="'$php_version'"'
@@ -243,6 +247,10 @@ code 'drupal_nginx_config_file="'$drupal_nginx_config_file'"'
 code 'drupal_fqdn_localhost="'$drupal_fqdn_localhost'"'
 code 'drupal_db_name="'$drupal_db_name'"'
 code 'sites_subdir="'$sites_subdir'"'
+if [ -z "$prefix" ];then
+    prefix=/var/www
+fi
+code 'prefix="'$prefix'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -255,9 +263,9 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek direktori project '`'/var/www/drupal-project/$project_dir/drupal/web'`'.
+chapter Mengecek direktori project '`'"$prefix"/drupal-project/$project_dir/drupal/web'`'.
 notfound=
-if [ -d /var/www/drupal-project/$project_dir/drupal/web ] ;then
+if [ -d "$prefix"/drupal-project/$project_dir/drupal/web ] ;then
     __ Direktori ditemukan.
 else
     __ Direktori tidak ditemukan.
@@ -267,9 +275,9 @@ ____
 
 if [ -n "$notfound" ];then
     chapter Membuat direktori project.
-    code mkdir -p /var/www/drupal-project/$project_dir/drupal/web
-    mkdir -p /var/www/drupal-project/$project_dir/drupal/web
-    if [ -d /var/www/drupal-project/$project_dir/drupal/web ] ;then
+    code mkdir -p "$prefix"/drupal-project/$project_dir/drupal/web
+    mkdir -p "$prefix"/drupal-project/$project_dir/drupal/web
+    if [ -d "$prefix"/drupal-project/$project_dir/drupal/web ] ;then
         __; green Direktori berhasil dibuat.; _.
     else
         __; red Direktori gagal dibuat.; x
@@ -278,7 +286,7 @@ if [ -n "$notfound" ];then
 fi
 
 chapter Prepare arguments.
-root="/var/www/drupal-project/$project_dir/drupal/web"
+root="$prefix/drupal-project/$project_dir/drupal/web"
 code root="$root"
 filename="$drupal_nginx_config_file"
 code filename="$filename"
@@ -334,12 +342,12 @@ fi
 __ Menghapus file "${root}/.well-known/__getuser.php"
 rm "${root}/.well-known/__getuser.php"
 rmdir "${root}/.well-known" --ignore-fail-on-non-empty
-rmdir "/var/www/drupal-project/$project_dir/drupal/web" --ignore-fail-on-non-empty
+rmdir "$prefix/drupal-project/$project_dir/drupal/web" --ignore-fail-on-non-empty
 ____
 
 chapter Mengecek file '`'composer.json'`' untuk project '`'drupal/recommended-project'`'
 notfound=
-if [ -f /var/www/drupal-project/$project_dir/drupal/composer.json ];then
+if [ -f "$prefix"/drupal-project/$project_dir/drupal/composer.json ];then
     __ File '`'composer.json'`' ditemukan.
 else
     __ File '`'composer.json'`' tidak ditemukan.
@@ -349,9 +357,9 @@ ____
 
 if [ -n "$notfound" ];then
     chapter Mendownload composer.json untuk project '`'drupal/recommended-project'`'.
-    mkdir -p /var/www/drupal-project/$project_dir/drupal
-    chown $user_nginx:$user_nginx /var/www/drupal-project/$project_dir/drupal
-    cd /var/www/drupal-project/$project_dir/drupal
+    mkdir -p "$prefix"/drupal-project/$project_dir/drupal
+    chown $user_nginx:$user_nginx "$prefix"/drupal-project/$project_dir/drupal
+    cd "$prefix"/drupal-project/$project_dir/drupal
     # Jika version hanya angka 9 atau 10, maka ubah menjadi ^9 atau ^10.
     if [[ "$drupal_version" =~ ^[0-9]+$ ]];then
         _drupal_version="$drupal_version"
@@ -367,13 +375,13 @@ if [ -n "$notfound" ];then
     sudo -u $user_nginx HOME='/tmp' -E bash -c "composer create-project --no-install drupal/recommended-project . $drupal_version"
     drupal_version="$_drupal_version"
     cd - >/dev/null
-    fileMustExists "/var/www/drupal-project/$project_dir/drupal/composer.json"
+    fileMustExists "$prefix/drupal-project/$project_dir/drupal/composer.json"
     ____
 fi
 
 chapter Mengecek dependencies menggunakan Composer.
 notfound=
-cd /var/www/drupal-project/$project_dir/drupal
+cd "$prefix"/drupal-project/$project_dir/drupal
 msg=$(sudo -u $user_nginx HOME='/tmp' -s composer show 2>&1)
 if ! grep -q '^No dependencies installed.' <<< "$msg";then
     __ Dependencies installed.
@@ -386,7 +394,7 @@ ____
 
 if [ -n "$notfound" ];then
     chapter Mendownload dependencies menggunakan Composer.
-    cd /var/www/drupal-project/$project_dir/drupal
+    cd "$prefix"/drupal-project/$project_dir/drupal
     code composer -v install
     # sudo -u $user_nginx HOME='/tmp' -s composer -v install
     sudo -u $user_nginx HOME='/tmp' -E bash -c 'composer -v install'
@@ -396,7 +404,7 @@ fi
 
 chapter Mengecek drush.
 notfound=
-cd /var/www/drupal-project/$project_dir/drupal
+cd "$prefix"/drupal-project/$project_dir/drupal
 if sudo -u $user_nginx HOME='/tmp' -s composer show | grep -q '^drush/drush';then
     __ Drush exists.
 else
@@ -408,7 +416,7 @@ ____
 
 if [ -n "$notfound" ];then
     chapter Memasang '`'Drush'`' menggunakan Composer.
-    cd /var/www/drupal-project/$project_dir/drupal
+    cd "$prefix"/drupal-project/$project_dir/drupal
     # Jika version hanya angka 9 atau 10, maka ubah menjadi ^9 atau ^10.
     if [[ "$drush_version" =~ ^[0-9]+$ ]];then
         _drush_version="$drush_version"
@@ -417,7 +425,7 @@ if [ -n "$notfound" ];then
     code composer -v require drush/drush "$drush_version"
     # sudo -u $user_nginx HOME='/tmp' -s composer -v require drush/drush
     sudo -u $user_nginx HOME='/tmp' -E bash -c 'composer -v require drush/drush '"$drush_version"
-    if [ -f /var/www/drupal-project/$project_dir/drupal/vendor/bin/drush ];then
+    if [ -f "$prefix"/drupal-project/$project_dir/drupal/vendor/bin/drush ];then
         __; green Binary Drush is exists.
     else
         __; red Binary Drush is not exists.; x
@@ -427,7 +435,7 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-PATH=/var/www/drupal-project/$project_dir/drupal/vendor/bin:$PATH
+PATH="$prefix"/drupal-project/$project_dir/drupal/vendor/bin:$PATH
 
 chapter Mengecek domain-strict.
 if [ -n "$domain_strict" ];then
@@ -438,7 +446,7 @@ fi
 ____
 
 chapter Mengecek apakah Drupal sudah terinstall sebagai singlesite '`'default'`'.
-cd /var/www/drupal-project/$project_dir/drupal
+cd "$prefix"/drupal-project/$project_dir/drupal
 default_installed=
 if drush status --field=db-status | grep -q '^Connected$';then
     __ Drupal site default installed.
@@ -453,7 +461,7 @@ install_type=singlesite
 chapter Mengecek Drupal multisite
 if [ -n "$project_parent_name" ];then
     __ Project parent didefinisikan. Menggunakan Drupal multisite.
-    if [ -f /var/www/drupal-project/$project_dir/drupal/web/sites/sites.php ];then
+    if [ -f "$prefix"/drupal-project/$project_dir/drupal/web/sites/sites.php ];then
         __ Files '`'sites.php'`' ditemukan.
     else
         __ Files '`'sites.php'`' belum ditemukan.
@@ -519,10 +527,10 @@ if [[ -n "$domain_strict" && -n "$default_installed" ]];then
     __; red Process terminated; x
 fi
 
-chapter Mengecek database credentials: '`'/var/www/drupal-project/$project_dir/credential/database'`'.
+chapter Mengecek database credentials: '`'$prefix/drupal-project/$project_dir/credential/database'`'.
 databaseCredentialDrupal
 if [[ -z "$drupal_db_user" || -z "$drupal_db_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/var/www/drupal-project/$project_dir/credential/database'`'.; x
+    __; red Informasi credentials tidak lengkap: '`'$prefix/drupal-project/$project_dir/credential/database'`'.; x
 else
     code drupal_db_user="$drupal_db_user"
     code drupal_db_user_password="$drupal_db_user_password"
@@ -548,10 +556,10 @@ rcm-mariadb-setup-database.sh \
     --db-user-password="$db_user_password" \
     ; [ ! $? -eq 0 ] && x
 
-chapter Mengecek website credentials: '`'/var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
+chapter Mengecek website credentials: '`'$prefix/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
 websiteCredentialDrupal
 if [[ -z "$account_name" || -z "$account_pass" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.; x
+    __; red Informasi credentials tidak lengkap: '`'$prefix/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.; x
 else
     code account_name="$account_name"
     code account_pass="$account_pass"
@@ -563,7 +571,7 @@ if [[ $install_type == 'singlesite' && -z "$default_installed" ]];then
     code drush site:install --yes \
         --account-name="$account_name" --account-pass="$account_pass" \
         --db-url=mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}
-    sudo -u $user_nginx HOME='/tmp' PATH=/var/www/drupal-project/$project_dir/drupal/vendor/bin:$PATH -s \
+    sudo -u $user_nginx HOME='/tmp' PATH="$prefix"/drupal-project/$project_dir/drupal/vendor/bin:$PATH -s \
         drush site:install --yes \
             --account-name="$account_name" --account-pass="$account_pass" \
             --db-url=mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}
@@ -581,12 +589,12 @@ if [[ $install_type == 'multisite' && -z "$multisite_installed" ]];then
         --account-name="$account_name" --account-pass="$account_pass" \
         --db-url=mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name} \
         --sites-subdir=${sites_subdir}
-    sudo -u $user_nginx HOME='/tmp' PATH=/var/www/drupal-project/$project_dir/drupal/vendor/bin:$PATH -s \
+    sudo -u $user_nginx HOME='/tmp' PATH="$prefix"/drupal-project/$project_dir/drupal/vendor/bin:$PATH -s \
         drush site:install --yes \
             --account-name="$account_name" --account-pass="$account_pass" \
             --db-url=mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name} \
             --sites-subdir=${sites_subdir}
-    if [ -f /var/www/drupal-project/$project_dir/drupal/web/sites/sites.php ];then
+    if [ -f "$prefix"/drupal-project/$project_dir/drupal/web/sites/sites.php ];then
         __; green Files '`'sites.php'`' ditemukan.; _.
     else
         __; red Files '`'sites.php'`' tidak ditemukan.; x
@@ -615,7 +623,7 @@ EOF
 )
     sudo -u $user_nginx \
         php -r "$php" \
-            /var/www/drupal-project/$project_dir/drupal/web/sites/sites.php \
+            "$prefix"/drupal-project/$project_dir/drupal/web/sites/sites.php \
             "$sites_subdir" \
             "${allsite[@]}"
     error=
@@ -679,6 +687,7 @@ exit 0
 # --php-version
 # --project-name
 # --project-parent-name
+# --prefix
 # )
 # FLAG_VALUE=(
 # )
