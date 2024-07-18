@@ -299,7 +299,7 @@ rcm-nginx-setup-drupal.sh \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \
-    --php-version="$php_version" \
+    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek subdomain '`'$drupal_fqdn_localhost'`'.

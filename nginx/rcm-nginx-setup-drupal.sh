@@ -7,10 +7,10 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
+        --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
+        --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
         --filename=*) filename="${1#*=}"; shift ;;
         --filename) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then filename="$2"; shift; fi; shift ;;
-        --php-version=*) php_version="${1#*=}"; shift ;;
-        --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then root="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
@@ -44,7 +44,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.4.0'
 }
 printHelp() {
     title RCM Nginx Setup
@@ -65,8 +65,8 @@ Options:
         Set the filename to created inside /etc/nginx/sites-available directory.
    --root *
         Set the value of root directive.
-   --php-version
-        Set the version of PHP FPM.
+   --fastcgi-pass *
+        Set the value of fastcgi_pass directive.
    --server-name *
         Set the value of server_name directive. Multivalue.
 
@@ -129,7 +129,7 @@ if [[ ${#server_name[@]} -eq 0 ]];then
     error "Argument --server-name required."; x
 fi
 code 'server_name=('"${server_name[@]}"')'
-code 'php_version="'$php_version'"'
+code 'fastcgi_pass="'$fastcgi_pass'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
@@ -148,7 +148,7 @@ create_new=
 chapter Memeriksa file konfigurasi.
 if [ -f "$file_config" ];then
     __ File ditemukan: '`'$file_config'`'.
-    string="unix:/run/php/php${php_version}-fpm.sock"
+    string="$fastcgi_pass"
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
     if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
         __ Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.
@@ -207,12 +207,12 @@ server {
     }
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php__PHP_VERSION__-fpm.sock;
+        fastcgi_pass __FASTCGI_PASS__;
     }
 }
 EOF
     sed -i "s|__ROOT__|${root}|g" "$file_config"
-    sed -i "s|__PHP_VERSION__|${php_version}|g" "$file_config"
+    sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$file_config"
     cd /etc/nginx/sites-enabled/
     ln -sf ../sites-available/$filename
     cd - >/dev/null
@@ -250,7 +250,7 @@ EOF
 fi
 
 chapter Memeriksa ulang file konfigurasi.
-string="unix:/run/php/php${php_version}-fpm.sock"
+string="$fastcgi_pass"
 string_quoted=$(sed "s/\./\\\./g" <<< "$string")
 if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
     __; green Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.; _.
@@ -284,7 +284,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
+# --no-error-require-arguments << EOF
 # FLAG=(
 # --fast
 # --version
@@ -293,7 +293,7 @@ exit 0
 # )
 # VALUE=(
 # --root
-# --php-version
+# --fastcgi-pass
 # --filename
 # )
 # MULTIVALUE=(
@@ -302,4 +302,3 @@ exit 0
 # FLAG_VALUE=(
 # )
 # EOF
-# clear

@@ -174,7 +174,7 @@ ____
 INDENT+="    " \
 rcm-nginx-setup-drupal.sh $isfast --root-sure \
     --root="$root" \
-    --php-version="$php_version" \
+    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
     --filename="$filename" \
     --server-name="$server_name" \
     ; [ ! $? -eq 0 ] && x
