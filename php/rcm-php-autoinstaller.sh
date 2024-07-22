@@ -227,6 +227,7 @@ else
                         7.4) eligible=1 ;;
                         8.1) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.2) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.3) eligible=1; addRepositoryPpaOndrejPhp ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
