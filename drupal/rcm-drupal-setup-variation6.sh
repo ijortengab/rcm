@@ -49,7 +49,7 @@ printVersion() {
 }
 printHelp() {
     title RCM Drupal Setup
-    _ 'Variation '; yellow 2; _, . Debian 12, Drupal 9, PHP 8.1. ; _.
+    _ 'Variation '; yellow 6; _, . Debian 12, Drupal 9, PHP 8.1. ; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
