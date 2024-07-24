@@ -158,7 +158,10 @@ printBackupDialog() {
     fi
 }
 printHistoryDialog() {
-    count_max=$(wc -l <<< "$history_value")
+    local count_max=$(wc -l <<< "$history_value")
+    if [ $count_max -gt 9 ];then
+        count_max=9
+    fi
     unset count
     declare -i count
     count=0
@@ -184,7 +187,6 @@ printHistoryDialog() {
             *) echo
         esac
     done
-
 }
 printSelectDialog() {
     local prefix="$1"
@@ -198,7 +200,7 @@ printSelectDialog() {
         fi
     fi
     value=
-    _ "$prefix"; _, Available $what:; for e in "${source[@]}"; do
+    _, "$prefix"; _, Available $what:; for e in "${source[@]}"; do
         if [ -n "$first" ];then first=; else _, ','; fi
         _, ' '; yellow "$e"
     done; _, '.'; _.
@@ -211,9 +213,56 @@ printSelectDialog() {
                 break
             fi
         else
-            break
+            if [ -z "$is_required" ];then
+                break
+            fi
         fi
     done
+}
+printSelectOtherDialog() {
+    local prefix="$1"
+    local source=("${!2}")
+    local what="$3"
+    local first=1 e reference_key
+    if [ -z "$what" ];then
+        what=value
+        if [ "${#source[@]}" -gt 1 ];then
+            what=values
+        fi
+    fi
+    count_max="${#source[@]}"
+    if [ $count_max -gt 9 ];then
+        count_max=9
+    fi
+    unset count
+    declare -i count
+    count=0
+    _, There are values available. Press the yellow key to select.; _.
+    for ((i = 0 ; i < $count_max ; i++)); do
+      count+=1
+      __; _, '['; yellow $count; _, ']'; _, ' '; _, "${source[$i]}"; _.
+    done
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow S; _, 'kip and continue.'; _.
+    while true; do
+        __; read -rsn 1 -p "Select: " char;
+        if [ -z "$char" ];then
+            char=s
+        fi
+        case $char in
+            s|S) echo "$char"; break ;;
+            [1-$count_max])
+                echo "$char"
+                i=$((char - 1))
+                value="${source[$i]}"
+                __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+                save_history=
+                break ;;
+            *) echo
+        esac
+    done
+    if [ -z "$value" ];then
+        __; read -p "Type the value: " value
+    fi
 }
 ArraySearch() {
     local index match="$1"
@@ -442,29 +491,18 @@ Rcm_prompt() {
             history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             available_values=()
             _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
+            or_other=
+            if [ -n "$_available_values" ];then
+                if grep -i -q -E 'or others?' <<< "$_available_values";then
+                    or_other=1
+                    _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
+                fi
+            fi
             if [ -n "$_available_values" ];then
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
-            if [ -n "$is_required" ];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
-                if [ -n "$backup_value" ];then
-                    printBackupDialog
-                fi
-                if [ -z "$value" ];then
-                    if [ -n "$history_value" ];then
-                        printHistoryDialog
-                    fi
-                fi
-                if [ -z "$value" ];then
-                    if [ "${#available_values[@]}" -gt 0 ];then
-                        printSelectDialog "`__`" available_values[@]
-                    fi
-                fi
-                until [[ -n "$value" ]];do
-                    __; read -p "Type the value: " value
-                done
-                argument_pass+=("${parameter}=${value}")
-            elif [ -n "$is_flag" ];then
+
+            if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
                 __; _, Add this argument?; _.
                 userInputBooleanDefaultNo
@@ -513,7 +551,11 @@ Rcm_prompt() {
                     fi
                 fi
             else
-                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                if [ -n "$is_required" ];then
+                    _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
+                else
+                    _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                fi
                 if [ -n "$backup_value" ];then
                     printBackupDialog
                 fi
@@ -524,11 +566,19 @@ Rcm_prompt() {
                 fi
                 if [ -z "$value" ];then
                     if [ "${#available_values[@]}" -gt 0 ];then
-                        printSelectDialog "`__`" available_values[@]
+                        if [ -n "$or_other" ];then
+                            printSelectOtherDialog "`__`" available_values[@]
+                        else
+                            printSelectDialog "`__`" available_values[@]
+                        fi
+                    else
+                        __; read -p "Type the value: " value
                     fi
                 fi
-                if [ -z "$value" ];then
-                    __; read -p "Type the value: " value
+                if [ -n "$is_required" ];then
+                    until [[ -n "$value" ]];do
+                        __; read -p "Type the value: " value
+                    done
                 fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
