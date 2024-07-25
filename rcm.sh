@@ -255,7 +255,6 @@ printSelectOtherDialog() {
                 i=$((char - 1))
                 value="${source[$i]}"
                 __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
-                save_history=
                 break ;;
             *) echo
         esac
@@ -485,7 +484,25 @@ Rcm_prompt() {
             if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$label";then
                 value_addon=canhavevalue
             fi
-            options=`sed -n '3,$p' <<< "$options"`
+            unset count
+            declare -i count
+            count=3
+            placeholders=
+            while true; do
+                below=`sed -n ${count}p <<< "$options" | xargs`
+                if grep -q '^--' <<< "$below";then
+                    break
+                fi
+                if [ -z "$below" ];then
+                    break
+                fi
+                if [ -n "$placeholders" ];then
+                    placeholders+=$'\n'
+                fi
+                placeholders+="$below"
+                count+=1
+            done
+            options=`sed -n ${count}',$p' <<< "$options"`
             value=
             backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
@@ -498,10 +515,19 @@ Rcm_prompt() {
                     _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
                 fi
             fi
+            if [ -n "$placeholders" ];then
+                while read line; do
+                    find=$(echo ${line} | cut -d: -f1 | xargs)
+                    replace=$(echo ${line} | cut -d: -f2 | xargs)
+                    label="${label/"$find"/"$replace"}"
+                    if [ -n "$_available_values" ];then
+                        _available_values="${_available_values/"$find"/"$replace"}"
+                    fi
+                done <<< "$placeholders"
+            fi
             if [ -n "$_available_values" ];then
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
-
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
                 __; _, Add this argument?; _.
@@ -587,6 +613,9 @@ Rcm_prompt() {
             # Backup to text file.
             if [ -n "$value" ];then
                 echo "${parameter}=${value}" >> "$backup_storage"
+                if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
+                    save_history=
+                fi
                 if [ -n "$save_history" ];then
                     echo "${parameter}=${value}" >> "$history_storage"
                 fi
@@ -621,6 +650,9 @@ Rcm_prompt() {
                         # Backup to text file.
                         if [ -n "$value" ];then
                             echo "${parameter}=${value}" >> "$backup_storage"
+                            if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
+                                save_history=
+                            fi
                             if [ -n "$save_history" ];then
                                 echo "${parameter}=${value}" >> "$history_storage"
                             fi
