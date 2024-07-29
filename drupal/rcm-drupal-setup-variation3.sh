@@ -193,7 +193,7 @@ rcm-composer-autoinstaller.sh $isfast --root-sure \
 rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
     --drupal-version="$drupal_version" \
     --drush-version="$drush_version" \
-    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
+    --php-version="$php_version" \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     ; [ ! $? -eq 0 ] && x

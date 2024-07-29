@@ -12,8 +12,8 @@ while [[ $# -gt 0 ]]; do
         --drush-version=*) drush_version="${1#*=}"; shift ;;
         --drush-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drush_version="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
-        --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
+        --php-version=*) php_version="${1#*=}"; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
         --prefix=*) prefix="${1#*=}"; shift ;;
         --prefix) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then prefix="$2"; shift; fi; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
@@ -64,8 +64,8 @@ Options:
         Set the project name. This should be in machine name format.
    --project-parent-name
         Set the project parent name. The parent is not have to installed before.
-   --fastcgi-pass *
-        Set the value of fastcgi_pass directive.
+   --php-version *
+        Set the version of PHP FPM.
    --drush-version *
         Set the version of Drush.
    --drupal-version *
@@ -228,7 +228,7 @@ if [[ $? -lt 2 ]];then
     red Hanya mendukung Drupal versi '>=' 8.; x
 fi
 code 'drush_version="'$drush_version'"'
-code 'fastcgi_pass="'$fastcgi_pass'"'
+code 'php_version="'$php_version'"'
 project_dir="$project_name"
 drupal_nginx_config_file=drupal_"$project_name"
 drupal_fqdn_localhost="$project_name".drupal.localhost
@@ -299,7 +299,7 @@ rcm-nginx-setup-drupal.sh \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \
-    --fastcgi-pass="$fastcgi_pass" \
+    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek subdomain '`'$drupal_fqdn_localhost'`'.
@@ -673,7 +673,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -684,7 +684,7 @@ exit 0
 # VALUE=(
 # --drupal-version
 # --drush-version
-# --fastcgi-pass
+# --php-version
 # --project-name
 # --project-parent-name
 # --prefix
@@ -692,3 +692,4 @@ exit 0
 # FLAG_VALUE=(
 # )
 # EOF
+# clear
