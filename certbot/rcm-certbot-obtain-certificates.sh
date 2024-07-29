@@ -165,7 +165,7 @@ link_symbolic() {
             if [[ "$_dereference" == "$match" ]];then
                 _, ' 'Merujuk.; _.
             else
-                _, ' 'Tidak Merujuk.; _.
+                _, ' 'Tidak merujuk.; _.
                 __ Melakukan backup.
                 backupFile move "$target"
                 create=1
