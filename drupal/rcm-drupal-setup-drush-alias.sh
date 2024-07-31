@@ -140,10 +140,25 @@ for uri in "${list_uri[@]}";do
         __ Membuat file '`'$HOME_DIRECTORY/$each'`'.
         cat << 'EOF' > "$HOME_DIRECTORY/$each"
 [[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
-echo -e "\e[95m""cd /var/www/drupal-project/__PROJECT_DIR__/drupal""\e[39m"
-cd /var/www/drupal-project/__PROJECT_DIR__/drupal
-echo -e "\e[95m""alias drush='vendor/bin/drush --uri=__URI__'""\e[39m"
-alias drush='vendor/bin/drush --uri=__URI__'
+_prefix_master=/usr/local/share
+_project_container_master=drupal
+_project_dir=__PROJECT_DIR__
+_target="${_prefix_master}/${_project_container_master}/${_project_dir}/drupal"
+_dereference=$(stat --cached=never "$_target" -c %N)
+PROJECT_DIR=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
+DRUPAL_ROOT="${PROJECT_DIR}/web"
+echo export PROJECT_DIR='"'$PROJECT_DIR'"'
+echo export DRUPAL_ROOT='"'$DRUPAL_ROOT'"'
+echo alias drush='"'$PROJECT_DIR/vendor/bin/drush --uri=__URI__'"'
+echo cd '"$PROJECT_DIR"'
+echo '[ -f .aliases ] && . .aliases'
+echo -e "\e[95m"drush status"\e[39m"
+export PROJECT_DIR="$PROJECT_DIR"
+export DRUPAL_ROOT="$DRUPAL_ROOT"
+alias drush="$PROJECT_DIR/vendor/bin/drush --uri=__URI__"
+cd "$PROJECT_DIR"
+[ -f .aliases ] && . .aliases
+drush status
 EOF
         sed -i "s|__PROJECT_DIR__|${project_dir}|g" "$HOME_DIRECTORY/$each"
         sed -i "s|__URI__|${uri}|g" "$HOME_DIRECTORY/$each"

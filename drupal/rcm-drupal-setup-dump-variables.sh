@@ -82,44 +82,19 @@ EOF
 
 # Functions.
 databaseCredentialDrupal() {
-    if [ -f /var/www/drupal-project/$project_dir/credential/database ];then
+    if [ -f /usr/local/share/drupal/$project_dir/credential/database ];then
         local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
-        . /var/www/drupal-project/$project_dir/credential/database
+        . /usr/local/share/drupal/$project_dir/credential/database
         drupal_db_user=$DRUPAL_DB_USER
         drupal_db_user_password=$DRUPAL_DB_USER_PASSWORD
-    else
-        drupal_db_user="$project_name"
-        [ -n "$project_parent_name" ] && {
-            drupal_db_user=$project_parent_name
-        }
-        drupal_db_user_password=$(pwgen -s 32 -1)
-        mkdir -p /var/www/drupal-project/$project_dir/credential
-        cat << EOF > /var/www/drupal-project/$project_dir/credential/database
-DRUPAL_DB_USER=$drupal_db_user
-DRUPAL_DB_USER_PASSWORD=$drupal_db_user_password
-EOF
-        chmod 0500 /var/www/drupal-project/$project_dir/credential
-        chmod 0400 /var/www/drupal-project/$project_dir/credential/database
     fi
 }
 websiteCredentialDrupal() {
-    local file=/var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
-    if [ -f "$file" ];then
+    if [ -f "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
         local ACCOUNT_NAME ACCOUNT_PASS
-        . "$file"
+        . "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
         account_name=$ACCOUNT_NAME
         account_pass=$ACCOUNT_PASS
-    else
-        account_name=system
-        account_pass=$(pwgen -s 32 -1)
-        mkdir -p /var/www/drupal-project/$project_dir/credential/drupal
-        cat << EOF > "$file"
-ACCOUNT_NAME=$account_name
-ACCOUNT_PASS=$account_pass
-EOF
-        chmod 0500 /var/www/drupal-project/$project_dir/credential
-        chmod 0500 /var/www/drupal-project/$project_dir/credential/drupal
-        chmod 0400 /var/www/drupal-project/$project_dir/credential/drupal/$drupal_fqdn_localhost
     fi
 }
 
