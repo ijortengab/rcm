@@ -205,7 +205,7 @@ server {
     location / {
         try_files $uri $uri/ /index.php$is_args$args;
     }
-    location ~ ^(.+\.php)(.*)$
+    location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass __FASTCGI_PASS__;
     }
