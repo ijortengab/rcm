@@ -9,8 +9,14 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
+        --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --prefix=*) prefix="${1#*=}"; shift ;;
+        --prefix) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then prefix="$2"; shift; fi; shift ;;
+        --project-container=*) project_container="${1#*=}"; shift ;;
+        --project-container) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_container="$2"; shift; fi; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
         --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
@@ -53,20 +59,32 @@ printHelp() {
     _ 'Variation '; yellow Wrapper Nginx Setup Drupal; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    nginx_user=
+    conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+    if [ -f "$conf_nginx" ];then
+        nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+    fi
+    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
+    cat << EOF
 Usage: rcm-drupal-setup-wrapper-nginx-setup-drupal.sh [command] [options]
 
 Options:
-   --php-version
-        Set the version of PHP FPM.
-   --subdomain
-        Set the subdomain if any.
-   --domain
-        Set the domain.
-   --project-name
+   --project-name *
         Set the project name. This should be in machine name format.
    --project-parent-name
         Set the project parent name.
+   --subdomain
+        Set the subdomain if any.
+   --domain *
+        Set the domain.
+   --php-version *
+        Set the version of PHP.
+   --php-fpm-user
+        Set the system user of PHP FPM. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other.
+   --prefix
+        Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
+   --project-container
+        Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
 
 Global Options.
    --fast
@@ -80,6 +98,7 @@ Global Options.
 
 Dependency:
    rcm-nginx-setup-drupal.sh
+   rcm-php-fpm-setup-pool.sh
 EOF
 }
 
@@ -115,6 +134,9 @@ ____
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
 code 'php_version="'$php_version'"'
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
@@ -140,6 +162,36 @@ project_dir="$project_name"
 [ -n "$project_parent_name" ] && {
     project_dir="$project_parent_name"
 }
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+if [ -z "$php_fpm_user" ];then
+    php_fpm_user="$nginx_user"
+fi
+code 'php_fpm_user="'$php_fpm_user'"'
+if [ -z "$prefix" ];then
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+fi
+# Jika $php_fpm_user adalah nginx, maka $HOME nya adalah /nonexistent, maka
+# perlu kita verifikasi lagi.
+if [ ! -d "$prefix" ];then
+    prefix=
+fi
+if [ -z "$prefix" ];then
+    prefix=/usr/local/share
+    project_container=drupal
+fi
+if [ -z "$project_container" ];then
+    project_container=drupal-project
+fi
+code 'prefix="'$prefix'"'
+code 'project_container="'$project_container'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
@@ -153,9 +205,10 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek direktori project '`'/var/www/drupal-project/$project_dir/drupal/web'`'.
+root="${prefix}/${project_container}/${project_dir}/drupal/web"
+chapter Mengecek direktori project '`'$root'`'.
 notfound=
-if [ -d /var/www/drupal-project/$project_dir/drupal/web ] ;then
+if [ -d "$root" ] ;then
     __ Direktori ditemukan.
 else
     __; red Direktori tidak ditemukan.; x
@@ -163,7 +216,11 @@ fi
 ____
 
 chapter Prepare arguments.
-root="/var/www/drupal-project/$project_dir/drupal/web"
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-pool.sh $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" get listen)
+if [ -z "$socket_filename" ];then
+    __; red Socket Filename of PHP-FPM not found.; x
+fi
+code socket_filename="$socket_filename"
 code root="$root"
 filename="$fqdn_project"
 code filename="$filename"
@@ -174,7 +231,7 @@ ____
 INDENT+="    " \
 rcm-nginx-setup-drupal.sh $isfast --root-sure \
     --root="$root" \
-    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
+    --fastcgi-pass="unix:${socket_filename}" \
     --filename="$filename" \
     --server-name="$server_name" \
     ; [ ! $? -eq 0 ] && x
@@ -188,7 +245,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
+# --no-error-require-arguments << EOF
 # FLAG=(
 # --fast
 # --version
@@ -201,10 +258,12 @@ exit 0
 # --subdomain
 # --project-name
 # --project-parent-name
+# --php-fpm-user
+# --prefix
+# --project-container
 # )
 # MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
 # EOF
-# clear
