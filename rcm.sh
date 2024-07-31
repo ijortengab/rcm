@@ -200,6 +200,9 @@ printSelectDialog() {
         fi
     fi
     value=
+    if [ -z "$prefix" ];then
+        prefix=`_ ''`
+    fi
     _, "$prefix"; _, Available $what:; for e in "${source[@]}"; do
         if [ -n "$first" ];then first=; else _, ','; fi
         _, ' '; yellow "$e"
@@ -457,7 +460,7 @@ Rcm_prompt() {
             chapter Prepare argument for command '`'$command'`'.
         fi
         until [[ -z "$options" ]];do
-            parameter=`sed -n 1p <<< "$options" | xargs`
+            parameter=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             is_required=
             is_flag=
             value_addon=
@@ -477,7 +480,7 @@ Rcm_prompt() {
                 is_flag=
                 value_addon=multivalue
             fi
-            label=`sed -n 2p <<< "$options" | xargs`
+            label=`sed -n 2p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$label";then
                 value_addon=multivalue
             fi
@@ -489,7 +492,7 @@ Rcm_prompt() {
             count=3
             placeholders=
             while true; do
-                below=`sed -n ${count}p <<< "$options" | xargs`
+                below=`sed -n ${count}p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
                 if grep -q '^--' <<< "$below";then
                     break
                 fi
@@ -717,6 +720,9 @@ rcm-drupal-setup-variation3.sh
 rcm-drupal-setup-variation4.sh
 rcm-drupal-setup-variation5.sh
 rcm-drupal-setup-variation6.sh
+rcm-drupal-setup-variation7.sh
+rcm-drupal-setup-variation8.sh
+rcm-drupal-setup-variation9.sh
 rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
 rcm-ispconfig-autoinstaller-nginx.sh
 rcm-ispconfig-control-manage-domain.sh
