@@ -6,10 +6,17 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --auto-add-group) auto_add_group=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --domain-strict) domain_strict=1; shift ;;
         --fast) fast=1; shift ;;
+        --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
+        --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
+        --prefix=*) prefix="${1#*=}"; shift ;;
+        --prefix) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then prefix="$2"; shift; fi; shift ;;
+        --project-container=*) project_container="${1#*=}"; shift ;;
+        --project-container) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_container="$2"; shift; fi; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
         --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
@@ -52,7 +59,13 @@ printHelp() {
     _ 'Variation '; yellow 8; _, . Debian 11, Drupal 10, PHP 8.3. ; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    nginx_user=
+    conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+    if [ -f "$conf_nginx" ];then
+        nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+    fi
+    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
+    cat << EOF
 Usage: rcm-drupal-setup-variation8.sh [options]
 
 Options:
@@ -60,12 +73,20 @@ Options:
         Set the project name. This should be in machine name format.
    --project-parent-name
         Set the project parent name. The parent is not have to installed before.
-   --timezone
-        Set the timezone of this machine.
    --domain
         Set the domain.
+   --timezone
+        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --domain-strict ^
         Prevent installing drupal inside directory sites/default.
+   --php-fpm-user
+        Set the system user of PHP FPM. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other.
+   --prefix
+        Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
+   --project-container
+        Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
+   --auto-add-group ^
+        If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
 
 Global Options.
    --fast
@@ -78,6 +99,7 @@ Global Options.
         Bypass root checking.
 
 Dependency:
+   nginx
    rcm-debian-11-setup-basic.sh
    rcm-nginx-autoinstaller.sh
    rcm-mariadb-autoinstaller.sh
@@ -91,6 +113,7 @@ Dependency:
    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
    rcm-drupal-setup-drush-alias.sh
    rcm-drupal-setup-dump-variables.sh
+   rcm-php-fpm-setup-pool.sh
 EOF
 }
 
@@ -120,12 +143,15 @@ validateMachineName() {
 }
 
 # Title.
-title rcm-drupal-setup-variation6.sh
+title rcm-drupal-setup-variation8.sh
 ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+delay=.5; [ -n "$fast" ] && unset delay
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
+[ -n "$auto_add_group" ] && is_auto_add_group=' --auto-add-group' || is_auto_add_group=''
+
 php_version=8.3
 code php_version="$php_version"
 drupal_version=10
@@ -151,7 +177,37 @@ if [ -f /proc/sys/kernel/osrelease ];then
     fi
 fi
 code 'is_wsl="'$is_wsl'"'
-delay=.5; [ -n "$fast" ] && unset delay
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+if [ -z "$php_fpm_user" ];then
+    php_fpm_user="$nginx_user"
+fi
+code 'php_fpm_user="'$php_fpm_user'"'
+if [ -z "$prefix" ];then
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+fi
+# Jika $php_fpm_user adalah nginx, maka $HOME nya adalah /nonexistent, maka
+# perlu kita verifikasi lagi.
+if [ ! -d "$prefix" ];then
+    prefix=
+fi
+if [ -z "$prefix" ];then
+    prefix=/usr/local/share
+    project_container=drupal
+fi
+if [ -z "$project_container" ];then
+    project_container=drupal-project
+fi
+code 'prefix="'$prefix'"'
+code 'project_container="'$project_container'"'
+code 'auto_add_group="'$auto_add_group'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -187,16 +243,28 @@ if [ -n "$is_wsl" ];then
         --php-version="$php_version" \
         ; [ ! $? -eq 0 ] && x
 fi
+
+INDENT+="    " \
+rcm-php-fpm-setup-pool.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    --php-fpm-user="$php_fpm_user" \
+    ; [ ! $? -eq 0 ] && x
+
 INDENT+="    " \
 rcm-composer-autoinstaller.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
+    $is_auto_add_group \
     --drupal-version="$drupal_version" \
     --drush-version="$drush_version" \
-    --fastcgi-pass="unix:/run/php/php${php_version}-fpm.sock" \
+    --php-version="$php_version" \
+    --php-fpm-user="$php_fpm_user" \
+    --prefix="$prefix" \
+    --project-container="$project_container" \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     ; [ ! $? -eq 0 ] && x
+
 if [ -n "$domain" ];then
     INDENT+="    " \
     rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
@@ -204,6 +272,9 @@ if [ -n "$domain" ];then
         --project-name="$project_name" \
         --project-parent-name="$project_parent_name" \
         --domain="$domain" \
+        --php-fpm-user="$php_fpm_user" \
+        --prefix="$prefix" \
+        --project-container="$project_container" \
         && INDENT+="    " \
     rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
         --php-version="$php_version" \
@@ -211,8 +282,12 @@ if [ -n "$domain" ];then
         --project-parent-name="$project_parent_name" \
         --subdomain="$domain" \
         --domain="localhost" \
+        --php-fpm-user="$php_fpm_user" \
+        --prefix="$prefix" \
+        --project-container="$project_container" \
         ; [ ! $? -eq 0 ] && x
 fi
+
 INDENT+="    " \
 rcm-drupal-setup-drush-alias.sh $isfast --root-sure \
     --project-name="$project_name" \
@@ -227,7 +302,9 @@ rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code sudo -E $(command -v rcm-drupal-setup-dump-variables.sh)
+[ -n "$project_parent_name" ] && has_project_parent_name=' --project-parent-name='"'${project_parent_name}'" || has_project_parent_name=''
+[ -n "$domain" ] && has_domain=' --domain='"'${domain}'" || has_domain=''
+code rcm-drupal-setup-dump-variables.sh${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
 ____
 
 exit 0
@@ -239,19 +316,23 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
+# --no-error-require-arguments << EOF
 # FLAG=(
 # --fast
 # --version
 # --help
 # --root-sure
 # --domain-strict
+# --auto-add-group
 # )
 # VALUE=(
 # --project-name
 # --project-parent-name
 # --timezone
 # --domain
+# --php-fpm-user
+# --prefix
+# --project-container
 # )
 # MULTIVALUE=(
 # )
@@ -260,4 +341,3 @@ exit 0
 # CSV=(
 # )
 # EOF
-# clear
