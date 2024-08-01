@@ -24,6 +24,10 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
+        --with-update-system) update_system=1; shift ;;
+        --without-update-system) update_system=0; shift ;;
+        --with-upgrade-system) upgrade_system=1; shift ;;
+        --without-upgrade-system) upgrade_system=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -87,6 +91,10 @@ Options:
         Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
+   --without-update-system ^
+        Skip execute update system. Default to --with-update-system.
+   --without-upgrade-system ^
+        Skip execute upgrade system. Default to --with-upgrade-system.
 
 Global Options.
    --fast
@@ -149,8 +157,12 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+code update_system="$update_system"
+code upgrade_system="$upgrade_system"
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 [ -n "$auto_add_group" ] && is_auto_add_group=' --auto-add-group' || is_auto_add_group=''
+[[ "$update_system" == "0" ]] && is_without_update_system=' --without-update-system' || is_without_update_system=''
+[[ "$upgrade_system" == "0" ]] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
 
 php_version=8.3
 code php_version="$php_version"
@@ -222,6 +234,8 @@ fi
 
 INDENT+="    " \
 rcm-debian-12-setup-basic.sh $isfast --root-sure \
+    $is_without_update_system \
+    $is_without_upgrade_system \
     --timezone="$timezone" \
     && INDENT+="    " \
 rcm-nginx-autoinstaller.sh $isfast --root-sure \
@@ -305,6 +319,8 @@ e If you want to see the credentials again, please execute this command:
 [ -n "$project_parent_name" ] && has_project_parent_name=' --project-parent-name='"'${project_parent_name}'" || has_project_parent_name=''
 [ -n "$domain" ] && has_domain=' --domain='"'${domain}'" || has_domain=''
 code rcm-drupal-setup-dump-variables.sh${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
+e If you want to see all project, please execute this command:
+code . cd-drupal
 ____
 
 exit 0
@@ -316,7 +332,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -339,5 +355,10 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--with-update-system,parameter:update_system'
+    # 'long:--without-update-system,parameter:update_system,flag_option:reverse'
+    # 'long:--with-upgrade-system,parameter:upgrade_system'
+    # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # EOF
+# clear
