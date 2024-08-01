@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.6'
+    echo '0.4.0'
 }
 printHelp() {
     title Rapid Construct Massive

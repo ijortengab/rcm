@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.1'
+    echo '0.4.0'
 }
 printHelp() {
     title RCM PHP Setup

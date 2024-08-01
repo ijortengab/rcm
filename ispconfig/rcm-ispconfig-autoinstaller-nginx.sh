@@ -52,7 +52,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.2'
+    echo '0.4.0'
 }
 printHelp() {
     title RCM ISPConfig Auto-Installer

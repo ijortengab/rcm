@@ -47,7 +47,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.3.1'
+    echo '0.4.0'
 }
 printHelp() {
     title RCM ISPConfig Control

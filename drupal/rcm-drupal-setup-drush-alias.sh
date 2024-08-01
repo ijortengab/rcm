@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.3.0'
+    echo '0.4.0'
 }
 printHelp() {
     title RCM Drupal Setup
