@@ -54,7 +54,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.4.0'
+    echo '0.4.1'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -507,8 +507,14 @@ Rcm_prompt() {
             done
             options=`sed -n ${count}',$p' <<< "$options"`
             value=
-            backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
-            history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+            backup_value=
+            if [ -f "$backup_storage" ];then
+                backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+            fi
+            history_value=
+            if [ -f "$history_storage" ];then
+                history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+            fi
             available_values=()
             _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
             or_other=
@@ -617,8 +623,10 @@ Rcm_prompt() {
             if [ -n "$value" ];then
                 mkdir -p $(dirname "$backup_storage");
                 echo "${parameter}=${value}" >> "$backup_storage"
-                if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
-                    save_history=
+                if [ -f "$history_storage" ];then
+                    if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
+                        save_history=
+                    fi
                 fi
                 if [ -n "$save_history" ];then
                     mkdir -p $(dirname "$history_storage");
@@ -656,8 +664,10 @@ Rcm_prompt() {
                         if [ -n "$value" ];then
                             mkdir -p $(dirname "$backup_storage");
                             echo "${parameter}=${value}" >> "$backup_storage"
-                            if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
-                                save_history=
+                            if [ -f "$history_storage" ];then
+                                if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
+                                    save_history=
+                                fi
                             fi
                             if [ -n "$save_history" ];then
                                 mkdir -p $(dirname "$history_storage");
