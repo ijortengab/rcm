@@ -91,8 +91,6 @@ Options:
         Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
-   --auto-add-group ^
-        If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
    --without-update-system ^
         Skip execute update system. Default to --with-update-system.
    --without-upgrade-system ^
