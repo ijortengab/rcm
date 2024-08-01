@@ -75,6 +75,32 @@ Environment Variables:
         Default to $__DIR__
 EOF
 }
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
@@ -158,7 +184,7 @@ link_symbolic() {
     else
         if [ -h "$target" ];then
             __; _, Mengecek apakah file merujuk ke '`'$source'`':
-            _dereference=$(stat --cached=never "$target" -c %N)
+            _dereference=$(stat ${stat_cached} "$target" -c %N)
             match="'$target' -> '$source'"
             if [[ "$_dereference" == "$match" ]];then
                 _, ' 'Merujuk.; _.
@@ -183,7 +209,7 @@ link_symbolic() {
         ln -s "$source" "$target"
         __ Verifikasi
         if [ -h "$target" ];then
-            _dereference=$(stat --cached=never "$target" -c %N)
+            _dereference=$(stat ${stat_cached} "$target" -c %N)
             match="'$target' -> '$source'"
             if [[ "$_dereference" == "$match" ]];then
                 __; green Symbolic link berhasil dibuat.; _.
@@ -219,6 +245,12 @@ drupal_fqdn_localhost="$project_name".drupal.localhost
     drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
     project_dir="$project_parent_name"
 }
+vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
+if [[ $? -lt 2 ]];then
+    stat_cached=' --cached=never'
+else
+    stat_cached=''
+fi
 ____
 
 if [ -z "$root_sure" ];then
@@ -262,7 +294,7 @@ _prefix_master=/usr/local/share
 _project_container_master=drupal
 _project_dir=__PROJECT_DIR__
 _target="${_prefix_master}/${_project_container_master}/${_project_dir}/drupal"
-_dereference=$(stat --cached=never "$_target" -c %N)
+_dereference=$(stat ${stat_cached} "$_target" -c %N)
 PROJECT_DIR=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
 DRUPAL_ROOT="${PROJECT_DIR}/web"
 echo export PROJECT_DIR='"'$PROJECT_DIR'"'

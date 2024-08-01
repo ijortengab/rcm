@@ -66,6 +66,32 @@ Dependency:
    netstat
 EOF
 }
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
@@ -94,7 +120,7 @@ RcmAmavisSetupIspconfig_startTweak() {
     if [ -n "$tweak" ];then
         chown -R root:amavis /etc/amavis/
         restart=1
-        if [ $(stat --cached=never /etc/amavis -c %G) == amavis ];then
+        if [ $(stat ${stat_cached} /etc/amavis -c %G) == amavis ];then
             __; green Directory '`'/etc/amavis'`' bagian dari Group '`'amavis'`'.; _.
         else
             __; red Directory '`'/etc/amavis'`' bukan bagian dari Group '`'amavis'`'.; x
@@ -111,7 +137,7 @@ RcmAmavisSetupIspconfig_startTweak() {
         if [ -n "$tweak" ];then
             chmod 644 /etc/amavis/50-user~
             restart=1
-            if [[ -f /etc/amavis/50-user~ && $(stat --cached=never /etc/amavis/50-user~ -c %a) == 644 ]];then
+            if [[ -f /etc/amavis/50-user~ && $(stat ${stat_cached} /etc/amavis/50-user~ -c %a) == 644 ]];then
                 __; green File  '`'/etc/amavis/50-user~'`' memiliki permission '`'644'`'.; _.
             else
                 __; red File  '`'/etc/amavis/50-user~'`' tidak memiliki permission '`'644'`'.; x
@@ -129,7 +155,7 @@ RcmAmavisSetupIspconfig_startTweak() {
         if [ -n "$tweak" ];then
             chmod 644 /etc/amavis/conf.d/50-user
             restart=1
-            if [[ -f /etc/amavis/conf.d/50-user && $(stat --cached=never /etc/amavis/conf.d/50-user -c %a) == 644 ]];then
+            if [[ -f /etc/amavis/conf.d/50-user && $(stat ${stat_cached} /etc/amavis/conf.d/50-user -c %a) == 644 ]];then
                 __; green File  '`'/etc/amavis/conf.d/50-user'`' memiliki permission '`'644'`'.; _.
             else
                 __; red File  '`'/etc/amavis/conf.d/50-user'`' tidak memiliki permission '`'644'`'.; x
@@ -147,7 +173,7 @@ RcmAmavisSetupIspconfig_startTweak() {
         if [ -n "$tweak" ];then
             chmod 750 /etc/amavis/conf.d
             restart=1
-            if [[ -d /etc/amavis/conf.d && $(stat --cached=never /etc/amavis/conf.d -c %a) == 750 ]];then
+            if [[ -d /etc/amavis/conf.d && $(stat ${stat_cached} /etc/amavis/conf.d -c %a) == 750 ]];then
                 __; green Directory  '`'/etc/amavis/conf.d'`' memiliki permission '`'750'`'.; _.
             else
                 __; red Directory  '`'/etc/amavis/conf.d'`' tidak memiliki permission '`'750'`'.; x
@@ -219,6 +245,12 @@ ____
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 declare -i countdown
+vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
+if [[ $? -lt 2 ]];then
+    stat_cached=' --cached=never'
+else
+    stat_cached=''
+fi
 ____
 
 if [ -z "$root_sure" ];then

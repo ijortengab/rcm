@@ -117,6 +117,32 @@ Dependency:
    rcm-mariadb-setup-database.sh
 EOF
 }
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
@@ -326,6 +352,12 @@ find='[php-version]'
 replace="$php_version"
 PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
 code 'PHP_FPM_POOL_DIRECTORY="'$PHP_FPM_POOL_DIRECTORY'"'
+vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
+if [[ $? -lt 2 ]];then
+    stat_cached=' --cached=never'
+else
+    stat_cached=''
+fi
 ____
 
 if [ -z "$root_sure" ];then
@@ -420,7 +452,7 @@ if [ -d "$target" ];then
         code 'source="'$source'"'
         code 'target="'$target'"'
         __ Directory merupakan sebuah symbolic link.
-        _dereference=$(stat --cached=never "$target" -c %N)
+        _dereference=$(stat ${stat_cached} "$target" -c %N)
         source_current=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
         __; _, Mengecek apakah symbolic link merujuk ke '`'$source'`':
         if [[ "$source_current" == "$source" ]];then
@@ -432,7 +464,7 @@ if [ -d "$target" ];then
             x
         fi
     else
-        if [ $(stat --cached=never "$target" -c %U) == "$php_fpm_user" ];then
+        if [ $(stat ${stat_cached} "$target" -c %U) == "$php_fpm_user" ];then
             __ Directory '`'"$target"'`' dimiliki oleh '`'$php_fpm_user'`'.
         else
             __; red Directory '`'"$target"'`' tidak dimiliki oleh '`'$php_fpm_user'`'.; _.
@@ -449,7 +481,7 @@ if [ -n "$create" ];then
     ln -s "$source" "$target"
     __ Verifikasi
     if [ -h "$target" ];then
-        _dereference=$(stat --cached=never "$target" -c %N)
+        _dereference=$(stat ${stat_cached} "$target" -c %N)
         match="'$target' -> '$source'"
         if [[ "$_dereference" == "$match" ]];then
             __; green Symbolic link berhasil dibuat.; _.
