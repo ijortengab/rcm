@@ -10,6 +10,10 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
+        --with-update-system) update_system=1; shift ;;
+        --without-update-system) update_system=0; shift ;;
+        --with-upgrade-system) upgrade_system=1; shift ;;
+        --without-upgrade-system) upgrade_system=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -50,7 +54,11 @@ Usage: rcm-debian-12-setup-basic.sh [options]
 
 Options:
    --timezone
-        Set the timezone of this machine.
+        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
+   --without-update-system ^
+        Skip execute update system. Default to --with-update-system.
+   --without-upgrade-system ^
+        Skip execute upgrade system. Default to --with-upgrade-system.
 
 Global Options:
    --fast
@@ -130,6 +138,8 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+code update_system="$update_system"
+code upgrade_system="$upgrade_system"
 if [ -f /etc/os-release ];then
     . /etc/os-release
 fi
@@ -266,15 +276,21 @@ done <<< "$repository_required"
     CONTENT=$'\n'"# Customize. ${NOW}"$'\n'"$CONTENT"
     echo "$CONTENT" >> /etc/apt/sources.list
 }
-if [[ $update_now == 1 ]];then
-    echo -n # For next feature.
+if [ -n "$update_now" ];then
+    code apt -y update
+    code apt -y upgrade
+    apt -y update
+    apt -y upgrade
 else
-    echo -n # For next feature.
+    if [[ ! "$update_system" == "0" ]];then
+        code apt -y update
+        apt -y update
+    fi
+    if [[ ! "$upgrade_system" == "0" ]];then
+        code apt -y upgrade
+        apt -y upgrade
+    fi
 fi
-code apt -y update
-code apt -y upgrade
-apt -y update
-apt -y upgrade
 ____
 
 downloadApplication $application
@@ -301,6 +317,12 @@ exit 0
 # --timezone
 # )
 # FLAG_VALUE=(
+# )
+# CSV=(
+    # 'long:--with-update-system,parameter:update_system'
+    # 'long:--without-update-system,parameter:update_system,flag_option:reverse'
+    # 'long:--with-upgrade-system,parameter:upgrade_system'
+    # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # EOF
 # clear
