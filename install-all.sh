@@ -1,25 +1,40 @@
 #!/bin/bash
 
-if command -v git >/dev/null;then
-    while read line; do
-        if [[ $line =~ .sh$ ]];then
-            chmod a+x "$line"
-            echo -n cd /usr/local/bin'; '
-            echo ln -sf "$PWD/$line"
-            ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line")
-        fi
-    done <<< `git ls-files`
-else
-    find * -type f -name '*.sh' | while read line; do
-        chmod a+x "$line"
-        echo -n cd /usr/local/bin'; '
-        echo ln -sf "$PWD/$line"
-        ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line")
-    done
+if [[ "$EUID" -ne 0 ]]; then
+    echo This script needs to be run with superuser privileges
+    exit
 fi
 
-echo -n cd /usr/local/bin'; '
-echo ln -sf rcm.sh rcm
-cd /usr/local/bin
-ln -sf rcm.sh rcm
-cd - >/dev/null
+# Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+cd "$__DIR__"
+echo cd /usr/local/bin
+echo __DIR__='"'"$__DIR__"'"'
+while read line; do
+    chmod a+x "$line"
+    echo ln -sf '"''$__DIR__'/"$line"'"'
+    ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line")
+done <<< `find * -mindepth 1 -type f -name '*.sh'`
+while read line; do
+    case "$line" in
+        rcm\.sh)
+            chmod a+x "$line"
+            echo ln -sf '"''$__DIR__'/"$line"'"'
+            ln -sf "$PWD/$line" /usr/local/bin/"$line"
+            ;;
+    esac
+done <<< `find * -mindepth 0 -maxdepth 0 -type f -name '*.sh'`
