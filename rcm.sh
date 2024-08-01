@@ -615,11 +615,13 @@ Rcm_prompt() {
             fi
             # Backup to text file.
             if [ -n "$value" ];then
+                mkdir -p $(dirname "$backup_storage");
                 echo "${parameter}=${value}" >> "$backup_storage"
                 if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
                     save_history=
                 fi
                 if [ -n "$save_history" ];then
+                    mkdir -p $(dirname "$history_storage");
                     echo "${parameter}=${value}" >> "$history_storage"
                 fi
             fi
@@ -652,11 +654,13 @@ Rcm_prompt() {
                         fi
                         # Backup to text file.
                         if [ -n "$value" ];then
+                            mkdir -p $(dirname "$backup_storage");
                             echo "${parameter}=${value}" >> "$backup_storage"
                             if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
                                 save_history=
                             fi
                             if [ -n "$save_history" ];then
+                                mkdir -p $(dirname "$history_storage");
                                 echo "${parameter}=${value}" >> "$history_storage"
                             fi
                         fi
@@ -766,7 +770,7 @@ rcm-wsl-setup-lemp-stack.sh
 EOF
     )
     e Press the yellow key to select.;
-    history_storage=$HOME'/.rcm.history'
+    history_storage=$HOME'/.cache/rcm/rcm.history'
     save_history=1
     if [ -f "$history_storage" ];then
         history_value=$(tail -9 "$history_storage")
@@ -845,6 +849,7 @@ EOF
     ____
 
     if [ -n "$save_history" ];then
+        mkdir -p $(dirname "$history_storage")
         echo "$command_selected" >> "$history_storage"
     fi
 fi
@@ -897,16 +902,14 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 Rcm_download $command
 
 if [ $# -eq 0 ];then
-    backup_storage=$HOME'/.rcm.'$command'.bak'
-    history_storage=$HOME'/.rcm.'$command'.history'
-    touch "$backup_storage"
-    touch "$history_storage"
+    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
+    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
     Rcm_prompt $command
     if [[ "${#argument_pass[@]}" -gt 0 ]];then
         set -- "${argument_pass[@]}"
         unset argument_pass
     fi
-    rm "$backup_storage"
+    [ -f "$backup_storage" ] && rm "$backup_storage"
 fi
 
 chapter Execute:
