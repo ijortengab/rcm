@@ -62,7 +62,7 @@ printHelp() {
     nginx_user=
     conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
     if [ -f "$conf_nginx" ];then
-        nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+        nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
     fi
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
@@ -165,7 +165,7 @@ project_dir="$project_name"
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
 if [ -f "$conf_nginx" ];then
-    nginx_user=`grep -o -P '^user \K([^;]+)' "$conf_nginx"`
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
 fi
 code 'nginx_user="'$nginx_user'"'
 if [ -z "$nginx_user" ];then
