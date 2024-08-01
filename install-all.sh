@@ -38,3 +38,8 @@ while read line; do
             ;;
     esac
 done <<< `find * -mindepth 0 -maxdepth 0 -type f -name '*.sh'`
+
+cd /usr/local/bin
+echo ln -sf rcm.sh rcm
+ln -sf rcm.sh rcm
+cd - >/dev/null
