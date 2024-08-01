@@ -71,8 +71,8 @@ Global Options.
         Bypass root checking.
 
 Environment Variables:
-   HOME_DIRECTORY
-        Default to $HOME
+   BINARY_DIRECTORY
+        Default to $__DIR__
 EOF
 }
 
@@ -81,6 +81,120 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
+fileMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
+backupFile() {
+    local mode="$1"
+    local oldpath="$2" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -f "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -f "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    case $mode in
+        move)
+            mv "$oldpath" "$newpath" ;;
+        copy)
+            local user=$(stat -c "%U" "$oldpath")
+            local group=$(stat -c "%G" "$oldpath")
+            cp "$oldpath" "$newpath"
+            chown ${user}:${group} "$newpath"
+    esac
+}
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local create
+    _success=
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t isFileExists) == function ]] || { error Function isFileExists not found.; x; }
+
+    chapter Memeriksa file '`'$target'`'
+    isFileExists "$target"
+    if [ -n "$notfound" ];then
+        create=1
+    else
+        if [ -h "$target" ];then
+            __; _, Mengecek apakah file merujuk ke '`'$source'`':
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                _, ' 'Merujuk.; _.
+            else
+                _, ' 'Tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ File bukan merupakan symbolic link.
+            __ Melakukan backup.
+            backupFile move "$target"
+            create=1
+        fi
+    fi
+    ____
+
+    if [ -n "$create" ];then
+        chapter Membuat symbolic link '`'$target'`'.
+        code ln -s \"$source\" \"$target\"
+        ln -s "$source" "$target"
+        __ Verifikasi
+        if [ -h "$target" ];then
+            _dereference=$(stat --cached=never "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                __; green Symbolic link berhasil dibuat.; _.
+                _success=1
+            else
+                __; red Symbolic link gagal dibuat.; x
+            fi
+        fi
+        ____
+    fi
+}
 
 # Title.
 title rcm-drupal-setup-drush-alias.sh
@@ -88,8 +202,11 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
-HOME_DIRECTORY=${HOME_DIRECTORY:=$HOME}
-code 'HOME_DIRECTORY="'$HOME_DIRECTORY'"'
+delay=.5; [ -n "$fast" ] && unset delay
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
+code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
 fi
@@ -102,7 +219,6 @@ drupal_fqdn_localhost="$project_name".drupal.localhost
     drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
     project_dir="$project_parent_name"
 }
-delay=.5; [ -n "$fast" ] && unset delay
 ____
 
 if [ -z "$root_sure" ];then
@@ -121,24 +237,26 @@ else
     fqdn_string="$drupal_fqdn_localhost"
 fi
 
-chapter Script Shortcut
-
 list_uri=("${drupal_fqdn_localhost}")
 if [ -n "$domain" ];then
     list_uri=("${domain}")
 fi
 
 for uri in "${list_uri[@]}";do
-    each="cd.${uri}"
-    __; _, Command:' '; magenta ". $each"; _.
-    if [[ -f "$HOME_DIRECTORY/$each" && ! -s "$HOME_DIRECTORY/$each" ]];then
+    filename="cd-drupal-${uri}"
+    chapter Script Shortcut ${filename}
+    __; _, Command:' '; magenta ". ${filename}"; _.
+    fullpath="/usr/local/share/drupal/${project_dir}/${filename}"
+    if [[ -f "$fullpath" && ! -s "$fullpath" ]];then
         __ Empty file detected.
-        __; magenta rm "$HOME_DIRECTORY/$each"; _.
-        rm "$HOME_DIRECTORY/$each"
+        __; magenta rm "$fullpath"; _.
+        rm "$fullpath"
     fi
-    if [ ! -f "$HOME_DIRECTORY/$each" ];then
-        __ Membuat file '`'$HOME_DIRECTORY/$each'`'.
-        cat << 'EOF' > "$HOME_DIRECTORY/$each"
+    if [ ! -f "$fullpath" ];then
+        __ Membuat file '`'"$fullpath"'`'.
+        touch "$fullpath"
+        chmod a+x "$fullpath"
+        cat << 'EOF' > "$fullpath"
 [[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
 _prefix_master=/usr/local/share
 _project_container_master=drupal
@@ -149,24 +267,174 @@ PROJECT_DIR=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$
 DRUPAL_ROOT="${PROJECT_DIR}/web"
 echo export PROJECT_DIR='"'$PROJECT_DIR'"'
 echo export DRUPAL_ROOT='"'$DRUPAL_ROOT'"'
-echo alias drush='"'$PROJECT_DIR/vendor/bin/drush --uri=__URI__'"'
+echo -e alias "\e[95m"drush"\e[39m"='"'$PROJECT_DIR/vendor/bin/drush --uri=__URI__'"'
 echo cd '"$PROJECT_DIR"'
 echo '[ -f .aliases ] && . .aliases'
-echo -e "\e[95m"drush status"\e[39m"
 export PROJECT_DIR="$PROJECT_DIR"
 export DRUPAL_ROOT="$DRUPAL_ROOT"
 alias drush="$PROJECT_DIR/vendor/bin/drush --uri=__URI__"
 cd "$PROJECT_DIR"
 [ -f .aliases ] && . .aliases
-drush status
 EOF
-        sed -i "s|__PROJECT_DIR__|${project_dir}|g" "$HOME_DIRECTORY/$each"
-        sed -i "s|__URI__|${uri}|g" "$HOME_DIRECTORY/$each"
+        sed -i "s|__PROJECT_DIR__|${project_dir}|g" "$fullpath"
+        sed -i "s|__URI__|${uri}|g" "$fullpath"
     else
-        __ File ditemukan '`'$HOME_DIRECTORY/$each'`'.
+        __ File ditemukan '`'"$fullpath"'`'.
     fi
+    ____
+
+    link_symbolic "$fullpath" "$BINARY_DIRECTORY/$filename"
 done
+
+chapter Script Shortcut General
+isFileExists "/usr/local/share/drupal/cd-drupal"
+if [ -n "$notfound" ];then
+    __ Membuat file "/usr/local/share/drupal/cd-drupal"
+    code touch '"'/usr/local/share/drupal/cd-drupal'"'
+    code chmod a+x '"'/usr/local/share/drupal/cd-drupal'"'
+    touch "/usr/local/share/drupal/cd-drupal"
+    chmod a+x "/usr/local/share/drupal/cd-drupal"
+    cat << 'EOF' > "/usr/local/share/drupal/cd-drupal"
+#!/bin/bash
+
+[[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
+_prefix_master=/usr/local/share
+_project_container_master=drupal
+[[ ! -d "${_prefix_master}/${_project_container_master}" ]] && { echo -e "\e[91m""There's no Drupal Directory Master : ${_prefix_master}/${_project_container_master}" "\e[39m"; }
+if [[ -d "${_prefix_master}/${_project_container_master}" ]];then
+    echo -e There are Drupal project available. Press the "\e[93m"yellow"\e[39m" number key to select.
+    unset count
+    declare -i count
+    count=0
+    source=()
+    while read line; do
+        basename=$(basename "$line")
+        count+=1
+        if [ $count -lt 10 ];then
+            echo -ne '['"\e[93m"$count"\e[39m"']' "$basename" "\n"
+        else
+            echo '['$count']' "$basename"
+        fi
+        source+=("$basename")
+    done <<< `find "${_prefix_master}/${_project_container_master}" -mindepth 1 -maxdepth 1 -type d`
+    echo -ne '['"\e[93m"Enter"\e[39m"']' "\e[93m"T"\e[39m"ype the number key instead. "\n"
+    count_max="${#source[@]}"
+    if [ $count_max -gt 9 ];then
+        count_max=9
+    fi
+    project_dir=
+    while true; do
+        read -rsn 1 -p "Select: " char;
+        if [ -z "$char" ];then
+            char=t
+        fi
+        case $char in
+            t|T) echo "$char"; break ;;
+            [1-$count_max])
+                echo "$char"
+                i=$((char - 1))
+                project_dir="${source[$i]}"
+                break ;;
+            *) echo
+        esac
+    done
+    until [ -n "$project_dir" ];do
+        read -p "Type the value: " project_dir
+        if [[ $project_dir =~ [^0-9] ]];then
+            project_dir=
+        fi
+        if [ -n "$project_dir" ];then
+            project_dir=$((project_dir - 1))
+            project_dir="${source[$project_dir]}"
+        fi
+    done
+    echo -e Project "\e[93m""$project_dir""\e[39m" selected.
+    echo
+    unset count
+    declare -i count
+    count=0
+    source=()
+    while read line; do
+        if grep -q '^_project_dir='"$project_dir" "$line";then
+            if [ "${#source[@]}" -eq 0 ];then
+                echo -e There are Site available. Press the "\e[93m"yellow"\e[39m" number key to select.
+            fi
+            basename=$(basename "$line" | cut -c11-)
+            count+=1
+            if [ $count -lt 10 ];then
+                echo -ne '['"\e[93m"$count"\e[39m"']' "$basename" "\n"
+            else
+                echo '['$count']' "$basename"
+            fi
+            source+=("$basename")
+        fi
+    done <<< `ls /usr/local/share/drupal/$project_dir/cd-drupal-*`
+    count_max="${#source[@]}"
+    if [ $count_max -gt 9 ];then
+        count_max=9
+    fi
+    if [ "${#source[@]}" -eq 0 ];then
+        echo -e There are no site available.
+    else
+        echo -ne '['"\e[93m"Enter"\e[39m"']' "\e[93m"T"\e[39m"ype the number key instead. "\n"
+        value=
+        while true; do
+            read -rsn 1 -p "Select: " char;
+            if [ -z "$char" ];then
+                char=t
+            fi
+            case $char in
+                t|T) echo "$char"; break ;;
+                [1-$count_max])
+                    echo "$char"
+                    i=$((char - 1))
+                    value="${source[$i]}"
+                    break ;;
+                *) echo
+            esac
+        done
+        until [ -n "$value" ];do
+            read -p "Type the value: " value
+            if [[ $value =~ [^0-9] ]];then
+                value=
+            fi
+            if [ -n "$value" ];then
+                value=$((value - 1))
+                value="${source[$value]}"
+            fi
+        done
+        echo -e Site "\e[93m""$value""\e[39m" selected.
+    fi
+    echo
+    echo -e We will execute: "\e[95m". cd-drupal-${value}"\e[39m"
+    echo -ne '['"\e[93m"Esc"\e[39m"']' "\e[93m"Q"\e[39m"uit. "\n"
+    echo -ne '['"\e[93m"Enter"\e[39m"']' Continue. "\n"
+    exe=
+    while true; do
+        read -rsn 1 -p "Select: " char;
+        if [ -z "$char" ];then
+            printf "\r\033[K" >&2
+            exe=1
+            break
+        fi
+        case $char in
+            $'\33') echo "q"; break ;;
+            q|Q) echo "$char"; break ;;
+            *) echo
+        esac
+    done
+    if [ -n "$exe" ];then
+        echo
+        echo -e "\e[95m". cd-drupal-${value}"\e[39m"
+        . cd-drupal-${value}
+    fi
+fi
+EOF
+    fileMustExists "/usr/local/share/drupal/cd-drupal"
+fi
 ____
+
+link_symbolic "/usr/local/share/drupal/cd-drupal" "$BINARY_DIRECTORY/cd-drupal"
 
 exit 0
 

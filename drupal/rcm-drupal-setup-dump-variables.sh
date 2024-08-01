@@ -71,8 +71,8 @@ Global Options.
         Bypass root checking.
 
 Environment Variables:
-   HOME_DIRECTORY
-        Default to $HOME
+   BINARY_DIRECTORY
+        Default to $__DIR__
 EOF
 }
 
@@ -81,6 +81,19 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
 databaseCredentialDrupal() {
     if [ -f /usr/local/share/drupal/$project_dir/credential/database ];then
         local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
@@ -104,8 +117,11 @@ ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
-HOME_DIRECTORY=${HOME_DIRECTORY:=$HOME}
-code 'HOME_DIRECTORY="'$HOME_DIRECTORY'"'
+delay=.5; [ -n "$fast" ] && unset delay
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
+code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
 fi
@@ -118,7 +134,6 @@ drupal_fqdn_localhost="$project_name".drupal.localhost
     drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
     project_dir="$project_parent_name"
 }
-delay=.5; [ -n "$fast" ] && unset delay
 ____
 
 if [ -z "$root_sure" ];then
@@ -161,14 +176,9 @@ if [ -n "$domain" ];then
     list_uri=("${domain}")
 fi
 for uri in "${list_uri[@]}";do
-    each="cd.${uri}"
-    if [ -f "$HOME_DIRECTORY/$each" ];then
-        chapter Drush command for $uri
-        if [[ "$HOME_DIRECTORY" == "$HOME" ]];then
-            code cd
-        else
-            code cd '"'"$HOME_DIRECTORY"'"'
-        fi
+    each="cd-drupal-${uri}"
+    if [ -f "$BINARY_DIRECTORY/$each" ];then
+        chapter The '`'drush'`' command for $uri
         code . "${each}"
         code drush status
         ____
