@@ -206,20 +206,44 @@ databaseCredentialDrupal() {
             drupal_db_user=$project_parent_name
         }
         mkdir -p /usr/local/share/drupal/$project_dir/credential
+        local source="/usr/local/share/drupal/${project_dir}/credential"
+        local target="${prefix}/${project_container}/${project_dir}/credential"
+        if [ -d "$target" ];then
+            if [ -h "$target" ];then
+                _dereference=$(stat ${stat_cached} "$target" -c %N)
+                source_current=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
+                __; _, Mengecek apakah symbolic link merujuk ke '`'$source'`':
+                if [[ "$source_current" == "$source" ]];then
+                    _, ' 'Merujuk.; _.
+                else
+                    _, ' 'Tidak merujuk.; _.
+                    __; red Symbolic link merujuk ke: '`'$source_current'`'.; _.
+                    __ Mohon hapus manual untuk melanjutkan.
+                    __; magenta rm '"'$target'"'
+                    x
+                fi
+            else
+                __; red Direktori exists: '`'$target'`'.; _.
+                __ Mohon pindahkan manual untuk melanjutkan.
+                __; magenta mv '"'$target'"' -t '"'/usr/local/share/drupal/${project_dir}'"'
+                x
+            fi
+        fi
         cd "${prefix}/${project_container}/${project_dir}"
         ln -sf /usr/local/share/drupal/$project_dir/credential
         cd - >/dev/null
+
         # Sebagai referensi.
         # cd /usr/local/share/drupal/$project_dir
         # ln -sf "$prefix"/drupal-project/$project_dir project
         # cd - >/dev/null
         drupal_db_user_password=$(pwgen -s 32 -1)
-        cat << EOF > "${prefix}/${project_container}/${project_dir}/credential/database"
+        cat << EOF > "/usr/local/share/drupal/${project_dir}/credential/database"
 DRUPAL_DB_USER=$drupal_db_user
 DRUPAL_DB_USER_PASSWORD=$drupal_db_user_password
 EOF
-        chmod 0500 "${prefix}/${project_container}/${project_dir}/credential"
-        chmod 0400 "${prefix}/${project_container}/${project_dir}/credential/database"
+        chmod 0500 "/usr/local/share/drupal/${project_dir}/credential"
+        chmod 0400 "/usr/local/share/drupal/${project_dir}/credential/database"
     fi
 }
 websiteCredentialDrupal() {
@@ -249,20 +273,6 @@ fileMustExists() {
         __; green File '`'$(basename "$1")'`' ditemukan.; _.
     else
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
     fi
 }
 
@@ -445,7 +455,6 @@ fi
 source="${prefix}/${project_container}/${project_dir}/drupal"
 target="${prefix_master}/${project_container_master}/${project_dir}/drupal"
 chapter Memeriksa direktori '`'$target'`'
-# isFileExists "$target"
 create=
 if [ -d "$target" ];then
     if [ -h "$target" ];then
@@ -539,6 +548,7 @@ ____
 
 INDENT+="    " \
 rcm-nginx-setup-drupal.sh \
+    --root-sure \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \
