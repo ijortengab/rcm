@@ -143,60 +143,6 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-link_symbolic() {
-    local source="$1"
-    local target="$2"
-    local create
-    _success=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t isFileExists) == function ]] || { error Function isFileExists not found.; x; }
-
-    chapter Memeriksa file '`'$target'`'
-    isFileExists "$target"
-    if [ -n "$notfound" ];then
-        create=1
-    else
-        if [ -h "$target" ];then
-            __; _, Mengecek apakah file merujuk ke '`'$source'`':
-            _dereference=$(stat --cached=never "$target" -c %N)
-            match="'$target' -> '$source'"
-            if [[ "$_dereference" == "$match" ]];then
-                _, ' 'Merujuk.; _.
-            else
-                _, ' 'Tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
-        else
-            __ File bukan merupakan symbolic link.
-            __ Melakukan backup.
-            backupFile move "$target"
-            create=1
-        fi
-    fi
-    ____
-
-    if [ -n "$create" ];then
-        chapter Membuat symbolic link '`'$target'`'.
-        code ln -s \"$source\" \"$target\"
-        ln -s "$source" "$target"
-        __ Verifikasi
-        if [ -h "$target" ];then
-            _dereference=$(stat --cached=never "$target" -c %N)
-            match="'$target' -> '$source'"
-            if [[ "$_dereference" == "$match" ]];then
-                __; green Symbolic link berhasil dibuat.; _.
-                _success=1
-            else
-                __; red Symbolic link gagal dibuat.; x
-            fi
-        fi
-        ____
-    fi
-}
 ArraySearch() {
     local index match="$1"
     local source=("${!2}")
