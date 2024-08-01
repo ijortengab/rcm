@@ -923,8 +923,8 @@ if [ $# -eq 0 ];then
 fi
 
 chapter Execute:
-[ -n "$fast" ] && isfast='--fast ' || isfast=''
-code ${command} ${isfast}"$@"
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
+code ${command}${isfast} "$@"
 ____
 
 if [ -z "$fast" ];then
@@ -938,10 +938,8 @@ e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
 
-INDENT+="    "
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
-INDENT="$INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
-INDENT=${INDENT::-4}
+INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
 
 chapter Timer Finish.
 e End: $(date +%Y%m%d-%H%M%S)
