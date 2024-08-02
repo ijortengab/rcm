@@ -28,8 +28,6 @@ while [[ $# -gt 0 ]]; do
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
         --project-parent-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_parent_name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
         --with-update-system) update_system=1; shift ;;
         --without-update-system) update_system=0; shift ;;
         --with-upgrade-system) upgrade_system=1; shift ;;
@@ -112,8 +110,6 @@ Options:
         Set the project parent name. The parent is not have to installed before.
    --domain
         Set the domain.
-   --timezone
-        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --domain-strict ^
         Prevent installing drupal inside directory sites/default.
    --php-fpm-user
@@ -365,7 +361,6 @@ exit 0
 # --drupal-version
 # --drush-version
 # --php-version
-# --timezone
 # --domain
 # --php-fpm-user
 # --prefix
