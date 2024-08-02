@@ -6,6 +6,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --) shift
@@ -16,13 +17,14 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        *)
+        update)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
                 esac
             done
             ;;
+        *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
@@ -1066,13 +1068,14 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --with-end-options-first-operand \
+# --with-end-options-specific-operand \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
 # --help
 # --root-sure
+# --binary-directory-exists-sure
 # )
 # VALUE=(
 # )
@@ -1081,6 +1084,9 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+# )
+# OPERAND=(
+# update
 # )
 # EOF
 # clear
