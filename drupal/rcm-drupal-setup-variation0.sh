@@ -66,7 +66,7 @@ printVersion() {
 }
 printHelp() {
     title RCM Drupal Setup
-    _ 'Variation '; yellow 0; _, . Ubuntu 22.04, Drupal 10, PHP 8.3. ; _.
+    _ 'Variation '; yellow 0; _, . Just Drupal without LEMP Stack setup. ; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     nginx_user=
@@ -90,8 +90,6 @@ printHelp() {
             multi_line+=$'\n''        '"[${count}]: "${line}
         fi
     done <<< `ls /etc/php/`
-    echo '$single_line' "$single_line"
-    echo '$multi_line' "$multi_line"
     if [ -n "$single_line" ];then
         single_line=" Available values: ${single_line}, or other."
     fi
