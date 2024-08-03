@@ -202,6 +202,7 @@ userInputBooleanDefaultYes() {
     done
 }
 printBackupDialog() {
+    _; _.
     __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _.
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
@@ -217,6 +218,7 @@ printHistoryDialog() {
     unset count
     declare -i count
     count=0
+    _; _.
     __ There are values available from history. Press the yellow key to select.
     while read opt; do
         count+=1
@@ -241,9 +243,8 @@ printHistoryDialog() {
     done
 }
 printSelectDialog() {
-    local prefix="$1"
-    local source=("${!2}")
-    local what="$3"
+    local source=("${!1}")
+    local what="$2"
     local first=1 e reference_key
     if [ -z "$what" ];then
         what=value
@@ -252,15 +253,18 @@ printSelectDialog() {
         fi
     fi
     value=
-    if [ -z "$prefix" ];then
-        prefix=`_ ''`
-    fi
-    _, "$prefix"; _, Available $what:; for e in "${source[@]}"; do
+    _; _.
+    __; _, Available $what:; for e in "${source[@]}"; do
         if [ -n "$first" ];then first=; else _, ','; fi
         _, ' '; yellow "$e"
     done; _, '.'; _.
+    _; _.
     while true; do
-        __; read -p "Type the value: " value
+        if [ -n "$is_required" ];then
+            __; read -p "Type the value: " value
+        else
+            __; read -p "Type the value or leave blank to skip: " value
+        fi
         if [ -n "$value" ];then
             ArraySearch "$value" source[@]
             reference_key="$_return"; unset _return; # Clear.
@@ -275,9 +279,8 @@ printSelectDialog() {
     done
 }
 printSelectOtherDialog() {
-    local prefix="$1"
-    local source=("${!2}")
-    local what="$3"
+    local source=("${!1}")
+    local what="$2"
     local first=1 e reference_key
     if [ -z "$what" ];then
         what=value
@@ -292,7 +295,8 @@ printSelectOtherDialog() {
     unset count
     declare -i count
     count=0
-    _, There are values available. Press the yellow key to select.; _.
+    _; _.
+    __ There are values available. Press the yellow key to select.
     for ((i = 0 ; i < $count_max ; i++)); do
       count+=1
       __; _, '['; yellow $count; _, ']'; _, ' '; _, "${source[$i]}"; _.
@@ -315,7 +319,12 @@ printSelectOtherDialog() {
         esac
     done
     if [ -z "$value" ];then
-        __; read -p "Type the value: " value
+        _; _.
+        if [ -n "$is_required" ];then
+            __; read -p "Type the value: " value
+        else
+            __; read -p "Type the value or leave blank to skip: " value
+        fi
     fi
 }
 ArraySearch() {
@@ -500,7 +509,7 @@ Rcm_prompt() {
         if [ "${#available_subcommands[@]}" -gt 1 ];then
             what=subcommands
         fi
-        printSelectDialog '' available_subcommands[@] "$what"
+        printSelectDialog available_subcommands[@] "$what"
         if [ -n "$value" ];then
             argument_pass+=("${value}")
         fi
@@ -589,8 +598,10 @@ Rcm_prompt() {
             if [ -n "$_available_values" ];then
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
+            _; _.
             if [ -n "$is_flag" ];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                _ "${label}"; _.
                 __; _, Add this argument?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
@@ -608,7 +619,7 @@ Rcm_prompt() {
                             fi
                             if [ -z "$value" ];then
                                 if [ "${#available_values[@]}" -gt 0 ];then
-                                    printSelectDialog "`__`" available_values[@]
+                                    printSelectDialog available_values[@]
                                 fi
                             fi
                             until [[ -n "$value" ]];do
@@ -623,7 +634,8 @@ Rcm_prompt() {
                     fi
                 fi
             elif [[ "$parameter" == '--' ]];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                _ "${label}"; _.
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
@@ -639,9 +651,11 @@ Rcm_prompt() {
                 fi
             else
                 if [ -n "$is_required" ];then
-                    _ 'Argument '; magenta ${parameter};_, ' is '; yellow required; _, ". ${label}"; _.
+                    _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
+                    _ "${label}"; _.
                 else
-                    _ 'Argument '; magenta ${parameter};_, ' is '; _, optional; _, ". ${label}"; _.
+                    _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                    _ "${label}"; _.
                 fi
                 if [ -n "$backup_value" ];then
                     printBackupDialog
@@ -654,12 +668,17 @@ Rcm_prompt() {
                 if [ -z "$value" ];then
                     if [ "${#available_values[@]}" -gt 0 ];then
                         if [ -n "$or_other" ];then
-                            printSelectOtherDialog "`__`" available_values[@]
+                            printSelectOtherDialog available_values[@]
                         else
-                            printSelectDialog "`__`" available_values[@]
+                            printSelectDialog available_values[@]
                         fi
                     else
-                        __; read -p "Type the value: " value
+                        _; _.
+                        if [ -n "$is_required" ];then
+                            __; read -p "Type the value: " value
+                        else
+                            __; read -p "Type the value or leave blank to skip: " value
+                        fi
                     fi
                 fi
                 if [ -n "$is_required" ];then
@@ -714,7 +733,7 @@ Rcm_prompt() {
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
                         fi
                         # Backup to text file.
-                        value=$(echo "$value" | sed -E 's/[^a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        value=$(echo "$value" | sed -E 's/[^/a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         if [ -n "$value" ];then
                             mkdir -p $(dirname "$backup_storage");
                             echo "${parameter}=${value}" >> "$backup_storage"
@@ -737,6 +756,7 @@ Rcm_prompt() {
         ____
     fi
 }
+
 sleepExtended() {
     local countdown=$1
     countdown=$((countdown - 1))
@@ -745,8 +765,13 @@ sleepExtended() {
         printf %"$countdown"s | tr " " "." >&2
         printf "\r"
         countdown=$((countdown - 1))
-        sleep .9
+        if [ "$countdown" -ge 0 ];then
+            sleep .9
+        fi
     done
+}
+immediately() {
+    countdown=0
 }
 
 # Title.
@@ -935,50 +960,48 @@ rcm-ubuntu-22.04-setup-basic.sh
 rcm-wsl-setup-lemp-stack.sh
 EOF
     )
-    e Press the yellow key to select.;
     history_storage=$HOME'/.cache/rcm/rcm.history'
     save_history=1
+    history_value=
+
+    e Execute the command.
     if [ -f "$history_storage" ];then
         history_value=$(tail -9 "$history_storage")
-        count_max=$(wc -l <<< "$history_value")
-        unset count
-        declare -i count
-        count=0
-        while read opt; do
-            count+=1
-            _ '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
-        done <<< "$history_value"
-
+        printHistoryDialog
     fi
-    _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
-    _ '['; yellow Enter; _, ']'; _, ' Show all commands. (Tips navigate: press space key for next page, press q to quit.)'; _.
-    while true; do
-        _ ''; read -rsn 1 -p "Select: " char
-        if [ -z "$char" ];then
-            printf "\r\033[K" >&2
-            echo "$command_list" | less -N -X
-            break
-        fi
-        case $char in
-            $'\33') echo "q"; exit ;;
-            q|Q) echo "$char"; exit ;;
-            [1-$count_max])
-                echo "$char"
-                command_selected=$(sed -n ${char}p <<< "$history_value")
-                save_history=
-                break
-                ;;
-            *) echo
-        esac
-    done
+    ____
+
+    if [ -z "$value" ];then
+        e The contents of list commands will be open.
+        _; _.
+        e Guide to navigate the contents:
+        __; _, Press ; _, ' ['; yellow space key; _, '] '; _, for next page.; _.
+        __; _, Press ; _, ' ['; yellow Page Up; _, '] '; _, for previous page.; _.
+        __; _, Press ; _, ' ['; yellow Page Down; _, '] '; _, for next page.; _.
+        __; _, Press ; _, ' ['; yellow q; _, '] '; _, to quit from contents.; _.
+        _; _.
+        e After quit, you have to select one command to execute.
+        _; _.
+        e Please press Ctrl+C to open the contents immediately.
+
+        trap immediately SIGINT
+        sleepExtended 30
+        trap x SIGINT
+
+        printf "\r\033[K" >&2
+        echo "$command_list" | less -N -X
+    fi
+
     printDialogSecondary=
-    until [ -n "$command_selected" ];do
+    until [ -n "$value" ];do
         if [ -n "$printDialogSecondary" ];then
             printDialogSecondary=
             e Press the yellow key to select.;
-            _ '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
-            _ '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
-            _ '['; yellow Enter; _, ']'; _, ' Type the number of command to select.'; _.
+            _; _.
+            __; _, '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
+            __; _, '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
+            __; _, '['; yellow Enter; _, ']'; _, ' Type the number of command to select.'; _.
+            _; _.
             while true; do
                 _ ''; read -rsn 1 -p "Select: " char
                 if [ -z "$char" ];then
@@ -997,12 +1020,17 @@ EOF
                 esac
             done
         fi
-        _; read -p "Number of command to select: " number
+        ____
+
+        # _; read -p " Number of command to select: " number
+        _; read -p " Type the number or leave blank to skip:  " number
+        ____
+
         if [ -z "$number" ];then
             error The number is required.; _.
         elif [[ "$number" =~ ^[0-9]+$ ]];then
-            command_selected=$(sed -n ${number}p <<< "$command_list")
-            if [ -z "$command_selected" ];then
+            value=$(sed -n ${number}p <<< "$command_list")
+            if [ -z "$value" ];then
                 error The number is out of range.; _.
             fi
         else
@@ -1010,13 +1038,21 @@ EOF
         fi
         printDialogSecondary=1
     done
-    _ Command' '; magenta $command_selected; _, ' 'selected.; _.
-    command=$command_selected
+
+    _ Command' '; magenta $value; _, ' 'will be executed.; _.
+    command=$value
     ____
 
+    if [ -n "$value" ];then
+        if [ -f "$history_storage" ];then
+            if grep -q -- "^${command}$" "$history_storage";then
+                save_history=
+            fi
+        fi
+    fi
     if [ -n "$save_history" ];then
         mkdir -p $(dirname "$history_storage")
-        echo "$command_selected" >> "$history_storage"
+        echo "$value" >> "$history_storage"
     fi
 fi
 
