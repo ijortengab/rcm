@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if [[ "$EUID" -ne 0 ]]; then
-    echo This script needs to be run with superuser privileges
-    exit
-fi
 [ -z $1 ] && {
     echo Version Required as argument 1. Example: 1.0.0
     exit

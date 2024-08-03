@@ -106,7 +106,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.4.1'
+    echo '0.5.0'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -909,6 +909,7 @@ rcm-digitalocean-api-manage-domain.sh
 rcm-drupal-autoinstaller-nginx.sh
 rcm-drupal-setup-drush-alias.sh
 rcm-drupal-setup-dump-variables.sh
+rcm-drupal-setup-variation0.sh
 rcm-drupal-setup-variation1.sh
 rcm-drupal-setup-variation2.sh
 rcm-drupal-setup-variation3.sh
@@ -946,6 +947,7 @@ rcm-nginx-setup-ispconfig.sh
 rcm-nginx-setup-php.sh
 rcm-nginx-setup-static.sh
 rcm-php-autoinstaller.sh
+rcm-php-fpm-setup-pool.sh
 rcm-php-setup-adjust-cli-version.sh
 rcm-php-setup-drupal.sh
 rcm-php-setup-ispconfig.sh
