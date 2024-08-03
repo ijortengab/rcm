@@ -45,12 +45,34 @@ printHelp() {
     _ 'Variation '; yellow LEMP Stack; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    unset count
+    declare -i count
+    count=0
+    single_line=
+    multi_line=
+    while read line;do
+        if [ -d /etc/php/$line/fpm ];then
+            if [ $count -gt 0 ];then
+                single_line+=", "
+            fi
+            count+=1
+            single_line+="[${count}]"
+            multi_line+=$'\n''        '"[${count}]: "${line}
+        fi
+    done <<< `ls /etc/php/`
+    if [ -n "$single_line" ];then
+        single_line=" Available values: ${single_line}, or other."
+    fi
+    if [ -n "$multi_line" ];then
+        multi_line="$multi_line"
+    fi
+
+    cat << EOF
 Usage: rcm-wsl-setup-lemp-stack.sh [options]
 
 Options:
-   --php-version
-        Set the version of PHP FPM.
+   --php-version *
+        Set the version of PHP FPM.${single_line}${multi_line}
 
 Global Options:
    --fast
@@ -151,7 +173,6 @@ if [ -n "$wsl" ];then
     makeSureRunning mariadb
     makeSureRunning "php${php_version}-fpm"
 fi
-____
 
 exit 0
 
