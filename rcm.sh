@@ -652,6 +652,7 @@ Rcm_prompt() {
                 fi
             fi
             # Backup to text file.
+            value=$(echo "$value" | sed -E 's/[^a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
             if [ -n "$value" ];then
                 mkdir -p $(dirname "$backup_storage");
                 echo "${parameter}=${value}" >> "$backup_storage"
@@ -693,6 +694,7 @@ Rcm_prompt() {
                             [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
                         fi
                         # Backup to text file.
+                        value=$(echo "$value" | sed -E 's/[^a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         if [ -n "$value" ];then
                             mkdir -p $(dirname "$backup_storage");
                             echo "${parameter}=${value}" >> "$backup_storage"
