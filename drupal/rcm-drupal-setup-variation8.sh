@@ -88,7 +88,7 @@ Options:
    --prefix
         Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
    --project-container
-        Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
+        Set the container directory for all projects. Available value: drupal-project, drupal, public_html, or other. Default to drupal-project.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
    --without-update-system ^
