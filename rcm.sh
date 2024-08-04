@@ -413,7 +413,7 @@ ArrayUnique() {
         fi
     done
 }
-Rcm_download() {
+Rcm_resolve_dependencies() {
     commands_required=("$1")
     PATH="${BINARY_DIRECTORY}:${PATH}"
     commands_exists=()
@@ -438,22 +438,29 @@ Rcm_download() {
                     url=
                     # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
                     if [[ "$each" =~ ^rcm- ]];then
-                        url=https://github.com/ijortengab/rcm/raw/master/$(cut -d- -f2 <<< "$each")/"$each"
+                        url=internal
                     elif [[ "$each" =~ \.sh$ ]];then
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                     fi
                     if [ -n "$url" ];then
                         __ Memulai download.
-                        __; magenta wget "$url"; _.
-                        wget -q "$url" -O "$BINARY_DIRECTORY/$each"
-                        fileMustExists "$BINARY_DIRECTORY/$each"
-                        if [ ! -s "$BINARY_DIRECTORY/$each" ];then
-                            __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-                            rm "$BINARY_DIRECTORY/$each"
-                            __; red HTTP Response: 404 Not Found; x
+                        if [ "$url" == internal ];then
+                            # repository
+                            sub_directory=$(cut -d- -f2 <<< "$each")
+                            __; magenta rcm install $each ijortengab/rcm $sub_directory; _.
+                            INDENT+='    ' Rcm_download install $each ijortengab/rcm $sub_directory
+                        else
+                            __; magenta wget "$url"; _.
+                            wget -q "$url" -O "$BINARY_DIRECTORY/$each"
+                            fileMustExists "$BINARY_DIRECTORY/$each"
+                            if [ ! -s "$BINARY_DIRECTORY/$each" ];then
+                                __; magenta rm "$BINARY_DIRECTORY/$each"; _.
+                                rm "$BINARY_DIRECTORY/$each"
+                                __; red HTTP Response: 404 Not Found; x
+                            fi
+                            __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
+                            chmod a+x "$BINARY_DIRECTORY/$each"
                         fi
-                        __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-                        chmod a+x "$BINARY_DIRECTORY/$each"
                         commands_downloaded+=("$each")
                     fi
                 elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
@@ -693,7 +700,7 @@ Rcm_prompt() {
             # Backup to text file.
             value=$(echo "$value" | sed -E 's/[^/a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
             if [ -n "$value" ];then
-                mkdir -p $(dirname "$backup_storage");
+                mkdir -p $(dirname "$backup_storage")
                 echo "${parameter}=${value}" >> "$backup_storage"
                 if [ -f "$history_storage" ];then
                     if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
@@ -755,6 +762,114 @@ Rcm_prompt() {
         done
         ____
     fi
+}
+Rcm_download() {
+    mode=$1; shift
+    shell_script=$1; shift
+    if [ -z "$shell_script" ];then
+        error "Operand <shell_script> required."; x
+    fi
+    github_repo=$1; shift
+    if [ -z "$github_repo" ];then
+        error "Operand <github_repo> required."; x
+    fi
+    sub_directory=$1; shift
+
+    case $mode in
+        install)
+            if command -v $shell_script >/dev/null;then
+                error "Command has exists: ${shell_script}."; x
+            fi
+            tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
+        ;;
+        update)
+            if ! command -v $shell_script >/dev/null;then
+                error "Command not found: ${shell_script}."; x
+            fi
+            current_version=`$shell_script --version`
+            current_path=$(which $shell_script)
+            current_path=$(realpath "$current_path")
+            if [ -n "$rollback" ];then
+                previous_path=$HOME/.cache/rcm/$github_repo/rollback/$shell_script
+                if [ -f "$previous_path" ];then
+                    # Override now
+                    cp "$previous_path" "$current_path"
+                    old_version=$current_version
+                    current_version=`$shell_script --version`
+                    _ 'Success rollback '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
+                    rm $HOME/.cache/rcm/$github_repo/rollback/$shell_script
+                    rmdir $HOME/.cache/rcm/$github_repo/rollback
+                else
+                    _ 'No previous version found. '; _.
+                fi
+                exit 0
+            fi
+            tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
+            if [ "$current_version" == "$latest_version" ];then
+                _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
+                exit 0
+            fi
+            backup_path=$HOME/.cache/rcm/$github_repo/rollback/$shell_script
+            mkdir -p $(dirname "$backup_path")
+            cp "$current_path" "$backup_path"
+            if [ ! -f "$backup_path" ];then
+                error Failed to save backup file: "$backup_path".; x
+            fi
+    esac
+    local cache_directory=$HOME/.cache/rcm/$github_repo/$latest_version
+    if [ ! -d "$cache_directory" ];then
+        _ 'Downloading version: '; yellow $latest_version; _.
+        url='https://api.github.com/repos/'$github_repo'/tarball/'$tag_name
+        tempdir=$(mktemp -d)
+        cd "$tempdir"
+        wget -q -O "${tag_name}.tar.gz" "$url"
+        if [ ! -f "${tag_name}.tar.gz" ];then
+            error Failed to download file: "${tag_name}.tar.gz".
+            rm -rf "$tempdir"
+            x
+        fi
+        tar xfz "${tag_name}.tar.gz"
+        local found_directory_extracted=$(find -maxdepth 1 -mindepth 1 -type d)
+        if [ ! -d "$found_directory_extracted" ];then
+            error Failed to extract archieve: "${tag_name}.tar.gz".;
+            cd - >/dev/null
+            rm -rf "$tempdir"
+            x
+        fi
+        mkdir -p $(dirname "$cache_directory");
+        mv $(realpath "$found_directory_extracted") "$cache_directory"
+        # Cleaning.
+        cd - >/dev/null
+        rm -rf "$tempdir"
+    else
+        _ 'Using downloaded version: '; yellow $latest_version; _.
+    fi
+    if [ -n "$sub_directory" ];then
+        cache_directory+="/${sub_directory}"
+    fi
+    if [ ! -d "$cache_directory" ];then
+        error Directory is not found: "$cache_directory".; x
+    fi
+    local filename="${cache_directory}/${shell_script}"
+    if [ ! -f "$filename" ];then
+        error File is not found: "$filename".; x
+    fi
+    case $mode in
+        install)
+            cp "$filename" $BINARY_DIRECTORY/$shell_script
+            current_version=`$shell_script --version`
+            _ 'Success install '; magenta $shell_script; _, ' version: '; yellow $current_version; _.
+        ;;
+        update)
+            cp "$filename" "$current_path"
+            old_version=$current_version
+            current_version=`$shell_script --version`
+            _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
+            e To rollback version $old_version, execute the latest command with --rollback options.
+        ;;
+    esac
 }
 sleepExtended() {
     local countdown=$1
@@ -823,106 +938,8 @@ ____
 
 case $command in
     update|install)
-        shell_script=$1; shift
-        if [ -z "$shell_script" ];then
-            error "Operand <shell_script> required."; x
-        fi
-        github_repo=$1; shift
-        if [ -z "$github_repo" ];then
-            error "Operand <github_repo> required."; x
-        fi
-esac
-case $command in
-    install)
-        if command -v $shell_script >/dev/null;then
-            error "Command has exists: ${shell_script}."; x
-        fi
-        tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
-        latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
-    ;;
-    update)
-        if ! command -v $shell_script >/dev/null;then
-            error "Command not found: ${shell_script}."; x
-        fi
-        current_version=`$shell_script --version`
-        current_path=$(which $shell_script)
-        current_path=$(realpath "$current_path")
-        if [ -n "$rollback" ];then
-            previous_path=$HOME/.cache/rcm/$github_repo/rollback/$shell_script
-            if [ -f "$previous_path" ];then
-                # Override now
-                cp "$previous_path" "$current_path"
-                old_version=$current_version
-                current_version=`$shell_script --version`
-                _ 'Success rollback '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
-                rm $HOME/.cache/rcm/$github_repo/rollback
-            else
-                _ 'There are no previous version found. '; _.
-            fi
-            exit 0
-        fi
-        tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
-        latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
-        if [ "$current_version" == "$latest_version" ];then
-            _ 'You are already using the latest available '; magenta $shell_script; _, ' version : '; yellow $latest_version; _.
-            exit 0
-        fi
-        backup_path=$HOME/.cache/rcm/$github_repo/$current_version/$shell_script
-        mkdir -p $(dirname "$backup_path")
-        cp "$current_path" "$backup_path"
-        if [ ! -f "$backup_path" ];then
-            error Failed to save backup file: "$backup_path".; x
-        fi
-esac
-case $command in
-    update|install)
-        _ 'Downloading version: '; yellow $latest_version; _.
-        url='https://api.github.com/repos/'$github_repo'/tarball/'$tag_name
-        tempdir=$(mktemp -d)
-        cd "$tempdir"
-        wget -q -O "${tag_name}.tar.gz" "$url"
-        if [ ! -f "${tag_name}.tar.gz" ];then
-            error Failed to download file: "${tag_name}.tar.gz".
-            rm -rf "$tempdir"
-            x
-        fi
-        tar xfz "${tag_name}.tar.gz"
-        found_file=$(find -mindepth 2 -type f -name "$shell_script")
-        if [ -z "$found_file" ];then
-            error Failed to extract file: "$shell_script".
-            rm -rf "$tempdir"
-            x
-        fi
-        latest_path=$HOME/.cache/rcm/$github_repo/$latest_version/$shell_script
-        mkdir -p $(dirname "$latest_path")
-        cp "$found_file" "$latest_path"
-        cd - >/dev/null
-esac
-case $command in
-    install)
-        ln -sf $latest_path $BINARY_DIRECTORY/$shell_script
-        # Cleaning
-        rm -rf "$tempdir"
-        current_version=`$shell_script --version`
-        _ 'Success install '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
-        exit 0
-    ;;
-    update)
-        # Buat rollback.
-        if [ ! -d $HOME/.cache/rcm/$github_repo/rollback ];then
-            cd $HOME/.cache/rcm/$github_repo
-            ln -sf $current_version rollback
-        fi
-        # Override now
-        cp "$latest_path" "$current_path"
-        # Cleaning
-        rm -rf "$tempdir"
-        old_version=$current_version
-        current_version=`$shell_script --version`
-        _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
-        e To rollback version $old_version, execute the latest command with --rollback options.
-        exit 0
-    ;;
+        Rcm_download $command "${@}"
+        x
 esac
 
 if [ $command == list ];then
@@ -1037,7 +1054,7 @@ EOF
             _; _.
             __; _, '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
             __; _, '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
-            __; _, '['; yellow Enter; _, ']'; _, ' Type the number of command to select.'; _.
+            __; _, '['; yellow Enter; _, ']'; _, ' Type the line number of command to select.'; _.
             _; _.
             while true; do
                 _ ''; read -rsn 1 -p "Select: " char
@@ -1060,11 +1077,11 @@ EOF
         ____
 
         # _; read -p " Number of command to select: " number
-        _; read -p " Type the number or leave blank to skip:  " number
+        _; read -p " Type the line number or leave blank to skip:  " number
         ____
 
         if [ -z "$number" ];then
-            error The number is required.; _.
+            _ The line number of command is skipped. The command is not define yet.; _.
         elif [[ "$number" =~ ^[0-9]+$ ]];then
             value=$(sed -n ${number}p <<< "$command_list")
             if [ -z "$value" ];then
@@ -1129,7 +1146,7 @@ fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
 
-Rcm_download $command
+Rcm_resolve_dependencies $command
 
 if [ $# -eq 0 ];then
     backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
