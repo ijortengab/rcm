@@ -34,7 +34,7 @@ unset _new_arguments
 command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
-        update|history) ;;
+        update|history|install) ;;
         rcm-*.sh) ;;
         *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
     esac
@@ -756,7 +756,6 @@ Rcm_prompt() {
         ____
     fi
 }
-
 sleepExtended() {
     local countdown=$1
     countdown=$((countdown - 1))
@@ -812,7 +811,18 @@ if [ $command == history ];then
     fi
     exit 0
 fi
-if [ $command == update ];then
+
+# Requirement, validate, and populate value.
+chapter Dump variable.
+delay=.5; [ -n "$fast" ] && unset delay
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
+code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+____
+
+case $command in
+    update|install)
         shell_script=$1; shift
         if [ -z "$shell_script" ];then
             error "Operand <shell_script> required."; x
@@ -820,6 +830,19 @@ if [ $command == update ];then
         github_repo=$1; shift
         if [ -z "$github_repo" ];then
             error "Operand <github_repo> required."; x
+        fi
+esac
+case $command in
+    install)
+        if command -v $shell_script >/dev/null;then
+            error "Command has exists: ${shell_script}."; x
+        fi
+        tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+        latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
+    ;;
+    update)
+        if ! command -v $shell_script >/dev/null;then
+            error "Command not found: ${shell_script}."; x
         fi
         current_version=`$shell_script --version`
         current_path=$(which $shell_script)
@@ -844,14 +867,15 @@ if [ $command == update ];then
             _ 'You are already using the latest available '; magenta $shell_script; _, ' version : '; yellow $latest_version; _.
             exit 0
         fi
-
         backup_path=$HOME/.cache/rcm/$github_repo/$current_version/$shell_script
-        # e '$backup_path' "$backup_path"
         mkdir -p $(dirname "$backup_path")
         cp "$current_path" "$backup_path"
         if [ ! -f "$backup_path" ];then
             error Failed to save backup file: "$backup_path".; x
         fi
+esac
+case $command in
+    update|install)
         _ 'Downloading version: '; yellow $latest_version; _.
         url='https://api.github.com/repos/'$github_repo'/tarball/'$tag_name
         tempdir=$(mktemp -d)
@@ -872,16 +896,25 @@ if [ $command == update ];then
         latest_path=$HOME/.cache/rcm/$github_repo/$latest_version/$shell_script
         mkdir -p $(dirname "$latest_path")
         cp "$found_file" "$latest_path"
-
+        cd - >/dev/null
+esac
+case $command in
+    install)
+        ln -sf $latest_path $BINARY_DIRECTORY/$shell_script
+        # Cleaning
+        rm -rf "$tempdir"
+        current_version=`$shell_script --version`
+        _ 'Success install '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
+        exit 0
+    ;;
+    update)
         # Buat rollback.
         if [ ! -d $HOME/.cache/rcm/$github_repo/rollback ];then
             cd $HOME/.cache/rcm/$github_repo
             ln -sf $current_version rollback
         fi
-
         # Override now
         cp "$latest_path" "$current_path"
-
         # Cleaning
         rm -rf "$tempdir"
         old_version=$current_version
@@ -889,7 +922,9 @@ if [ $command == update ];then
         _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
         e To rollback version $old_version, execute the latest command with --rollback options.
         exit 0
-fi
+    ;;
+esac
+
 if [ $command == list ];then
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2
     command_list=$(cat << 'EOF'
@@ -1057,15 +1092,6 @@ EOF
         echo "$value" >> "$history_storage"
     fi
 fi
-
-# Requirement, validate, and populate value.
-chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
-__FILE__=$(resolve_relative_path "$0")
-__DIR__=$(dirname "$__FILE__")
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
-code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-____
 
 if [ -z "$root_sure" ];then
     chapter Mengecek akses root.
