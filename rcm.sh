@@ -46,6 +46,8 @@ if [ "$command" == 'history' ];then
     _new_arguments=()
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --delete=*) delete+=("${1#*=}"); shift ;;
+            --delete) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then delete+=("$2"); shift; fi; shift ;;
             --delete-all) delete_all=1; shift ;;
             --fast) fast=1; shift ;;
             --) shift
@@ -114,8 +116,13 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm.sh
-       rcm.sh [command]
+Usage: rcm
+       rcm [command]
+       rcm history --delete-all
+       rcm history --delete rcm-wsl-setup-lemp-stack.sh --delete rcm-drupal-setup-variation9.sh
+       rcm install drupal-autoinstaller.sh ijortengab/drupal-autoinstaller
+
+Available commands: history, update, install.
 
 Options:
 
@@ -977,15 +984,27 @@ if [ $command == history ];then
         rm *.bak 2>/dev/null
         rm *.history 2>/dev/null
         e All history deleted.
+    elif [ "${#delete[@]}" -gt 0 ];then
+        for each in "${delete[@]}";do
+            if [ -f rcm."$each".history ];then
+                rm rcm."$each".history
+            fi
+            if [ -f rcm."$each".bak ];then
+                rm rcm."$each".bak
+            fi
+            e History "$each" deleted.
+        done
     else
         ls *.history 2>/dev/null | sed -E 's,^rcm\.(.*)\.history$,\1,' | while read line; do
             yellow $line; _.
             if [ -f $line ];then
                 contents="$(cat $line)"
                 code "$contents"
+                ____
             elif [ -f rcm.$line.history ];then
                 contents="$(cat rcm.${line}.history)"
                 code "$contents"
+                ____
             fi
         done
     fi
@@ -1308,6 +1327,9 @@ exit 0
 # FLAG=(
 # --delete-all
 # --fast
+# )
+# MULTIVALUE=(
+# --delete
 # )
 # EOF
 # clear
