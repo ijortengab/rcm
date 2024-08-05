@@ -910,6 +910,8 @@ Rcm_wget() {
             cache_file_basename=$(cut -d' ' -f2 <<< "$line")
             cache_file=$HOME/.cache/rcm/"$cache_file_basename"
         fi
+    else
+        http_request=1
     fi
 
     # e '$cache_file_basename' "$cache_file_basename"
@@ -950,6 +952,7 @@ Rcm_wget() {
         # echo wget -q -O "$cache_file" "$url"
         wget -q -O "$cache_file" "$url"
         touch "$cache_file" # wajib karena wget mengubah modified sesuai http header response.
+        mkdir -p $(dirname "$table")
         echo "$url" "$cache_file_basename" >> "$table"
     fi
     # e '$http_request' "$http_request"
