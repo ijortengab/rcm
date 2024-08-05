@@ -443,12 +443,12 @@ Rcm_resolve_dependencies() {
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                     fi
                     if [ -n "$url" ];then
-                        __ Memulai download.
+                        e Memulai download.
                         if [ "$url" == internal ];then
                             # repository
                             sub_directory=$(cut -d- -f2 <<< "$each")
-                            __; magenta rcm install $each ijortengab/rcm $sub_directory; _.
-                            INDENT+='    ' Rcm_download install $each ijortengab/rcm $sub_directory
+                            code rcm install $each ijortengab/rcm $sub_directory
+                            Rcm_download install $each ijortengab/rcm $sub_directory
                         else
                             __; magenta wget "$url"; _.
                             wget -q "$url" -O "$BINARY_DIRECTORY/$each"
@@ -774,13 +774,12 @@ Rcm_download() {
         error "Operand <github_repo> required."; x
     fi
     sub_directory=$1; shift
-
     case $mode in
         install)
             if command -v $shell_script >/dev/null;then
                 error "Command has exists: ${shell_script}."; x
             fi
-            tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            tag_name=$(Rcm_wget 3600 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
         ;;
         update)
@@ -805,7 +804,7 @@ Rcm_download() {
                 fi
                 exit 0
             fi
-            tag_name=$(wget -qO- https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            tag_name=$(Rcm_wget 3600 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
             if [ "$current_version" == "$latest_version" ];then
                 _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
@@ -886,6 +885,72 @@ sleepExtended() {
 }
 immediately() {
     countdown=0
+}
+Rcm_wget() {
+    # Global, untuk debug.
+    http_request=
+    local expired="$1"
+    local url="$2"
+    local table=$HOME/.cache/rcm/rcm.table.cache
+    # e '$url' "$url"
+    # e '$expired' "$expired"
+    local cache_file=
+    if [ -f "$table" ];then
+        line=$(grep -n -F "$url"' ' "$table")
+        if [ -z "$line" ];then
+            http_request=1
+        else
+            cache_file_basename=$(cut -d' ' -f2 <<< "$line")
+            cache_file=$HOME/.cache/rcm/"$cache_file_basename"
+        fi
+    fi
+
+    # e '$cache_file_basename' "$cache_file_basename"
+    # e '$cache_file' "$cache_file"
+
+    do_delete_record_cache_file=
+    if [ -n "$cache_file" ];then
+        if [ -f "$cache_file" ];then
+            start=`date -r "$cache_file" +'%s'`
+            end=`date +%s`
+            runtime=$((end-start))
+            # e '$start' "$start"
+            # e '$end' "$end"
+            # e '$runtime' "$runtime"
+            if [ $runtime -gt $expired ];then
+                do_delete_record_cache_file=1
+            fi
+        else
+            do_delete_record_cache_file=1
+        fi
+    fi
+    # e '$do_delete_record_cache_file' "$do_delete_record_cache_file"
+    # x
+    if [ -n "$do_delete_record_cache_file" ];then
+        line_number=$(cut -d':' -f1 <<< "$line")
+        sed -i $line_number'd' "$table"
+        http_request=1
+        if [ -f "$cache_file" ];then
+            rm "$cache_file"
+        fi
+        cache_file=
+    fi
+    # e '$http_request' "$http_request"
+    # e '$cache_file' "$cache_file"
+    if [ -n "$http_request" ];then
+        cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm/ rcm.wget.XXXXXXXXXXXX.cache)
+        cache_file_basename=$(basename "$cache_file")
+        # echo wget -q -O "$cache_file" "$url"
+        wget -q -O "$cache_file" "$url"
+        touch "$cache_file" # wajib karena wget mengubah modified sesuai http header response.
+        echo "$url" "$cache_file_basename" >> "$table"
+    fi
+    # e '$http_request' "$http_request"
+    # e '$cache_file' "$cache_file"
+    if [ ! -f "$cache_file" ];then
+        exit 1
+    fi
+    cat "$cache_file"
 }
 
 # Title.
