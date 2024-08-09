@@ -221,26 +221,26 @@ EOF
         error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
     fi
     ____
-fi
 
-chapter Memeriksa ulang file konfigurasi.
-string="$root"
-string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
-    __; green Directive root "$string" sudah terdapat pada file config.; _.
-    reload=1
-else
-    __; red Directive root "$string" belum terdapat pada file config.; x
-fi
-for string in "${server_name[@]}" ;do
+    chapter Memeriksa ulang file konfigurasi.
+    string="$root"
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __; green Directive server_name "$string" sudah terdapat pada file config.; _.
+    if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
+        __; green Directive root "$string" sudah terdapat pada file config.; _.
+        reload=1
     else
-        __; red Directive server_name "$string" belum terdapat pada file config.; x
+        __; red Directive root "$string" belum terdapat pada file config.; x
     fi
-done
-____
+    for string in "${server_name[@]}" ;do
+        string_quoted=$(sed "s/\./\\\./g" <<< "$string")
+        if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
+            __; green Directive server_name "$string" sudah terdapat pada file config.; _.
+        else
+            __; red Directive server_name "$string" belum terdapat pada file config.; x
+        fi
+    done
+    ____
+fi
 
 exit 0
 

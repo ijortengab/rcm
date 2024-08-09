@@ -221,64 +221,64 @@ EOF
     sed -i -E "s/server_name\s{2}/server_name /" "$file_config"
     reload=1
     ____
-fi
 
-chapter Mengecek link di direktori sites-enabled.
-if [ -L /etc/nginx/sites-enabled/$filename ];then
-    __ Link sudah ada.
-else
-    __ Membuat link.
-    cd /etc/nginx/sites-enabled/
-    ln -sf ../sites-available/$filename
-    cd - >/dev/null
+    chapter Mengecek link di direktori sites-enabled.
     if [ -L /etc/nginx/sites-enabled/$filename ];then
-        success Berhasil dibuat.
-        reload=1
+        __ Link sudah ada.
     else
-        error Gagal dibuat.; x
-    fi
-fi
-____
-
-if [ -n "$reload" ];then
-    chapter Reload nginx configuration.
-    __ Cleaning broken symbolic link.
-    code find /etc/nginx/sites-enabled -xtype l -delete -print
-    find /etc/nginx/sites-enabled -xtype l -delete -print
-    if nginx -t 2> /dev/null;then
-        code nginx -s reload
-        nginx -s reload; sleep .5
-    else
-        error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
+        __ Membuat link.
+        cd /etc/nginx/sites-enabled/
+        ln -sf ../sites-available/$filename
+        cd - >/dev/null
+        if [ -L /etc/nginx/sites-enabled/$filename ];then
+            success Berhasil dibuat.
+            reload=1
+        else
+            error Gagal dibuat.; x
+        fi
     fi
     ____
 
-fi
+    if [ -n "$reload" ];then
+        chapter Reload nginx configuration.
+        __ Cleaning broken symbolic link.
+        code find /etc/nginx/sites-enabled -xtype l -delete -print
+        find /etc/nginx/sites-enabled -xtype l -delete -print
+        if nginx -t 2> /dev/null;then
+            code nginx -s reload
+            nginx -s reload; sleep .5
+        else
+            error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
+        fi
+        ____
 
-chapter Memeriksa ulang file konfigurasi.
-string="unix:/run/php/php${php_version}-fpm.sock"
-string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
-    __; green Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.; _.
-else
-    __; red Directive fastcgi_pass '`'$string'`' belum terdapat pada file config.; x
-fi
-string="$root"
-string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
-    __; green Directive root "$string" sudah terdapat pada file config.; _.
-else
-    __; red Directive root "$string" belum terdapat pada file config.; x
-fi
-for string in "${server_name[@]}" ;do
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __; green Directive server_name "$string" sudah terdapat pada file config.; _.
-    else
-        __; red Directive server_name "$string" belum terdapat pada file config.; x
     fi
-done
-____
+
+    chapter Memeriksa ulang file konfigurasi.
+    string="unix:/run/php/php${php_version}-fpm.sock"
+    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
+    if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
+        __; green Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.; _.
+    else
+        __; red Directive fastcgi_pass '`'$string'`' belum terdapat pada file config.; x
+    fi
+    string="$root"
+    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
+    if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
+        __; green Directive root "$string" sudah terdapat pada file config.; _.
+    else
+        __; red Directive root "$string" belum terdapat pada file config.; x
+    fi
+    for string in "${server_name[@]}" ;do
+        string_quoted=$(sed "s/\./\\\./g" <<< "$string")
+        if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
+            __; green Directive server_name "$string" sudah terdapat pada file config.; _.
+        else
+            __; red Directive server_name "$string" belum terdapat pada file config.; x
+        fi
+    done
+    ____
+fi
 
 exit 0
 
@@ -308,4 +308,3 @@ exit 0
 # FLAG_VALUE=(
 # )
 # EOF
-
