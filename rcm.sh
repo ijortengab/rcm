@@ -711,7 +711,6 @@ Rcm_prompt() {
             if [ -n "$_available_values_from_command" ];then
                 if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
                     or_other=1
-                    # _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
                 fi
             fi
             if [ -n "$placeholders" ];then
@@ -728,6 +727,12 @@ Rcm_prompt() {
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
             _; _.
+            if [ -n "$_available_values_from_command" ];then
+                # Tidak ada cache jika value dari command.
+                backup_value=
+                history_value=
+                save_history=
+            fi
             if [ -n "$_available_values_from_command" ];then
                 # parsing argument.
                 _command_arguments=$(echo "$_available_values_from_command" | sed -n -E 's/^Values? available from command:\s*([^\)]+\))(\.$|, or others?\.$)/\1/p')
