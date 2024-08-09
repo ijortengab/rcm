@@ -83,32 +83,6 @@ Download:
    [ssh-keep-alive-symlink-reference.sh](https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh)
 EOF
 }
-vercomp() {
-    # https://www.google.com/search?q=bash+compare+version
-    # https://stackoverflow.com/a/4025065
-    if [[ $1 == $2 ]]; then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    # fill empty fields in ver1 with zeros
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ -z ${ver2[i]} ]];then
-            # fill empty fields in ver2 with zeros
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]})); then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]})); then
-            return 2
-        fi
-    done
-    return 0
-}
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
@@ -220,6 +194,32 @@ fileMustExists() {
     else
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
+}
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
 }
 
 # Title.
