@@ -511,6 +511,7 @@ Rcm_prompt() {
     local command="$1"
     local chapter_printed=
     argument_pass=()
+    argument_placeholders=
     available_subcommands=()
     _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
     if [ -n "$_available_subcommands" ];then
@@ -592,6 +593,7 @@ Rcm_prompt() {
             fi
             available_values=()
             _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
+            _available_values_from_command=`echo "$label" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))\s*\.' | sed -n -E 's/^Values? available from command:\s*(.*)\.$/\1/p'`
             or_other=
             if [ -n "$_available_values" ];then
                 if grep -i -q -E 'or others?' <<< "$_available_values";then
@@ -613,6 +615,26 @@ Rcm_prompt() {
                 available_values=(`echo $_available_values | tr ',' ' '`)
             fi
             _; _.
+            if [ -n "$_available_values_from_command" ];then
+                # parsing argument.
+                _command=$(echo "$_available_values_from_command" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+                _arguments=$(echo "$_available_values_from_command" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+                if command -v "$_command" > /dev/null;then
+                    if [ -n "$argument_placeholders" ];then
+                        while read line; do
+                            find=$(echo ${line} | cut -d: -f1 | xargs)
+                            replace=$(echo ${line} | cut -d: -f2 | xargs)
+                            label="${label/"$find"/"$replace"}"
+                            if [ -n "$_arguments" ];then
+                                _arguments="${_arguments/"$find"/"$replace"}"
+                            fi
+                        done <<< "$argument_placeholders"
+                    fi
+                    while read line;do
+                        available_values+=("$line")
+                    done <<< `$_command $_arguments`
+                fi
+            fi
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
                 _ "${label}"; _.
@@ -680,6 +702,15 @@ Rcm_prompt() {
                     fi
                 fi
                 if [ -z "$value" ];then
+
+                    if [ -n "$_available_values_from_command" ];then
+                        if command -v "$_command" > /dev/null;then
+                            _; _.
+                            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+                            __; _, Trying to execute: '`'${_command}${_arguments}'`'.;_.
+                        fi
+                    fi
+
                     if [ "${#available_values[@]}" -gt 0 ];then
                         if [ -n "$or_other" ];then
                             printSelectOtherDialog available_values[@]
@@ -702,6 +733,10 @@ Rcm_prompt() {
                 fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
+                    if [ -n "$argument_placeholders" ];then
+                        argument_placeholders+=$'\n'
+                    fi
+                    argument_placeholders+='['"$parameter"']: '"$value"
                 fi
             fi
             # Backup to text file.
@@ -1119,9 +1154,10 @@ EOF
         __; _, Press ; _, ' ['; yellow space key; _, '] '; _, for next page.; _.
         __; _, Press ; _, ' ['; yellow Page Up; _, '] '; _, for previous page.; _.
         __; _, Press ; _, ' ['; yellow Page Down; _, '] '; _, for next page.; _.
+        __; _, Press ; _, ' ['; yellow /; _, '] '; _, to find string, then; _, ' ['; yellow n; _, '] '; _, to find next and; _, ' ['; yellow p; _, '] ';_, to find previous.; _.
         __; _, Press ; _, ' ['; yellow q; _, '] '; _, to quit from contents.; _.
         _; _.
-        e After quit, you have to select one command to execute.
+        e After quit, you should select one command to execute.
         _; _.
         e Please press Ctrl+C to open the contents immediately.
 
