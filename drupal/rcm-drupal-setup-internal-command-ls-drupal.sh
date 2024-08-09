@@ -6,13 +6,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --project-name=*) project_name="${1#*=}"; shift ;;
-        --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
-        --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
-        --project-parent-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_parent_name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -42,25 +36,19 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.5.0'
+    echo '0.5.4'
 }
 printHelp() {
-    title RCM Drupal Setup
-    _ 'Variation '; yellow Drush Alias; _.
+    title RCM Drupal Setup Internal Command
+    _ 'Variation '; yellow ls-drupal; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-setup-drush-alias.sh [options]
+Usage: rcm-drupal-setup-internal-command-ls-drupal.sh [options]
 
 Options:
-   --project-name
-        Set the project name. This should be in machine name format.
-   --project-parent-name
-        Set the project parent name.
-   --domain
-        Set the domain.
 
-Global Options.
+Global Options:
    --fast
         No delay every subtask.
    --version
@@ -83,36 +71,15 @@ Environment Variables:
         Default to bin
 EOF
 }
-vercomp() {
-    # https://www.google.com/search?q=bash+compare+version
-    # https://stackoverflow.com/a/4025065
-    if [[ $1 == $2 ]]; then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    # fill empty fields in ver1 with zeros
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ -z ${ver2[i]} ]];then
-            # fill empty fields in ver2 with zeros
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]})); then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]})); then
-            return 2
-        fi
-    done
-    return 0
-}
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, ${line} command not found." "\e[39m"; exit 1; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Functions.
 resolve_relative_path() {
@@ -126,35 +93,6 @@ resolve_relative_path() {
         echo "$(pwd)/${1##*/}"
     else
         return 1
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    if [[ -f "$1" && ! -s "$1" ]];then
-        __ Empty file detected.
-        __; magenta rm "$1"; _.
-        rm "$1"
-    fi
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
     fi
 }
 backupFile() {
@@ -179,6 +117,30 @@ backupFile() {
             cp "$oldpath" "$newpath"
             chown ${user}:${group} "$newpath"
     esac
+}
+fileMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
 }
 link_symbolic() {
     local source="$1"
@@ -234,60 +196,44 @@ link_symbolic() {
         ____
     fi
 }
-dirMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -d "$1" ];then
-        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
     fi
-}
-isDirExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -d "$1" ];then
-        __ Direktori '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
 }
 
 # Title.
-title rcm-drupal-setup-drush-alias.sh
+title rcm-drupal-setup-internal-command-ls-drupal.sh
 ____
 
-# Require, validate, and populate value.
+# Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-if [ -z "$project_name" ];then
-    error "Argument --project-name required."; x
-fi
-code 'domain="'$domain'"'
-code 'project_name="'$project_name'"'
-code 'project_parent_name="'$project_parent_name'"'
-project_dir="$project_name"
-drupal_fqdn_localhost="$project_name".drupal.localhost
-[ -n "$project_parent_name" ] && {
-    drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
-    project_dir="$project_parent_name"
-}
-vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
-if [[ $? -lt 2 ]];then
-    stat_cached=' --cached=never'
-else
-    stat_cached=''
-fi
 PREFIX_MASTER=${PREFIX_MASTER:=/usr/local/share/drupal}
 code 'PREFIX_MASTER="'$PREFIX_MASTER'"'
 PROJECTS_CONTAINER_MASTER=${PROJECTS_CONTAINER_MASTER:=projects}
@@ -296,6 +242,7 @@ BINARY_MASTER=${BINARY_MASTER:=bin}
 code 'BINARY_MASTER="'$BINARY_MASTER'"'
 SITES_MASTER=${SITES_MASTER:=sites}
 code 'SITES_MASTER="'$SITES_MASTER'"'
+mktemp=
 ____
 
 if [ -z "$root_sure" ];then
@@ -308,68 +255,112 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-target_master="${PREFIX_MASTER}/${BINARY_MASTER}"
-chapter Mengecek direktori master binary '`'$target_master'`'.
-isDirExists "$target_master"
+chapter Mengecek '`'ls-drupal'`' command.
+fullpath="${PREFIX_MASTER}/${BINARY_MASTER}/ls-drupal"
+dirname="${PREFIX_MASTER}/${BINARY_MASTER}"
+isFileExists "$fullpath"
 ____
 
-if [ -n "$notfound" ];then
-    chapter Membuat direktori master binary.
-    code mkdir -p '"'$target_master'"'
-    mkdir -p "$target_master"
-    dirMustExists "$target_master"
-    ____
-fi
-
-list_uri=("${drupal_fqdn_localhost}")
-if [ -n "$domain" ];then
-    list_uri+=("${domain}")
-fi
-
-for uri in "${list_uri[@]}";do
-    filename="${uri}"
-    chapter Script Shortcut ${filename}
-    fullpath="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/${SITES_MASTER}/${filename}"
-    dirname="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/${SITES_MASTER}"
-    isFileExists "$fullpath"
-    if [ -n "$notfound" ];then
-        __ Membuat file '`'"$fullpath"'`'.
-        mkdir -p "$dirname"
-        touch "$fullpath"
-        chmod a+x "$fullpath"
-        cat << 'EOF' > "$fullpath"
-[[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
-PREFIX_MASTER=__PREFIX_MASTER__
-PROJECTS_CONTAINER_MASTER=__PROJECTS_CONTAINER_MASTER__
-PROJECT_DIR=__PROJECT_DIR__
-_target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${PROJECT_DIR}/drupal"
-_dereference=$(stat "$_target" -c %N)
-PROJECT_DIR=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
-DRUPAL_ROOT="${PROJECT_DIR}/web"
-echo export PROJECT_DIR='"'$PROJECT_DIR'"'
-echo export DRUPAL_ROOT='"'$DRUPAL_ROOT'"'
-echo -e alias "\e[95m"drush"\e[39m"='"'$PROJECT_DIR/vendor/bin/drush --uri=__URI__'"'
-echo export SITE_DIR='"''$(drush --uri=__URI__ status --field=site)''"'
-echo cd '"$PROJECT_DIR"'
-echo '[ -f .aliases ] && . .aliases'
-echo
-export PROJECT_DIR="$PROJECT_DIR"
-export DRUPAL_ROOT="$DRUPAL_ROOT"
-export SITE_DIR=$("$PROJECT_DIR/vendor/bin/drush" --uri=__URI__ status --field=site)
-alias drush="$PROJECT_DIR/vendor/bin/drush --uri=__URI__"
-cd "$PROJECT_DIR"
-[ -f .aliases ] && . .aliases
-EOF
-        sed -i "s|__PREFIX_MASTER__|${PREFIX_MASTER}|g" "$fullpath"
-        sed -i "s|__PROJECTS_CONTAINER_MASTER__|${PROJECTS_CONTAINER_MASTER}|g" "$fullpath"
-        sed -i "s|__PROJECT_DIR__|${project_dir}|g" "$fullpath"
-        sed -i "s|__URI__|${uri}|g" "$fullpath"
-        fileMustExists "$fullpath"
+if [ -n "$found" ];then
+    chapter Mengecek versi '`'ls-drupal'`' command.
+    code ls-drupal --version
+    if [ -z "$mktemp" ];then
+        mktemp=$(mktemp -p /dev/shm)
+    fi
+    ls-drupal --version | tee $mktemp
+    old_version=$(<$mktemp)
+    NEW_VERSION=`printVersion`
+    vercomp $NEW_VERSION $old_version
+    if [[ $? -eq 1 ]];then
+        __ Command perlu diupdate. Versi saat ini ${NEW_VERSION}.
+        found=
+        notfound=1
+    else
+        __ Command tidak perlu diupdate. Versi saat ini ${NEW_VERSION}.
     fi
     ____
+fi
 
-    link_symbolic "$fullpath" "$BINARY_DIRECTORY/cd-drupal-${filename}"
+if [ -n "$notfound" ];then
+    chapter Create Drupal Command '`'ls-drupal'`'.
+    mkdir -p "$dirname"
+    touch "$fullpath"
+    chmod a+x "$fullpath"
+    cat << 'EOF' > "$fullpath"
+#!/bin/bash
+[[ -f "$0" && ! "$0" == $(command -v bash) ]] || {
+    echo -e "\e[91m""Invalid execution: "'`'. ls-drupal'`'"\e[39m". Try this one: '`'ls-drupal'`'.
+    return
+}
+_new_arguments=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help) help=1; shift ;;
+        --version) version=1; shift ;;
+        --[^-]*) shift ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
 done
+set -- "${_new_arguments[@]}"
+unset _new_arguments
+
+printVersion() {
+    echo '__NEW_VERSION__'
+}
+printHelp() {
+    cat << 'EOL'
+Usage: ls-drupal
+       ls-drupal [options]
+       ls-drupal [project]
+       ls-drupal -
+
+       List the domain by [project].
+       If [project] omitted, it will list the project name.
+       Set [project] with - (dash), it will list all domain.
+
+Options:
+   --version
+        Print version of this script.
+   --help
+        Show this help.
+EOL
+}
+
+# Help and Version.
+[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$version" ] && { printVersion; exit 1; }
+
+PREFIX_MASTER=__PREFIX_MASTER__
+PROJECTS_CONTAINER_MASTER=__PROJECTS_CONTAINER_MASTER__
+SITES_MASTER=__SITES_MASTER__
+project_name="$1"; shift
+if [ -z "$project_name" ];then
+    ls "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}"
+else
+    case "$project_name" in
+        -)
+            while read line; do
+                ls "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${line}/${SITES_MASTER}"
+            done <<< `ls "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}"`
+            ;;
+        *)
+            ls "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_name}/${SITES_MASTER}"
+    esac
+fi
+EOF
+    sed -i "s|__PREFIX_MASTER__|${PREFIX_MASTER}|g" "$fullpath"
+    sed -i "s|__PROJECTS_CONTAINER_MASTER__|${PROJECTS_CONTAINER_MASTER}|g" "$fullpath"
+    sed -i "s|__SITES_MASTER__|${SITES_MASTER}|g" "$fullpath"
+    sed -i "s|__NEW_VERSION__|${NEW_VERSION}|g" "$fullpath"
+    fileMustExists "$fullpath"
+    ____
+fi
+
+link_symbolic "$fullpath" "$BINARY_DIRECTORY/ls-drupal"
+
+if [ -n "$mktemp" ];then
+    rm "$mktemp"
+fi
 
 exit 0
 
@@ -388,11 +379,6 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --project-name
-# --project-parent-name
-# --domain
-# )
-# MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )

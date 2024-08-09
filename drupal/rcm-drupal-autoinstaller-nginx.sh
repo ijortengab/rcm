@@ -88,7 +88,7 @@ Options:
    --prefix
         Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
    --project-container
-        Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
+        Set the container directory for all projects. Available value: drupal-projects, drupal, or other. Default to drupal-projects.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
 
@@ -107,6 +107,10 @@ Environment Variables.
         Default to localhost
    PHP_FPM_POOL_DIRECTORY
         Default to /etc/php/[php-version]/fpm/pool.d
+   PREFIX_MASTER
+        Default to /usr/local/share/drupal
+   PROJECTS_CONTAINER_MASTER
+        Default to projects
 
 Dependency:
    sudo
@@ -195,9 +199,9 @@ vercomp() {
     return 0
 }
 databaseCredentialDrupal() {
-    if [ -f /usr/local/share/drupal/$project_dir/credential/database ];then
+    if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database" ];then
         local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
-        . /usr/local/share/drupal/$project_dir/credential/database
+        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
         drupal_db_user=$DRUPAL_DB_USER
         drupal_db_user_password=$DRUPAL_DB_USER_PASSWORD
     else
@@ -205,8 +209,8 @@ databaseCredentialDrupal() {
         [ -n "$project_parent_name" ] && {
             drupal_db_user=$project_parent_name
         }
-        mkdir -p /usr/local/share/drupal/$project_dir/credential
-        local source="/usr/local/share/drupal/${project_dir}/credential"
+        mkdir -p "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        local source="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
         local target="${prefix}/${project_container}/${project_dir}/credential"
         if [ -d "$target" ];then
             if [ -h "$target" ];then
@@ -225,44 +229,41 @@ databaseCredentialDrupal() {
             else
                 __; red Direktori exists: '`'$target'`'.; _.
                 __ Mohon pindahkan manual untuk melanjutkan.
-                __; magenta mv '"'$target'"' -t '"'/usr/local/share/drupal/${project_dir}'"'
+                __; magenta mv '"'$target'"' -t '"'$PREFIX_MASTER/$PROJECTS_CONTAINER_MASTER/${project_dir}'"'
                 x
             fi
         fi
+        # Sebagai referensi.
         cd "${prefix}/${project_container}/${project_dir}"
-        ln -sf /usr/local/share/drupal/$project_dir/credential
+        ln -sf "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
         cd - >/dev/null
 
-        # Sebagai referensi.
-        # cd /usr/local/share/drupal/$project_dir
-        # ln -sf "$prefix"/drupal-project/$project_dir project
-        # cd - >/dev/null
         drupal_db_user_password=$(pwgen -s 32 -1)
-        cat << EOF > "/usr/local/share/drupal/${project_dir}/credential/database"
+        cat << EOF > "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
 DRUPAL_DB_USER=$drupal_db_user
 DRUPAL_DB_USER_PASSWORD=$drupal_db_user_password
 EOF
-        chmod 0500 "/usr/local/share/drupal/${project_dir}/credential"
-        chmod 0400 "/usr/local/share/drupal/${project_dir}/credential/database"
+        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        chmod 0400 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
     fi
 }
 websiteCredentialDrupal() {
-    if [ -f "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
+    if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
         local ACCOUNT_NAME ACCOUNT_PASS
-        . "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
+        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
         account_name=$ACCOUNT_NAME
         account_pass=$ACCOUNT_PASS
     else
         account_name=system
         account_pass=$(pwgen -s 32 -1)
-        mkdir -p "/usr/local/share/drupal/${project_dir}/credential/drupal"
-        cat << EOF > "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
+        mkdir -p "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal"
+        cat << EOF > "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
 ACCOUNT_NAME=$account_name
 ACCOUNT_PASS=$account_pass
 EOF
-        chmod 0500 "/usr/local/share/drupal/${project_dir}/credential"
-        chmod 0500 "/usr/local/share/drupal/${project_dir}/credential/drupal"
-        chmod 0400 "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
+        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal"
+        chmod 0400 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
     fi
 }
 fileMustExists() {
@@ -273,6 +274,30 @@ fileMustExists() {
         __; green File '`'$(basename "$1")'`' ditemukan.; _.
     else
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+dirMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -d "$1" ];then
+        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
     fi
 }
 
@@ -352,7 +377,7 @@ if [ -z "$prefix" ];then
     project_container=drupal
 fi
 if [ -z "$project_container" ];then
-    project_container=drupal-project
+    project_container=drupal-projects
 fi
 code 'prefix="'$prefix'"'
 code 'project_container="'$project_container'"'
@@ -368,6 +393,10 @@ if [[ $? -lt 2 ]];then
 else
     stat_cached=''
 fi
+PREFIX_MASTER=${PREFIX_MASTER:=/usr/local/share/drupal}
+code 'PREFIX_MASTER="'$PREFIX_MASTER'"'
+PROJECTS_CONTAINER_MASTER=${PROJECTS_CONTAINER_MASTER:=projects}
+code 'PROJECTS_CONTAINER_MASTER="'$PROJECTS_CONTAINER_MASTER'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -380,7 +409,7 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek PHP-FPM User
+chapter Mengecek PHP-FPM User.
 code id -u '"'$php_fpm_user'"'
 if id "$php_fpm_user" >/dev/null 2>&1; then
     __ User '`'$php_fpm_user'`' found.
@@ -389,71 +418,8 @@ else
 fi
 ____
 
-prefix_master=/usr/local/share
-project_container_master=drupal
-target_master="${prefix_master}/${project_container_master}/${project_dir}"
-chapter Mengecek direktori master project '`'$target_master'`'.
-notfound=
-if [ -d "$target_master" ];then
-    __ Directory exists.
-else
-    __ Directory tidak exists.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat direktori master project.
-    code mkdir -p '"'$target_master'"'
-    code chown $php_fpm_user:$php_fpm_user '"'$target_master'"'
-    mkdir -p "$target_master"
-    chown $php_fpm_user:$php_fpm_user "$target_master"
-    if [ -d "$target_master" ];then
-        __; green Direktori berhasil dibuat.; _.
-    else
-        __; red Direktori gagal dibuat.; x
-    fi
-    ____
-fi
-
-target="${prefix}/${project_container}/${project_dir}"
-chapter Mengecek direktori project '`'$target'`'.
-notfound=
-if [ -d "$target" ] ;then
-    __ Direktori ditemukan.
-else
-    __ Direktori tidak ditemukan.
-    notfound=1
-fi
-____
-
-target_web_root="${prefix}/${project_container}/${project_dir}/drupal/web"
-chapter Mengecek direktori project web root '`'$target_web_root'`'.
-notfound=
-if [ -d "$target_web_root" ] ;then
-    __ Direktori project web root ditemukan.
-else
-    __ Direktori project web root tidak ditemukan.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat  direktori project web root.
-    code alias mkdir='"'sudo -u $php_fpm_user mkdir'"'
-    code mkdir -p "$target_web_root"
-    code unalias mkdir
-    sudo -u "$php_fpm_user" mkdir -p "$target_web_root"
-    if [ -d "$target_web_root" ] ;then
-        __; green Direktori berhasil dibuat.; _.
-    else
-        __; red Direktori gagal dibuat.; x
-    fi
-    ____
-fi
-
 source="${prefix}/${project_container}/${project_dir}/drupal"
-target="${prefix_master}/${project_container_master}/${project_dir}/drupal"
+target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/drupal"
 chapter Memeriksa direktori '`'$target'`'
 create=
 if [ -d "$target" ];then
@@ -484,7 +450,70 @@ if [ -d "$target" ];then
 else
     create=1
 fi
+
+target_master="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}"
+chapter Mengecek direktori master project '`'$target_master'`'.
+isDirExists "$target_master"
+____
+
+if [ -n "$notfound" ];then
+    chapter Membuat direktori master project.
+    code mkdir -p '"'$target_master'"'
+    code chown $php_fpm_user:$php_fpm_user '"'$target_master'"'
+    mkdir -p "$target_master"
+    chown $php_fpm_user:$php_fpm_user "$target_master"
+    dirMustExists "$target_master"
+    ____
+fi
+
+target_project_container="${prefix}/${project_container}"
+chapter Mengecek direktori project container '`'$target_project_container'`'.
+isDirExists "$target_project_container"
+____
+
+if [ -n "$notfound" ];then
+    chapter Membuat direktori project container.
+    code mkdir -p '"'$target_project_container'"'
+    code chown $php_fpm_user:$php_fpm_user '"'$target_project_container'"'
+    mkdir -p "$target_project_container"
+    chown $php_fpm_user:$php_fpm_user "$target_project_container"
+    dirMustExists "$target_project_container"
+    ____
+fi
+
+target="${prefix}/${project_container}/${project_dir}"
+chapter Mengecek direktori project '`'$target'`'.
+isDirExists "$target"
+____
+
+if [ -n "$notfound" ];then
+    chapter Membuat direktori project.
+    code alias mkdir='"'sudo -u $php_fpm_user mkdir'"'
+    code mkdir -p "$target"
+    code unalias mkdir
+    sudo -u "$php_fpm_user" mkdir -p "$target"
+    dirMustExists "$target"
+    ____
+fi
+
+target_web_root="${prefix}/${project_container}/${project_dir}/drupal/web"
+chapter Mengecek direktori project web root '`'$target_web_root'`'.
+isDirExists "$target_web_root"
+____
+
+if [ -n "$notfound" ];then
+    chapter Membuat direktori project web root.
+    code alias mkdir='"'sudo -u $php_fpm_user mkdir'"'
+    code mkdir -p "$target_web_root"
+    code unalias mkdir
+    sudo -u "$php_fpm_user" mkdir -p "$target_web_root"
+    dirMustExists "$target_web_root"
+    ____
+fi
+
 if [ -n "$create" ];then
+    source="${prefix}/${project_container}/${project_dir}/drupal"
+    target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/drupal"
     __ Membuat symbolic link '`'$target'`'.
     code ln -s \"$source\" \"$target\"
     ln -s "$source" "$target"
@@ -514,6 +543,7 @@ else
     __ Direktori tidak dapat diakses.
 fi
 if [[ -z "$is_access" ]];then
+    __ Mengecek flag --auto-add-group sebagai salah satu solusi.
     if [[ -n "$auto_add_group" ]];then
         __ Flag --auto-add-group ditemukan.
         __ Memberi akses Group PHP-FPM User kepada Nginx User.
@@ -527,7 +557,7 @@ if [[ -z "$is_access" ]];then
     if sudo -u "$nginx_user" bash -c "cd ${prefix}/${project_container}/${project_dir}/drupal/web" 2>/dev/null;then
         success Direktori dapat diakses.
     else
-        error Direktori tidak dapat diakses.
+        error Direktori tidak dapat diakses oleh Nginx User '('"$nginx_user"')'.
     fi
 fi
 ____
@@ -783,6 +813,7 @@ if [[ -n "$domain_strict" && -n "$default_installed" ]];then
     __ - Menghapus informasi site di '`'sites/sites.php'`'.
     __; red Process terminated; x
 fi
+
 chapter Mengecek database credentials: '`'$prefix/$project_container/$project_dir/credential/database'`'.
 databaseCredentialDrupal
 if [[ -z "$drupal_db_user" || -z "$drupal_db_user_password" ]];then

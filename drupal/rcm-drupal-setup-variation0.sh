@@ -117,7 +117,7 @@ Options:
    --prefix
         Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
    --project-container
-        Set the container directory for all projects. Available value: drupal-project, drupal, or other. Default to drupal-project.
+        Set the container directory for all projects. Available value: drupal-projects, drupal, or other. Default to drupal-projects.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
    --without-update-system ^
@@ -143,6 +143,8 @@ Dependency:
    rcm-drupal-autoinstaller-nginx.sh
    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
    rcm-drupal-setup-drush-alias.sh
+   rcm-drupal-setup-internal-command-cd-drupal.sh
+   rcm-drupal-setup-internal-command-ls-drupal.sh
    rcm-drupal-setup-dump-variables.sh
    rcm-php-fpm-setup-pool.sh
 EOF
@@ -244,7 +246,7 @@ if [ -z "$prefix" ];then
     project_container=drupal
 fi
 if [ -z "$project_container" ];then
-    project_container=drupal-project
+    project_container=drupal-projects
 fi
 code 'prefix="'$prefix'"'
 code 'project_container="'$project_container'"'
@@ -321,6 +323,10 @@ rcm-drupal-setup-drush-alias.sh $isfast --root-sure \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     --domain="$domain" \
+    && INDENT+="    " \
+rcm-drupal-setup-internal-command-cd-drupal.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-drupal-setup-internal-command-ls-drupal.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
     --project-name="$project_name" \

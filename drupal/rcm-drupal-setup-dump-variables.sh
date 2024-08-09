@@ -73,6 +73,10 @@ Global Options.
 Environment Variables:
    BINARY_DIRECTORY
         Default to $__DIR__
+   PREFIX_MASTER
+        Default to /usr/local/share/drupal
+   PROJECTS_CONTAINER_MASTER
+        Default to projects
 EOF
 }
 
@@ -95,17 +99,17 @@ resolve_relative_path() {
     fi
 }
 databaseCredentialDrupal() {
-    if [ -f /usr/local/share/drupal/$project_dir/credential/database ];then
+    if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database" ];then
         local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
-        . /usr/local/share/drupal/$project_dir/credential/database
+        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
         drupal_db_user=$DRUPAL_DB_USER
         drupal_db_user_password=$DRUPAL_DB_USER_PASSWORD
     fi
 }
 websiteCredentialDrupal() {
-    if [ -f "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
+    if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
         local ACCOUNT_NAME ACCOUNT_PASS
-        . "/usr/local/share/drupal/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
+        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}"
         account_name=$ACCOUNT_NAME
         account_pass=$ACCOUNT_PASS
     fi
@@ -134,6 +138,10 @@ drupal_fqdn_localhost="$project_name".drupal.localhost
     drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
     project_dir="$project_parent_name"
 }
+PREFIX_MASTER=${PREFIX_MASTER:=/usr/local/share/drupal}
+code 'PREFIX_MASTER="'$PREFIX_MASTER'"'
+PROJECTS_CONTAINER_MASTER=${PROJECTS_CONTAINER_MASTER:=projects}
+code 'PROJECTS_CONTAINER_MASTER="'$PROJECTS_CONTAINER_MASTER'"'
 ____
 
 if [ -z "$root_sure" ];then

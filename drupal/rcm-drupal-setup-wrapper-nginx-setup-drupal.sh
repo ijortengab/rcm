@@ -188,7 +188,7 @@ if [ -z "$prefix" ];then
     project_container=drupal
 fi
 if [ -z "$project_container" ];then
-    project_container=drupal-project
+    project_container=drupal-projects
 fi
 code 'prefix="'$prefix'"'
 code 'project_container="'$project_container'"'
