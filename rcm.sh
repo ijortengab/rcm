@@ -259,28 +259,95 @@ printSelectDialog() {
             what=values
         fi
     fi
-    value=
+    unset count
+    declare -i count
+    count=0
     _; _.
     __; _, Available $what:; for e in "${source[@]}"; do
         if [ -n "$first" ];then first=; else _, ','; fi
         _, ' '; yellow "$e"
     done; _, '.'; _.
     _; _.
+
+    __ Press the yellow key to select.
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
+    __; _, '['; yellow Esc; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
+    select_mode=
     while true; do
-        if [ -n "$is_required" ];then
-            __; read -p "Type the value: " value
-        else
-            __; read -p "Type the value or leave blank to skip: " value
+        __; read -rsn 1 -p "Select: " char;
+        if [ -z "$char" ];then
+            char=t
         fi
+        case $char in
+            t|T) echo "$char"; break ;;
+            s|S) select_mode=1; echo "$char"; break ;;
+            $'\33') select_mode=1; echo "s"; break ;;
+            *) echo
+        esac
+    done
+    if [[ -n "$select_mode" ]];then
+        _; _.
+        __ Press the yellow key to select.
+        for ((i = 0 ; i < ${#source[@]} ; i++)); do
+            count+=1
+            if [ $count -lt 10 ];then
+                __; _, '['; yellow $count; _, ']'; _, ' '; _, "${source[$i]}"; _.
+            else
+                __; _, '['$count']' "${source[$i]}"; _.
+            fi
+        done
+        __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
+        count_max="${#source[@]}"
+        if [ $count_max -gt 9 ];then
+            count_max=9
+        fi
+        while true; do
+            __; read -rsn 1 -p "Select: " char;
+            if [ -z "$char" ];then
+                char=t
+            fi
+            case $char in
+                t|T) echo "$char"; break ;;
+                [1-$count_max])
+                    echo "$char"
+                    i=$((char - 1))
+                    value="${source[$i]}"
+                    break ;;
+                *) echo
+            esac
+        done
+        until [ -n "$value" ];do
+            __; read -p "Type the number: " value
+            if [[ $value =~ [^0-9] ]];then
+                value=
+            fi
+            if [[ $value =~ ^0 ]];then
+                value=
+            fi
+            if [ -n "$value" ];then
+                value=$((value - 1))
+                value="${source[$value]}"
+            fi
+        done
+        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+    fi
+    while true; do
         if [ -n "$value" ];then
             ArraySearch "$value" source[@]
             reference_key="$_return"; unset _return; # Clear.
             if [ -n "$reference_key" ];then
                 break
+            else
+                value=
             fi
         else
-            if [ -z "$is_required" ];then
-                break
+            if [ -n "$is_required" ];then
+                __; read -p "Type the value: " value
+            else
+                __; read -p "Type the value or leave blank to skip: " value
+                if [ -z "$value" ];then
+                    break
+                fi
             fi
         fi
     done
@@ -295,38 +362,78 @@ printSelectOtherDialog() {
             what=values
         fi
     fi
-    count_max="${#source[@]}"
-    if [ $count_max -gt 9 ];then
-        count_max=9
-    fi
     unset count
     declare -i count
     count=0
     _; _.
-    __ There are values available. Press the yellow key to select.
-    for ((i = 0 ; i < $count_max ; i++)); do
-      count+=1
-      __; _, '['; yellow $count; _, ']'; _, ' '; _, "${source[$i]}"; _.
-    done
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow S; _, 'kip and continue.'; _.
+    __; _, Available $what:; for e in "${source[@]}"; do
+        if [ -n "$first" ];then first=; else _, ','; fi
+        _, ' '; yellow "$e"
+    done; _, ', or other.'; _.
+    _; _.
+    __ Press the yellow key to select.
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
+    __; _, '['; yellow Esc; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
+    select_mode=
     while true; do
         __; read -rsn 1 -p "Select: " char;
         if [ -z "$char" ];then
-            char=s
+            char=t
         fi
         case $char in
-            s|S) echo "$char"; break ;;
-            [1-$count_max])
-                echo "$char"
-                i=$((char - 1))
-                value="${source[$i]}"
-                __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
-                break ;;
+            t|T) echo "$char"; break ;;
+            s|S) select_mode=1; echo "$char"; break ;;
+            $'\33') select_mode=1; echo "s"; break ;;
             *) echo
         esac
     done
-    if [ -z "$value" ];then
+    if [[ -n "$select_mode" ]];then
         _; _.
+        __ Press the yellow key to select.
+        for ((i = 0 ; i < ${#source[@]} ; i++)); do
+            count+=1
+            if [ $count -lt 10 ];then
+                __; _, '['; yellow $count; _, ']'; _, ' '; _, "${source[$i]}"; _.
+            else
+                __; _, '['$count']' "${source[$i]}"; _.
+            fi
+        done
+        __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
+        count_max="${#source[@]}"
+        if [ $count_max -gt 9 ];then
+            count_max=9
+        fi
+        while true; do
+            __; read -rsn 1 -p "Select: " char;
+            if [ -z "$char" ];then
+                char=t
+            fi
+            case $char in
+                t|T) echo "$char"; break ;;
+                [1-$count_max])
+                    echo "$char"
+                    i=$((char - 1))
+                    value="${source[$i]}"
+                    break ;;
+                *) echo
+            esac
+        done
+        until [ -n "$value" ];do
+            __; read -p "Type the number: " value
+            if [[ $value =~ [^0-9] ]];then
+                value=
+            fi
+            if [[ $value =~ ^0 ]];then
+                value=
+            fi
+            if [ -n "$value" ];then
+                value=$((value - 1))
+                value="${source[$value]}"
+            fi
+        done
+        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+    fi
+    if [ -z "$value" ];then
         if [ -n "$is_required" ];then
             __; read -p "Type the value: " value
         else
@@ -593,12 +700,18 @@ Rcm_prompt() {
             fi
             available_values=()
             _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
-            _available_values_from_command=`echo "$label" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))\s*\.' | sed -n -E 's/^Values? available from command:\s*(.*)\.$/\1/p'`
+            _available_values_from_command=`echo "$label" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
             or_other=
             if [ -n "$_available_values" ];then
                 if grep -i -q -E 'or others?' <<< "$_available_values";then
                     or_other=1
                     _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
+                fi
+            fi
+            if [ -n "$_available_values_from_command" ];then
+                if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
+                    or_other=1
+                    # _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
                 fi
             fi
             if [ -n "$placeholders" ];then
@@ -617,8 +730,9 @@ Rcm_prompt() {
             _; _.
             if [ -n "$_available_values_from_command" ];then
                 # parsing argument.
-                _command=$(echo "$_available_values_from_command" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-                _arguments=$(echo "$_available_values_from_command" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+                _command_arguments=$(echo "$_available_values_from_command" | sed -n -E 's/^Values? available from command:\s*([^\)]+\))(\.$|, or others?\.$)/\1/p')
+                _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+                _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
                 if command -v "$_command" > /dev/null;then
                     if [ -n "$argument_placeholders" ];then
                         while read line; do
@@ -630,9 +744,6 @@ Rcm_prompt() {
                             fi
                         done <<< "$argument_placeholders"
                     fi
-                    while read line;do
-                        available_values+=("$line")
-                    done <<< `$_command $_arguments`
                 fi
             fi
             if [ -n "$is_flag" ];then
@@ -707,7 +818,11 @@ Rcm_prompt() {
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                            __; _, Trying to execute: '`'${_command}${_arguments}'`'.;_.
+                            __; _, Get the output of '`'${_command}${_arguments}'`'.;_.
+
+                            while read line;do
+                                available_values+=("$line")
+                            done <<< `${_command}${_arguments}`
                         fi
                     fi
 
@@ -934,8 +1049,6 @@ Rcm_wget() {
     local expired="$1"
     local url="$2"
     local table=$HOME/.cache/rcm/rcm.table.cache
-    # e '$url' "$url"
-    # e '$expired' "$expired"
     local cache_file=
     if [ -f "$table" ];then
         line=$(grep -n -F "$url"' ' "$table")
@@ -948,19 +1061,12 @@ Rcm_wget() {
     else
         http_request=1
     fi
-
-    # e '$cache_file_basename' "$cache_file_basename"
-    # e '$cache_file' "$cache_file"
-
     do_delete_record_cache_file=
     if [ -n "$cache_file" ];then
         if [ -f "$cache_file" ];then
             start=`date -r "$cache_file" +'%s'`
             end=`date +%s`
             runtime=$((end-start))
-            # e '$start' "$start"
-            # e '$end' "$end"
-            # e '$runtime' "$runtime"
             if [ $runtime -gt $expired ];then
                 do_delete_record_cache_file=1
             fi
@@ -968,8 +1074,6 @@ Rcm_wget() {
             do_delete_record_cache_file=1
         fi
     fi
-    # e '$do_delete_record_cache_file' "$do_delete_record_cache_file"
-    # x
     if [ -n "$do_delete_record_cache_file" ];then
         line_number=$(cut -d':' -f1 <<< "$line")
         sed -i $line_number'd' "$table"
@@ -979,8 +1083,6 @@ Rcm_wget() {
         fi
         cache_file=
     fi
-    # e '$http_request' "$http_request"
-    # e '$cache_file' "$cache_file"
     if [ -n "$http_request" ];then
         cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm/ rcm.wget.XXXXXXXXXXXX.cache)
         cache_file_basename=$(basename "$cache_file")
@@ -990,8 +1092,6 @@ Rcm_wget() {
         mkdir -p $(dirname "$table")
         echo "$url" "$cache_file_basename" >> "$table"
     fi
-    # e '$http_request' "$http_request"
-    # e '$cache_file' "$cache_file"
     if [ ! -f "$cache_file" ];then
         exit 1
     fi
