@@ -101,21 +101,28 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Functions.
-fileMustExists() {
+isFileExists() {
     # global used:
-    # global modified:
-    # function used: __, success, error, x
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
     if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
     else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
     fi
 }
 makeSureRunning() {
     local service="$1"
     chapter Memeriksa apakah daemon "$service" is running
     __ Memeriksa System V script '`'/etc/init.d/"$service"'`'
-    fileMustExists /etc/init.d/"$service"
+    isFileExists /etc/init.d/"$service"
+    if [ -n "$notfound" ];then
+        __; red File '`'/etc/init.d/"$service"'`' tidak ditemukan.; x
+    fi
     if /etc/init.d/"$service" status 2>&1 >/dev/null; then
         __ Daemon "$service" running.
     else
