@@ -268,10 +268,9 @@ printSelectDialog() {
         _, ' '; yellow "$e"
     done; _, '.'; _.
     _; _.
-
     __ Press the yellow key to select.
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
-    __; _, '['; yellow Esc; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
+    __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
+    __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
     select_mode=
     while true; do
         __; read -rsn 1 -p "Select: " char;
@@ -281,7 +280,7 @@ printSelectDialog() {
         case $char in
             t|T) echo "$char"; break ;;
             s|S) select_mode=1; echo "$char"; break ;;
-            $'\33') select_mode=1; echo "s"; break ;;
+            $'\177') select_mode=1; echo "s"; break ;;
             *) echo
         esac
     done
@@ -372,8 +371,8 @@ printSelectOtherDialog() {
     done; _, ', or other.'; _.
     _; _.
     __ Press the yellow key to select.
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
-    __; _, '['; yellow Esc; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
+    __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
+    __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
     select_mode=
     while true; do
         __; read -rsn 1 -p "Select: " char;
@@ -383,7 +382,7 @@ printSelectOtherDialog() {
         case $char in
             t|T) echo "$char"; break ;;
             s|S) select_mode=1; echo "$char"; break ;;
-            $'\33') select_mode=1; echo "s"; break ;;
+            $'\177') select_mode=1; echo "s"; break ;;
             *) echo
         esac
     done
@@ -1256,7 +1255,7 @@ EOF
         e The contents of list commands will be open.
         _; _.
         e Guide to navigate the contents:
-        __; _, Press ; _, ' ['; yellow space key; _, '] '; _, for next page.; _.
+        __; _, Press ; _, ' ['; yellow space; _, '] '; _, key for next page.; _.
         __; _, Press ; _, ' ['; yellow Page Up; _, '] '; _, for previous page.; _.
         __; _, Press ; _, ' ['; yellow Page Down; _, '] '; _, for next page.; _.
         __; _, Press ; _, ' ['; yellow /; _, '] '; _, to find string, then; _, ' ['; yellow n; _, '] '; _, to find next and; _, ' ['; yellow p; _, '] ';_, to find previous.; _.
