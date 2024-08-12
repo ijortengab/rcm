@@ -300,6 +300,86 @@ vercomp() {
     done
     return 0
 }
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    _success=
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -h "$target" ];then
+        __ Path target saat ini sudah merupakan symbolic link: '`'$target'`'
+        __; _, Mengecek apakah link merujuk ke '`'$source'`':
+        _dereference=$(stat ${stat_cached} "$target" -c %N)
+        match="'$target' -> '$source'"
+        if [[ "$_dereference" == "$match" ]];then
+            _, ' 'Merujuk.; _.
+        else
+            _, ' 'Tidak merujuk.; _.
+            __ Melakukan backup.
+            backupFile move "$target"
+            create=1
+        fi
+    elif [ -e "$target" ];then
+        __ File/directory bukan merupakan symbolic link.
+        __ Melakukan backup.
+        backupFile move "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link '`'$target'`'.
+        if [ -n "$sudo" ];then
+            __; magenta sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'; _.
+            sudo -u "$sudo" ln -s "$source" "$target"
+        else
+            __; magenta ln -s '"'$source'"' '"'$target'"'; _.
+            ln -s "$source" "$target"
+        fi
+        __ Verifikasi
+        if [ -h "$target" ];then
+            _dereference=$(stat ${stat_cached} "$target" -c %N)
+            match="'$target' -> '$source'"
+            if [[ "$_dereference" == "$match" ]];then
+                __; green Symbolic link berhasil dibuat.; _.
+                _success=1
+            else
+                __; red Symbolic link gagal dibuat.; x
+            fi
+        fi
+    fi
+    ____
+}
+backupFile() {
+    local mode="$1"
+    local oldpath="$2" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -f "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -f "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    case $mode in
+        move)
+            mv "$oldpath" "$newpath" ;;
+        copy)
+            local user=$(stat -c "%U" "$oldpath")
+            local group=$(stat -c "%G" "$oldpath")
+            cp "$oldpath" "$newpath"
+            chown ${user}:${group} "$newpath"
+    esac
+}
 
 # Title.
 title rcm-drupal-autoinstaller-nginx.sh
@@ -514,24 +594,8 @@ fi
 if [ -n "$create" ];then
     source="${prefix}/${project_container}/${project_dir}/drupal"
     target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/drupal"
-    __ Membuat symbolic link '`'$target'`'.
-    code ln -s \"$source\" \"$target\"
-    ln -s "$source" "$target"
-    __ Verifikasi
-    if [ -h "$target" ];then
-        _dereference=$(stat ${stat_cached} "$target" -c %N)
-        match="'$target' -> '$source'"
-        if [[ "$_dereference" == "$match" ]];then
-            __; green Symbolic link berhasil dibuat.; _.
-            _success=1
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    else
-        __; red Symbolic link gagal dibuat.; x
-    fi
+    link_symbolic "$source" "$target"
 fi
-____
 
 is_access=
 chapter Memastikan Nginx User dapat mengakses Direktori Project.

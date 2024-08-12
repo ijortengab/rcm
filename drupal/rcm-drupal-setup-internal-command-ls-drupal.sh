@@ -145,43 +145,46 @@ isFileExists() {
 link_symbolic() {
     local source="$1"
     local target="$2"
+    local sudo="$3"
     local create
     _success=
     [ -e "$source" ] || { error Source not exist: $source.; x; }
     [ -n "$target" ] || { error Target not defined.; x; }
     [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t isFileExists) == function ]] || { error Function isFileExists not found.; x; }
 
-    chapter Memeriksa file '`'$target'`'
-    isFileExists "$target"
-    if [ -n "$notfound" ];then
-        create=1
-    else
-        if [ -h "$target" ];then
-            __; _, Mengecek apakah file merujuk ke '`'$source'`':
-            _dereference=$(stat ${stat_cached} "$target" -c %N)
-            match="'$target' -> '$source'"
-            if [[ "$_dereference" == "$match" ]];then
-                _, ' 'Merujuk.; _.
-            else
-                _, ' 'Tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -h "$target" ];then
+        __ Path target saat ini sudah merupakan symbolic link: '`'$target'`'
+        __; _, Mengecek apakah link merujuk ke '`'$source'`':
+        _dereference=$(stat ${stat_cached} "$target" -c %N)
+        match="'$target' -> '$source'"
+        if [[ "$_dereference" == "$match" ]];then
+            _, ' 'Merujuk.; _.
         else
-            __ File bukan merupakan symbolic link.
+            _, ' 'Tidak merujuk.; _.
             __ Melakukan backup.
             backupFile move "$target"
             create=1
         fi
+    elif [ -e "$target" ];then
+        __ File/directory bukan merupakan symbolic link.
+        __ Melakukan backup.
+        backupFile move "$target"
+        create=1
+    else
+        create=1
     fi
-    ____
-
     if [ -n "$create" ];then
-        chapter Membuat symbolic link '`'$target'`'.
-        code ln -s \"$source\" \"$target\"
-        ln -s "$source" "$target"
+        __ Membuat symbolic link '`'$target'`'.
+        if [ -n "$sudo" ];then
+            __; magenta sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'; _.
+            sudo -u "$sudo" ln -s "$source" "$target"
+        else
+            __; magenta ln -s '"'$source'"' '"'$target'"'; _.
+            ln -s "$source" "$target"
+        fi
         __ Verifikasi
         if [ -h "$target" ];then
             _dereference=$(stat ${stat_cached} "$target" -c %N)
@@ -193,8 +196,8 @@ link_symbolic() {
                 __; red Symbolic link gagal dibuat.; x
             fi
         fi
-        ____
     fi
+    ____
 }
 vercomp() {
     # https://www.google.com/search?q=bash+compare+version
