@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-autoinstaller.sh [options]
+Usage: rcm-nginx-autoinstaller [options]
 
 Global Options:
    --fast
@@ -103,7 +103,7 @@ validateApplication() {
 }
 
 # Title.
-title rcm-nginx-autoinstaller.sh
+title rcm-nginx-autoinstaller
 ____
 
 # Requirement, validate, and populate value.

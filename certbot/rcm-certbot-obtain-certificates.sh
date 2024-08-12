@@ -52,7 +52,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-certbot-obtain-certificates.sh [options]
+Usage: rcm-certbot-obtain-certificates [options]
 
 Options:
    --subdomain
@@ -181,7 +181,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-certbot-obtain-certificates.sh
+title rcm-certbot-obtain-certificates
 ____
 
 # Require, validate, and populate value.

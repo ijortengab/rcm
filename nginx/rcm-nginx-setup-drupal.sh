@@ -58,7 +58,7 @@ https://www.drupal.org/files/issues/drupal-nginx-conf.patch
 
 EOF
     cat << 'EOF'
-Usage: rcm-nginx-setup-drupal.sh [options]
+Usage: rcm-nginx-setup-drupal [options]
 
 Options:
    --filename *
@@ -112,7 +112,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-nginx-setup-drupal.sh
+title rcm-nginx-setup-drupal
 ____
 
 # Require, validate, and populate value.

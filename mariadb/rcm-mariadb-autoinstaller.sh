@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-mariadb-autoinstaller.sh [options]
+Usage: rcm-mariadb-autoinstaller [options]
 
 Global Options:
    --fast
@@ -95,7 +95,7 @@ validateApplication() {
 }
 
 # Title.
-title rcm-mariadb-autoinstaller.sh
+title rcm-mariadb-autoinstaller
 ____
 
 # Requirement, validate, and populate value.

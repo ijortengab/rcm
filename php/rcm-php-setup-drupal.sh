@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-php-setup-drupal.sh [options]
+Usage: rcm-php-setup-drupal [options]
 
 Options:
    --php-version
@@ -133,7 +133,7 @@ addRepositoryPpaOndrejPhp() {
 }
 
 # Title.
-title rcm-php-setup-drupal.sh
+title rcm-php-setup-drupal
 ____
 
 # Require, validate, and populate value.

@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-debian-11-setup-basic.sh [options]
+Usage: rcm-debian-11-setup-basic [options]
 
 Options:
    --timezone
@@ -132,7 +132,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-debian-11-setup-basic.sh
+title rcm-debian-11-setup-basic
 ____
 
 # Requirement, validate, and populate value.

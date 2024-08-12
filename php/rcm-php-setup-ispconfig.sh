@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-php-setup-ispconfig.sh [options]
+Usage: rcm-php-setup-ispconfig [options]
 
 Options:
    --php-version *
@@ -103,7 +103,7 @@ validateApplication() {
 }
 
 # Title.
-title rcm-php-setup-ispconfig.sh
+title rcm-php-setup-ispconfig
 ____
 
 # Require, validate, and populate value.

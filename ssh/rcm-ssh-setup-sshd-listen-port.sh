@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ssh-setup-sshd-listen-port.sh [options]
+Usage: rcm-ssh-setup-sshd-listen-port [options]
 
 Options:
    --config-file
@@ -107,7 +107,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-ssh-setup-sshd-listen-port.sh
+title rcm-ssh-setup-sshd-listen-port
 ____
 
 # Require, validate, and populate value.

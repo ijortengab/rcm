@@ -53,7 +53,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-variation5.sh [options]
+Usage: rcm-ispconfig-setup-variation5 [options]
 
 Options:
    --domain *
@@ -98,23 +98,23 @@ Environment Variables:
 Dependency:
    wget
    dig
-   rcm-debian-12-setup-basic.sh
-   rcm-mariadb-autoinstaller.sh
-   rcm-nginx-autoinstaller.sh
-   rcm-php-autoinstaller.sh
-   rcm-php-setup-adjust-cli-version.sh
-   rcm-postfix-autoinstaller.sh
-   rcm-certbot-autoinstaller.sh
-   rcm-ispconfig-autoinstaller-nginx.sh
-   rcm-ispconfig-setup-internal-command.sh
-   rcm-roundcube-setup-ispconfig-integration.sh
-   rcm-amavis-setup-ispconfig.sh
-   rcm-ispconfig-setup-wrapper-nginx-setup-php.sh
-   rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
-   rcm-ispconfig-control-manage-domain.sh
-   rcm-ispconfig-control-manage-email-mailbox.sh
-   rcm-ispconfig-control-manage-email-alias.sh
-   rcm-ispconfig-setup-dump-variables.sh
+   rcm-debian-12-setup-basic
+   rcm-mariadb-autoinstaller
+   rcm-nginx-autoinstaller
+   rcm-php-autoinstaller
+   rcm-php-setup-adjust-cli-version
+   rcm-postfix-autoinstaller
+   rcm-certbot-autoinstaller
+   rcm-ispconfig-autoinstaller-nginx
+   rcm-ispconfig-setup-internal-command
+   rcm-roundcube-setup-ispconfig-integration
+   rcm-amavis-setup-ispconfig
+   rcm-ispconfig-setup-wrapper-nginx-setup-php
+   rcm-ispconfig-setup-wrapper-certbot-setup-nginx
+   rcm-ispconfig-control-manage-domain
+   rcm-ispconfig-control-manage-email-mailbox
+   rcm-ispconfig-control-manage-email-alias
+   rcm-ispconfig-setup-dump-variables
 EOF
 }
 
@@ -190,7 +190,7 @@ sleepExtended() {
 }
 
 # Title.
-title rcm-ispconfig-setup-variation5.sh
+title rcm-ispconfig-setup-variation5
 ____
 
 # Require, validate, and populate value.
@@ -272,7 +272,7 @@ fi
 chapter Mengecek Name Server domain '`'$domain'`'
 code dig NS $domain +trace
 sleepExtended 3
-tempfile=$(mktemp -t rcm-ispconfig-setup-variation5.sh.XXXXXX)
+tempfile=$(mktemp -t rcm-ispconfig-setup-variation5.XXXXXX)
 dig NS $domain +trace | tee "$tempfile"
 stdout=$(<"$tempfile")
 domain_escape=${domain//\./\\.}
@@ -294,7 +294,7 @@ rm "$tempfile"
 ____
 
 INDENT+="    " \
-rcm-debian-12-setup-basic.sh $isfast --root-sure \
+rcm-debian-12-setup-basic $isfast --root-sure \
     --timezone="$timezone" \
     ; [ ! $? -eq 0 ] && x
 
@@ -326,21 +326,21 @@ if [[ -n "$adjust" ]];then
 fi
 
 INDENT+="    " \
-rcm-mariadb-autoinstaller.sh $isfast --root-sure \
+rcm-mariadb-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
-rcm-nginx-autoinstaller.sh $isfast --root-sure \
+rcm-nginx-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
-rcm-php-autoinstaller.sh $isfast --root-sure \
+rcm-php-autoinstaller $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-adjust-cli-version.sh $isfast --root-sure \
+rcm-php-setup-adjust-cli-version $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-autoinstaller.sh $isfast --root-sure \
+rcm-postfix-autoinstaller $isfast --root-sure \
     --hostname="$hostname" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-certbot-autoinstaller.sh $isfast --root-sure \
+rcm-certbot-autoinstaller $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -349,7 +349,7 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-autoinstaller-nginx.sh $isfast --root-sure \
+rcm-ispconfig-autoinstaller-nginx $isfast --root-sure \
     --standalone \
     --hostname="$hostname" \
     --domain="$domain" \
@@ -358,14 +358,14 @@ rcm-ispconfig-autoinstaller-nginx.sh $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-internal-command.sh $isfast --root-sure \
+rcm-ispconfig-setup-internal-command $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --roundcube-version="$roundcube_version" \
     --ispconfig-version="$ispconfig_version" \
     && INDENT+="    " \
-rcm-roundcube-setup-ispconfig-integration.sh $isfast --root-sure \
+rcm-roundcube-setup-ispconfig-integration $isfast --root-sure \
     && INDENT+="    " \
-rcm-amavis-setup-ispconfig.sh $isfast --root-sure \
+rcm-amavis-setup-ispconfig $isfast --root-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Take a break.
@@ -374,53 +374,53 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=ispconfig \
     --subdomain="$SUBDOMAIN_ISPCONFIG" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=roundcube \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=phpmyadmin \
     --subdomain="$SUBDOMAIN_PHPMYADMIN" \
     --domain="$domain" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=ispconfig \
     --subdomain="${SUBDOMAIN_ISPCONFIG}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=roundcube \
     --subdomain="${SUBDOMAIN_ROUNDCUBE}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-nginx-setup-php.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-nginx-setup-php $isfast --root-sure \
     --project=phpmyadmin \
     --subdomain="${SUBDOMAIN_PHPMYADMIN}.${domain}" \
     --domain="localhost" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
     --standalone \
     --domain="$domain" \
     --subdomain="$SUBDOMAIN_ISPCONFIG" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
     --standalone \
     --domain="$domain" \
     --subdomain="$SUBDOMAIN_PHPMYADMIN" \
     && INDENT+="    " \
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh $isfast --root-sure \
+rcm-ispconfig-setup-wrapper-certbot-setup-nginx $isfast --root-sure \
     --standalone \
     --domain="$domain" \
     --subdomain="$SUBDOMAIN_ROUNDCUBE" \
@@ -432,31 +432,31 @@ sleepExtended 3
 ____
 
 INDENT+="    " \
-rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+rcm-ispconfig-control-manage-domain $isfast --root-sure \
     add \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
     --name="$MAILBOX_ADMIN" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-mailbox.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-mailbox $isfast --root-sure --ispconfig-domain-exists-sure \
     --name="$MAILBOX_SUPPORT" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
     --name="$MAILBOX_HOST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
     --name="$MAILBOX_POST" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
     --destination-domain="$domain" \
     && INDENT+="    " \
-rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-domain-exists-sure \
+rcm-ispconfig-control-manage-email-alias $isfast --root-sure --ispconfig-domain-exists-sure \
     --name="$MAILBOX_WEB" \
     --domain="$domain" \
     --destination-name="$MAILBOX_ADMIN" \
@@ -464,7 +464,7 @@ rcm-ispconfig-control-manage-email-alias.sh $isfast --root-sure --ispconfig-doma
     ; [ ! $? -eq 0 ] && x
 
 INDENT+="    " \
-rcm-ispconfig-setup-dump-variables.sh $isfast --root-sure \
+rcm-ispconfig-setup-dump-variables $isfast --root-sure \
     --domain="$domain" \
     --hostname="$hostname" \
     --ip-address="$ip_address" \
@@ -478,7 +478,7 @@ ____
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code rcm-ispconfig-setup-dump-variables.sh --domain=$domain
+code rcm-ispconfig-setup-dump-variables --domain=$domain
 ____
 
 exit 0

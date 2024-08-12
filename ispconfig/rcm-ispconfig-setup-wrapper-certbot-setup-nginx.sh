@@ -52,7 +52,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh [options]
+Usage: rcm-ispconfig-setup-wrapper-certbot-setup-nginx [options]
 
 Options:
    --subdomain
@@ -81,7 +81,7 @@ Environment Variables:
         Default to $HOME/.$dns_authenticator-token.ini
 
 Dependency:
-   rcm-certbot-setup-nginx.sh
+   rcm-certbot-setup-nginx
    systemctl
 EOF
 }
@@ -158,7 +158,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-ispconfig-setup-wrapper-certbot-setup-nginx.sh
+title rcm-ispconfig-setup-wrapper-certbot-setup-nginx
 ____
 
 # Require, validate, and populate value.
@@ -289,7 +289,7 @@ EOF
 
     INDENT+="    " \
     PATH=$PATH \
-    rcm-certbot-setup-nginx.sh $isfast --root-sure \
+    rcm-certbot-setup-nginx $isfast --root-sure \
         --domain="$domain" \
         --email="$email" \
         -- \
@@ -332,7 +332,7 @@ if [[ "$dns_authenticator" == 'standalone' ]]; then
 
     INDENT+="    " \
     PATH=$PATH \
-    rcm-certbot-setup-nginx.sh $isfast --root-sure \
+    rcm-certbot-setup-nginx $isfast --root-sure \
         --domain="$domain" \
         --email="$email" \
         -- \

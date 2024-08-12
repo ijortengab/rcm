@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-setup-static.sh [options]
+Usage: rcm-nginx-setup-static [options]
 
 Options:
    --filename *
@@ -110,7 +110,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-nginx-setup-static.sh
+title rcm-nginx-setup-static
 ____
 
 # Require, validate, and populate value.

@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-setup-hello-world-php.sh [options]
+Usage: rcm-nginx-setup-hello-world-php [options]
 
 Options:
    --domain *
@@ -68,7 +68,7 @@ Global Options:
 
 Dependency:
    curl
-   rcm-nginx-setup-php.sh
+   rcm-nginx-setup-php
 EOF
 }
 
@@ -117,7 +117,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-nginx-setup-hello-world-php.sh
+title rcm-nginx-setup-hello-world-php
 ____
 
 # Require, validate, and populate value.
@@ -150,7 +150,7 @@ code server_name="${server_name[@]}"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php.sh $isfast --root-sure \
+rcm-nginx-setup-php $isfast --root-sure \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \

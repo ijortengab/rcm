@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-certbot-digitalocean-autoinstaller.sh [options]
+Usage: rcm-certbot-digitalocean-autoinstaller [options]
 
 Global Options:
    --fast
@@ -73,7 +73,7 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' 
 # Functions.
 
 # Title.
-title rcm-certbot-digitalocean-autoinstaller.sh
+title rcm-certbot-digitalocean-autoinstaller
 ____
 
 # Require, validate, and populate value.

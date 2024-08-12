@@ -72,7 +72,7 @@ printHelp() {
     fi
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
-Usage: rcm-drupal-setup-variation-lemp-stack.sh [options]
+Usage: rcm-drupal-setup-variation-lemp-stack [options]
 
 Options:
    --variation *
@@ -113,22 +113,22 @@ Global Options.
 Dependency:
    nginx
    rcm-ubuntu-22.04-setup-basic.sh
-   rcm-debian-11-setup-basic.sh
-   rcm-debian-12-setup-basic.sh
-   rcm-nginx-autoinstaller.sh
-   rcm-mariadb-autoinstaller.sh
-   rcm-php-autoinstaller.sh
-   rcm-php-setup-adjust-cli-version.sh
-   rcm-php-setup-drupal.sh
-   rcm-wsl-setup-lemp-stack.sh
-   rcm-composer-autoinstaller.sh
-   rcm-drupal-autoinstaller-nginx.sh
-   rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
-   rcm-drupal-setup-drush-alias.sh
-   rcm-drupal-setup-internal-command-cd-drupal.sh
-   rcm-drupal-setup-internal-command-ls-drupal.sh
-   rcm-drupal-setup-dump-variables.sh
-   rcm-php-fpm-setup-pool.sh
+   rcm-debian-11-setup-basic
+   rcm-debian-12-setup-basic
+   rcm-nginx-autoinstaller
+   rcm-mariadb-autoinstaller
+   rcm-php-autoinstaller
+   rcm-php-setup-adjust-cli-version
+   rcm-php-setup-drupal
+   rcm-wsl-setup-lemp-stack
+   rcm-composer-autoinstaller
+   rcm-drupal-autoinstaller-nginx
+   rcm-drupal-setup-wrapper-nginx-setup-drupal
+   rcm-drupal-setup-drush-alias
+   rcm-drupal-setup-internal-command-cd-drupal
+   rcm-drupal-setup-internal-command-ls-drupal
+   rcm-drupal-setup-dump-variables
+   rcm-php-fpm-setup-pool
 EOF
 }
 
@@ -158,7 +158,7 @@ validateMachineName() {
 }
 
 # Title.
-title rcm-drupal-setup-variation-lemp-stack.sh
+title rcm-drupal-setup-variation-lemp-stack
 ____
 
 # Requirement, validate, and populate value.
@@ -263,41 +263,41 @@ if [ -z "$root_sure" ];then
 fi
 
 INDENT+="    " \
-rcm-$os-$os_version-setup-basic.sh $isfast --root-sure \
+rcm-$os-$os_version-setup-basic $isfast --root-sure \
     $is_without_update_system \
     $is_without_upgrade_system \
     --timezone="$timezone" \
     && INDENT+="    " \
-rcm-nginx-autoinstaller.sh $isfast --root-sure \
+rcm-nginx-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
-rcm-mariadb-autoinstaller.sh $isfast --root-sure \
+rcm-mariadb-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
-rcm-php-autoinstaller.sh $isfast --root-sure \
+rcm-php-autoinstaller $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-adjust-cli-version.sh $isfast --root-sure \
+rcm-php-setup-adjust-cli-version $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-php-setup-drupal.sh $isfast --root-sure \
+rcm-php-setup-drupal $isfast --root-sure \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
 if [ -n "$is_wsl" ];then
     INDENT+="    " \
-    rcm-wsl-setup-lemp-stack.sh $isfast --root-sure \
+    rcm-wsl-setup-lemp-stack $isfast --root-sure \
         --php-version="$php_version" \
         ; [ ! $? -eq 0 ] && x
 fi
 
 INDENT+="    " \
-rcm-php-fpm-setup-pool.sh $isfast --root-sure \
+rcm-php-fpm-setup-pool $isfast --root-sure \
     --php-version="$php_version" \
     --php-fpm-user="$php_fpm_user" \
     ; [ ! $? -eq 0 ] && x
 
 INDENT+="    " \
-rcm-composer-autoinstaller.sh $isfast --root-sure \
+rcm-composer-autoinstaller $isfast --root-sure \
     && INDENT+="    " \
-rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
+rcm-drupal-autoinstaller-nginx $isfast --root-sure \
     $is_auto_add_group \
     --drupal-version="$drupal_version" \
     --drush-version="$drush_version" \
@@ -311,7 +311,7 @@ rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
 
 if [ -n "$domain" ];then
     INDENT+="    " \
-    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
+    rcm-drupal-setup-wrapper-nginx-setup-drupal $isfast --root-sure \
         --php-version="$php_version" \
         --project-name="$project_name" \
         --project-parent-name="$project_parent_name" \
@@ -320,7 +320,7 @@ if [ -n "$domain" ];then
         --prefix="$prefix" \
         --project-container="$project_container" \
         && INDENT+="    " \
-    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
+    rcm-drupal-setup-wrapper-nginx-setup-drupal $isfast --root-sure \
         --php-version="$php_version" \
         --project-name="$project_name" \
         --project-parent-name="$project_parent_name" \
@@ -333,16 +333,16 @@ if [ -n "$domain" ];then
 fi
 
 INDENT+="    " \
-rcm-drupal-setup-drush-alias.sh $isfast --root-sure \
+rcm-drupal-setup-drush-alias $isfast --root-sure \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-drupal-setup-internal-command-cd-drupal.sh $isfast --root-sure \
+rcm-drupal-setup-internal-command-cd-drupal $isfast --root-sure \
     && INDENT+="    " \
-rcm-drupal-setup-internal-command-ls-drupal.sh $isfast --root-sure \
+rcm-drupal-setup-internal-command-ls-drupal $isfast --root-sure \
     && INDENT+="    " \
-rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
+rcm-drupal-setup-dump-variables $isfast --root-sure \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     --domain="$domain" \
@@ -352,7 +352,7 @@ chapter Finish
 e If you want to see the credentials again, please execute this command:
 [ -n "$project_parent_name" ] && has_project_parent_name=' --project-parent-name='"'${project_parent_name}'" || has_project_parent_name=''
 [ -n "$domain" ] && has_domain=' --domain='"'${domain}'" || has_domain=''
-code rcm-drupal-setup-dump-variables.sh${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
+code rcm-drupal-setup-dump-variables${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
 e If you want to see all project, please execute this command:
 code . cd-drupal
 ____

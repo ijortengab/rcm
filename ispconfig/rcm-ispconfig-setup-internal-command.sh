@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-internal-command.sh [options]
+Usage: rcm-ispconfig-setup-internal-command [options]
 
 Options:
    --phpmyadmin-version
@@ -264,7 +264,7 @@ EOF
 }
 
 # Title.
-title rcm-ispconfig-setup-internal-command.sh
+title rcm-ispconfig-setup-internal-command
 ____
 
 # Requirement, validate, and populate value.

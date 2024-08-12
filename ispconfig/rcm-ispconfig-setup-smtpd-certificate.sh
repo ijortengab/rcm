@@ -52,7 +52,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-smtpd-certificate.sh [options]
+Usage: rcm-ispconfig-setup-smtpd-certificate [options]
 
 Options:
    --subdomain
@@ -81,7 +81,7 @@ Environment Variables:
         Default to $HOME/.$dns_authenticator-token.ini
 
 Dependency:
-   rcm-certbot-obtain-certificates.sh
+   rcm-certbot-obtain-certificates
 EOF
 }
 
@@ -227,7 +227,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-ispconfig-setup-smtpd-certificate.sh
+title rcm-ispconfig-setup-smtpd-certificate
 ____
 
 # Require, validate, and populate value.
@@ -350,7 +350,7 @@ fi
 
 INDENT+="    " \
 PATH=$PATH \
-rcm-certbot-obtain-certificates.sh $isfast --root-sure \
+rcm-certbot-obtain-certificates $isfast --root-sure \
     --dns-authenticator="$dns_authenticator" \
     --domain="$domain" \
     ; [ ! $? -eq 0 ] && x

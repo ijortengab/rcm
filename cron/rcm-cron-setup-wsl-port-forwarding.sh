@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-cron-setup-wsl-port-forwarding.sh [options]
+Usage: rcm-cron-setup-wsl-port-forwarding [options]
 
 Options:
    --host-port *
@@ -111,7 +111,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-cron-setup-wsl-port-forwarding.sh
+title rcm-cron-setup-wsl-port-forwarding
 ____
 
 # Require, validate, and populate value.

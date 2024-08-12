@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-mariadb-setup-ispconfig.sh [options]
+Usage: rcm-mariadb-setup-ispconfig [options]
 
 Global Options:
    --fast
@@ -79,7 +79,7 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' 
 # Functions.
 
 # Title.
-title rcm-mariadb-setup-ispconfig.sh
+title rcm-mariadb-setup-ispconfig
 ____
 
 # Requirement, validate, and populate value.

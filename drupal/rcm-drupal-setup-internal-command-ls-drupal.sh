@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-setup-internal-command-ls-drupal.sh [options]
+Usage: rcm-drupal-setup-internal-command-ls-drupal [options]
 
 Options:
 
@@ -227,7 +227,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-drupal-setup-internal-command-ls-drupal.sh
+title rcm-drupal-setup-internal-command-ls-drupal
 ____
 
 # Requirement, validate, and populate value.

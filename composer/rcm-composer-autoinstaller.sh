@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-composer-autoinstaller.sh [options]
+Usage: rcm-composer-autoinstaller [options]
 
 Global Options.
    --fast
@@ -68,7 +68,7 @@ command -v "php" >/dev/null || { echo -e "\e[91m" "Unable to proceed, php comman
 # Functions.
 
 # Title.
-title rcm-composer-autoinstaller.sh
+title rcm-composer-autoinstaller
 ____
 
 # Require, validate, and populate value.

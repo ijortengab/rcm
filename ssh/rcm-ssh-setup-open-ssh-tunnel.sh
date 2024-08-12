@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ssh-setup-open-ssh-tunnel.sh [options]
+Usage: rcm-ssh-setup-open-ssh-tunnel [options]
 
 Available commands: dependency-downloader.
 
@@ -226,7 +226,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-ssh-setup-open-ssh-tunnel.sh
+title rcm-ssh-setup-open-ssh-tunnel
 ____
 
 # Requirement, validate, and populate value.

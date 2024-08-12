@@ -49,7 +49,7 @@ Reference: https://www.howtoforge.com/community/threads/bullseye-for-ispconfig.8
 
 EOF
     cat << 'EOF'
-Usage: rcm-amavis-setup-ispconfig.sh [options]
+Usage: rcm-amavis-setup-ispconfig [options]
 
 Global Options:
    --fast
@@ -238,7 +238,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-amavis-setup-ispconfig.sh
+title rcm-amavis-setup-ispconfig
 ____
 
 # Requirement, validate, and populate value.

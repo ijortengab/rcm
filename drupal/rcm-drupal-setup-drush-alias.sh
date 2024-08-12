@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-setup-drush-alias.sh [options]
+Usage: rcm-drupal-setup-drush-alias [options]
 
 Options:
    --project-name
@@ -263,7 +263,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-drupal-setup-drush-alias.sh
+title rcm-drupal-setup-drush-alias
 ____
 
 # Require, validate, and populate value.

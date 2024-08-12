@@ -61,7 +61,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-wrapper-digitalocean.sh [options]
+Usage: rcm-ispconfig-setup-wrapper-digitalocean [options]
 
 Options:
    --domain
@@ -99,8 +99,8 @@ Environment Variables:
 
 Dependency:
    ispconfig.sh
-   rcm-ispconfig-control-manage-domain.sh
-   rcm-digitalocean-api-manage-domain.sh
+   rcm-ispconfig-control-manage-domain
+   rcm-digitalocean-api-manage-domain
    php
 EOF
 }
@@ -127,7 +127,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-ispconfig-setup-wrapper-digitalocean.sh
+title rcm-ispconfig-setup-wrapper-digitalocean
 ____
 
 # Requirement, validate, and populate value.
@@ -192,7 +192,7 @@ if [ -z "$ispconfig_domain_exists_sure" ];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+    rcm-ispconfig-control-manage-domain $isfast --root-sure \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1
@@ -209,7 +209,7 @@ if [ -z "$digitalocean_domain_exists_sure" ];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain.sh $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain $isfast --root-sure \
         --domain="$domain" \
         --ip-address="$ip_address" \
         ; [ ! $? -eq 0 ] && x
@@ -235,7 +235,7 @@ if [[ $type == spf ]];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
         add \
         --domain="$domain" \
         --type=txt \
@@ -251,7 +251,7 @@ if [[ $type == dmarc ]];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
         add \
         --domain="$domain" \
         --type=txt \
@@ -263,7 +263,7 @@ if [[ $type == dmarc ]];then
 fi
 if [[ $type == dkim ]];then
     if [ -n "$dns_record_auto" ];then
-        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain.sh $isfast --root-sure --domain="$domain" get_dns_record)
+        dns_record=$(INDENT+="    " rcm-ispconfig-control-manage-domain $isfast --root-sure --domain="$domain" get_dns_record)
     fi
     if [ -z "$dns_record" ];then
         __; red DNS record not found.; x
@@ -273,7 +273,7 @@ if [[ $type == dkim ]];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-digitalocean-api-manage-domain-record.sh $isfast --root-sure \
+    rcm-digitalocean-api-manage-domain-record $isfast --root-sure \
         add \
         --domain="$domain" \
         --type=txt \

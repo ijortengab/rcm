@@ -68,7 +68,7 @@ printHelp() {
     fi
 
     cat << EOF
-Usage: rcm-wsl-setup-lemp-stack.sh [options]
+Usage: rcm-wsl-setup-lemp-stack [options]
 
 Options:
    --php-version *
@@ -139,7 +139,7 @@ makeSureRunning() {
 }
 
 # Title.
-title rcm-wsl-setup-lemp-stack.sh
+title rcm-wsl-setup-lemp-stack
 ____
 
 # Require, validate, and populate value.

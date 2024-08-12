@@ -60,7 +60,7 @@ Shortcut version of cerbot --nginx.
 
 EOF
     cat << 'EOF'
-Usage: rcm-certbot-setup-nginx.sh [options]
+Usage: rcm-certbot-setup-nginx [options]
 
 Options:
    --domain *
@@ -83,7 +83,7 @@ Global Options:
         Bypass root checking.
 
 Example:
-     rcm-certbot-setup-nginx.sh -- -d domain2.com
+     rcm-certbot-setup-nginx -- -d domain2.com
 
 Dependency:
    certbot
@@ -102,7 +102,7 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' 
 # Functions.
 
 # Title.
-title rcm-certbot-setup-nginx.sh
+title rcm-certbot-setup-nginx
 ____
 
 # Require, validate, and populate value.

@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-roundcube-setup-ispconfig-integration.sh [options]
+Usage: rcm-roundcube-setup-ispconfig-integration [options]
 
 Global Options:
    --fast
@@ -252,7 +252,7 @@ EOF
 }
 
 # Title.
-title rcm-roundcube-setup-ispconfig-integration.sh
+title rcm-roundcube-setup-ispconfig-integration
 ____
 
 # Requirement, validate, and populate value.

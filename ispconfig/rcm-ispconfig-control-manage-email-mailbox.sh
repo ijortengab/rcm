@@ -49,7 +49,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-control-manage-email-mailbox.sh [options]
+Usage: rcm-ispconfig-control-manage-email-mailbox [options]
 
 Options:
    --name
@@ -264,7 +264,7 @@ insertEmailIspconfig() {
 }
 
 # Title.
-title rcm-ispconfig-control-manage-email-mailbox.sh
+title rcm-ispconfig-control-manage-email-mailbox
 ____
 
 # Require, validate, and populate value.
@@ -296,7 +296,7 @@ if [ -z "$ispconfig_domain_exists_sure" ];then
     _ ___________________________________________________________________;_.;_.;
 
     INDENT+="    " \
-    rcm-ispconfig-control-manage-domain.sh $isfast --root-sure \
+    rcm-ispconfig-control-manage-domain $isfast --root-sure \
         isset \
         --domain="$domain" \
         ; [ $? -eq 0 ] && ispconfig_domain_exists_sure=1

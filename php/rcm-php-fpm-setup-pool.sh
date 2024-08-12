@@ -63,7 +63,7 @@ printHelp() {
     fi
     [ -n "$nginx_user" ] && { nginx_user="${nginx_user},"; }
     cat << EOF
-Usage: rcm-php-fpm-setup-pool.sh [options]
+Usage: rcm-php-fpm-setup-pool [options]
 
 Available commands: get.
 
@@ -133,7 +133,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-php-fpm-setup-pool.sh
+title rcm-php-fpm-setup-pool
 ____
 
 # Requirement, validate, and populate value.

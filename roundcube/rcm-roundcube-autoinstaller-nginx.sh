@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-roundcube-autoinstaller-nginx.sh [options]
+Usage: rcm-roundcube-autoinstaller-nginx [options]
 
 Options:
    --php-version
@@ -83,7 +83,7 @@ Dependency:
    pwgen
    php
    curl
-   rcm-nginx-setup-php.sh
+   rcm-nginx-setup-php
 EOF
 }
 
@@ -143,7 +143,7 @@ EOF
 }
 
 # Title.
-title rcm-roundcube-autoinstaller-nginx.sh
+title rcm-roundcube-autoinstaller-nginx
 ____
 
 # Requirement, validate, and populate value.
@@ -267,7 +267,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php.sh $isfast --root-sure \
+rcm-nginx-setup-php $isfast --root-sure \
     --root="$root" \
     --php-version="$php_version" \
     --filename="$filename" \

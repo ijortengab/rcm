@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-cron-setup-wsl-autorun-crond.sh
+Usage: rcm-cron-setup-wsl-autorun-crond
 
 Environment Variables:
    BASENAME
@@ -101,7 +101,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-cron-setup-wsl-autorun-crond.sh
+title rcm-cron-setup-wsl-autorun-crond
 ____
 
 # Require, validate, and populate value.

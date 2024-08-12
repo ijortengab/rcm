@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-postfix-autoinstaller.sh [options]
+Usage: rcm-postfix-autoinstaller [options]
 
 Options:
    --hostname
@@ -113,7 +113,7 @@ validateApplication() {
 }
 
 # Title.
-title rcm-postfix-autoinstaller.sh
+title rcm-postfix-autoinstaller
 ____
 
 # Requirement, validate, and populate value.

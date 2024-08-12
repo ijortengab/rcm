@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-php-setup-adjust-cli-version.sh [options]
+Usage: rcm-php-setup-adjust-cli-version [options]
 
 Options:
    --php-version
@@ -69,7 +69,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-php-setup-adjust-cli-version.sh
+title rcm-php-setup-adjust-cli-version
 
 ____
 

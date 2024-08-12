@@ -68,7 +68,7 @@ printHelp() {
     fi
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
-Usage: rcm-drupal-autoinstaller-nginx.sh [options]
+Usage: rcm-drupal-autoinstaller-nginx [options]
 
 Options:
    --project-name *
@@ -117,8 +117,8 @@ Dependency:
    composer
    pwgen
    curl
-   rcm-nginx-setup-drupal.sh
-   rcm-mariadb-setup-database.sh
+   rcm-nginx-setup-drupal
+   rcm-mariadb-setup-database
 EOF
 }
 
@@ -382,7 +382,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-drupal-autoinstaller-nginx.sh
+title rcm-drupal-autoinstaller-nginx
 ____
 
 # Requirement, validate, and populate value.
@@ -627,7 +627,7 @@ fi
 ____
 
 chapter Prepare arguments.
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-pool.sh $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" get listen)
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-pool $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" get listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
@@ -641,7 +641,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-drupal.sh \
+rcm-nginx-setup-drupal \
     --root-sure \
     --root="$root" \
     --filename="$filename" \
@@ -901,7 +901,7 @@ code db_user_host="$db_user_host"
 ____
 
 INDENT+="    " \
-rcm-mariadb-setup-database.sh \
+rcm-mariadb-setup-database \
     --db-name="$db_name" \
     --db-user="$db_user" \
     --db-user-host="$db_user_host" \

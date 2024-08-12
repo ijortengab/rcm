@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-postfix-setup-ispconfig.sh [options]
+Usage: rcm-postfix-setup-ispconfig [options]
 
 Global Options:
    --fast
@@ -293,7 +293,7 @@ postfixConfigEditor() {
 }
 
 # Title.
-title rcm-postfix-setup-ispconfig.sh
+title rcm-postfix-setup-ispconfig
 ____
 
 # Requirement, validate, and populate value.

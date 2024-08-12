@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-dump-variables.sh [options]
+Usage: rcm-ispconfig-setup-dump-variables [options]
 
 Options:
    --domain *
@@ -218,7 +218,7 @@ EOF
 }
 
 # Title.
-title rcm-ispconfig-setup-dump-variables.sh
+title rcm-ispconfig-setup-dump-variables
 ____
 
 # Require, validate, and populate value.

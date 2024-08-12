@@ -66,7 +66,7 @@ printHelp() {
     fi
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
-Usage: rcm-drupal-setup-wrapper-nginx-setup-drupal.sh [command] [options]
+Usage: rcm-drupal-setup-wrapper-nginx-setup-drupal [command] [options]
 
 Options:
    --project-name *
@@ -97,8 +97,8 @@ Global Options.
         Bypass root checking.
 
 Dependency:
-   rcm-nginx-setup-drupal.sh
-   rcm-php-fpm-setup-pool.sh
+   rcm-nginx-setup-drupal
+   rcm-php-fpm-setup-pool
 EOF
 }
 
@@ -128,7 +128,7 @@ validateMachineName() {
 }
 
 # Title.
-title rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
+title rcm-drupal-setup-wrapper-nginx-setup-drupal
 ____
 
 # Require, validate, and populate value.
@@ -216,7 +216,7 @@ fi
 ____
 
 chapter Prepare arguments.
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-pool.sh $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" get listen)
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-pool $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" get listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
@@ -229,7 +229,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-drupal.sh $isfast --root-sure \
+rcm-nginx-setup-drupal $isfast --root-sure \
     --root="$root" \
     --fastcgi-pass="unix:${socket_filename}" \
     --filename="$filename" \

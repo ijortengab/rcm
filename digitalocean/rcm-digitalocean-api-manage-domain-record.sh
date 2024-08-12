@@ -70,7 +70,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-digitalocean-api-manage-domain-record.sh [command] [options]
+Usage: rcm-digitalocean-api-manage-domain-record [command] [options]
 
 Available commands: add, delete.
 
@@ -262,7 +262,7 @@ EOF
 }
 
 # Title.
-title rcm-digitalocean-api-manage-domain-record.sh
+title rcm-digitalocean-api-manage-domain-record
 ____
 
 # Require, validate, and populate value.

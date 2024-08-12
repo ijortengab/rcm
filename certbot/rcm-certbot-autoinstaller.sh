@@ -43,7 +43,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-certbot-autoinstaller.sh [options]
+Usage: rcm-certbot-autoinstaller [options]
 
 Global Options:
    --fast
@@ -94,7 +94,7 @@ validateApplication() {
 }
 
 # Title.
-title rcm-certbot-autoinstaller.sh
+title rcm-certbot-autoinstaller
 ____
 
 # Require, validate, and populate value.

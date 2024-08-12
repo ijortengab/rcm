@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-setup-hello-world-static.sh [options]
+Usage: rcm-nginx-setup-hello-world-static [options]
 
 Options:
    --domain *
@@ -64,7 +64,7 @@ Global Options:
 
 Dependency:
    curl
-   rcm-nginx-setup-static.sh
+   rcm-nginx-setup-static
 EOF
 }
 
@@ -113,7 +113,7 @@ fileMustExists() {
 }
 
 # Title.
-title rcm-nginx-setup-hello-world-static.sh
+title rcm-nginx-setup-hello-world-static
 ____
 
 # Require, validate, and populate value.
@@ -146,7 +146,7 @@ code server_name="${server_name[@]}"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-static.sh $isfast --root-sure \
+rcm-nginx-setup-static $isfast --root-sure \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \

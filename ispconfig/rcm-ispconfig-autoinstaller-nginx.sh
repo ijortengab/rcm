@@ -60,7 +60,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-autoinstaller-nginx.sh [options]
+Usage: rcm-ispconfig-autoinstaller-nginx [options]
 
 Options:
    --hostname
@@ -108,14 +108,14 @@ Dependency:
    php
    curl
    nginx
-   rcm-mariadb-setup-ispconfig.sh
-   rcm-nginx-setup-ispconfig.sh
-   rcm-php-setup-ispconfig.sh
-   rcm-postfix-setup-ispconfig.sh
-   rcm-ispconfig-setup-smtpd-certificate.sh
-   rcm-phpmyadmin-autoinstaller-nginx.sh
-   rcm-roundcube-autoinstaller-nginx.sh
-   rcm-nginx-setup-php.sh
+   rcm-mariadb-setup-ispconfig
+   rcm-nginx-setup-ispconfig
+   rcm-php-setup-ispconfig
+   rcm-postfix-setup-ispconfig
+   rcm-ispconfig-setup-smtpd-certificate
+   rcm-phpmyadmin-autoinstaller-nginx
+   rcm-roundcube-autoinstaller-nginx
+   rcm-nginx-setup-php
 EOF
 }
 
@@ -354,7 +354,7 @@ EOF
 }
 
 # Title.
-title rcm-ispconfig-autoinstaller-nginx.sh
+title rcm-ispconfig-autoinstaller-nginx
 ____
 
 # Requirement, validate, and populate value.
@@ -420,24 +420,24 @@ if [ -z "$root_sure" ];then
 fi
 
 INDENT+="    " \
-rcm-mariadb-setup-ispconfig.sh $isfast --root-sure \
+rcm-mariadb-setup-ispconfig $isfast --root-sure \
     && INDENT+="    " \
-rcm-nginx-setup-ispconfig.sh $isfast --root-sure \
+rcm-nginx-setup-ispconfig $isfast --root-sure \
     && INDENT+="    " \
-rcm-php-setup-ispconfig.sh $isfast --root-sure \
+rcm-php-setup-ispconfig $isfast --root-sure \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-postfix-setup-ispconfig.sh $isfast --root-sure \
+rcm-postfix-setup-ispconfig $isfast --root-sure \
     && INDENT+="    " \
-rcm-ispconfig-setup-smtpd-certificate.sh $isfast --root-sure \
+rcm-ispconfig-setup-smtpd-certificate $isfast --root-sure \
     --dns-authenticator="$dns_authenticator" \
     --domain="$domain" \
     && INDENT+="    " \
-rcm-phpmyadmin-autoinstaller-nginx.sh $isfast --root-sure \
+rcm-phpmyadmin-autoinstaller-nginx $isfast --root-sure \
     --phpmyadmin-version="$phpmyadmin_version" \
     --php-version="$php_version" \
     && INDENT+="    " \
-rcm-roundcube-autoinstaller-nginx.sh $isfast --root-sure \
+rcm-roundcube-autoinstaller-nginx $isfast --root-sure \
     --roundcube-version="$roundcube_version" \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
@@ -467,7 +467,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php.sh $isfast --root-sure \
+rcm-nginx-setup-php $isfast --root-sure \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \

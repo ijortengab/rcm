@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-php-autoinstaller.sh [options]
+Usage: rcm-php-autoinstaller [options]
 
 Options:
    --php-version
@@ -185,7 +185,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 }
 
 # Title.
-title rcm-php-autoinstaller.sh
+title rcm-php-autoinstaller
 ____
 
 # Requirement, validate, and populate value.

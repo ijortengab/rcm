@@ -50,7 +50,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-setup-dump-variables.sh [options]
+Usage: rcm-drupal-setup-dump-variables [options]
 
 Options:
    --project-name
@@ -116,7 +116,7 @@ websiteCredentialDrupal() {
 }
 
 # Title.
-title rcm-drupal-setup-dump-variables.sh
+title rcm-drupal-setup-dump-variables
 ____
 
 # Require, validate, and populate value.

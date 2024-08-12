@@ -36,7 +36,7 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install) ;;
-        rcm-*.sh) ;;
+        rcm-*) ;;
         *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
     esac
 else
@@ -120,7 +120,7 @@ printHelp() {
 Usage: rcm
        rcm [command]
        rcm history --delete-all
-       rcm history --delete rcm-wsl-setup-lemp-stack.sh --delete rcm-drupal-setup-variation9.sh
+       rcm history --delete rcm-wsl-setup-lemp-stack --delete rcm-drupal-setup-variation9
        rcm install drupal-autoinstaller.sh ijortengab/drupal-autoinstaller
 
 Available commands: history, update, install.

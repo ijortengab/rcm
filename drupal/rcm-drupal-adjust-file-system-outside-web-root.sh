@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-drupal-adjust-file-system-outside-web-root.sh
+Usage: rcm-drupal-adjust-file-system-outside-web-root
 
 Options:
    --project-name *
@@ -244,7 +244,7 @@ link_symbolic() {
 }
 
 # Title.
-title rcm-drupal-adjust-file-system-outside-web-root.sh
+title rcm-drupal-adjust-file-system-outside-web-root
 ____
 
 # Requirement, validate, and populate value.

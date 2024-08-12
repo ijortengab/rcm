@@ -52,7 +52,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-setup-wrapper-nginx-setup-php.sh [options]
+Usage: rcm-ispconfig-setup-wrapper-nginx-setup-php [options]
 
 Options:
    --subdomain
@@ -75,7 +75,7 @@ Global Options:
         Bypass root checking.
 
 Dependency:
-   rcm-nginx-setup-php.sh
+   rcm-nginx-setup-php
    ispconfig.sh
    curl
 EOF
@@ -116,7 +116,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-ispconfig-setup-wrapper-nginx-setup-php.sh
+title rcm-ispconfig-setup-wrapper-nginx-setup-php
 ____
 
 # Require, validate, and populate value.
@@ -183,7 +183,7 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php.sh $isfast --root-sure \
+rcm-nginx-setup-php $isfast --root-sure \
     --root="$root" \
     --php-version="$php_version" \
     --filename="$filename" \

@@ -53,7 +53,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-mariadb-setup-database.sh [options]
+Usage: rcm-mariadb-setup-database [options]
 
 Options:
    --database-exists-sure
@@ -92,7 +92,7 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
 
 # Title.
-title rcm-mariadb-setup-database.sh
+title rcm-mariadb-setup-database
 ____
 
 # Requirement, validate, and populate value.

@@ -44,7 +44,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-setup-ispconfig.sh [options]
+Usage: rcm-nginx-setup-ispconfig [options]
 
 Global Options:
    --fast
@@ -96,7 +96,7 @@ backupFile() {
 }
 
 # Title.
-title rcm-nginx-setup-ispconfig.sh
+title rcm-nginx-setup-ispconfig
 ____
 
 # Require, validate, and populate value.

@@ -55,7 +55,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-ispconfig-control-manage-domain.sh [command] [options]
+Usage: rcm-ispconfig-control-manage-domain [command] [options]
 
 Available commands: add, delete, isset, get_dns_record.
 
@@ -227,7 +227,7 @@ vercomp() {
 }
 
 # Title.
-title rcm-ispconfig-control-manage-domain.sh
+title rcm-ispconfig-control-manage-domain
 ____
 
 # Requirement, validate, and populate value.
