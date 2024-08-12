@@ -564,9 +564,9 @@ Rcm_resolve_dependencies() {
                         e Memulai download.
                         if [ "$url" == internal ];then
                             # repository
-                            sub_directory=$(cut -d- -f2 <<< "$each")
-                            code rcm install $each ijortengab/rcm $sub_directory
-                            Rcm_download install $each ijortengab/rcm $sub_directory
+                            blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                            code rcm install $each ijortengab/rcm $blob_path
+                            Rcm_download install $each ijortengab/rcm $blob_path
                         else
                             __; magenta wget "$url"; _.
                             wget -q "$url" -O "$BINARY_DIRECTORY/$each"
@@ -952,7 +952,10 @@ Rcm_download() {
     if [ -z "$github_repo" ];then
         error "Operand <github_repo> required."; x
     fi
-    sub_directory=$1; shift
+    blob_path=$1; shift
+    if [ -z "$blob_path" ];then
+        error "Operand <blob_path> required."; x
+    fi
     case $mode in
         install)
             if command -v $shell_script >/dev/null;then
@@ -1024,13 +1027,7 @@ Rcm_download() {
     else
         _ 'Using downloaded version: '; yellow $latest_version; _.
     fi
-    if [ -n "$sub_directory" ];then
-        cache_directory+="/${sub_directory}"
-    fi
-    if [ ! -d "$cache_directory" ];then
-        error Directory is not found: "$cache_directory".; x
-    fi
-    local filename="${cache_directory}/${shell_script}"
+    local filename="${cache_directory}/${blob_path}"
     if [ ! -f "$filename" ];then
         error File is not found: "$filename".; x
     fi
