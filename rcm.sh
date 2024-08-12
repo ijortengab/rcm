@@ -753,6 +753,7 @@ Rcm_prompt() {
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
                 _ "${label}"; _.
+                _;_.
                 __; _, Add this argument?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
@@ -808,6 +809,17 @@ Rcm_prompt() {
                     _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
                     _ "${label}"; _.
                 fi
+                # @todo, argument prepopulate untuk flag.
+                for each in "${argument_prepopulate[@]}";do
+                    if grep -q -- "^${parameter}=" <<< "$each";then
+                        value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
+                        _;_.
+                        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, prepopulated.; _.
+                        backup_value=
+                        # argument_pass+=("${parameter}=${value}")
+                        break
+                    fi
+                done
                 if [ -n "$backup_value" ];then
                     printBackupDialog
                 fi
@@ -817,7 +829,6 @@ Rcm_prompt() {
                     fi
                 fi
                 if [ -z "$value" ];then
-
                     if [ -n "$_available_values_from_command" ];then
                         if command -v "$_command" > /dev/null;then
                             _; _.
@@ -877,9 +888,11 @@ Rcm_prompt() {
                 again=1
                 until [ -z "$again" ]; do
                     if [ -n "$is_flag" ];then
+                        _; _.
                         __ Add this argument again?
                         userInputBooleanDefaultNo
                     else
+                        _; _.
                         __ Add other value?
                         userInputBooleanDefaultNo
                     fi
@@ -1375,16 +1388,20 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 
 Rcm_resolve_dependencies $command
 
-if [ $# -eq 0 ];then
-    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
-    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-    Rcm_prompt $command
-    if [[ "${#argument_pass[@]}" -gt 0 ]];then
-        set -- "${argument_pass[@]}"
-        unset argument_pass
-    fi
-    [ -f "$backup_storage" ] && rm "$backup_storage"
+argument_prepopulate=()
+if [ $# -gt 0 ];then
+    while [[ $# -gt 0 ]]; do
+        argument_prepopulate+=("$1"); shift
+    done
 fi
+backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
+history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
+Rcm_prompt $command
+if [[ "${#argument_pass[@]}" -gt 0 ]];then
+    set -- "${argument_pass[@]}"
+    unset argument_pass
+fi
+[ -f "$backup_storage" ] && rm "$backup_storage"
 
 chapter Execute:
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
