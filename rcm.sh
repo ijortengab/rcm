@@ -8,6 +8,7 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --fast) fast=1; shift ;;
+        --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --) shift
             while [[ $# -gt 0 ]]; do
@@ -133,8 +134,12 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
+   --binary-directory-exists-sure
+        Bypass binary directory checking.
    --root-sure
         Bypass root checking.
+   --non-interactive ^
+        Skip prompt for every options.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -1388,20 +1393,34 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 
 Rcm_resolve_dependencies $command
 
-argument_prepopulate=()
-if [ $# -gt 0 ];then
-    while [[ $# -gt 0 ]]; do
-        argument_prepopulate+=("$1"); shift
-    done
+if [ -z "$non_interactive" ];then
+    argument_prepopulate=()
+    if [ $# -gt 0 ];then
+        while [[ $# -gt 0 ]]; do
+            if [[ "$1" =~ ^-- ]];then
+                if [[ "$2" =~ ^-- ]];then
+                    argument_prepopulate+=("$1");
+                elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
+                    argument_prepopulate+=("$1"="$2");
+                    shift
+                else
+                    argument_prepopulate+=("$1");
+                fi
+            else
+                argument_prepopulate+=("$1");
+            fi
+            shift
+        done
+    fi
+    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
+    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
+    Rcm_prompt $command
+    if [[ "${#argument_pass[@]}" -gt 0 ]];then
+        set -- "${argument_pass[@]}"
+        unset argument_pass
+    fi
+    [ -f "$backup_storage" ] && rm "$backup_storage"
 fi
-backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
-history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-Rcm_prompt $command
-if [[ "${#argument_pass[@]}" -gt 0 ]];then
-    set -- "${argument_pass[@]}"
-    unset argument_pass
-fi
-[ -f "$backup_storage" ] && rm "$backup_storage"
 
 chapter Execute:
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
@@ -1447,6 +1466,7 @@ exit 0
 # --help
 # --root-sure
 # --binary-directory-exists-sure
+# --non-interactive
 # )
 # VALUE=(
 # )
