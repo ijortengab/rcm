@@ -109,7 +109,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.7.0'
+    echo '0.7.1'
 }
 printHelp() {
     title Rapid Construct Massive
