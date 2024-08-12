@@ -35,7 +35,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.6.0'
+    echo '0.7.0'
 }
 printHelp() {
     title RCM Certbot Autoinstaller
