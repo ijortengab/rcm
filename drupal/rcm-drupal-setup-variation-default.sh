@@ -64,7 +64,7 @@ printVersion() {
 }
 printHelp() {
     title RCM Drupal Setup
-    _ 'Variation '; yellow 0; _, . Just Drupal without LEMP Stack setup. ; _.
+    _ 'Variation '; yellow Default; _, . Just Drupal without LEMP Stack setup. ; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     nginx_user=
@@ -95,11 +95,11 @@ printHelp() {
         multi_line="$multi_line"
     fi
     cat << EOF
-Usage: rcm-drupal-setup-variation0.sh [options]
+Usage: rcm-drupal-setup-variation-default.sh [options]
 
 Options:
    --drupal-version *
-        Set the version of Drupal. Available values: 10 or other.
+        Set the version of Drupal. Available values: 10, 11, or other.
    --drush-version *
         Set the version of Drush. Available values: 12 or other.
    --php-version *
@@ -117,7 +117,7 @@ Options:
    --prefix
         Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
    --project-container
-        Set the container directory for all projects. Available value: drupal-projects, drupal, or other. Default to drupal-projects.
+        Set the container directory for all projects. Available value: drupal-projects, drupal, public_html, or other. Default to drupal-projects.
    --auto-add-group ^
         If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
    --without-update-system ^
@@ -176,7 +176,7 @@ validateMachineName() {
 }
 
 # Title.
-title rcm-drupal-setup-variation0.sh
+title rcm-drupal-setup-variation-default.sh
 ____
 
 # Requirement, validate, and populate value.
