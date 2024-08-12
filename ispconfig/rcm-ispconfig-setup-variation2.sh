@@ -101,7 +101,7 @@ Environment Variables:
 
 Dependency:
    wget
-   rcm-ubuntu-22.04-setup-basic.sh
+   rcm-ubuntu-22.04-setup-basic
    rcm-mariadb-autoinstaller
    rcm-nginx-autoinstaller
    rcm-php-autoinstaller
@@ -295,7 +295,7 @@ fileMustExists $HOME/.digitalocean-token.txt
 ____
 
 INDENT+="    " \
-rcm-ubuntu-22.04-setup-basic.sh $isfast --root-sure \
+rcm-ubuntu-22.04-setup-basic $isfast --root-sure \
     --timezone="$timezone" \
     ; [ ! $? -eq 0 ] && x
 

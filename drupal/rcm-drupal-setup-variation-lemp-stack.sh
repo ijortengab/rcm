@@ -112,7 +112,7 @@ Global Options.
 
 Dependency:
    nginx
-   rcm-ubuntu-22.04-setup-basic.sh
+   rcm-ubuntu-22.04-setup-basic
    rcm-debian-11-setup-basic
    rcm-debian-12-setup-basic
    rcm-nginx-autoinstaller
