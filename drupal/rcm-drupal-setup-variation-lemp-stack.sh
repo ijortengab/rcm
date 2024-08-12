@@ -6,10 +6,17 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --auto-add-group) auto_add_group=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
         --domain-strict) domain_strict=1; shift ;;
         --fast) fast=1; shift ;;
+        --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
+        --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
+        --prefix=*) prefix="${1#*=}"; shift ;;
+        --prefix) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then prefix="$2"; shift; fi; shift ;;
+        --project-container=*) project_container="${1#*=}"; shift ;;
+        --project-container) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_container="$2"; shift; fi; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
         --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
@@ -17,6 +24,12 @@ while [[ $# -gt 0 ]]; do
         --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
         --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
+        --variation=*) variation="${1#*=}"; shift ;;
+        --variation) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then variation="$2"; shift; fi; shift ;;
+        --with-update-system) update_system=1; shift ;;
+        --without-update-system) update_system=0; shift ;;
+        --with-upgrade-system) upgrade_system=1; shift ;;
+        --without-upgrade-system) upgrade_system=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -49,23 +62,43 @@ printVersion() {
 }
 printHelp() {
     title RCM Drupal Setup
-    _ 'Variation '; yellow 2; _, . Debian 11, Drupal 9, PHP 8.1. ; _.
+    _ 'Variation '; yellow LEMP Stack; _, . Setup Linux, '(E)'Nginx, MySQL/MariaDB, PHP. ; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
-Usage: rcm-drupal-setup-variation2.sh [options]
+    nginx_user=
+    conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+    if [ -f "$conf_nginx" ];then
+        nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+    fi
+    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
+    cat << EOF
+Usage: rcm-drupal-setup-variation-lemp-stack.sh [options]
 
 Options:
+   --variation *
+        Set the variation.
    --project-name *
         Set the project name. This should be in machine name format.
    --project-parent-name
         Set the project parent name. The parent is not have to installed before.
-   --timezone
-        Set the timezone of this machine.
    --domain
         Set the domain.
+   --timezone
+        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --domain-strict ^
         Prevent installing drupal inside directory sites/default.
+   --php-fpm-user
+        Set the system user of PHP FPM. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other.
+   --prefix
+        Set prefix directory for project. Default to home directory of --php-fpm-user or /usr/local/share.
+   --project-container
+        Set the container directory for all projects. Available value: drupal-projects, drupal, public_html, or other. Default to drupal-projects.
+   --auto-add-group ^
+        If Nginx User cannot access PHP-FPM's Directory, auto add group of PHP-FPM User to Nginx User.
+   --without-update-system ^
+        Skip execute update system. Default to --with-update-system.
+   --without-upgrade-system ^
+        Skip execute upgrade system. Default to --with-upgrade-system.
 
 Global Options.
    --fast
@@ -78,7 +111,10 @@ Global Options.
         Bypass root checking.
 
 Dependency:
+   nginx
+   rcm-ubuntu-22.04-setup-basic.sh
    rcm-debian-11-setup-basic.sh
+   rcm-debian-12-setup-basic.sh
    rcm-nginx-autoinstaller.sh
    rcm-mariadb-autoinstaller.sh
    rcm-php-autoinstaller.sh
@@ -88,9 +124,11 @@ Dependency:
    rcm-composer-autoinstaller.sh
    rcm-drupal-autoinstaller-nginx.sh
    rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
-   rcm-drupal-setup-wrapper-nginx-setup-drupal.sh
    rcm-drupal-setup-drush-alias.sh
+   rcm-drupal-setup-internal-command-cd-drupal.sh
+   rcm-drupal-setup-internal-command-ls-drupal.sh
    rcm-drupal-setup-dump-variables.sh
+   rcm-php-fpm-setup-pool.sh
 EOF
 }
 
@@ -120,17 +158,47 @@ validateMachineName() {
 }
 
 # Title.
-title rcm-drupal-setup-variation2.sh
+title rcm-drupal-setup-variation-lemp-stack.sh
 ____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
+delay=.5; [ -n "$fast" ] && unset delay
+code update_system="$update_system"
+code upgrade_system="$upgrade_system"
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-php_version=8.1
+[ -n "$auto_add_group" ] && is_auto_add_group=' --auto-add-group' || is_auto_add_group=''
+[[ "$update_system" == "0" ]] && is_without_update_system=' --without-update-system' || is_without_update_system=''
+[[ "$upgrade_system" == "0" ]] && is_without_upgrade_system=' --without-upgrade-system' || is_without_upgrade_system=''
+if [ -z "$variation" ];then
+    error "Argument --variation required."; x
+fi
+# Variation 1. Debian 11,    PHP 8.2, Drupal 10, Drush 12.
+# Variation 2. Debian 11,    PHP 8.1, Drupal  9, Drush 11.
+# Variation 3. Ubuntu 22.04, PHP 8.2, Drupal 10, Drush 12.
+# Variation 4. Ubuntu 22.04, PHP 8.1, Drupal  9, Drush 11.
+# Variation 5. Debian 12,    PHP 8.2, Drupal 10, Drush 12.
+# Variation 6. Debian 12,    PHP 8.1, Drupal  9, Drush 11.
+# Variation 7. Debian 12,    PHP 8.3, Drupal 10, Drush 12.
+# Variation 8. Debian 11,    PHP 8.3, Drupal 10, Drush 12.
+# Variation 9. Ubuntu 22.04, PHP 8.3, Drupal 10, Drush 12.
+case "$variation" in
+    1) os=debian; os_version=11   ; php_version=8.2; drupal_version=10; drush_version=12 ;;
+    2) os=debian; os_version=11   ; php_version=8.1; drupal_version=9 ; drush_version=11 ;;
+    3) os=ubuntu; os_version=22.04; php_version=8.2; drupal_version=10; drush_version=12 ;;
+    4) os=ubuntu; os_version=22.04; php_version=8.1; drupal_version=9 ; drush_version=11 ;;
+    5) os=debian; os_version=12   ; php_version=8.2; drupal_version=10; drush_version=12 ;;
+    6) os=debian; os_version=12   ; php_version=8.1; drupal_version=9 ; drush_version=11 ;;
+    7) os=debian; os_version=12   ; php_version=8.3; drupal_version=10; drush_version=12 ;;
+    8) os=debian; os_version=11   ; php_version=8.3; drupal_version=10; drush_version=12 ;;
+    9) os=ubuntu; os_version=22.04; php_version=8.3; drupal_version=10; drush_version=12 ;;
+    *) error "Argument --variation is not valid."; x;;
+esac
+
+code os="$os"
+code os_version="$os_version"
 code php_version="$php_version"
-drupal_version=9
 code drupal_version="$drupal_version"
-drush_version=11
 code drush_version="$drush_version"
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
@@ -151,7 +219,37 @@ if [ -f /proc/sys/kernel/osrelease ];then
     fi
 fi
 code 'is_wsl="'$is_wsl'"'
-delay=.5; [ -n "$fast" ] && unset delay
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+if [ -z "$php_fpm_user" ];then
+    php_fpm_user="$nginx_user"
+fi
+code 'php_fpm_user="'$php_fpm_user'"'
+if [ -z "$prefix" ];then
+    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+fi
+# Jika $php_fpm_user adalah nginx, maka $HOME nya adalah /nonexistent, maka
+# perlu kita verifikasi lagi.
+if [ ! -d "$prefix" ];then
+    prefix=
+fi
+if [ -z "$prefix" ];then
+    prefix=/usr/local/share
+    project_container=drupal
+fi
+if [ -z "$project_container" ];then
+    project_container=drupal-projects
+fi
+code 'prefix="'$prefix'"'
+code 'project_container="'$project_container'"'
+code 'auto_add_group="'$auto_add_group'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -165,7 +263,9 @@ if [ -z "$root_sure" ];then
 fi
 
 INDENT+="    " \
-rcm-debian-11-setup-basic.sh $isfast --root-sure \
+rcm-$os-$os_version-setup-basic.sh $isfast --root-sure \
+    $is_without_update_system \
+    $is_without_upgrade_system \
     --timezone="$timezone" \
     && INDENT+="    " \
 rcm-nginx-autoinstaller.sh $isfast --root-sure \
@@ -187,16 +287,28 @@ if [ -n "$is_wsl" ];then
         --php-version="$php_version" \
         ; [ ! $? -eq 0 ] && x
 fi
+
+INDENT+="    " \
+rcm-php-fpm-setup-pool.sh $isfast --root-sure \
+    --php-version="$php_version" \
+    --php-fpm-user="$php_fpm_user" \
+    ; [ ! $? -eq 0 ] && x
+
 INDENT+="    " \
 rcm-composer-autoinstaller.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-drupal-autoinstaller-nginx.sh $isfast --root-sure \
+    $is_auto_add_group \
     --drupal-version="$drupal_version" \
     --drush-version="$drush_version" \
     --php-version="$php_version" \
+    --php-fpm-user="$php_fpm_user" \
+    --prefix="$prefix" \
+    --project-container="$project_container" \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     ; [ ! $? -eq 0 ] && x
+
 if [ -n "$domain" ];then
     INDENT+="    " \
     rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
@@ -204,6 +316,9 @@ if [ -n "$domain" ];then
         --project-name="$project_name" \
         --project-parent-name="$project_parent_name" \
         --domain="$domain" \
+        --php-fpm-user="$php_fpm_user" \
+        --prefix="$prefix" \
+        --project-container="$project_container" \
         && INDENT+="    " \
     rcm-drupal-setup-wrapper-nginx-setup-drupal.sh $isfast --root-sure \
         --php-version="$php_version" \
@@ -211,13 +326,21 @@ if [ -n "$domain" ];then
         --project-parent-name="$project_parent_name" \
         --subdomain="$domain" \
         --domain="localhost" \
+        --php-fpm-user="$php_fpm_user" \
+        --prefix="$prefix" \
+        --project-container="$project_container" \
         ; [ ! $? -eq 0 ] && x
 fi
+
 INDENT+="    " \
 rcm-drupal-setup-drush-alias.sh $isfast --root-sure \
     --project-name="$project_name" \
     --project-parent-name="$project_parent_name" \
     --domain="$domain" \
+    && INDENT+="    " \
+rcm-drupal-setup-internal-command-cd-drupal.sh $isfast --root-sure \
+    && INDENT+="    " \
+rcm-drupal-setup-internal-command-ls-drupal.sh $isfast --root-sure \
     && INDENT+="    " \
 rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
     --project-name="$project_name" \
@@ -227,7 +350,11 @@ rcm-drupal-setup-dump-variables.sh $isfast --root-sure \
 
 chapter Finish
 e If you want to see the credentials again, please execute this command:
-code sudo -E $(command -v rcm-drupal-setup-dump-variables.sh)
+[ -n "$project_parent_name" ] && has_project_parent_name=' --project-parent-name='"'${project_parent_name}'" || has_project_parent_name=''
+[ -n "$domain" ] && has_domain=' --domain='"'${domain}'" || has_domain=''
+code rcm-drupal-setup-dump-variables.sh${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
+e If you want to see all project, please execute this command:
+code . cd-drupal
 ____
 
 exit 0
@@ -246,18 +373,27 @@ exit 0
 # --help
 # --root-sure
 # --domain-strict
+# --auto-add-group
 # )
 # VALUE=(
 # --project-name
 # --project-parent-name
 # --timezone
 # --domain
+# --php-fpm-user
+# --prefix
+# --project-container
+# --variation
 # )
 # MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--with-update-system,parameter:update_system'
+    # 'long:--without-update-system,parameter:update_system,flag_option:reverse'
+    # 'long:--with-upgrade-system,parameter:upgrade_system'
+    # 'long:--without-upgrade-system,parameter:upgrade_system,flag_option:reverse'
 # )
 # EOF
 # clear
