@@ -432,8 +432,6 @@ fi
 if [ -n "$makesure_directory_exist" ];then
     __ Mengecek direktori: "$expected_value"
     isDirExists "$expected_value"
-    __ Mengecek direktori: "$expected_value"
-    isDirExists "$expected_value"
     if [ -n "$notfound" ];then
         __ Mengecek direktori: "${origin_value}/php/twig"
         isDirExists "${origin_value}/php/twig"
