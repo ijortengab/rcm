@@ -36,8 +36,11 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install) ;;
-        rcm-*) ;;
-        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
+        *)
+            if command -v "rcm-${command}" >/dev/null;then
+                echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
+            fi
+            command="rcm-${command}"
     esac
 else
     command=list # internal only.
