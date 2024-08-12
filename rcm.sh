@@ -1118,7 +1118,7 @@ Rcm_wget() {
 }
 
 # Title.
-title rcm.sh
+title rcm
 ____
 
 # Prompt.
@@ -1184,70 +1184,70 @@ case $command in
 esac
 
 if [ $command == list ];then
-    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed s,\.sh$,,
+    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
     command_list=$(cat << 'EOF'
-rcm-amavis-setup-ispconfig
-rcm-certbot-autoinstaller
-rcm-certbot-digitalocean-autoinstaller
-rcm-certbot-obtain-certificates
-rcm-certbot-setup-nginx
-rcm-composer-autoinstaller
-rcm-cron-setup-wsl-autorun-crond
-rcm-cron-setup-wsl-autorun-sshd
-rcm-cron-setup-wsl-port-forwarding
-rcm-debian-11-setup-basic
-rcm-debian-12-setup-basic
-rcm-digitalocean-api-manage-domain-record
-rcm-digitalocean-api-manage-domain
-rcm-drupal-adjust-file-system-outside-web-root
-rcm-drupal-autoinstaller-nginx
-rcm-drupal-setup-drush-alias
-rcm-drupal-setup-dump-variables
-rcm-drupal-setup-internal-command-cd-drupal
-rcm-drupal-setup-internal-command-ls-drupal
-rcm-drupal-setup-variation-default
-rcm-drupal-setup-variation-lemp-stack
-rcm-drupal-setup-wrapper-nginx-setup-drupal
-rcm-ispconfig-autoinstaller-nginx
-rcm-ispconfig-control-manage-domain
-rcm-ispconfig-control-manage-email-alias
-rcm-ispconfig-control-manage-email-mailbox
-rcm-ispconfig-setup-dump-variables
-rcm-ispconfig-setup-internal-command
-rcm-ispconfig-setup-smtpd-certificate
-rcm-ispconfig-setup-variation1
-rcm-ispconfig-setup-variation2
-rcm-ispconfig-setup-variation3
-rcm-ispconfig-setup-variation4
-rcm-ispconfig-setup-variation5
-rcm-ispconfig-setup-wrapper-certbot-setup-nginx
-rcm-ispconfig-setup-wrapper-digitalocean
-rcm-ispconfig-setup-wrapper-nginx-setup-php
-rcm-mariadb-autoinstaller
-rcm-mariadb-setup-database
-rcm-mariadb-setup-ispconfig
-rcm-nginx-autoinstaller
-rcm-nginx-setup-drupal
-rcm-nginx-setup-front-controller-php
-rcm-nginx-setup-hello-world-php
-rcm-nginx-setup-hello-world-static
-rcm-nginx-setup-ispconfig
-rcm-nginx-setup-php
-rcm-nginx-setup-static
-rcm-php-autoinstaller
-rcm-php-fpm-setup-pool
-rcm-php-setup-adjust-cli-version
-rcm-php-setup-drupal
-rcm-php-setup-ispconfig
-rcm-phpmyadmin-autoinstaller-nginx
-rcm-postfix-autoinstaller
-rcm-postfix-setup-ispconfig
-rcm-roundcube-autoinstaller-nginx
-rcm-roundcube-setup-ispconfig-integration
-rcm-ssh-setup-open-ssh-tunnel
-rcm-ssh-setup-sshd-listen-port
-rcm-ubuntu-22.04-setup-basic
-rcm-wsl-setup-lemp-stack
+amavis-setup-ispconfig
+certbot-autoinstaller
+certbot-digitalocean-autoinstaller
+certbot-obtain-certificates
+certbot-setup-nginx
+composer-autoinstaller
+cron-setup-wsl-autorun-crond
+cron-setup-wsl-autorun-sshd
+cron-setup-wsl-port-forwarding
+debian-11-setup-basic
+debian-12-setup-basic
+digitalocean-api-manage-domain-record
+digitalocean-api-manage-domain
+drupal-adjust-file-system-outside-web-root
+drupal-autoinstaller-nginx
+drupal-setup-drush-alias
+drupal-setup-dump-variables
+drupal-setup-internal-command-cd-drupal
+drupal-setup-internal-command-ls-drupal
+drupal-setup-variation-default
+drupal-setup-variation-lemp-stack
+drupal-setup-wrapper-nginx-setup-drupal
+ispconfig-autoinstaller-nginx
+ispconfig-control-manage-domain
+ispconfig-control-manage-email-alias
+ispconfig-control-manage-email-mailbox
+ispconfig-setup-dump-variables
+ispconfig-setup-internal-command
+ispconfig-setup-smtpd-certificate
+ispconfig-setup-variation1
+ispconfig-setup-variation2
+ispconfig-setup-variation3
+ispconfig-setup-variation4
+ispconfig-setup-variation5
+ispconfig-setup-wrapper-certbot-setup-nginx
+ispconfig-setup-wrapper-digitalocean
+ispconfig-setup-wrapper-nginx-setup-php
+mariadb-autoinstaller
+mariadb-setup-database
+mariadb-setup-ispconfig
+nginx-autoinstaller
+nginx-setup-drupal
+nginx-setup-front-controller-php
+nginx-setup-hello-world-php
+nginx-setup-hello-world-static
+nginx-setup-ispconfig
+nginx-setup-php
+nginx-setup-static
+php-autoinstaller
+php-fpm-setup-pool
+php-setup-adjust-cli-version
+php-setup-drupal
+php-setup-ispconfig
+phpmyadmin-autoinstaller-nginx
+postfix-autoinstaller
+postfix-setup-ispconfig
+roundcube-autoinstaller-nginx
+roundcube-setup-ispconfig-integration
+ssh-setup-open-ssh-tunnel
+ssh-setup-sshd-listen-port
+ubuntu-22.04-setup-basic
+wsl-setup-lemp-stack
 EOF
     )
     history_storage=$HOME'/.cache/rcm/rcm.history'
@@ -1331,7 +1331,7 @@ EOF
     done
 
     _ Command' '; magenta $value; _, ' 'will be executed.; _.
-    command=$value
+    command=rcm-$value
     ____
 
     if [ -n "$value" ];then
