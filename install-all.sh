@@ -24,22 +24,19 @@ __DIR__=$(dirname "$__FILE__")
 cd "$__DIR__"
 echo cd /usr/local/bin
 echo __DIR__='"'"$__DIR__"'"'
+
 while read line; do
     chmod a+x "$line"
-    echo ln -sf '"''$__DIR__'/"$line"'"'
-    ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line")
+    echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.sh$,,)'"'
+    ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.sh$,,)
 done <<< `find * -mindepth 1 -type f -name '*.sh'`
+
 while read line; do
     case "$line" in
         rcm\.sh)
             chmod a+x "$line"
-            echo ln -sf '"''$__DIR__'/"$line"'"'
-            ln -sf "$PWD/$line" /usr/local/bin/"$line"
+            echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.sh$,,)'"'
+            ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.sh$,,)
             ;;
     esac
 done <<< `find * -mindepth 0 -maxdepth 0 -type f -name '*.sh'`
-
-cd /usr/local/bin
-echo ln -sf rcm.sh rcm
-ln -sf rcm.sh rcm
-cd - >/dev/null
