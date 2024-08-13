@@ -36,11 +36,7 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install) ;;
-        *)
-            if command -v "rcm-${command}" >/dev/null;then
-                echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
-            fi
-            command="rcm-${command}"
+        *) command="rcm-${command}"
     esac
 else
     command=list # internal only.
@@ -112,7 +108,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.7.1'
+    echo '0.7.2'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -547,7 +543,6 @@ Rcm_resolve_dependencies() {
             _ Requires command: "$each"
             if command -v "$each" > /dev/null;then
                 _, ' [FOUND].'; _.
-                # __ Command "$each" ditemukan.
             else
                 _, ' [NOTFOUND].'; _.
                 if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
@@ -595,8 +590,8 @@ Rcm_resolve_dependencies() {
             fi
             commands_exists+=("$each")
             _help=$("$each" --help 2>/dev/null)
-            # Hanya mendownload dependency dengan akhiran .sh (shell script).
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep \.sh$)
+            # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm-.
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep -E '(^rcm-|\.sh$)')
             _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g')
             if [ -n "$_dependency" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
