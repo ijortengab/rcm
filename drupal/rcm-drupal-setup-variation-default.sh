@@ -338,9 +338,12 @@ chapter Finish
 e If you want to see the credentials again, please execute this command:
 [ -n "$project_parent_name" ] && has_project_parent_name=' --project-parent-name='"'${project_parent_name}'" || has_project_parent_name=''
 [ -n "$domain" ] && has_domain=' --domain='"'${domain}'" || has_domain=''
-code rcm-drupal-setup-dump-variables${isfast} --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
-e If you want to see all project, please execute this command:
-code . cd-drupal
+code rcm drupal-setup-dump-variables${isfast} --non-interactive -- --project-name="'${project_name}'"${has_project_parent_name}${has_domain}
+e It is recommended for you to level up file system directory outside web root, please execute this command:
+code rcm drupal-adjust-file-system-outside-web-root${isfast} -- --project-name="'${project_parent_name:-$project_name}'"
+e There are helpful commands to browse all projects:
+code cd-drupal --help
+code ls-drupal --help
 ____
 
 exit 0
