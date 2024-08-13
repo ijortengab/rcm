@@ -36,6 +36,10 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install) ;;
+        self-update|selfupdate)
+            command=update
+            set -- rcm ijortengab/rcm rcm.sh
+            ;;
         *) command="rcm-${command}"
     esac
 else
@@ -108,7 +112,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.7.2'
+    echo '0.7.3'
 }
 printHelp() {
     title Rapid Construct Massive
