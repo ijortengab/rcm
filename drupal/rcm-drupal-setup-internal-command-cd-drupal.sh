@@ -270,9 +270,12 @@ if [ -n "$found" ];then
     if [ -z "$mktemp" ];then
         mktemp=$(mktemp -p /dev/shm)
     fi
-    cd-drupal --version | tee $mktemp
-    old_version=$(<$mktemp)
-        NEW_VERSION=`printVersion`
+    "$fullpath" --version | tee $mktemp
+    old_version=$(head -1 $mktemp)
+    if [[ "$old_version" =~ [^0-9\.]+ ]];then
+        old_version=0
+    fi
+    NEW_VERSION=`printVersion`
     vercomp $NEW_VERSION $old_version
     if [[ $? -eq 1 ]];then
         __ Command perlu diupdate. Versi saat ini ${NEW_VERSION}.

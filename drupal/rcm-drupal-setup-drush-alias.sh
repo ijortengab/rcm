@@ -42,7 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.8.0'
+    echo '0.8.1'
 }
 printHelp() {
     title RCM Drupal Setup
@@ -299,6 +299,7 @@ BINARY_MASTER=${BINARY_MASTER:=bin}
 code 'BINARY_MASTER="'$BINARY_MASTER'"'
 SITES_MASTER=${SITES_MASTER:=sites}
 code 'SITES_MASTER="'$SITES_MASTER'"'
+mktemp=
 ____
 
 if [ -z "$root_sure" ];then
@@ -336,12 +337,50 @@ for uri in "${list_uri[@]}";do
     fullpath="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/${SITES_MASTER}/${filename}"
     dirname="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/${SITES_MASTER}"
     isFileExists "$fullpath"
+    if [ -n "$found" ];then
+        __ Mengecek versi '`'${filename}'`' command.
+        __; magenta ${filename} --version; _.
+        if [ -z "$mktemp" ];then
+            mktemp=$(mktemp -p /dev/shm)
+        fi
+        "$fullpath" --version 2>/dev/null | tee $mktemp
+        old_version=$(head -1 $mktemp)
+        if [[ "$old_version" =~ [^0-9\.]+ ]];then
+            old_version=0
+        fi
+        NEW_VERSION=`printVersion`
+        vercomp $NEW_VERSION $old_version
+        if [[ $? -eq 1 ]];then
+            __ Command perlu diupdate. Versi saat ini ${NEW_VERSION}.
+            found=
+            notfound=1
+        else
+            __ Command tidak perlu diupdate. Versi saat ini ${NEW_VERSION}.
+        fi
+    fi
     if [ -n "$notfound" ];then
         __ Membuat file '`'"$fullpath"'`'.
         mkdir -p "$dirname"
         touch "$fullpath"
         chmod a+x "$fullpath"
         cat << 'EOF' > "$fullpath"
+#!/bin/bash
+_new_arguments=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --version) version=1; shift ;;
+        --[^-]*) shift ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
+done
+set -- "${_new_arguments[@]}"
+unset _new_arguments
+
+printVersion() {
+    echo '__NEW_VERSION__'
+}
+[ -n "$version" ] && { printVersion; exit 1; }
+
 [[ -f "$0" && ! "$0" == $(command -v bash) ]] && { echo -e "\e[91m""Usage: . "$(basename "$0") "\e[39m"; exit 1; }
 PREFIX_MASTER=__PREFIX_MASTER__
 PROJECTS_CONTAINER_MASTER=__PROJECTS_CONTAINER_MASTER__
@@ -349,31 +388,39 @@ PROJECT_DIR=__PROJECT_DIR__
 _target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${PROJECT_DIR}/drupal"
 _dereference=$(stat "$_target" -c %N)
 PROJECT_DIR=$(grep -Eo "' -> '.*'$" <<< "$_dereference" | sed -E "s/' -> '(.*)'$/\1/")
-DRUPAL_ROOT="${PROJECT_DIR}/web"
+echo
+echo -n Waiting...
+export SITE=__URI__
+export PROJECT_DIR="$PROJECT_DIR"
+export SITE_DIR=$("$PROJECT_DIR/vendor/bin/drush" --uri="$SITE" status --field=site)
+export DRUPAL_ROOT=$("$PROJECT_DIR/vendor/bin/drush" --uri="$SITE" status --field=root)
+printf "\r\033[K"
 echo export PROJECT_DIR='"'$PROJECT_DIR'"'
 echo export DRUPAL_ROOT='"'$DRUPAL_ROOT'"'
-echo -e alias "\e[95m"drush"\e[39m"='"'$PROJECT_DIR/vendor/bin/drush --uri=__URI__'"'
-echo export SITE_DIR='"''$(drush --uri=__URI__ status --field=site)''"'
-echo cd '"$PROJECT_DIR"'
-echo '[ -f .aliases ] && . .aliases'
+echo export '       'SITE='"'"$SITE"'"'
+echo export '   'SITE_DIR='"'$SITE_DIR'"'
+echo -e alias '      '"\e[95m"' 'drush"\e[39m"='"''$PROJECT_DIR'/vendor/bin/drush --uri='$SITE''"'
 echo
-export PROJECT_DIR="$PROJECT_DIR"
-export DRUPAL_ROOT="$DRUPAL_ROOT"
-export SITE_DIR=$("$PROJECT_DIR/vendor/bin/drush" --uri=__URI__ status --field=site)
-alias drush="$PROJECT_DIR/vendor/bin/drush --uri=__URI__"
-cd "$PROJECT_DIR"
-[ -f .aliases ] && . .aliases
+echo cd '"$PROJECT_DIR"'' && [ -f .aliases ] && . .aliases'
+alias drush="$PROJECT_DIR/vendor/bin/drush --uri=$SITE"
+echo
+cd "$PROJECT_DIR" && [ -f .aliases ] && . .aliases
 EOF
         sed -i "s|__PREFIX_MASTER__|${PREFIX_MASTER}|g" "$fullpath"
         sed -i "s|__PROJECTS_CONTAINER_MASTER__|${PROJECTS_CONTAINER_MASTER}|g" "$fullpath"
         sed -i "s|__PROJECT_DIR__|${project_dir}|g" "$fullpath"
         sed -i "s|__URI__|${uri}|g" "$fullpath"
+        sed -i "s|__NEW_VERSION__|${NEW_VERSION}|g" "$fullpath"
         fileMustExists "$fullpath"
     fi
     ____
 
     link_symbolic "$fullpath" "$BINARY_DIRECTORY/cd-drupal-${filename}"
 done
+
+if [ -n "$mktemp" ];then
+    rm "$mktemp"
+fi
 
 exit 0
 
