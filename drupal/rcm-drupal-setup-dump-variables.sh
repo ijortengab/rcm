@@ -166,12 +166,15 @@ e ' - 'username: $account_name
 e '   'password: $account_pass
 ____
 
+list_host=("${drupal_fqdn_localhost}")
 if [ -n "$domain" ];then
-    chapter Alias Hostname
-    e ' - 'http://"$drupal_fqdn_localhost"
-    e ' - 'http://"${domain}.localhost"
-    ____
+    list_host+=("${domain}.localhost")
 fi
+chapter Alias Hostname
+for host in "${list_host[@]}";do
+    e ' - 'http://"$host"
+done
+____
 
 chapter Database Credential
 databaseCredentialDrupal
@@ -179,10 +182,13 @@ e ' - 'username: $drupal_db_user
 e '   'password: $drupal_db_user_password
 ____
 
+
 list_uri=("${drupal_fqdn_localhost}")
 if [ -n "$domain" ];then
-    list_uri=("${domain}")
+    list_uri+=("${domain}")
+    list_uri+=("${domain}.localhost")
 fi
+
 for uri in "${list_uri[@]}";do
     each="cd-drupal-${uri}"
     if [ -f "$BINARY_DIRECTORY/$each" ];then
