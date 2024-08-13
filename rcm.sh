@@ -559,7 +559,11 @@ Rcm_resolve_dependencies() {
                     url=
                     # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
                     if [[ "$each" =~ ^rcm- ]];then
-                        url=internal
+                        command_list=$(Rcm_list)
+                        each_without_prefix=$(sed s,^rcm-,, <<< "$each")
+                        if grep -q ^"$each_without_prefix"$ <<< "$command_list";then
+                            url=internal
+                        fi
                     elif [[ "$each" =~ \.sh$ ]];then
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                     fi
@@ -1119,6 +1123,72 @@ Rcm_wget() {
     fi
     cat "$cache_file"
 }
+Rcm_list() {
+    cat << 'EOF'
+amavis-setup-ispconfig
+certbot-autoinstaller
+certbot-digitalocean-autoinstaller
+certbot-obtain-certificates
+certbot-setup-nginx
+composer-autoinstaller
+cron-setup-wsl-autorun-crond
+cron-setup-wsl-autorun-sshd
+cron-setup-wsl-port-forwarding
+debian-11-setup-basic
+debian-12-setup-basic
+digitalocean-api-manage-domain-record
+digitalocean-api-manage-domain
+drupal-adjust-file-system-outside-web-root
+drupal-autoinstaller-nginx
+drupal-setup-drush-alias
+drupal-setup-dump-variables
+drupal-setup-internal-command-cd-drupal
+drupal-setup-internal-command-ls-drupal
+drupal-setup-variation-default
+drupal-setup-variation-lemp-stack
+drupal-setup-wrapper-nginx-setup-drupal
+ispconfig-autoinstaller-nginx
+ispconfig-control-manage-domain
+ispconfig-control-manage-email-alias
+ispconfig-control-manage-email-mailbox
+ispconfig-setup-dump-variables
+ispconfig-setup-internal-command
+ispconfig-setup-smtpd-certificate
+ispconfig-setup-variation1
+ispconfig-setup-variation2
+ispconfig-setup-variation3
+ispconfig-setup-variation4
+ispconfig-setup-variation5
+ispconfig-setup-wrapper-certbot-setup-nginx
+ispconfig-setup-wrapper-digitalocean
+ispconfig-setup-wrapper-nginx-setup-php
+mariadb-autoinstaller
+mariadb-setup-database
+mariadb-setup-ispconfig
+nginx-autoinstaller
+nginx-setup-drupal
+nginx-setup-front-controller-php
+nginx-setup-hello-world-php
+nginx-setup-hello-world-static
+nginx-setup-ispconfig
+nginx-setup-php
+nginx-setup-static
+php-autoinstaller
+php-fpm-setup-pool
+php-setup-adjust-cli-version
+php-setup-drupal
+php-setup-ispconfig
+phpmyadmin-autoinstaller-nginx
+postfix-autoinstaller
+postfix-setup-ispconfig
+roundcube-autoinstaller-nginx
+roundcube-setup-ispconfig-integration
+ssh-setup-open-ssh-tunnel
+ssh-setup-sshd-listen-port
+ubuntu-22.04-setup-basic
+wsl-setup-lemp-stack
+EOF
+}
 
 # Title.
 title rcm
@@ -1188,71 +1258,7 @@ esac
 
 if [ $command == list ];then
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
-    command_list=$(cat << 'EOF'
-amavis-setup-ispconfig
-certbot-autoinstaller
-certbot-digitalocean-autoinstaller
-certbot-obtain-certificates
-certbot-setup-nginx
-composer-autoinstaller
-cron-setup-wsl-autorun-crond
-cron-setup-wsl-autorun-sshd
-cron-setup-wsl-port-forwarding
-debian-11-setup-basic
-debian-12-setup-basic
-digitalocean-api-manage-domain-record
-digitalocean-api-manage-domain
-drupal-adjust-file-system-outside-web-root
-drupal-autoinstaller-nginx
-drupal-setup-drush-alias
-drupal-setup-dump-variables
-drupal-setup-internal-command-cd-drupal
-drupal-setup-internal-command-ls-drupal
-drupal-setup-variation-default
-drupal-setup-variation-lemp-stack
-drupal-setup-wrapper-nginx-setup-drupal
-ispconfig-autoinstaller-nginx
-ispconfig-control-manage-domain
-ispconfig-control-manage-email-alias
-ispconfig-control-manage-email-mailbox
-ispconfig-setup-dump-variables
-ispconfig-setup-internal-command
-ispconfig-setup-smtpd-certificate
-ispconfig-setup-variation1
-ispconfig-setup-variation2
-ispconfig-setup-variation3
-ispconfig-setup-variation4
-ispconfig-setup-variation5
-ispconfig-setup-wrapper-certbot-setup-nginx
-ispconfig-setup-wrapper-digitalocean
-ispconfig-setup-wrapper-nginx-setup-php
-mariadb-autoinstaller
-mariadb-setup-database
-mariadb-setup-ispconfig
-nginx-autoinstaller
-nginx-setup-drupal
-nginx-setup-front-controller-php
-nginx-setup-hello-world-php
-nginx-setup-hello-world-static
-nginx-setup-ispconfig
-nginx-setup-php
-nginx-setup-static
-php-autoinstaller
-php-fpm-setup-pool
-php-setup-adjust-cli-version
-php-setup-drupal
-php-setup-ispconfig
-phpmyadmin-autoinstaller-nginx
-postfix-autoinstaller
-postfix-setup-ispconfig
-roundcube-autoinstaller-nginx
-roundcube-setup-ispconfig-integration
-ssh-setup-open-ssh-tunnel
-ssh-setup-sshd-listen-port
-ubuntu-22.04-setup-basic
-wsl-setup-lemp-stack
-EOF
-    )
+    command_list=$(Rcm_list)
     history_storage=$HOME'/.cache/rcm/rcm.history'
     save_history=1
     history_value=
@@ -1334,7 +1340,7 @@ EOF
     done
 
     _ Command' '; magenta $value; _, ' 'will be executed.; _.
-    command=rcm-$value
+    command="rcm-${value}"
     ____
 
     if [ -n "$value" ];then
