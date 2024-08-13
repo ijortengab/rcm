@@ -327,6 +327,7 @@ fi
 list_uri=("${drupal_fqdn_localhost}")
 if [ -n "$domain" ];then
     list_uri+=("${domain}")
+    list_uri+=("${domain}.localhost")
 fi
 
 for uri in "${list_uri[@]}";do
