@@ -52,8 +52,6 @@ printHelp() {
     cat << 'EOF'
 Usage: rcm-ssh-setup-open-ssh-tunnel [options]
 
-Available commands: dependency-downloader.
-
 Options:
    --pattern *
         Argument that will be pass to `ssh-command-generator.sh` command.
