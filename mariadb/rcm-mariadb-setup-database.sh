@@ -56,14 +56,15 @@ printHelp() {
 Usage: rcm-mariadb-setup-database [options]
 
 Options:
-   --database-exists-sure
+   --database-exists-sure ^
         Bypass database checking.
-   --db-name
+   --db-name *
         The database name.
    --db-user
         The database user.
    --db-user-host
-        The database user from host.
+        Host of the the database user come from. Available value: localhost, [a].
+        [a]: 127.0.0.1
    --db-user-password
         The database user password.
 
@@ -103,13 +104,13 @@ fi
 code 'db_name="'$db_name'"'
 code 'db_user="'$db_user'"'
 if [ -n "$db_user" ];then
-    until [[ -n "$db_user_password" ]];do
-        _; read -p "Argument --db-user-password required: " db_user_password
-    done
+    if [ -z "$db_user_password" ];then
+        error "Argument --db-user-password required."; x
+    fi
     code 'db_user_password="'$db_user_password'"'
-    until [[ -n "$db_user_host" ]];do
-        _; read -p "Argument --db-user-host required: " db_user_host
-    done
+    if [ -z "$db_user_host" ];then
+        error "Argument --db-user-host required."; x
+    fi
     code 'db_user_host="'$db_user_host'"'
 fi
 code 'database_exists_sure="'$database_exists_sure'"'
@@ -117,6 +118,7 @@ ____
 
 if [ -z "$database_exists_sure" ];then
     chapter Mengecek database '`'$db_name'`'.
+    code 'mysql --silent --skip-column-names -e ''"''select schema_name from information_schema.schemata where schema_name = '"'""$db_name""'"'"'
     msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$db_name'")
     notfound=
     if [[ $msg == $db_name ]];then
@@ -130,7 +132,9 @@ if [ -z "$database_exists_sure" ];then
 
     if [ -n "$notfound" ];then
         chapter Membuat database.
+        code 'mysql -e ''"''create database '"$db_name"' character set utf8 collate utf8_general_ci;''"'
         mysql -e "create database $db_name character set utf8 collate utf8_general_ci;"
+        code 'mysql --silent --skip-column-names -e ''"''select schema_name from information_schema.schemata where schema_name = '"'""$db_name""'"'"'
         msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$db_name'")
         if [[ $msg == $db_name ]];then
             __; green Database ditemukan.; _.
@@ -143,6 +147,7 @@ fi
 
 if [ -n "$db_user" ];then
     chapter Mengecek user database '`'$db_user'`'.
+    code mysql --silent --skip-column-names -e '"''select COUNT(*) FROM mysql.user WHERE user = '"'""$db_user""'"';''"'
     msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
     notfound=
     if [ $msg -gt 0 ];then
@@ -155,6 +160,7 @@ if [ -n "$db_user" ];then
 
     if [ -n "$notfound" ];then
         chapter Membuat user database.
+        code 'mysql -e ''"''create user '"'""${db_user}""'"'@'"'""${db_user_host}""'"' identified by '"'""${db_user_password}""'"';''"'
         mysql -e "create user '${db_user}'@'${db_user_host}' identified by '${db_user_password}';"
         msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
         if [ $msg -gt 0 ];then
@@ -163,6 +169,16 @@ if [ -n "$db_user" ];then
             __; red User database tidak ditemukan; x
         fi
         ____
+    else
+        chapter Mengecek password user.
+        u="$db_user"
+        p="$db_user_password"
+        code 'mysql --defaults-extra-file=<(printf ''"''[client]\nuser = %s\npassword = %s''"'' ''"'"$u"'"'' ''"'"$p"'"'') -h ''"'"$db_user_host"'"'' -r -N -s -e ''"''"'
+        if mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") -h "$db_user_host" -r -N -s -e "";then
+            __ User password valid.
+        else
+            __; red User password tidak valid; x
+        fi
     fi
 
     chapter Mengecek grants user '`'$db_user'`' ke database '`'$db_name'`'.
