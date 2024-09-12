@@ -118,7 +118,9 @@ Dependency:
    pwgen
    curl
    rcm-nginx-setup-drupal
-   rcm-mariadb-setup-database
+   rcm-mariadb-database-autocreate
+   rcm-mariadb-user-autocreate
+   rcm-mariadb-assign-grant-all
 EOF
 }
 
@@ -388,6 +390,7 @@ ____
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 DRUPAL_DB_USER_HOST=${DRUPAL_DB_USER_HOST:=localhost}
 code 'DRUPAL_DB_USER_HOST="'$DRUPAL_DB_USER_HOST'"'
 if [ -z "$project_name" ];then
@@ -886,7 +889,6 @@ else
     code drupal_db_user="$drupal_db_user"
     code drupal_db_user_password="$drupal_db_user_password"
 fi
-
 ____
 
 chapter Prepare arguments.
@@ -901,11 +903,20 @@ code db_user_host="$db_user_host"
 ____
 
 INDENT+="    " \
-rcm-mariadb-setup-database \
+rcm-mariadb-database-autocreate $isfast --root-sure \
     --db-name="$db_name" \
+    && INDENT+="    " \
+rcm-mariadb-user-autocreate $isfast --root-sure \
     --db-user="$db_user" \
     --db-user-host="$db_user_host" \
     --db-user-password="$db_user_password" \
+    && INDENT+="    " \
+rcm-mariadb-assign-grant-all $isfast --root-sure \
+    --db-name="$db_name" \
+    --db-user="$db_user" \
+    --db-user-host="$db_user_host" \
+    --database-exists-sure \
+    --user-exists-sure \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek website credentials: '`'$prefix/$project_container/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
