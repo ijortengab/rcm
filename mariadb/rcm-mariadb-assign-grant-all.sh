@@ -51,20 +51,58 @@ printHelp() {
     _ 'Variation '; yellow Grant All; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    # Label for --db-name.
+    unset count
+    declare -i count
+    count=0
+    single_line=
+    while read line;do
+        if [ $count -gt 0 ];then
+            single_line+=", "
+        fi
+        count+=1
+        single_line+="${line}"
+    done <<< `mysql --silent --skip-column-names -e "show databases;"`
+    if [ -n "$single_line" ];then
+        single_line=" Available values: ${single_line}."
+    fi
+    db_name_label_suffix="${single_line}"
+    # Label for --db-user.
+    # Karena user boleh terdapat karakter titik, sehingga perlu kita akalin.
+    unset count
+    declare -i count
+    count=0
+    single_line=
+    multi_line=
+    while read line;do
+        if [ $count -gt 0 ];then
+            single_line+=", "
+        fi
+        count+=1
+        single_line+="[${count}]"
+        multi_line+=$'\n''        '"[${count}]: "${line}
+    done <<< `mysql --silent --skip-column-names -e "select User from mysql.user;"`
+    if [ -n "$single_line" ];then
+        single_line=" Available values: ${single_line}."
+    fi
+    if [ -n "$multi_line" ];then
+        multi_line="$multi_line"
+    fi
+    db_user_label_suffix="${single_line}${multi_line}"
+    cat << EOF
 Usage: rcm-mariadb-assign-grant-all [options]
 
 Options:
+   --db-name *
+        The database name.${db_name_label_suffix}
+   --db-user *
+        The database user.${db_user_label_suffix}
+   --db-user-host
+        Host of the the database user come from. Default value: localhost.
    --database-exists-sure ^
         Bypass database checking.
    --user-exists-sure ^
         Bypass database user checking.
-   --db-name *
-        The database name.
-   --db-user *
-        The database user.
-   --db-user-host
-        Host of the the database user come from. Default value: localhost.
 
 Global Options.
    --fast
