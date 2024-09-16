@@ -10,8 +10,6 @@ while [[ $# -gt 0 ]]; do
         --domain-strict) domain_strict=1; shift ;;
         --drupal-version=*) drupal_version="${1#*=}"; shift ;;
         --drupal-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drupal_version="$2"; shift; fi; shift ;;
-        --drush-version=*) drush_version="${1#*=}"; shift ;;
-        --drush-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drush_version="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
@@ -79,8 +77,6 @@ Options:
         Set the version of PHP. Available values: [a], [b], or other.
         [a]: 8.2
         [b]: 8.3
-   --drush-version *
-        Set the version of Drush. Available values: 11, 12, or other.
    --drupal-version *
         Set the version of Drupal.
    --php-fpm-user
@@ -111,6 +107,10 @@ Environment Variables.
         Default to /usr/local/share/drupal
    PROJECTS_CONTAINER_MASTER
         Default to projects
+   MARIADB_PREFIX_MASTER
+        Default to /usr/local/share/mariadb
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to users
 
 Dependency:
    sudo
@@ -118,9 +118,7 @@ Dependency:
    pwgen
    curl
    rcm-nginx-setup-drupal
-   rcm-mariadb-database-autocreate
-   rcm-mariadb-user-autocreate
-   rcm-mariadb-assign-grant-all
+   rcm-mariadb-setup-project-database
 EOF
 }
 
@@ -175,19 +173,31 @@ vercomp() {
     return 0
 }
 databaseCredentialDrupal() {
-    if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database" ];then
-        local DRUPAL_DB_USER DRUPAL_DB_USER_PASSWORD
-        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
-        drupal_db_user=$DRUPAL_DB_USER
-        drupal_db_user_password=$DRUPAL_DB_USER_PASSWORD
-    else
-        drupal_db_user="$project_name"
+    local DB_USER DB_USER_PASSWORD
+    if [ ! -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database" ];then
+        chapter Membuat database credentials: '`'$prefix/$project_container/$project_dir/credential/database'`'.
+        db_user="$project_name"
         [ -n "$project_parent_name" ] && {
-            drupal_db_user=$project_parent_name
+            db_user=$project_parent_name
         }
+        __ Memerlukan file '`'"${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"'`'
+        fileMustExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+        . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
+        ____
+
+        source="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+        target="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
         mkdir -p "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
-        local source="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
-        local target="${prefix}/${project_container}/${project_dir}/credential"
+        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        link_symbolic "$source" "$target"
+
+        # Karena belum ada function link_symbolic untuk directory, maka:
+        chapter Membuat symbolic link directory.
+        mkdir -p "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        source="${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
+        target="${prefix}/${project_container}/${project_dir}/credential"
+        __ source: '`'$source'`'
+        __ target: '`'$target'`'
         if [ -d "$target" ];then
             if [ -h "$target" ];then
                 _dereference=$(stat ${stat_cached} "$target" -c %N)
@@ -209,19 +219,17 @@ databaseCredentialDrupal() {
                 x
             fi
         fi
+
         # Sebagai referensi.
         cd "${prefix}/${project_container}/${project_dir}"
         ln -sf "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
         cd - >/dev/null
-
-        drupal_db_user_password=$(pwgen -s 32 -1)
-        cat << EOF > "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
-DRUPAL_DB_USER=$drupal_db_user
-DRUPAL_DB_USER_PASSWORD=$drupal_db_user_password
-EOF
-        chmod 0500 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential"
-        chmod 0400 "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
     fi
+
+    # Populate.
+    . "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/database"
+    db_user=$DB_USER
+    db_user_password=$DB_USER_PASSWORD
 }
 websiteCredentialDrupal() {
     if [ -f "${PREFIX_MASTER}/${PROJECTS_CONTAINER_MASTER}/${project_dir}/credential/drupal/${drupal_fqdn_localhost}" ];then
@@ -411,21 +419,20 @@ vercomp 8 "$drupal_version"
 if [[ $? -lt 2 ]];then
     red Hanya mendukung Drupal versi '>=' 8.; x
 fi
-code 'drush_version="'$drush_version'"'
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
 code 'php_version="'$php_version'"'
 project_dir="$project_name"
-drupal_nginx_config_file=drupal_"$project_name"
+drupal_nginx_config_file="${project_name}__drupal"
 drupal_fqdn_localhost="$project_name".drupal.localhost
-drupal_db_name="drupal_${project_name}"
+drupal_db_name="${project_name}__drupal"
 sites_subdir=$project_name
 [ -n "$project_parent_name" ] && {
     project_dir="$project_parent_name"
-    drupal_nginx_config_file=drupal_"$project_parent_name"__"$project_name"
+    drupal_nginx_config_file="${project_parent_name}__${project_name}__drupal"
     drupal_fqdn_localhost="$project_name"."$project_parent_name".drupal.localhost
-    drupal_db_name="drupal_${project_parent_name}__${project_name}"
+    drupal_db_name="${project_parent_name}__${project_name}__drupal"
     sites_subdir="${project_parent_name}__${project_name}"
 }
 sites_subdir=$(tr _ - <<< "$sites_subdir")
@@ -480,6 +487,10 @@ PREFIX_MASTER=${PREFIX_MASTER:=/usr/local/share/drupal}
 code 'PREFIX_MASTER="'$PREFIX_MASTER'"'
 PROJECTS_CONTAINER_MASTER=${PROJECTS_CONTAINER_MASTER:=projects}
 code 'PROJECTS_CONTAINER_MASTER="'$PROJECTS_CONTAINER_MASTER'"'
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -771,20 +782,14 @@ ____
 if [ -n "$notfound" ];then
     chapter Memasang '`'Drush'`' menggunakan Composer.
     cd "${prefix}/${project_container}/${project_dir}/drupal"
-    # Jika version hanya angka 9 atau 10, maka ubah menjadi ^9 atau ^10.
-    if [[ "$drush_version" =~ ^[0-9]+$ ]];then
-        _drush_version="$drush_version"
-        drush_version="^${drush_version}"
-    fi
     # sudo -u $php_fpm_user HOME='/tmp' -s composer -v require drush/drush
-    code sudo -u $php_fpm_user $env bash -c '"'composer -v require drush/drush:${drush_version}'"'
-    sudo -u $php_fpm_user $env bash -c "composer -v require drush/drush:${drush_version}"
+    code sudo -u $php_fpm_user $env bash -c '"'composer -v require drush/drush'"'
+    sudo -u $php_fpm_user $env bash -c "composer -v require drush/drush"
     if [ -f "${prefix}/${project_container}/${project_dir}/drupal/vendor/bin/drush" ];then
         __; green Binary Drush is exists.
     else
         __; red Binary Drush is not exists.; x
     fi
-    drush_version="$_drush_version"
     cd - >/dev/null
     ____
 fi
@@ -881,43 +886,14 @@ if [[ -n "$domain_strict" && -n "$default_installed" ]];then
     __; red Process terminated; x
 fi
 
-chapter Mengecek database credentials: '`'$prefix/$project_container/$project_dir/credential/database'`'.
-databaseCredentialDrupal
-if [[ -z "$drupal_db_user" || -z "$drupal_db_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'$prefix/$project_container/$project_dir/credential/database'`'.; x
-else
-    code drupal_db_user="$drupal_db_user"
-    code drupal_db_user_password="$drupal_db_user_password"
-fi
-____
-
-chapter Prepare arguments.
-db_name="$drupal_db_name"
-code db_name="$db_name"
-db_user="$drupal_db_user"
-code db_user="$db_user"
-db_user_password="$drupal_db_user_password"
-code db_user_password="$db_user_password"
-db_user_host="$DRUPAL_DB_USER_HOST"
-code db_user_host="$db_user_host"
-____
-
 INDENT+="    " \
-rcm-mariadb-database-autocreate $isfast --root-sure \
-    --db-name="$db_name" \
-    && INDENT+="    " \
-rcm-mariadb-user-autocreate $isfast --root-sure \
-    --db-user="$db_user" \
-    --db-user-host="$db_user_host" \
-    --db-user-password="$db_user_password" \
-    && INDENT+="    " \
-rcm-mariadb-assign-grant-all $isfast --root-sure \
-    --db-name="$db_name" \
-    --db-user="$db_user" \
-    --db-user-host="$db_user_host" \
-    --database-exists-sure \
-    --user-exists-sure \
+rcm-mariadb-setup-project-database $isfast --root-sure \
+    --project-name="$project_name" \
+    --project-parent-name="$project_parent_name" \
+    --db-suffix-name="drupal" \
     ; [ ! $? -eq 0 ] && x
+
+databaseCredentialDrupal
 
 chapter Mengecek website credentials: '`'$prefix/$project_container/$project_dir/credential/drupal/$drupal_fqdn_localhost'`'.
 websiteCredentialDrupal
@@ -933,11 +909,11 @@ if [[ $install_type == 'singlesite' && -z "$default_installed" ]];then
     chapter Install Drupal site default.
     code drush site:install --yes \
         --account-name="$account_name" --account-pass="$account_pass" \
-        --db-url="mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}"
+        --db-url="mysql://${db_user}:${db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}"
     sudo -u $php_fpm_user PATH="${prefix}/${project_container}/${project_dir}/drupal/vendor/bin":$PATH $env -s \
         drush site:install --yes \
             --account-name="$account_name" --account-pass="$account_pass" \
-            --db-url="mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}"
+            --db-url="mysql://${db_user}:${db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}"
     if drush status --field=db-status | grep -q '^Connected$';then
         __; green Drupal site default installed.
     else
@@ -950,12 +926,12 @@ if [[ $install_type == 'multisite' && -z "$multisite_installed" ]];then
     chapter Install Drupal multisite.
     code drush site:install --yes \
         --account-name="$account_name" --account-pass="$account_pass" \
-        --db-url="mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}" \
+        --db-url="mysql://${db_user}:${db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}" \
         --sites-subdir=${sites_subdir}
     sudo -u $php_fpm_user PATH="${prefix}/${project_container}/${project_dir}/drupal/vendor/bin":$PATH $env -s \
         drush site:install --yes \
             --account-name="$account_name" --account-pass="$account_pass" \
-            --db-url="mysql://${drupal_db_user}:${drupal_db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}" \
+            --db-url="mysql://${db_user}:${db_user_password}@${DRUPAL_DB_USER_HOST}/${drupal_db_name}" \
             --sites-subdir=${sites_subdir}
     if [ -f "${prefix}/${project_container}/${project_dir}/drupal/web/sites/sites.php" ];then
         __; green Files '`'sites.php'`' ditemukan.; _.
@@ -1047,7 +1023,6 @@ exit 0
 # )
 # VALUE=(
 # --drupal-version
-# --drush-version
 # --php-version
 # --project-name
 # --project-parent-name
