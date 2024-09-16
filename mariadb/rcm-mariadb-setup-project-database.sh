@@ -73,9 +73,9 @@ Global Options.
         Bypass root checking.
 
 Environment Variables.
-   PREFIX_MASTER
+   MARIADB_PREFIX_MASTER
         Default to /usr/local/share/mariadb
-   USERS_CONTAINER_MASTER
+   MARIADB_USERS_CONTAINER_MASTER
         Default to users
 
 Dependency:
@@ -98,18 +98,20 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' 
 
 # Functions.
 databaseCredential() {
-    if [ -f "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}/${db_user}" ];then
-        local DB_USER_PASSWORD
-        . "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}/${db_user}"
+    if [ -f "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}" ];then
+        local DB_USER DB_USER_PASSWORD
+        . "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+        db_user=$DB_USER
         db_user_password=$DB_USER_PASSWORD
     else
-        mkdir -p "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}"
+        mkdir -p "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}"
         db_user_password=$(pwgen -s 32 -1)
-        cat << EOF > "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}/${db_user}"
+        cat << EOF > "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+DB_USER=$db_user
 DB_USER_PASSWORD=$db_user_password
 EOF
-        chmod 0500 "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}"
-        chmod 0400 "${PREFIX_MASTER}/${USERS_CONTAINER_MASTER}/${db_user}"
+        chmod 0500 "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}"
+        chmod 0400 "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
     fi
 }
 
@@ -125,26 +127,23 @@ fi
 code 'project_name="'$project_name'"'
 code 'project_parent_name="'$project_parent_name'"'
 code 'db_suffix_name="'$db_suffix_name'"'
-project_dir="$project_name"
 db_user="$project_name"
 db_user_host="localhost"
 db_name="$project_name"
 [ -n "$project_parent_name" ] && {
-    project_dir="$project_parent_name"
     db_user="$project_parent_name"
     db_name="${project_parent_name}__${project_name}"
 }
 [ -n "$db_suffix_name" ] && {
     db_name="${db_name}__${db_suffix_name}"
 }
-code 'project_dir="'$project_dir'"'
 code 'db_user="'$db_user'"'
 code 'db_user_host="'$db_user_host'"'
 code 'db_name="'$db_name'"'
-PREFIX_MASTER=${PREFIX_MASTER:=/usr/local/share/mariadb}
-code 'PREFIX_MASTER="'$PREFIX_MASTER'"'
-USERS_CONTAINER_MASTER=${USERS_CONTAINER_MASTER:=users}
-code 'USERS_CONTAINER_MASTER="'$USERS_CONTAINER_MASTER'"'
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -157,10 +156,15 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek database credentials: '`'$PREFIX_MASTER/$USERS_CONTAINER_MASTER/$db_user'`'.
+chapter Mengecek database credentials: '`'$MARIADB_PREFIX_MASTER/$MARIADB_USERS_CONTAINER_MASTER/$db_user'`'.
 databaseCredential
+if [[ -z "$db_user" ]];then
+    __; red Informasi credentials tidak lengkap: '`'$MARIADB_PREFIX_MASTER/$MARIADB_USERS_CONTAINER_MASTER/$db_user'`'.; x
+else
+    code db_user="$db_user"
+fi
 if [[ -z "$db_user_password" ]];then
-    __; red Informasi credentials tidak lengkap: '`'$PREFIX_MASTER/$USERS_CONTAINER_MASTER/$db_user'`'.; x
+    __; red Informasi credentials tidak lengkap: '`'$MARIADB_PREFIX_MASTER/$MARIADB_USERS_CONTAINER_MASTER/$db_user'`'.; x
 else
     code db_user_password="$db_user_password"
 fi
