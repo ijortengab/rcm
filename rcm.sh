@@ -1122,6 +1122,7 @@ Rcm_wget() {
     fi
     cat "$cache_file"
 }
+# git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
 Rcm_list() {
     cat << 'EOF'
 amavis-setup-ispconfig
@@ -1161,9 +1162,12 @@ ispconfig-setup-variation5
 ispconfig-setup-wrapper-certbot-setup-nginx
 ispconfig-setup-wrapper-digitalocean
 ispconfig-setup-wrapper-nginx-setup-php
+mariadb-assign-grant-all
 mariadb-autoinstaller
-mariadb-setup-database
+mariadb-database-autocreate
 mariadb-setup-ispconfig
+mariadb-setup-project-database
+mariadb-user-autocreate
 nginx-autoinstaller
 nginx-setup-drupal
 nginx-setup-front-controller-php
