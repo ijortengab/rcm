@@ -538,15 +538,36 @@ Rcm_resolve_dependencies() {
     commands_required=("$1")
     PATH="${BINARY_DIRECTORY}:${PATH}"
     commands_exists=()
-    commands_downloaded=()
     table_downloads=
     until [[ ${#commands_required[@]} -eq 0 ]];do
         _commands_required=()
         chapter Requires command.
+        e Versi rcm saat ini: ${rcm_version}.
         for each in "${commands_required[@]}"; do
             _ Requires command: "$each"
             if command -v "$each" > /dev/null;then
-                _, ' [FOUND].'; _.
+                _, ' [FOUND].';
+                if Rcm_is_internal "$each";then
+                    # __ Mengecek versi '`'$each'`' command.
+                    # __; magenta $each --version; _.
+                    script_version=$("$each" --version)
+                    if [[ "$script_version" =~ [^0-9\.]+ ]];then
+                        script_version=0
+                    fi
+                    _, ' Versi: '$script_version'.'
+                    vercomp $script_version $rcm_version
+                    if [[ $? -lt 2 ]];then
+                        _.
+                    else
+                        _.
+                        e Command perlu diupdate.
+                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                        code rcm update $each ijortengab/rcm $blob_path
+                        Rcm_download update $each ijortengab/rcm $blob_path
+                    fi
+                else
+                    _.
+                fi
             else
                 _, ' [NOTFOUND].'; _.
                 if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
@@ -555,25 +576,14 @@ Rcm_resolve_dependencies() {
                     rm "$BINARY_DIRECTORY/$each"
                 fi
                 if [ ! -f "$BINARY_DIRECTORY/$each" ];then
-                    url=
-                    # Command dengan prefix rcm, kita anggap dari repository `ijortengab/rcm`.
-                    if [[ "$each" =~ ^rcm- ]];then
-                        command_list=$(Rcm_list)
-                        each_without_prefix=$(sed s,^rcm-,, <<< "$each")
-                        if grep -q ^"$each_without_prefix"$ <<< "$command_list";then
-                            url=internal
-                        fi
+                    if Rcm_is_internal "$each";then
+                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                        code rcm install $each ijortengab/rcm $blob_path
+                        Rcm_download install $each ijortengab/rcm $blob_path
                     elif [[ "$each" =~ \.sh$ ]];then
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
-                    fi
-                    if [ -n "$url" ];then
-                        e Memulai download.
-                        if [ "$url" == internal ];then
-                            # repository
-                            blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
-                            code rcm install $each ijortengab/rcm $blob_path
-                            Rcm_download install $each ijortengab/rcm $blob_path
-                        else
+                        if [ -n "$url" ];then
+                            e Memulai download.
                             __; magenta wget "$url"; _.
                             wget -q "$url" -O "$BINARY_DIRECTORY/$each"
                             fileMustExists "$BINARY_DIRECTORY/$each"
@@ -585,8 +595,8 @@ Rcm_resolve_dependencies() {
                             __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
                             chmod a+x "$BINARY_DIRECTORY/$each"
                         fi
-                        commands_downloaded+=("$each")
                     fi
+
                 elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
                     __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
                     chmod a+x "$BINARY_DIRECTORY/$each"
@@ -986,7 +996,9 @@ Rcm_download() {
                     current_version=`$shell_script --version`
                     _ 'Success rollback '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
                     rm $HOME/.cache/rcm/$github_repo/rollback/$shell_script
-                    rmdir $HOME/.cache/rcm/$github_repo/rollback
+                    # Dalam satu direktori ini bisa terdapat banyak file. Contoh
+                    # rcm, rcm-composer-autoinstaller
+                    rmdir --ignore-fail-on-non-empty $HOME/.cache/rcm/$github_repo/rollback
                 else
                     _ 'No previous version found. '; _.
                 fi
@@ -1068,6 +1080,32 @@ sleepExtended() {
 immediately() {
     countdown=0
 }
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
 Rcm_wget() {
     # Global, untuk debug.
     http_request=
@@ -1122,8 +1160,8 @@ Rcm_wget() {
     fi
     cat "$cache_file"
 }
-# git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
 Rcm_list() {
+    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'EOF'
 amavis-setup-ispconfig
 certbot-autoinstaller
@@ -1192,6 +1230,17 @@ ubuntu-22.04-setup-basic
 wsl-setup-lemp-stack
 EOF
 }
+Rcm_is_internal() {
+    local command="$1"
+    if [[ "$command" =~ ^rcm- ]];then
+        command_list=$(Rcm_list)
+        command_without_prefix=$(sed s,^rcm-,, <<< "$command")
+        if grep -q ^"$command_without_prefix"$ <<< "$command_list";then
+            return 0
+        fi
+    fi
+    return 1
+}
 
 # Title.
 title rcm
@@ -1251,6 +1300,7 @@ __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+rcm_version=`printVersion`
 ____
 
 case $command in
@@ -1426,6 +1476,8 @@ if [ -z "$non_interactive" ];then
     [ -f "$backup_storage" ] && rm "$backup_storage"
 fi
 
+command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
+
 chapter Execute:
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code ${command}${isfast} "$@"
@@ -1442,7 +1494,6 @@ e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
 
-command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
 
 chapter Timer Finish.
