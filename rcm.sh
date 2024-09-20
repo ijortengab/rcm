@@ -580,8 +580,27 @@ Rcm_resolve_dependencies() {
                         blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
                         code rcm install $each ijortengab/rcm $blob_path
                         Rcm_download install $each ijortengab/rcm $blob_path
-                    elif [[ "$each" =~ \.sh$ ]];then
+                    elif [[ "$each" =~ ^rcm- || "$each" =~ \.sh$ ]];then
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                        if [ -n "$url" ];then
+                            Rcm_parse_url "$url"
+                            if [[ "$PHP_URL_HOST" == github.com ]];then
+                                # Jika host dari Github, maka terdapat beberapa kemungkinan.
+                                # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-autorun-crond.sh
+                                # https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh
+                                # https://github.com/ijortengab/bash/raw/refs/heads/master/commands/ssh-keep-alive-symlink-reference.sh
+                                _github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
+                                if [[ $_github_media_type == blob ]];then
+                                    _github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+                                    _github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                    url=
+                                    e $_github_owner
+                                    code rcm install $each $_github_owner_repo $_github_file_path
+                                    Rcm_download install $each $_github_owner_repo $_github_file_path
+                                fi
+                            fi
+                        fi
                         if [ -n "$url" ];then
                             e Memulai download.
                             __; magenta wget "$url"; _.
@@ -596,7 +615,9 @@ Rcm_resolve_dependencies() {
                             chmod a+x "$BINARY_DIRECTORY/$each"
                         fi
                     fi
-
+                    if ! command -v "$each" > /dev/null;then
+                        error Command '`'$each'`' not found, unable to auto download.; x
+                    fi
                 elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
                     __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
                     chmod a+x "$BINARY_DIRECTORY/$each"
@@ -1241,6 +1262,25 @@ Rcm_is_internal() {
     fi
     return 1
 }
+Rcm_parse_url() {
+    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+    _PHP_URL_SCHEME_REVERSE="$(echo ${1/$PHP_URL_SCHEME/})"
+    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
+    # extract the user and password (if any)
+    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
+    if [ -n "$PHP_URL_PASS" ]; then
+        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
+    else
+        PHP_URL_USER=$_PHP_URL_USER_PASS
+    fi
+    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
+    # by request host without port
+    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
+    # by request - try to extract the port
+    PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+    # extract the path (if any)
+    PHP_URL_PATH="$(echo $_PHP_URL_SCHEME_REVERSE | grep / | cut -d/ -f2-)"
+}
 
 # Title.
 title rcm
@@ -1480,7 +1520,8 @@ command -v "$command" >/dev/null || { red "Unable to proceed, $command command n
 
 chapter Execute:
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code ${command}${isfast} "$@"
+[ -n "$non_interactive" ] && isnoninteractive=' --non-interactive' || isnoninteractive=''
+code ${command}${isfast}${isnoninteractive} "$@"
 ____
 
 if [ -z "$fast" ];then
@@ -1494,7 +1535,7 @@ e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
 
-INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast --root-sure "$@"
+INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive --root-sure "$@"
 
 chapter Timer Finish.
 e End: $(date +%Y%m%d-%H%M%S)
@@ -1514,6 +1555,7 @@ exit 0
 # --no-original-arguments \
 # --no-error-invalid-options \
 # --with-end-options-specific-operand \
+# --with-end-options-double-dash \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
