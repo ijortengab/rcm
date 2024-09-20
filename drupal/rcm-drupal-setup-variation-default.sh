@@ -12,8 +12,6 @@ while [[ $# -gt 0 ]]; do
         --domain-strict) domain_strict=1; shift ;;
         --drupal-version=*) drupal_version="${1#*=}"; shift ;;
         --drupal-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drupal_version="$2"; shift; fi; shift ;;
-        --drush-version=*) drush_version="${1#*=}"; shift ;;
-        --drush-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then drush_version="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
@@ -100,8 +98,6 @@ Usage: rcm-drupal-setup-variation-default [options]
 Options:
    --drupal-version *
         Set the version of Drupal. Available values: 10, 11, or other.
-   --drush-version *
-        Set the version of Drush. Available values: 12 or other.
    --php-version *
         Set the version of PHP.${single_line}${multi_line}
    --project-name *
@@ -195,12 +191,8 @@ fi
 if [ -z "$drupal_version" ];then
     error "Argument --drupal-version required."; x
 fi
-if [ -z "$drush_version" ];then
-    error "Argument --drush-version required."; x
-fi
 code php_version="$php_version"
 code drupal_version="$drupal_version"
-code drush_version="$drush_version"
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
 fi
@@ -286,7 +278,6 @@ rcm-composer-autoinstaller $isfast --root-sure \
 rcm-drupal-autoinstaller-nginx $isfast --root-sure \
     $is_auto_add_group \
     --drupal-version="$drupal_version" \
-    --drush-version="$drush_version" \
     --php-version="$php_version" \
     --php-fpm-user="$php_fpm_user" \
     --prefix="$prefix" \
@@ -368,7 +359,6 @@ exit 0
 # --project-name
 # --project-parent-name
 # --drupal-version
-# --drush-version
 # --php-version
 # --domain
 # --php-fpm-user
