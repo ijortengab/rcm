@@ -123,8 +123,8 @@ printHelp() {
 Usage: rcm
        rcm [command]
        rcm history --delete-all
-       rcm history --delete rcm-wsl-setup-lemp-stack --delete rcm-drupal-setup-variation9
-       rcm install drupal-autoinstaller.sh ijortengab/drupal-autoinstaller
+       rcm history --delete rcm-wsl-setup-lemp-stack --delete rcm-composer-autoinstaller
+       rcm install rcm-drupal ijortengab/drupal-autoinstaller rcm/rcm-drupal.sh
 
 Available commands: history, update, install.
 
@@ -1197,15 +1197,6 @@ debian-11-setup-basic
 debian-12-setup-basic
 digitalocean-api-manage-domain-record
 digitalocean-api-manage-domain
-drupal-adjust-file-system-outside-web-root
-drupal-autoinstaller-nginx
-drupal-setup-drush-alias
-drupal-setup-dump-variables
-drupal-setup-internal-command-cd-drupal
-drupal-setup-internal-command-ls-drupal
-drupal-setup-variation-default
-drupal-setup-variation-lemp-stack
-drupal-setup-wrapper-nginx-setup-drupal
 ispconfig-autoinstaller-nginx
 ispconfig-control-manage-domain
 ispconfig-control-manage-email-alias
@@ -1228,7 +1219,6 @@ mariadb-setup-ispconfig
 mariadb-setup-project-database
 mariadb-user-autocreate
 nginx-autoinstaller
-nginx-setup-drupal
 nginx-setup-front-controller-php
 nginx-setup-hello-world-php
 nginx-setup-hello-world-static
@@ -1238,7 +1228,6 @@ nginx-setup-static
 php-autoinstaller
 php-fpm-setup-pool
 php-setup-adjust-cli-version
-php-setup-drupal
 php-setup-ispconfig
 phpmyadmin-autoinstaller-nginx
 postfix-autoinstaller
