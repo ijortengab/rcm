@@ -1177,6 +1177,7 @@ Rcm_wget() {
         cache_file=
     fi
     if [ -n "$http_request" ];then
+        mkdir -p $HOME/.cache/rcm
         cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm/ rcm.wget.XXXXXXXXXXXX.cache)
         cache_file_basename=$(basename "$cache_file")
         # echo wget -q -O "$cache_file" "$url"
