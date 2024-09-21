@@ -167,7 +167,7 @@ EOF
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v "${line}" >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g'`
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 resolve_relative_path() {
@@ -635,8 +635,8 @@ Rcm_resolve_dependencies() {
             commands_exists+=("$each")
             _help=$("$each" --help 2>/dev/null)
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm-.
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g' | grep -E '(^rcm-|\.sh$)')
-            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^$/p' | sed 's/^ *//g')
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm-|\.sh$)')
+            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
             if [ -n "$_dependency" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
                 table_downloads+="$_download"
@@ -687,7 +687,7 @@ Rcm_prompt() {
         fi
     fi
 
-    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^$/p'`
+    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
             chapter Prepare argument for command '`'$command'`'.
