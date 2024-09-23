@@ -155,7 +155,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.11.1'
+    echo '0.11.2'
 }
 printHelp() {
     title Rapid Construct Massive
