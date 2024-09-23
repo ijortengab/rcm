@@ -578,6 +578,10 @@ ArrayUnique() {
     done
 }
 Rcm_resolve_dependencies() {
+    local commands_required
+    local command_required command_required_version
+    local url github_owner_repo github_file_path github_media_type
+    local is_updated
     commands_required=("$1")
     PATH="${BINARY_DIRECTORY}:${PATH}"
     commands_exists=()
@@ -586,53 +590,89 @@ Rcm_resolve_dependencies() {
         _commands_required=()
         chapter Requires command.
         e Versi rcm saat ini: ${rcm_version}.
-        for each in "${commands_required[@]}"; do
-            _ Requires command: "$each"
-            if command -v "$each" > /dev/null;then
+        for command_required in "${commands_required[@]}"; do
+            command_required_version=
+            if grep -q -F : <<< "$command_required";then
+                command_required_version=$(cut -d: -f2 <<< "$command_required")
+                command_required=$(cut -d: -f1 <<< "$command_required")
+            elif Rcm_is_internal "$command_required";then
+                command_required_version=${rcm_version}
+            fi
+            _ Requires command: "$command_required"
+            if command -v "$command_required" > /dev/null;then
                 _, ' [FOUND].';
-                if Rcm_is_internal "$each";then
-                    # __ Mengecek versi '`'$each'`' command.
-                    # __; magenta $each --version; _.
-                    script_version=$("$each" --version)
-                    if [[ "$script_version" =~ [^0-9\.]+ ]];then
-                        script_version=0
+                if [ -n "$command_required_version" ];then
+                    command_current_version=$("$command_required" --version)
+                    if [[ "$command_current_version" =~ [^0-9\.]+ ]];then
+                        command_current_version=0
                     fi
-                    _, ' Versi: '$script_version'.'
-                    vercomp $script_version $rcm_version
+                    if [[ ! "$command_required_version" == "$command_current_version" ]];then
+                        _, ' Version required: '$command_required_version'.'
+                        _, ' Current version: '$command_current_version'.'
+                    fi
+                    is_updated=
+                    vercomp $command_current_version $command_required_version
                     if [[ $? -lt 2 ]];then
                         _.
                     else
                         _.
-                        OLDINDENT="$INDENT"; INDENT+='    '
-                        code rcm update $(sed s,^rcm-,, <<< "$each")
-                        INDENT+='    '
-                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
-                        Rcm_github_release update $each ijortengab/rcm $blob_path
-                        INDENT="$OLDINDENT"
+                        if Rcm_is_internal "$command_required";then
+                            github_owner_repo=ijortengab/rcm
+                            github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                            OLDINDENT="$INDENT"; INDENT+='    '
+                            code rcm update $(sed s,^rcm-,, <<< "$command_required")
+                            INDENT+='    '
+                            blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                            Rcm_github_release update $command_required $github_owner_repo $github_file_path
+                            INDENT="$OLDINDENT"
+                            is_updated=1
+                        else
+                            url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                            if [ -n "$url" ];then
+                                Rcm_parse_url "$url"
+                                if [[ "$PHP_URL_HOST" == github.com ]];then
+                                    # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    # https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
+                                    if [[ $github_media_type == raw ]];then
+                                        github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+                                        github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                        OLDINDENT="$INDENT"; INDENT+='    '
+                                        code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                        INDENT+='    '
+                                        Rcm_github_release update $command_required $github_owner_repo $github_file_path
+                                        INDENT="$OLDINDENT"
+                                        is_updated=1
+                                    fi
+                                fi
+                            fi
+                        fi
                     fi
-                else
-                    _.
+                    if [[ -z "$is_updated" ]];then
+                        error Gagal Update; x
+                    fi
                 fi
             else
                 _, ' [NOTFOUND].'; _.
-                if [[ -f "$BINARY_DIRECTORY/$each" && ! -s "$BINARY_DIRECTORY/$each" ]];then
+                if [[ -f "$BINARY_DIRECTORY/$command_required" && ! -s "$BINARY_DIRECTORY/$command_required" ]];then
                     __ Empty file detected.
-                    __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-                    rm "$BINARY_DIRECTORY/$each"
+                    __; magenta rm "$BINARY_DIRECTORY/$command_required"; _.
+                    rm "$BINARY_DIRECTORY/$command_required"
                 fi
-                if [ ! -f "$BINARY_DIRECTORY/$each" ];then
-                    if Rcm_is_internal "$each";then
+                if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
+                    if Rcm_is_internal "$command_required";then
                         PHP_URL_SCHEME='https://'
                         PHP_URL_HOST='github.com'
                         github_owner_repo=ijortengab/rcm
-                        github_file_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                        github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
                         OLDINDENT="$INDENT"; INDENT+='    '
-                        code rcm install $(sed s,^rcm-,, <<< "$each") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                        code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         INDENT+='    '
-                        Rcm_github_release install "$each" "$github_owner_repo" "$github_file_path"
+                        Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
                         INDENT="$OLDINDENT"
-                    elif [[ "$each" =~ ^rcm- ]];then
-                        url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                    elif [[ "$command_required" =~ ^rcm- ]];then
+                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                         if [ -n "$url" ];then
                             Rcm_parse_url "$url"
                             if [[ "$PHP_URL_HOST" == github.com ]];then
@@ -646,44 +686,41 @@ Rcm_resolve_dependencies() {
                                     github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                     github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
                                     OLDINDENT="$INDENT"; INDENT+='    '
-                                    code rcm install $(sed s,^rcm-,, <<< "$each") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                    code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                     INDENT+='    '
-                                    Rcm_github_release install $each $github_owner_repo $github_file_path
+                                    Rcm_github_release install $command_required $github_owner_repo $github_file_path
                                     INDENT="$OLDINDENT"
                                 fi
                             fi
                         fi
-                    elif [[ "$each" =~ \.sh$ ]];then
-                        url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                    elif [[ "$command_required" =~ \.sh$ ]];then
+                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                         if [ -n "$url" ];then
                             Rcm_parse_url "$url"
                             OLDINDENT="$INDENT"; INDENT+='    '
-                            save_as="$each"
-                            if [[ $(basename "$PHP_URL_PATH") == "$each" ]];then
+                            save_as="$command_required"
+                            if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
                                 code rcm get "$url"
                                 INDENT+='    '
                                 Rcm_get "$url"
                             else
-                                code rcm get "$url" --save-as='"'"$each"'"'
+                                code rcm get "$url" --save-as='"'"$command_required"'"'
                                 INDENT+='    '
                                 Rcm_get "$url"
                             fi
                             INDENT="$OLDINDENT"
-
-                            # code wget '"'"$url"'"' -O '"'"$BINARY_DIRECTORY/$each"'"'; _.
-
                         fi
                     fi
-                    if ! command -v "$each" > /dev/null;then
-                        error Command '`'$each'`' not found, unable to auto download.; x
+                    if ! command -v "$command_required" > /dev/null;then
+                        error Command '`'$command_required'`' not found, unable to auto download.; x
                     fi
-                elif [[ ! -x "$BINARY_DIRECTORY/$each" ]];then
-                    __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-                    chmod a+x "$BINARY_DIRECTORY/$each"
+                elif [[ ! -x "$BINARY_DIRECTORY/$command_required" ]];then
+                    __; magenta chmod a+x "$BINARY_DIRECTORY/$command_required"; _.
+                    chmod a+x "$BINARY_DIRECTORY/$command_required"
                 fi
             fi
-            commands_exists+=("$each")
-            _help=$("$each" --help 2>/dev/null)
+            commands_exists+=("$command_required")
+            _help=$("$command_required" --help 2>/dev/null)
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm-.
             _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm-|\.sh$)')
             _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
