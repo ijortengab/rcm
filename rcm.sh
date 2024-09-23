@@ -151,7 +151,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.11.0'
+    echo '0.11.1'
 }
 printHelp() {
     title Rapid Construct Massive
@@ -599,10 +599,12 @@ Rcm_resolve_dependencies() {
                         _.
                     else
                         _.
-                        e Command perlu diupdate.
-                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                        OLDINDENT="$INDENT"; INDENT+='    '
                         code rcm update $(sed s,^rcm-,, <<< "$each")
+                        INDENT+='    '
+                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
                         Rcm_github_release update $each ijortengab/rcm $blob_path
+                        INDENT="$OLDINDENT"
                     fi
                 else
                     _.
@@ -1371,15 +1373,17 @@ Rcm_update() {
         error "Command not found: ${shell_script}."; x
     fi
     local table=$HOME/.config/rcm/rcm.table.extension
-    if [ ! -f "$table" ];then
-        e todo
+    if [ -f "$table" ];then
+        line=$(grep -n "^$extension"' ' "$table")
     fi
-    line=$(grep -n "^$extension"' ' "$table")
-    # e $line
-    url=$(cut -d' ' -f2 <<< "$line")
-    path=$(cut -d' ' -f3 <<< "$line")
-    # e $url
-    # e $path
+    if [ -z "$line" ];then
+        url=https://github.com/ijortengab/rcm
+        each=rcm-$extension
+        path=$(cut -d- -f2 <<< "$each")/"$each".sh
+    else
+        url=$(cut -d' ' -f2 <<< "$line")
+        path=$(cut -d' ' -f3 <<< "$line")
+    fi
     Rcm_parse_url "$url"
     if [[ "$PHP_URL_HOST" == github.com ]];then
         github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
