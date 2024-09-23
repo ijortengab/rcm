@@ -1384,7 +1384,7 @@ Rcm_update() {
     if [ -z "$url" ];then
         line=
         if [ -f "$table" ];then
-            line=$(grep -n "^$extension"' ' "$table")
+            line=$(grep -n "^$extension"' ' "$table" | tail -1)
         fi
         if [ -n "$line" ];then
             url=$(cut -d' ' -f2 <<< "$line")
@@ -1429,7 +1429,12 @@ Rcm_update() {
         github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
         Rcm_github_release update rcm-${extension} $github_owner_repo $path
     else
-        error Only supports URLs from Github.; x
+        error Only supports URLs from Github.;
+        line=$(grep -n "^$extension"' ' "$table" | tail -1)
+        if [ -n "$line" ];then
+            line_number=$(cut -d':' -f1 <<< "$line")
+            sed -i $line_number'd' "$table"
+        fi
     fi
 }
 Rcm_install() {
