@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        update|history|selfupdate|self-update)
+        install|update|get|history|selfupdate|self-update)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -35,12 +35,42 @@ unset _new_arguments
 command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
-        update|history|install) ;;
+        update|history|install|get) ;;
         self-update|selfupdate) ;;
         *) command="rcm-${command}"
     esac
 else
     command=list # internal only.
+fi
+
+if [ "$command" == 'get' ];then
+    _new_arguments=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --save-as=*) save_as="${1#*=}"; shift ;;
+            --save-as) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then save_as="$2"; shift; fi; shift ;;
+            --[^-]*) shift ;;
+            *) _new_arguments+=("$1"); shift ;;
+        esac
+    done
+    set -- "${_new_arguments[@]}"
+    unset _new_arguments
+fi
+
+if [ "$command" == 'install' ];then
+    _new_arguments=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --path=*) path="${1#*=}"; shift ;;
+            --path) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path="$2"; shift; fi; shift ;;
+            --url=*) url="${1#*=}"; shift ;;
+            --url) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then url="$2"; shift; fi; shift ;;
+            --[^-]*) shift ;;
+            *) _new_arguments+=("$1"); shift ;;
+        esac
+    done
+    set -- "${_new_arguments[@]}"
+    unset _new_arguments
 fi
 
 if [ "$command" == 'history' ];then
@@ -93,8 +123,7 @@ fi
 if [ -n "$command" ];then
     case "$command" in
         self-update|selfupdate)
-            command=update
-            set -- rcm ijortengab/rcm rcm.sh
+            set -- update rcm ijortengab/rcm rcm.sh
             ;;
     esac
 else
@@ -572,8 +601,8 @@ Rcm_resolve_dependencies() {
                         _.
                         e Command perlu diupdate.
                         blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
-                        code rcm update $each ijortengab/rcm $blob_path
-                        Rcm_download update $each ijortengab/rcm $blob_path
+                        code rcm update $(sed s,^rcm-,, <<< "$each")
+                        Rcm_github_release update $each ijortengab/rcm $blob_path
                     fi
                 else
                     _.
@@ -587,10 +616,16 @@ Rcm_resolve_dependencies() {
                 fi
                 if [ ! -f "$BINARY_DIRECTORY/$each" ];then
                     if Rcm_is_internal "$each";then
-                        blob_path=$(cut -d- -f2 <<< "$each")/"$each".sh
-                        code rcm install $each ijortengab/rcm $blob_path
-                        Rcm_download install $each ijortengab/rcm $blob_path
-                    elif [[ "$each" =~ ^rcm- || "$each" =~ \.sh$ ]];then
+                        PHP_URL_SCHEME='https://'
+                        PHP_URL_HOST='github.com'
+                        github_owner_repo=ijortengab/rcm
+                        github_file_path=$(cut -d- -f2 <<< "$each")/"$each".sh
+                        OLDINDENT="$INDENT"; INDENT+='    '
+                        code rcm install $(sed s,^rcm-,, <<< "$each") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                        INDENT+='    '
+                        Rcm_github_release install "$each" "$github_owner_repo" "$github_file_path"
+                        INDENT="$OLDINDENT"
+                    elif [[ "$each" =~ ^rcm- ]];then
                         url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                         if [ -n "$url" ];then
                             Rcm_parse_url "$url"
@@ -601,27 +636,36 @@ Rcm_resolve_dependencies() {
                                 # https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh
                                 # https://github.com/ijortengab/bash/raw/refs/heads/master/commands/ssh-keep-alive-symlink-reference.sh
                                 _github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
-                                if [[ $_github_media_type == blob ]];then
-                                    _github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
-                                    _github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                    url=
-                                    code rcm install $each $_github_owner_repo $_github_file_path
-                                    Rcm_download install $each $_github_owner_repo $_github_file_path
+                                if [[ $_github_media_type == raw ]];then
+                                    github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+                                    github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                    OLDINDENT="$INDENT"; INDENT+='    '
+                                    code rcm install $(sed s,^rcm-,, <<< "$each") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                    INDENT+='    '
+                                    Rcm_github_release install $each $github_owner_repo $github_file_path
+                                    INDENT="$OLDINDENT"
                                 fi
                             fi
                         fi
+                    elif [[ "$each" =~ \.sh$ ]];then
+                        url=$(grep -F '['$each']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                         if [ -n "$url" ];then
-                            e Memulai download.
-                            __; magenta wget "$url"; _.
-                            wget -q "$url" -O "$BINARY_DIRECTORY/$each"
-                            fileMustExists "$BINARY_DIRECTORY/$each"
-                            if [ ! -s "$BINARY_DIRECTORY/$each" ];then
-                                __; magenta rm "$BINARY_DIRECTORY/$each"; _.
-                                rm "$BINARY_DIRECTORY/$each"
-                                __; red HTTP Response: 404 Not Found; x
+                            Rcm_parse_url "$url"
+                            OLDINDENT="$INDENT"; INDENT+='    '
+                            save_as="$each"
+                            if [[ $(basename "$PHP_URL_PATH") == "$each" ]];then
+                                code rcm get "$url"
+                                INDENT+='    '
+                                Rcm_get "$url"
+                            else
+                                code rcm get "$url" --save-as='"'"$each"'"'
+                                INDENT+='    '
+                                Rcm_get "$url"
                             fi
-                            __; magenta chmod a+x "$BINARY_DIRECTORY/$each"; _.
-                            chmod a+x "$BINARY_DIRECTORY/$each"
+                            INDENT="$OLDINDENT"
+
+                            # code wget '"'"$url"'"' -O '"'"$BINARY_DIRECTORY/$each"'"'; _.
+
                         fi
                     fi
                     if ! command -v "$each" > /dev/null;then
@@ -665,6 +709,7 @@ Rcm_resolve_dependencies() {
     done
 }
 Rcm_prompt() {
+
     local command="$1"
     local chapter_printed=
     argument_pass=()
@@ -686,7 +731,6 @@ Rcm_prompt() {
             argument_pass+=("${value}")
         fi
     fi
-
     options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
@@ -988,7 +1032,7 @@ Rcm_prompt() {
         ____
     fi
 }
-Rcm_download() {
+Rcm_github_release() {
     mode=$1; shift
     shell_script=$1; shift
     if [ -z "$shell_script" ];then
@@ -1008,6 +1052,9 @@ Rcm_download() {
                 error "Command has exists: ${shell_script}."; x
             fi
             tag_name=$(Rcm_wget 3600 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            if [ -z "$tag_name" ];then
+                error "The repository does not have any releases."; x
+            fi
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
         ;;
         update)
@@ -1035,6 +1082,9 @@ Rcm_download() {
                 exit 0
             fi
             tag_name=$(Rcm_wget 3600 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            if [ -z "$tag_name" ];then
+                error "The repository does not have any releases."; x
+            fi
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
             if [ "$current_version" == "$latest_version" ];then
                 _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
@@ -1081,6 +1131,14 @@ Rcm_download() {
     fi
     case $mode in
         install)
+            if [ -f "${BINARY_DIRECTORY}/${shell_script}" ];then
+                __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                backupFile move "${BINARY_DIRECTORY}/${shell_script}"
+            elif [ -h "${BINARY_DIRECTORY}/${shell_script}" ];then
+                __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                backupFile move "${BINARY_DIRECTORY}/${shell_script}"
+            fi
+            code cp '"'$filename'"' '"'$BINARY_DIRECTORY/$shell_script'"'
             cp "$filename" $BINARY_DIRECTORY/$shell_script
             current_version=`$shell_script --version`
             _ 'Success install '; magenta $shell_script; _, ' version: '; yellow $current_version; _.
@@ -1135,6 +1193,29 @@ vercomp() {
         fi
     done
     return 0
+}
+backupFile() {
+    local mode="$1"
+    local oldpath="$2" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -f "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -f "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    case $mode in
+        move)
+            mv "$oldpath" "$newpath" ;;
+        copy)
+            local user=$(stat -c "%U" "$oldpath")
+            local group=$(stat -c "%G" "$oldpath")
+            cp "$oldpath" "$newpath"
+            chown ${user}:${group} "$newpath"
+    esac
 }
 Rcm_wget() {
     # Global, untuk debug.
@@ -1280,6 +1361,91 @@ Rcm_parse_url() {
     # extract the path (if any)
     PHP_URL_PATH="$(echo $_PHP_URL_SCHEME_REVERSE | grep / | cut -d/ -f2-)"
 }
+Rcm_update() {
+    if [ -z "$1" ];then
+        error "Operand <extension> required."; x
+    fi
+    local extension=$1; shift
+    local shell_script="rcm-${extension}"
+    if ! command -v $shell_script >/dev/null;then
+        error "Command not found: ${shell_script}."; x
+    fi
+    local table=$HOME/.config/rcm/rcm.table.extension
+    if [ ! -f "$table" ];then
+        e todo
+    fi
+    line=$(grep -n "^$extension"' ' "$table")
+    # e $line
+    url=$(cut -d' ' -f2 <<< "$line")
+    path=$(cut -d' ' -f3 <<< "$line")
+    # e $url
+    # e $path
+    Rcm_parse_url "$url"
+    if [[ "$PHP_URL_HOST" == github.com ]];then
+        github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+        Rcm_github_release update rcm-${extension} $github_owner_repo $path
+    fi
+}
+Rcm_install() {
+    if [ -z "$1" ];then
+        error "Operand <extension> required."; x
+    fi
+    local extension=$1; shift
+    local shell_script="rcm-${extension}"
+    if command -v $shell_script >/dev/null;then
+        error "Command has exists: ${shell_script}."; x
+    fi
+    # VarDump extension url
+    notfound=
+    if [ -z "$url" ];then
+        notfound=1
+        parameter='--url'
+        label='The URL repository.'
+        _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
+        _ "${label}"; _.
+    fi
+    until [ -n "$url" ];do
+        __; read -p "Type the value: " url
+    done
+    if [ -n "$notfound" ];then
+        ____
+    fi
+    if [ -z "$path" ];then
+        path=rcm/rcm-${extension}.sh
+    fi
+    Rcm_parse_url "$url"
+    if [[ "$PHP_URL_HOST" == github.com ]];then
+        github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+        Rcm_github_release install rcm-${extension} $github_owner_repo $path
+        # Jika berhasil, maka simpan url.
+        local table=$HOME/.config/rcm/rcm.table.extension
+        mkdir -p $HOME/.config/rcm
+        echo "$extension" "$url" "$path" >> "$table"
+    fi
+    if ! command -v "$shell_script" > /dev/null;then
+        error Command '`'$shell_script'`' not found, unable to auto download.; x
+    fi
+}
+Rcm_get() {
+    local url="$1"
+    e Memulai download.
+    if [ -n "$save_as" ];then
+        local filename="$save_as"
+    else
+        Rcm_parse_url "$url"
+        filename=$(basename "$PHP_URL_PATH")
+    fi
+    code wget '"'"$url"'"' -O '"'"$BINARY_DIRECTORY/$filename"'"'
+    wget -q "$url" -O "$BINARY_DIRECTORY/$filename"
+    fileMustExists "$BINARY_DIRECTORY/$filename"
+    if [ ! -s "$BINARY_DIRECTORY/$filename" ];then
+        __; magenta rm "$BINARY_DIRECTORY/$filename"; _.
+        rm "$BINARY_DIRECTORY/$filename"
+        __; red HTTP Response: 404 Not Found; x
+    fi
+    code chmod a+x "$BINARY_DIRECTORY/$filename"
+    chmod a+x "$BINARY_DIRECTORY/$filename"
+}
 
 # Title.
 title rcm
@@ -1343,9 +1509,14 @@ rcm_version=`printVersion`
 ____
 
 case $command in
-    update|install)
-        Rcm_download $command "${@}"
-        x
+    get)
+        Rcm_get "${@}"; x;;
+    install)
+        Rcm_install "${@}"; x;;
+    update)
+        Rcm_update "${@}"; x;;
+    self-update|selfupdate)
+        Rcm_github_release "${@}"; x;;
 esac
 
 if [ $command == list ];then
@@ -1573,7 +1744,9 @@ exit 0
 # CSV=(
 # )
 # OPERAND=(
+# install
 # update
+# get
 # history
 # selfupdate
 # self-update
@@ -1608,6 +1781,51 @@ exit 0
 # )
 # MULTIVALUE=(
 # --delete
+# )
+# EOF
+# clear
+
+# parse-options.sh \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --without-end-options-double-dash \
+# --no-error-require-arguments << EOF | clip
+# FLAG=(
+# )
+# VALUE=(
+# --url
+# --path
+# )
+# MULTIVALUE=(
+# )
+# FLAG_VALUE=(
+# )
+# CSV=(
+# )
+# EOF
+# clear
+
+# parse-options.sh \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --without-end-options-double-dash \
+# --no-error-require-arguments << EOF | clip
+# FLAG=(
+# )
+# VALUE=(
+# --save-as
+# )
+# MULTIVALUE=(
+# )
+# FLAG_VALUE=(
+# )
+# CSV=(
 # )
 # EOF
 # clear
