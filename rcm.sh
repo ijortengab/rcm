@@ -1322,7 +1322,6 @@ Rcm_wget() {
 Rcm_list() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'EOF'
-amavis-setup-ispconfig
 certbot-autoinstaller
 certbot-digitalocean-autoinstaller
 certbot-obtain-certificates
@@ -1335,43 +1334,23 @@ debian-11-setup-basic
 debian-12-setup-basic
 digitalocean-api-manage-domain-record
 digitalocean-api-manage-domain
-ispconfig-autoinstaller-nginx
-ispconfig-control-manage-domain
-ispconfig-control-manage-email-alias
-ispconfig-control-manage-email-mailbox
-ispconfig-setup-dump-variables
-ispconfig-setup-internal-command
-ispconfig-setup-smtpd-certificate
-ispconfig-setup-variation1
-ispconfig-setup-variation2
-ispconfig-setup-variation3
-ispconfig-setup-variation4
-ispconfig-setup-variation5
-ispconfig-setup-wrapper-certbot-setup-nginx
-ispconfig-setup-wrapper-digitalocean
-ispconfig-setup-wrapper-nginx-setup-php
 mariadb-assign-grant-all
 mariadb-autoinstaller
 mariadb-database-autocreate
-mariadb-setup-ispconfig
 mariadb-setup-project-database
 mariadb-user-autocreate
 nginx-autoinstaller
 nginx-setup-front-controller-php
 nginx-setup-hello-world-php
 nginx-setup-hello-world-static
-nginx-setup-ispconfig
 nginx-setup-php
 nginx-setup-static
 php-autoinstaller
 php-fpm-setup-pool
 php-setup-adjust-cli-version
-php-setup-ispconfig
 phpmyadmin-autoinstaller-nginx
 postfix-autoinstaller
-postfix-setup-ispconfig
 roundcube-autoinstaller-nginx
-roundcube-setup-ispconfig-integration
 ssh-setup-open-ssh-tunnel
 ssh-setup-sshd-listen-port
 ubuntu-22.04-setup-basic
