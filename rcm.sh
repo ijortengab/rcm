@@ -610,12 +610,12 @@ Rcm_resolve_dependencies() {
                         _, ' Version required: '$command_required_version'.'
                         _, ' Current version: '$command_current_version'.'
                     fi
-                    is_updated=
                     vercomp $command_current_version $command_required_version
                     if [[ $? -lt 2 ]];then
                         _.
                     else
                         _.
+                        is_updated=
                         if Rcm_is_internal "$command_required";then
                             github_owner_repo=ijortengab/rcm
                             github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
@@ -648,9 +648,9 @@ Rcm_resolve_dependencies() {
                                 fi
                             fi
                         fi
-                    fi
-                    if [[ -z "$is_updated" ]];then
-                        error Gagal Update; x
+                        if [[ -z "$is_updated" ]];then
+                            error Gagal Update; x
+                        fi
                     fi
                 fi
             else
