@@ -601,7 +601,9 @@ Rcm_resolve_dependencies() {
             _ Requires command: "$command_required"
             if command -v "$command_required" > /dev/null;then
                 _, ' [FOUND].';
-                if [ -n "$command_required_version" ];then
+                if [ -z "$command_required_version" ];then
+                    _.
+                else
                     command_current_version=$("$command_required" --version)
                     if [[ "$command_current_version" =~ [^0-9\.]+ ]];then
                         command_current_version=0
