@@ -6,20 +6,10 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
-        --email=*) email="${1#*=}"; shift ;;
-        --email) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then email="$2"; shift; fi; shift ;;
+        --domain=*) domain+=("${1#*=}"); shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain+=("$2"); shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --) shift
-            while [[ $# -gt 0 ]]; do
-                case "$1" in
-                    *) _new_arguments+=("$1"); shift ;;
-                esac
-            done
-            ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -48,29 +38,19 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.13.0'
+    echo '0.9.1'
 }
 printHelp() {
-    title RCM Certbot Setup
-    _ 'Variation '; yellow Nginx; _.
+    title RCM Certbot Obtain
+    _ 'Variation '; yellow Authenticator Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
-    cat << EOF
-
-Shortcut version of cerbot --nginx.
-
-EOF
+    _.
     cat << 'EOF'
-Usage: rcm-certbot-setup-nginx [options]
+Usage: rcm-certbot-obtain-authenticator-nginx [options]
 
 Options:
-   --domain *
-        Main domain to obtain certificate.
-   --email
-        Email of cerbot registered account. Try --email=auto.
-   --non-interactive ^
-        Skip confirmation of --email=auto.
-   --
-        Every arguments after double dash will pass to certbot command.
+   --domain
+        Set the domain. Multivalue.
 
 Global Options:
    --fast
@@ -82,8 +62,9 @@ Global Options:
    --root-sure
         Bypass root checking.
 
-Example:
-     rcm-certbot-setup-nginx -- -d domain2.com
+Environment Variables:
+   MAILBOX_HOST
+        Default to hostmaster
 
 Dependency:
    certbot
@@ -99,49 +80,20 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
-# Functions.
-
 # Title.
-title rcm-certbot-setup-nginx
+title rcm-certbot-obtain-authenticator-nginx
 ____
 
 # Require, validate, and populate value.
 chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
 delay=.5; [ -n "$fast" ] && unset delay
-code non_interactive="$non_interactive"
-until [[ -n "$email" ]];do
-    e Tips: Try --email=auto
-    _; read -p "Argument --email required: " email
-done
-if [[ $email == auto ]];then
-    email=
-    _email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
-    if [ -n "$_email" ];then
-        if [ -n "$non_interactive" ];then
-            selected=y
-        else
-            _; read -p "Do you wish to use this email: ${_email}? [y/N]: " selected
-        fi
-        if [[ "$selected" =~ ^[yY]$ ]]; then
-            email="$_email"
-        fi
-    else
-        code email=
-    fi
+MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
+code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
+code 'domain=('"${domain[@]}"')'
+if [[ "${#domain[@]}" -eq 0 ]];then
+    error Argument --domain is required.; x
 fi
-if [ -z "$email" ];then
-    error "Argument --email required."; x
-fi
-code 'email="'$email'"'
-regex="^[a-z0-9!#\$%&'*+/=?^_\`{|}~-]+(\.[a-z0-9!#$%&'*+/=?^_\`{|}~-]+)*@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?\$"
-if [[ ! $email =~ $regex ]] ; then
-    error Email format is not valid; x
-fi
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
-fi
-code 'domain="'$domain'"'
-code '-- '"$@"
 ____
 
 if [ -z "$root_sure" ];then
@@ -154,32 +106,58 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek certificates atas nama '`'$domain'`'
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
 notfound=
-if certbot certificates 2>/dev/null | grep -q -o "Certificate Name: ${domain}";then
-    __ Certificate obtained.
+if grep -q '/snap/bin' <<< "$PATH";then
+  __ '$PATH' sudah lengkap.
 else
-    __ Certificate not found.
-    notfound=1
+  __ '$PATH' belum lengkap.
+  notfound=1
 fi
 ____
 
-if [ -n "$notfound" ];then
-    chapter Request Certificate.
-    code certbot --non-interactive -i nginx --agree-tos --email="$email" --domain="$domain" "$@"
-    certbot --non-interactive -i nginx --agree-tos --email="$email" --domain="$domain" "$@"
-    sleep .5
-    if certbot certificates 2>/dev/null | grep -q -o "Certificate Name: ${domain}";then
-        __; green Certificate obtained.; _.
+if [[ -n "$notfound" ]];then
+    chapter Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+      __; green '$PATH' sudah lengkap.; _.
+      __; magenta PATH="$PATH"; _.
+
     else
-        __; red Certificate not found.; x
+      __; red '$PATH' belum lengkap.; x
     fi
     ____
 fi
 
+chapter Populate variable email.
+email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')
+if [ -n "$email" ];then
+    __ Certbot account has found: "$email"
+else
+    email="${MAILBOX_HOST}@${domain[0]}"
+fi
+code 'email="'$email'"'
+____
+
+chapter Obtain Certificate.
+arguments=()
+for each in "${domain[@]}"; do
+    arguments+=(--domain "$each")
+done
+set -- "${arguments[@]}"
+# https://eff-certbot.readthedocs.io/en/latest/using.html#combination
+code certbot certonly --non-interactive --nginx --agree-tos --email="$email" \
+    "$@"
+certbot certonly --non-interactive --nginx --agree-tos --email="$email" \
+    "$@" \
+    ; [ ! $? -eq 0 ] && x
+____
+
 exit 0
 
 # parse-options.sh \
+# --without-end-options-double-dash \
 # --compact \
 # --clean \
 # --no-hash-bang \
@@ -191,15 +169,15 @@ exit 0
 # --version
 # --help
 # --root-sure
-# --non-interactive
 # )
 # VALUE=(
-# --domain
-# --email
 # )
 # MULTIVALUE=(
+# --domain
 # )
 # FLAG_VALUE=(
+# )
+# CSV=(
 # )
 # EOF
 # clear
