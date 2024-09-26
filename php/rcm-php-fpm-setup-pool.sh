@@ -49,7 +49,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.15.1'
+    echo '0.15.2'
 }
 printHelp() {
     title RCM PHP Setup
