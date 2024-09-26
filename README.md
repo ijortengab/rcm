@@ -1,13 +1,9 @@
 Rapid Construct Massive
 =======================
 
-The Swiss Army Knife for *development* and *operations*.
-
-RCM provide you a simple way to do activity as `DevOps`.
-
 RCM works with generate anything with goals to simplify any routine task.
 
-## Installation
+## Install
 
 Download from Github.
 
@@ -29,16 +25,24 @@ sudo mv rcm -t /usr/local/bin
 Just execute.
 
 ```
-rcm --fast
+rcm
 ```
 
 ```
 Usage: rcm [options] [<command> [ -- [options]]]
 ```
 
-## Use Case
+## Extension
 
-Projects that implements `rcm`:
+Inspired from Git LFS which is the extension of Git, we have some extension of RCM:
 
- - https://github.com/ijortengab/ispconfig-autoinstaller
- - https://github.com/ijortengab/drupal-autoinstaller
+ 1. [Drupal Auto Installer](https://github.com/ijortengab/ispconfig-autoinstaller)
+ 2. [ISPConfig Auto Installer](https://github.com/ijortengab/drupal-autoinstaller)
+
+## Tips
+
+Always fast.
+
+```
+alias rcm='rcm --fast'
+```
