@@ -255,6 +255,12 @@ else
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
+                24.04)
+                    case "$php_version" in
+                        8.3) eligible=1 ;;
+                        *) error PHP Version "$php_version" not supported; x;
+                    esac
+                    ;;
                 *)
                     error OS "$ID" Version "$VERSION_ID" not supported; x;
             esac
