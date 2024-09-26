@@ -1322,6 +1322,12 @@ Rcm_wget() {
     cat "$cache_file"
 }
 Rcm_list() {
+    if [ -f $HOME/.config/rcm/rcm.table.extension ] ;then
+        cat $HOME/.config/rcm/rcm.table.extension | cut -d' ' -f1
+    fi
+    Rcm_list_internal
+}
+Rcm_list_internal() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'EOF'
 certbot-autoinstaller
@@ -1362,7 +1368,7 @@ EOF
 Rcm_is_internal() {
     local command="$1"
     if [[ "$command" =~ ^rcm- ]];then
-        command_list=$(Rcm_list)
+        command_list=$(Rcm_list_internal)
         command_without_prefix=$(sed s,^rcm-,, <<< "$command")
         if grep -q ^"$command_without_prefix"$ <<< "$command_list";then
             return 0
