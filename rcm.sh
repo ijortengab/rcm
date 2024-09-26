@@ -1128,7 +1128,7 @@ Rcm_github_release() {
                 fi
                 exit 0
             fi
-            tag_name=$(Rcm_wget 3600 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+            tag_name=$(Rcm_wget 60 https://api.github.com/repos/$github_repo/releases/latest | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
             if [ -z "$tag_name" ];then
                 error "The repository does not have any releases."; x
             fi
@@ -1740,30 +1740,45 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 Rcm_resolve_dependencies $command
 
 if [ -z "$non_interactive" ];then
+    _new_arguments=()
     argument_prepopulate=()
     if [ $# -gt 0 ];then
         while [[ $# -gt 0 ]]; do
-            if [[ "$1" =~ ^-- ]];then
-                if [[ "$2" =~ ^-- ]];then
-                    argument_prepopulate+=("$1");
-                elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
-                    argument_prepopulate+=("$1"="$2");
+            case "$1" in
+                --)
+                    while [[ $# -gt 0 ]]; do
+                        case "$1" in
+                            *) _new_arguments+=("$1"); shift ;;
+                        esac
+                    done
+                    ;;
+                --[^-]*)
+                    if [[ "$1" =~ ^-- ]];then
+                        if [[ "$2" =~ ^-- ]];then
+                            argument_prepopulate+=("$1");
+                        elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
+                            argument_prepopulate+=("$1"="$2");
+                            shift
+                        else
+                            argument_prepopulate+=("$1");
+                        fi
+                    else
+                        argument_prepopulate+=("$1");
+                    fi
                     shift
-                else
-                    argument_prepopulate+=("$1");
-                fi
-            else
-                argument_prepopulate+=("$1");
-            fi
-            shift
+                    ;;
+            esac
         done
     fi
     backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
     history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
     Rcm_prompt $command
     if [[ "${#argument_pass[@]}" -gt 0 ]];then
-        set -- "${argument_pass[@]}"
-        unset argument_pass
+        set -- "${argument_pass[@]}" "${_new_arguments[@]}"
+        unset argument_pass _new_arguments
+    else
+        set -- "${_new_arguments[@]}"
+        unset _new_arguments
     fi
     [ -f "$backup_storage" ] && rm "$backup_storage"
 fi
