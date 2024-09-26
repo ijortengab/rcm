@@ -90,6 +90,9 @@ Environment Variables:
         Default to /etc/php/[php-version]/fpm/pool.d
    PHP_FPM_FILENAME_PATTERN
         Default to [php-fpm-user]
+
+Dependency:
+   nginx
 EOF
 }
 
@@ -140,12 +143,25 @@ ____
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
 code 'command="'$command'"'
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+if [[ "$php_fpm_user" == - ]];then
+    php_fpm_user="$nginx_user"
+fi
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
 if [ -z "$php_fpm_user" ];then
     error "Argument --php-fpm-user required."; x
 fi
+
 code 'php_version="'$php_version'"'
 code 'php_fpm_user="'$php_fpm_user'"'
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
@@ -158,15 +174,7 @@ find='[php-fpm-user]'
 replace="$php_fpm_user"
 PHP_FPM_FILENAME_PATTERN="${PHP_FPM_FILENAME_PATTERN/"$find"/"$replace"}"
 code 'PHP_FPM_FILENAME_PATTERN="'$PHP_FPM_FILENAME_PATTERN'"'
-nginx_user=
-conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
-if [ -f "$conf_nginx" ];then
-    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
-fi
-code 'nginx_user="'$nginx_user'"'
-if [ -z "$nginx_user" ];then
-    error "Variable \$nginx_user failed to populate."; x
-fi
+
 ____
 
 php=$(cat <<'EOF'
