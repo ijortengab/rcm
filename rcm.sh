@@ -63,6 +63,8 @@ if [ "$command" == 'install' ];then
         case "$1" in
             --path=*) path="${1#*=}"; shift ;;
             --path) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path="$2"; shift; fi; shift ;;
+            --source=*) source="${1#*=}"; shift ;;
+            --source) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then source="$2"; shift; fi; shift ;;
             --url=*) url="${1#*=}"; shift ;;
             --url) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then url="$2"; shift; fi; shift ;;
             --[^-]*) shift ;;
@@ -1472,6 +1474,17 @@ Rcm_install() {
     fi
     # VarDump extension url
     notfound=
+    if [ -n "$source" ];then
+        local table=$HOME/.config/rcm/rcm.table.extension
+        line=
+        if [ -f "$table" ];then
+            line=$(grep -n "^$source"' ' "$table" | tail -1)
+        fi
+        if [ -n "$line" ];then
+            url=$(cut -d' ' -f2 <<< "$line")
+            path=-
+        fi
+    fi
     if [ -z "$url" ];then
         notfound=1
         parameter='--url'
@@ -1484,6 +1497,9 @@ Rcm_install() {
     done
     if [ -n "$notfound" ];then
         ____
+    fi
+    if [[ "$path" == - ]];then
+        path=rcm/rcm-${extension}.sh
     fi
     if [ -z "$path" ];then
         notfound=1
@@ -1905,6 +1921,7 @@ exit 0
 # VALUE=(
 # --url
 # --path
+# --source
 # )
 # MULTIVALUE=(
 # )
