@@ -5,6 +5,13 @@ RCM works with generate anything with goals to simplify any routine task.
 
 ## Install
 
+Login as root, then make sure `wget` command is exist.
+
+```
+apt update
+apt install -y wget
+```
+
 Download from Github.
 
 ```
@@ -36,8 +43,8 @@ Usage: rcm [options] [<command> [ -- [options]]]
 
 Inspired from Git LFS which is the extension of Git, we have some extension of RCM:
 
- 1. [Drupal Auto Installer](https://github.com/ijortengab/ispconfig-autoinstaller)
- 2. [ISPConfig Auto Installer](https://github.com/ijortengab/drupal-autoinstaller)
+ 1. [Drupal Auto Installer](https://github.com/ijortengab/drupal-autoinstaller)
+ 2. [ISPConfig Auto Installer](https://github.com/ijortengab/ispconfig-autoinstaller)
 
 ## Tips
 
