@@ -1333,9 +1333,11 @@ Rcm_list_internal() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'EOF'
 certbot-autoinstaller
+certbot-deploy-installer-nginx-authenticator-digitalocean
+certbot-deploy-nginx
 certbot-digitalocean-autoinstaller
-certbot-obtain-certificates
-certbot-setup-nginx
+certbot-obtain-authenticator-digitalocean
+certbot-obtain-authenticator-nginx
 composer-autoinstaller
 cron-setup-wsl-autorun-crond
 cron-setup-wsl-autorun-sshd
@@ -1364,6 +1366,7 @@ roundcube-autoinstaller-nginx
 ssh-setup-open-ssh-tunnel
 ssh-setup-sshd-listen-port
 ubuntu-22.04-setup-basic
+ubuntu-24.04-setup-basic
 wsl-setup-lemp-stack
 EOF
 }
