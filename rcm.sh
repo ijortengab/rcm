@@ -630,6 +630,14 @@ Rcm_resolve_dependencies() {
                             Rcm_github_release update $command_required $github_owner_repo $github_file_path
                             INDENT="$OLDINDENT"
                             is_updated=1
+                        elif [[ "$command_required" == rcm ]];then
+                            OLDINDENT="$INDENT"; INDENT+='    '
+                            code rcm self-update
+                            INDENT+='    '
+                            set -- update rcm ijortengab/rcm rcm.sh
+                            Rcm_github_release "$@"
+                            INDENT="$OLDINDENT"
+                            is_updated=1
                         else
                             url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                             if [ -n "$url" ];then
@@ -725,8 +733,8 @@ Rcm_resolve_dependencies() {
             fi
             commands_exists+=("$command_required")
             _help=$("$command_required" --help 2>/dev/null)
-            # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm-.
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm-|\.sh$)')
+            # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm$|^rcm-|\.sh$)')
             _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
             if [ -n "$_dependency" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
