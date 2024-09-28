@@ -61,6 +61,8 @@ Options:
         Set the project parent name. The parent is not have to exists before.
    --db-suffix-name
         The database suffix name.
+   --without-autocreate-db ^
+        Skip autocreate database. Default to --with-autocreate-db.
 
 Global Options.
    --fast
