@@ -6,12 +6,20 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --config-suffix-name=*) config_suffix_name="${1#*=}"; shift ;;
+        --config-suffix-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then config_suffix_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_fpm_user="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --project-name=*) project_name="${1#*=}"; shift ;;
+        --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
+        --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
+        --project-parent-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_parent_name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
+        --with-autocreate-user) autocreate_user=1; shift ;;
+        --without-autocreate-user) autocreate_user=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -52,8 +60,8 @@ printVersion() {
     echo '0.15.1'
 }
 printHelp() {
-    title RCM PHP Setup
-    _ 'Variation '; yellow ISPConfig; _.
+    title RCM PHP-FPM Setup Project Config
+    _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
     nginx_user=
@@ -61,9 +69,9 @@ printHelp() {
     if [ -f "$conf_nginx" ];then
         nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
     fi
-    [ -n "$nginx_user" ] && { nginx_user="${nginx_user},"; }
+    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
-Usage: rcm-php-fpm-setup-pool [options]
+Usage: rcm-php-fpm-setup-project-config [options]
 
 Available commands: get.
 
@@ -73,7 +81,15 @@ Options:
         [a]: 8.2
         [b]: 8.3
    --php-fpm-user
-        Set the system user of PHP FPM. Available values: `echo $nginx_user``cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other.
+        Set the Unix user that used by PHP FPM. Default value is the user that used by web server. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other. If the user does not exists, it will be autocreate as reguler user.
+   --project-name *
+        Set the project name. This should be in machine name format.
+   --project-parent-name
+        Set the project parent name. The parent is not have to exists before.
+   --config-suffix-name
+        The config suffix name.
+   --without-autocreate-user ^
+        Skip autocreate Unix user while config is created. Default to --with-autocreate-user.
 
 Global Options:
    --fast
@@ -135,8 +151,13 @@ fileMustExists() {
     fi
 }
 
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
 # Title.
-title rcm-php-fpm-setup-pool
+title rcm-php-fpm-setup-project-config
 ____
 
 # Requirement, validate, and populate value.
@@ -158,24 +179,47 @@ fi
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
+code 'php_version="'$php_version'"'
 if [ -z "$php_fpm_user" ];then
     error "Argument --php-fpm-user required."; x
 fi
-
-code 'php_version="'$php_version'"'
 code 'php_fpm_user="'$php_fpm_user'"'
+if [ -z "$project_name" ];then
+    error "Argument --project-name required."; x
+fi
+code 'project_name="'$project_name'"'
+code 'project_parent_name="'$project_parent_name'"'
+section_name="$project_name"
+[ -n "$project_parent_name" ] && {
+    section_name="${project_parent_name}__${project_name}"
+}
+config_file="$project_name"
+[ -n "$project_parent_name" ] && {
+    config_file="${project_parent_name}__${project_name}"
+}
+[ -n "$config_suffix_name" ] && {
+    section_name="${section_name}__${config_suffix_name}"
+    config_file="${config_file}__${config_suffix_name}"
+}
+config_file+=".conf"
+code 'section_name="'$section_name'"'
+code 'config_file="'$config_file'"'
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 find='[php-version]'
 replace="$php_version"
 PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
 code 'PHP_FPM_POOL_DIRECTORY="'$PHP_FPM_POOL_DIRECTORY'"'
-PHP_FPM_FILENAME_PATTERN=${PHP_FPM_FILENAME_PATTERN:=[php-fpm-user]}
-find='[php-fpm-user]'
-replace="$php_fpm_user"
-PHP_FPM_FILENAME_PATTERN="${PHP_FPM_FILENAME_PATTERN/"$find"/"$replace"}"
-code 'PHP_FPM_FILENAME_PATTERN="'$PHP_FPM_FILENAME_PATTERN'"'
-
 ____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
 
 php=$(cat <<'EOF'
 // https://stackoverflow.com/questions/17316873/convert-array-to-an-ini-file
@@ -207,12 +251,10 @@ $mode = $_SERVER['argv'][1];
 $file = $_SERVER['argv'][2];
 switch ($mode) {
     case 'is_exists':
-        $php_fpm_user = $_SERVER['argv'][3];
+        $section_name = $_SERVER['argv'][3];
         $array = parse_ini_file($file, true);
-        while($pool = array_shift($array)) {
-            if (array_key_exists('user', $pool) && $pool['user'] == $php_fpm_user) {
-                exit(0);
-            }
+        if (array_key_exists($section_name, $array)) {
+            exit(0);
         }
         exit(1);
         break;
@@ -222,26 +264,27 @@ switch ($mode) {
         file_put_contents($file, $content);
         break;
     case 'get':
-        $php_fpm_user = $_SERVER['argv'][3];
+        $section_name = $_SERVER['argv'][3];
         $what = $_SERVER['argv'][4];
         $array = parse_ini_file($file, true);
-        while($pool = array_shift($array)) {
-            if (array_key_exists('user', $pool) && $pool['user'] == $php_fpm_user && array_key_exists('listen', $pool)) {
-                echo $pool['listen'];
-                break 2;
+        if (array_key_exists($section_name, $array)) {
+            if (array_key_exists($what, $array[$section_name])) {
+                echo $array[$section_name][$what];
+                exit(0);
             }
         }
+        exit(1);
         break;
 }
 
 EOF
 )
 
-chapter Mengecek file '*.conf' yang mengandung user '`'$php_fpm_user'`'
+chapter Mengecek file '*.conf' yang mengandung section '`'$section_name'`'
 found=
 found_file=
 while read file; do
-    if php -r "$php" is_exists "$file" "$php_fpm_user";then
+    if php -r "$php" is_exists "$file" "$section_name";then
         found=1
         found_file="$file"
         break;
@@ -249,16 +292,16 @@ while read file; do
 done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
 
 if [ -n "$found" ];then
-    __ Ditemukan PHP-FPM user '`'"$php_fpm_user"'`' pada file "$found_file"
+    __ Ditemukan section '`'"$section_name"'`' pada file "$found_file"
 else
-    __ Tidak ditemukan PHP-FPM user '`'"$php_fpm_user"'`'.
+    __ Tidak ditemukan section '`'"$section_name"'`'.
 fi
 ____
 
 restart=
 if [ -z "$found" ];then
     reference="$(php -r "echo serialize([
-        '$php_fpm_user' => [
+        '$section_name' => [
             'user' => '$php_fpm_user',
             'group' => '$php_fpm_user',
             'listen' => '/run/php/php${php_version}-fpm-${php_fpm_user}.sock',
@@ -271,18 +314,41 @@ if [ -z "$found" ];then
             'pm.max_spare_servers' => '3',
         ]
     ]);")"
-
     chapter Membuat file PHP-FPM config.
-    code 'file_config="'${PHP_FPM_POOL_DIRECTORY}/${PHP_FPM_FILENAME_PATTERN}.conf'"'
-    file_config="${PHP_FPM_POOL_DIRECTORY}/${PHP_FPM_FILENAME_PATTERN}.conf"
-    if [ -f "$file_config" ];then
-        __ Backup file "$file_config".
-        backupFile move "$file_config"
+    config_file="${PHP_FPM_POOL_DIRECTORY}/${config_file}"
+    code 'config_file="'$config_file'"'
+    if [ -f "$config_file" ];then
+        __ Backup file "$config_file".
+        backupFile move "$config_file"
     fi
-    __ Membuat file '`'"$file_config"'`'.
-    php -r "$php" create "$file_config" "$reference"
-    fileMustExists "$file_config"
+    __ Membuat file '`'"$config_file"'`'.
+    php -r "$php" create "$config_file" "$reference"
+    fileMustExists "$config_file"
     restart=1
+    ____
+fi
+
+found=1
+if [ -n "$restart" ];then
+    chapter Mengecek PHP-FPM User.
+    code id -u '"'$php_fpm_user'"'
+    if id "$php_fpm_user" >/dev/null 2>&1; then
+        __ User '`'$php_fpm_user'`' found.
+    else
+        __ User '`'$php_fpm_user'`' not found.;
+        found=
+    fi
+    ____
+fi
+if [ -z "$found" ];then
+    chapter Membuat Unix user.
+    if [[ ! "$autocreate_user" == "0" ]];then
+        code adduser $php_fpm_user --disabled-password --gecos "''"
+        adduser "$php_fpm_user" --disabled-password --gecos ''
+    else
+        __ Flag --without-autocreate-user ditemukan.
+        error User tidak dapat dibuat; x
+    fi
     ____
 fi
 
@@ -295,7 +361,7 @@ fi
 
 if [[ "$command" == get ]];then
     what="$1"; shift
-    php -r "$php" get "$found_file" "$php_fpm_user" "$what"
+    php -r "$php" get "$found_file" "$section_name" "$what"
 fi
 
 exit 0
@@ -307,7 +373,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -317,7 +383,17 @@ exit 0
 # VALUE=(
 # --php-version
 # --php-fpm-user
+# --project-name
+# --project-parent-name
+# --config-suffix-name
+# )
+# MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
+# CSV=(
+    # 'long:--with-autocreate-user,parameter:autocreate_user'
+    # 'long:--without-autocreate-user,parameter:autocreate_user,flag_option:reverse'
+# )
 # EOF
+# clear
