@@ -46,7 +46,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.15.1'
+    echo '0.16.0'
 }
 printHelp() {
     title RCM Nginx Setup
