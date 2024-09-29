@@ -734,7 +734,7 @@ Rcm_resolve_dependencies() {
             commands_exists+=("$command_required")
             _help=$("$command_required" --help 2>/dev/null)
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm$|^rcm-|\.sh$)')
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
             _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
             if [ -n "$_dependency" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
