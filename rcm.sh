@@ -1339,7 +1339,7 @@ Rcm_list() {
 }
 Rcm_list_internal() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
-    cat << 'EOF'
+    cat << 'RCM_LIST_INTERNAL'
 certbot-autoinstaller
 certbot-deploy-installer-nginx-authenticator-digitalocean
 certbot-deploy-nginx
@@ -1366,7 +1366,7 @@ nginx-setup-hello-world-static
 nginx-setup-php
 nginx-setup-static
 php-autoinstaller
-php-fpm-setup-pool
+php-fpm-setup-project-config
 php-setup-adjust-cli-version
 phpmyadmin-autoinstaller-nginx
 postfix-autoinstaller
@@ -1376,7 +1376,7 @@ ssh-setup-sshd-listen-port
 ubuntu-22.04-setup-basic
 ubuntu-24.04-setup-basic
 wsl-setup-lemp-stack
-EOF
+RCM_LIST_INTERNAL
 }
 Rcm_is_internal() {
     local command="$1"
