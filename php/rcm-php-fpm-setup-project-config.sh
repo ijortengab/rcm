@@ -304,7 +304,7 @@ if [ -z "$found" ];then
         '$section_name' => [
             'user' => '$php_fpm_user',
             'group' => '$php_fpm_user',
-            'listen' => '/run/php/php${php_version}-fpm-${php_fpm_user}.sock',
+            'listen' => '/run/php/php${php_version}-fpm-${section_name}.sock',
             'listen.owner' => '$nginx_user',
             'listen.group' => '$nginx_user',
             'pm' => 'dynamic',
