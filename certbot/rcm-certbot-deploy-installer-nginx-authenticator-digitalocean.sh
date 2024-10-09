@@ -176,30 +176,6 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek '$PATH'.
-code PATH="$PATH"
-notfound=
-if grep -q '/snap/bin' <<< "$PATH";then
-  __ '$PATH' sudah lengkap.
-else
-  __ '$PATH' belum lengkap.
-  notfound=1
-fi
-____
-
-if [[ -n "$notfound" ]];then
-    chapter Memperbaiki '$PATH'
-    PATH=/snap/bin:$PATH
-    if grep -q '/snap/bin' <<< "$PATH";then
-      __; green '$PATH' sudah lengkap.; _.
-      __; magenta PATH="$PATH"; _.
-
-    else
-      __; red '$PATH' belum lengkap.; x
-    fi
-    ____
-fi
-
 if [ -z "$certbot_dns_digitalocean_sure" ];then
     chapter Mengecek apakah snap certbot-dns-digitalocean installed.
     notfound=
