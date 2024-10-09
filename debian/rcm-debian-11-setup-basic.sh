@@ -278,9 +278,7 @@ done <<< "$repository_required"
 }
 if [ -n "$update_now" ];then
     code apt -y update
-    code apt -y upgrade
     apt -y update
-    apt -y upgrade
 else
     if [[ ! "$update_system" == "0" ]];then
         code apt -y update
