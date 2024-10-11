@@ -171,9 +171,9 @@ if [[ "$command" == delete ]];then
     error Command delete is not support yet.; x
 fi
 if [[ "$command" == add ]];then
-    until [[ -n "$ip_address" ]];do
-        _; read -p "Argument --ip-address required: " ip_address
-    done
+    if [ -z "$ip_address" ];then
+        error "Argument --ip-address required. "; x
+    fi
     code 'ip_address="'$ip_address'"'
 fi
 ____
