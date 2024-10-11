@@ -1352,6 +1352,8 @@ cron-setup-wsl-autorun-sshd
 cron-setup-wsl-port-forwarding
 debian-11-setup-basic
 debian-12-setup-basic
+dig-is-name-exists
+dig-is-record-exists
 digitalocean-api-manage-domain-record
 digitalocean-api-manage-domain
 mariadb-assign-grant-all
