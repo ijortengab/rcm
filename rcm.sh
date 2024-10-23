@@ -1367,6 +1367,7 @@ nginx-setup-hello-world-php
 nginx-setup-hello-world-static
 nginx-setup-php
 nginx-setup-static
+nginx-virtual-host-autocreate-php
 php-autoinstaller
 php-fpm-setup-project-config
 php-setup-adjust-cli-version
@@ -1825,6 +1826,10 @@ chapter Execute:
 [ -n "$non_interactive" ] && isnoninteractive=' --non-interactive' || isnoninteractive=''
 code ${command}${isfast}${isnoninteractive} "$@"
 ____
+
+if [ -z "$non_interactive" ];then
+    sleepExtended 3
+fi
 
 if [ -z "$fast" ];then
     _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
