@@ -47,11 +47,11 @@ printHelp() {
     _ 'Variation '; yellow Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-phpmyadmin-autoinstaller-nginx [options]
 
 Options:
-   --php-version
+   --php-version *
         Set the version of PHP FPM.
    --phpmyadmin-version *
         Set the version of PHPMyAdmin.
@@ -69,21 +69,17 @@ Global Options:
 Environment Variables:
    PHPMYADMIN_FQDN_LOCALHOST
         Default to phpmyadmin.localhost
-   PHPMYADMIN_DB_NAME
-        Default to phpmyadmin
-   PHPMYADMIN_DB_USER
-        Default to pma
-   PHPMYADMIN_DB_USER_HOST
-        Default to localhost
    PHPMYADMIN_NGINX_CONFIG_FILE
         Default to phpmyadmin
+   MARIADB_PREFIX_MASTER
+        Default to /usr/local/share/mariadb
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to users
 
 Dependency:
-   mysql
-   pwgen
    php
    curl
-   rcm-nginx-setup-php
+   rcm-nginx-virtual-host-autocreate-php
 EOF
 }
 
@@ -97,6 +93,40 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+databaseCredentialPhpmyadmin() {
+    local DB_USER DB_USER_PASSWORD
+    __ Memerlukan file '`'"${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"'`'
+    isFileExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    [ -n "$notfound" ] && fileMustExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    # Populate.
+    . "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    db_user=$DB_USER
+    db_user_password=$DB_USER_PASSWORD
+}
+fileMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -120,26 +150,186 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-databaseCredentialPhpmyadmin() {
-    if [ -f /usr/local/share/phpmyadmin/credential/database ];then
-        local PHPMYADMIN_DB_USER PHPMYADMIN_DB_USER_PASSWORD PHPMYADMIN_BLOWFISH
-        . /usr/local/share/phpmyadmin/credential/database
-        phpmyadmin_db_user=$PHPMYADMIN_DB_USER
-        phpmyadmin_db_user_password=$PHPMYADMIN_DB_USER_PASSWORD
-        phpmyadmin_blowfish=$PHPMYADMIN_BLOWFISH
-    else
-        phpmyadmin_db_user=$PHPMYADMIN_DB_USER # global variable
-        phpmyadmin_db_user_password=$(pwgen -s 32 -1)
-        phpmyadmin_blowfish=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/phpmyadmin/credential
-        cat << EOF > /usr/local/share/phpmyadmin/credential/database
-PHPMYADMIN_DB_USER=$phpmyadmin_db_user
-PHPMYADMIN_DB_USER_PASSWORD=$phpmyadmin_db_user_password
-PHPMYADMIN_BLOWFISH=$phpmyadmin_blowfish
-EOF
-        chmod 0500 /usr/local/share/phpmyadmin/credential
-        chmod 0400 /usr/local/share/phpmyadmin/credential/database
+backupDir() {
+    local oldpath="$1" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -e "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -e "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
     fi
+    mv "$oldpath" "$newpath"
+}
+dirMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -d "$1" ];then
+        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -f "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular file: '`'"$target"'`'.
+            backupFile move "$target"
+            create=1
+        fi
+    elif [ -d "$target" ];then
+        __ Melakukan backup direktori: '`'"$target"'`'.
+        backupDir "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
+        else
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
+}
+link_symbolic_dir() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -d "$source" ] || { error Source exists but not directory: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+    chapter Membuat symbolic link directory.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -d "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan directory symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular direktori: '`'"$target"'`'.
+            backupDir "$target"
+            create=1
+        fi
+    elif [ -f "$target" ];then
+        __ Melakukan backup file: '`'"$target"'`'.
+        backupFile move "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
+        else
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
 }
 
 # Title.
@@ -151,20 +341,44 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
-PHPMYADMIN_DB_NAME=${PHPMYADMIN_DB_NAME:=phpmyadmin}
-code 'PHPMYADMIN_DB_NAME="'$PHPMYADMIN_DB_NAME'"'
-PHPMYADMIN_DB_USER=${PHPMYADMIN_DB_USER:=pma}
-code 'PHPMYADMIN_DB_USER="'$PHPMYADMIN_DB_USER'"'
-PHPMYADMIN_DB_USER_HOST=${PHPMYADMIN_DB_USER_HOST:=localhost}
-code 'PHPMYADMIN_DB_USER_HOST="'$PHPMYADMIN_DB_USER_HOST'"'
 PHPMYADMIN_NGINX_CONFIG_FILE=${PHPMYADMIN_NGINX_CONFIG_FILE:=phpmyadmin}
 code 'PHPMYADMIN_NGINX_CONFIG_FILE="'$PHPMYADMIN_NGINX_CONFIG_FILE'"'
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 delay=.5; [ -n "$fast" ] && unset delay
 if [ -z "$phpmyadmin_version" ];then
     error "Argument --phpmyadmin-version required."; x
 fi
 code 'phpmyadmin_version="'$phpmyadmin_version'"'
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
 code 'php_version="'$php_version'"'
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+php_fpm_user="$nginx_user"
+code 'php_fpm_user="'$php_fpm_user'"'
+prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+code 'prefix="'$prefix'"'
+project_container="$PHPMYADMIN_FQDN_LOCALHOST"
+code 'project_container="'$project_container'"'
+php_project_name=www
+code 'php_project_name="'$php_project_name'"'
+mariadb_project_name=phpmyadmin
+code 'mariadb_project_name="'$mariadb_project_name'"'
+root="$prefix/${project_container}/web"
+code 'root="'$root'"'
+root_source="$prefix/${project_container}/${phpmyadmin_version}"
+code 'root_source="'$root_source'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -177,88 +391,27 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek database '`'$PHPMYADMIN_DB_NAME'`'.
-msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$PHPMYADMIN_DB_NAME'")
-notfound=
-if [[ $msg == $PHPMYADMIN_DB_NAME ]];then
-    __ Database ditemukan.
-else
-    __ Database tidak ditemukan
-    notfound=1
-fi
+target_project_container="${prefix}/${project_container}"
+chapter Mengecek direktori project container '`'$target_project_container'`'.
+isDirExists "$target_project_container"
 ____
 
 if [ -n "$notfound" ];then
-    chapter Membuat database.
-    mysql -e "create database $PHPMYADMIN_DB_NAME character set utf8 collate utf8_general_ci;"
-    msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$PHPMYADMIN_DB_NAME'")
-    if [[ $msg == $PHPMYADMIN_DB_NAME ]];then
-        __; green Database ditemukan.; _.
-    else
-        __; red Database tidak ditemukan; x
-    fi
-    ____
-fi
-
-chapter Mengecek database credentials PHPMyAdmin.
-databaseCredentialPhpmyadmin
-if [[ -z "$phpmyadmin_db_user" || -z "$phpmyadmin_db_user_password" || -z "$phpmyadmin_blowfish" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/phpmyadmin/credential/database'`'.; x
-else
-    code phpmyadmin_db_user="$phpmyadmin_db_user"
-    code phpmyadmin_db_user_password="$phpmyadmin_db_user_password"
-    code phpmyadmin_blowfish="$phpmyadmin_blowfish"
-fi
-____
-
-chapter Mengecek user database '`'$phpmyadmin_db_user'`'.
-msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$phpmyadmin_db_user';")
-notfound=
-if [ $msg -gt 0 ];then
-    __ User database ditemukan.
-else
-    __ User database tidak ditemukan.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat user database '`'$phpmyadmin_db_user'`'.
-    mysql -e "create user '${phpmyadmin_db_user}'@'${PHPMYADMIN_DB_USER_HOST}' identified by '${phpmyadmin_db_user_password}';"
-    msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$phpmyadmin_db_user';")
-    if [ $msg -gt 0 ];then
-        __; green User database ditemukan.; _.
-    else
-        __; red User database tidak ditemukan; x
-    fi
-    ____
-fi
-
-chapter Mengecek grants user '`'$phpmyadmin_db_user'`' ke database '`'$PHPMYADMIN_DB_NAME'`'.
-notfound=
-msg=$(mysql "$PHPMYADMIN_DB_NAME" --silent --skip-column-names -e "show grants for ${phpmyadmin_db_user}@${PHPMYADMIN_DB_USER_HOST}")
-if grep -q "GRANT.*ON.*${PHPMYADMIN_DB_NAME}.*TO.*${phpmyadmin_db_user}.*@.*${PHPMYADMIN_DB_USER_HOST}.*" <<< "$msg";then
-    __ Granted.
-else
-    __ Not granted.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Memberi grants user '`'$phpmyadmin_db_user'`' ke database '`'$PHPMYADMIN_DB_NAME'`'.
-    mysql -e "grant all privileges on \`${PHPMYADMIN_DB_NAME}\`.* TO '${phpmyadmin_db_user}'@'${PHPMYADMIN_DB_USER_HOST}';"
-    msg=$(mysql "$PHPMYADMIN_DB_NAME" --silent --skip-column-names -e "show grants for ${phpmyadmin_db_user}@${PHPMYADMIN_DB_USER_HOST}")
-    if grep -q "GRANT.*ON.*${PHPMYADMIN_DB_NAME}.*TO.*${phpmyadmin_db_user}.*@.*${PHPMYADMIN_DB_USER_HOST}.*" <<< "$msg";then
-        __; green Granted.; _.
-    else
-        __; red Not granted.; x
-    fi
+    chapter Membuat direktori project container.
+    code mkdir -p '"'$target_project_container'"'
+    code chown $php_fpm_user:$php_fpm_user '"'$target_project_container'"'
+    mkdir -p "$target_project_container"
+    chown $php_fpm_user:$php_fpm_user "$target_project_container"
+    dirMustExists "$target_project_container"
     ____
 fi
 
 chapter Prepare arguments.
-root="/usr/local/share/phpmyadmin/${phpmyadmin_version}"
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+if [ -z "$socket_filename" ];then
+    __; red Socket Filename of PHP-FPM not found.; x
+fi
+code socket_filename="$socket_filename"
 code root="$root"
 filename="$PHPMYADMIN_NGINX_CONFIG_FILE"
 code filename="$filename"
@@ -267,11 +420,11 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php $isfast --root-sure \
+rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --root="$root" \
-    --php-version="$php_version" \
     --filename="$filename" \
     --server-name="$server_name" \
+    --fastcgi-pass="unix:${socket_filename}" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek subdomain '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
@@ -297,59 +450,90 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-chapter Mencari informasi PHP-FPM User.
-__ Membuat file "${root}/.well-known/__getuser.php"
-mkdir -p "${root}/.well-known"
-cat << 'EOF' > "${root}/.well-known/__getuser.php"
-<?php
-echo $_SERVER['USER'];
-EOF
-__ Eksekusi file script.
-__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${PHPMYADMIN_FQDN_LOCALHOST}"; _.
-user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${PHPMYADMIN_FQDN_LOCALHOST}")
-__; magenta user_nginx="$user_nginx"; _.
-if [ -z "$user_nginx" ];then
-    error PHP-FPM User tidak ditemukan; x
-fi
-__ Menghapus file "${root}/.well-known/__getuser.php"
-rm "${root}/.well-known/__getuser.php"
-rmdir "${root}/.well-known" --ignore-fail-on-non-empty
-____
-
 chapter Mengecek file '`'composer.json'`' untuk project '`'phpmyadmin/phpmyadmin'`'
-notfound=
-if [ -f /usr/local/share/phpmyadmin/${phpmyadmin_version}/composer.json ];then
-    __ File '`'composer.json'`' ditemukan.
-else
-    __ File '`'composer.json'`' tidak ditemukan.
-    notfound=1
-fi
+path="${root_source}/composer.json"
+isFileExists "$path"
 ____
 
 if [ -n "$notfound" ];then
     chapter Mendownload PHPMyAdmin
-    cd          /tmp
-    wget        https://files.phpmyadmin.net/phpMyAdmin/${phpmyadmin_version}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz
-    tar xfz     phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz
-    mkdir -p    /usr/local/share/phpmyadmin/${phpmyadmin_version}
-    mv          phpMyAdmin-${phpmyadmin_version}-all-languages/* -t /usr/local/share/phpmyadmin/${phpmyadmin_version}
-    mv          phpMyAdmin-${phpmyadmin_version}-all-languages/.[!.]* -t /usr/local/share/phpmyadmin/${phpmyadmin_version}
-    rmdir       phpMyAdmin-${phpmyadmin_version}-all-languages
-    chown -R $user_nginx:$user_nginx /usr/local/share/phpmyadmin/${phpmyadmin_version}
-    if [ -f /usr/local/share/phpmyadmin/${phpmyadmin_version}/composer.json ];then
-        __; green File '`'composer.json'`' ditemukan.; _.
-    else
-        __; red File '`'composer.json'`' tidak ditemukan.; x
+    code sudo -u $php_fpm_user mkdir -p '"'$root_source'"'
+    sudo -u $php_fpm_user mkdir -p "$root_source"
+    cd $root_source
+    __ Mendownload PHPMyAdmin
+    path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        sudo -u $php_fpm_user wget "https://files.phpmyadmin.net/phpMyAdmin/${phpmyadmin_version}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
+        fileMustExists "$path"
     fi
+    [ -f "$path" ] || fileMustExists "$path"
+    __ Extract File.
+    path_tar_gz="$path"
+    path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/composer.json"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        code sudo -u $php_fpm_user tar xfz "$path_tar_gz"
+        sudo -u $php_fpm_user tar xfz "$path_tar_gz"
+        fileMustExists "$path"
+        __ Memindahkan hasil download ke parent.
+        code sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
+        sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
+    fi
+    [ -f "$path" ] || fileMustExists "$path"
+    __ Memindahkan codebase.
+    code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'*' -t '"'$root_source'"'
+    code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'.[!.]*' -t '"'$root_source'"'
+    code rmdir "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages"
+    mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"* -t "$root_source"
+    mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/".[!.]* -t "$root_source"
+    rmdir "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages"
+    path="${root_source}/composer.json"
+    fileMustExists "$path"
+    cd - >/dev/null
     ____
 fi
+[ -f "$path" ] || fileMustExists "$path"
+
+source="$root_source"
+target="$root"
+link_symbolic_dir "$source" "$target" "$php_fpm_user"
+
+chapter Mengecek file konfigurasi PHPMyAdmin.
+path="${root_source}/config.inc.php"
+isFileExists "$path"
+if [ -n "$notfound" ];then
+    source="${root_source}/config.sample.inc.php"
+    fileMustExists "$source"
+    code sudo -u $php_fpm_user cp "$source" "$path"
+    sudo -u $php_fpm_user cp "$source" "$path"
+    fileMustExists "$path"
+fi
+[ -f "$path" ] || fileMustExists "$path"
+____
+
+INDENT+="    " \
+rcm-mariadb-setup-project-database $isfast --root-sure \
+    --project-name="$mariadb_project_name" \
+    ; [ ! $? -eq 0 ] && x
+
+chapter Prepare arguments.
+db_name="$mariadb_project_name"
+db_user="$mariadb_project_name"
+code 'db_name="'$db_name'"'
+code 'db_user="'$db_user'"'
+databaseCredentialPhpmyadmin
+code 'db_user_password="'$db_user_password'"'
+db_user_host=localhost
+code 'db_user_host="'$db_user_host'"'
+____
 
 chapter Mengecek apakah PHPMyAdmin sudah imported SQL.
 notfound=
 msg=$(mysql \
-    --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${phpmyadmin_db_user}" "${phpmyadmin_db_user_password}") \
+    --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
     --silent --skip-column-names \
-    $PHPMYADMIN_DB_NAME -e "show tables;" | wc -l)
+    $db_name -e "show tables;" | wc -l)
 if [[ $msg -gt 0 ]];then
     __ PHPMyAdmin sudah imported SQL.
 else
@@ -360,13 +544,15 @@ ____
 
 if [ -n "$notfound" ];then
     chapter PHPMyAdmin Import SQL
+    isFileExists "${root_source}/sql/create_tables.sql"
+    [ -n "$notfound" ] && fileMustExists "${root_source}/sql/create_tables.sql"
     mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${phpmyadmin_db_user}" "${phpmyadmin_db_user_password}") \
-        $PHPMYADMIN_DB_NAME < /usr/local/share/phpmyadmin/${phpmyadmin_version}/sql/create_tables.sql
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
+        $db_name < "${root_source}/sql/create_tables.sql"
     msg=$(mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${phpmyadmin_db_user}" "${phpmyadmin_db_user_password}") \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
         --silent --skip-column-names \
-        $PHPMYADMIN_DB_NAME -e "show tables;" | wc -l)
+        $db_name -e "show tables;" | wc -l)
     if [[ $msg -gt 0 ]];then
         __; green PHPMyAdmin sudah imported SQL.; _.
     else
@@ -375,79 +561,125 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-chapter Mengecek file konfigurasi PHPMyAdmin.
-notfound=
-if [ -f /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php ];then
-    __ File '`'config.inc.php'`' ditemukan.
-else
-    __ File '`'config.inc.php'`' tidak ditemukan.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat file konfigurasi PHPMyAdmin.
-    cp /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.sample.inc.php \
-        /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-    if [ -f /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php ];then
-        __; green File '`'config.inc.php'`' ditemukan.; _.
-        chown $user_nginx:$user_nginx /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-        chmod a-w /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-    else
-        __; red File '`'config.inc.php'`' tidak ditemukan.; x
-    fi
-    ____
-fi
-
-chapter Mengecek informasi file konfigurasi PHPMyAdmin pada server index 1.
+chapter Mengecek informasi file konfigurasi PHPMyAdmin.
 php=$(cat <<'EOF'
 $mode = $_SERVER['argv'][1];
-$file = $_SERVER['argv'][2];
-$array = unserialize($_SERVER['argv'][3]);
-include($file);
-$cfg = isset($cfg) ? $cfg : [];
-$cfg['blowfish_secret'] = isset($cfg['blowfish_secret']) ? $cfg['blowfish_secret'] : NULL;
-$cfg['Servers']['1'] = isset($cfg['Servers']['1']) ? $cfg['Servers']['1'] : [];
-$is_different = false;
-if ($cfg['blowfish_secret'] != $array['blowfish_secret']) {
-    $is_different = true;
-}
-$result = array_diff_assoc($array['Servers']['1'], $cfg['Servers']['1']);
-if (!empty($result)) {
-    $is_different = true;
+switch ($mode) {
+    case 'is_empty' :
+        $path = $_SERVER['argv'][2];
+        $key = $_SERVER['argv'][3];
+        include($path);
+        $cfg = isset($cfg) ? $cfg : [];
+        if (array_key_exists($key, $cfg)) {
+            if (is_string($cfg[$key]) && strlen($cfg[$key]) === 0) {
+                exit(0);
+            }
+        }
+        exit(1);
+        break;
+    case 'generate_sodium':
+        $key = sodium_crypto_secretbox_keygen();
+        echo sodium_bin2hex($key);
+        break;
+    case 'is_different':
+    case 'save':
+        # Populate variable $is_different.
+        $file = $_SERVER['argv'][2];
+        $reference = unserialize($_SERVER['argv'][3]);
+        include($file);
+        $cfg = isset($cfg) ? $cfg : [];
+        $cfg['Servers']['1'] = isset($cfg['Servers']['1']) ? $cfg['Servers']['1'] : [];
+        // Tidak menggunakan array_map serialize seperti rcm-roundcube-autoinstaller-nginx karena dipastikan seluruh value non array.
+        $is_different = !empty(array_diff_assoc($reference['Servers']['1'], $cfg['Servers']['1']));
+        break;
 }
 switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
     case 'save':
-        if ($is_different) {
-            $cfg = array_replace_recursive($cfg, $array);
-            $content = '$cfg = '.var_export($cfg, true).';'.PHP_EOL;
-            $content = <<< EOF
-<?php
-$content
-EOF;
-            file_put_contents($file, $content);
+        if (!$is_different) {
+            exit(0);
         }
+        $contents = file_get_contents($file);
+        $need_edit = array_diff_assoc($reference['Servers']['1'], $cfg['Servers']['1']);
+        $new_lines = [];
+        foreach ($need_edit as $key => $value) {
+            $new_line = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            // Jika indexed array dan hanya satu , maka buat one line.
+            if (is_array($value) && array_key_exists(0, $value) && count($value) === 1) {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), "['".$value[0]."']"], $new_line);
+            }
+            else {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+            }
+            $is_one_line = preg_match('/\n/', $new_line) ? false : true;
+            $find_existing = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            $find_existing = str_replace(['__PARAMETER__','__KEY__'],['$cfg'."['Servers'][1]", var_export($key, true)], $find_existing);
+            $find_existing = preg_quote($find_existing);
+            $find_existing = str_replace('__VALUE__', '.*', $find_existing);
+            $find_existing = '/\s*'.$find_existing.'\s*/';
+            if ($is_one_line && preg_match_all($find_existing, $contents, $matches, PREG_PATTERN_ORDER)) {
+                $contents = str_replace($matches[0], '', $contents);
+            }
+            $new_lines[] = $new_line;
+        }
+        if (substr($contents, -1) != "\n") {
+            $contents .= "\n";
+        }
+        $contents .= implode("\n", $new_lines);
+        $contents .= "\n";
+        file_put_contents($file, $contents);
         break;
 }
 EOF
 )
+
+path="${root_source}/config.inc.php"
+if php -r "$php" is_empty "$path" blowfish_secret;then
+    __ Key '`'blowfish_secret'`' belum berisi nilai. Diperlukan modifikasi file '`'config.inc.php'`'.
+    blowfish_secret=`php -r "$php" generate_sodium`
+    sed -i "s,\$cfg\['blowfish_secret'\] = '';.*,\$cfg['blowfish_secret'] = \\\sodium_hex2bin('$blowfish_secret');," "$path"
+    if php -r "$php" is_empty "$path" blowfish_secret;then
+        __; red Key '`'blowfish_secret'`' belum berisi nilai. Gagal modifikasi file '`'config.inc.php'`'.
+    else
+        __; green Key '`'blowfish_secret'`' sudah terisi nilai. Berhasil modifikasi file '`'config.inc.php'`'.; _.
+    fi
+else
+    __ Key '`'blowfish_secret'`' sudah terisi nilai. Tidak diperlukan modifikasi file '`'config.inc.php'`'.
+fi
+
 reference="$(php -r "echo serialize([
-    'blowfish_secret' => '$phpmyadmin_blowfish',
     'Servers' => [
         '1' => [
-            'controlhost' => '$PHPMYADMIN_DB_USER_HOST',
-            'controluser' => '$phpmyadmin_db_user',
-            'controlpass' => '$phpmyadmin_db_user_password',
+            'controlhost' => '$db_user_host',
+            'controluser' => '$db_user',
+            'controlpass' => '$db_user_password',
+            'pmadb' => '$db_name',
+            'bookmarktable' => 'pma__bookmark',
+            'relation' => 'pma__relation',
+            'table_info' => 'pma__table_info',
+            'table_coords' => 'pma__table_coords',
+            'pdf_pages' => 'pma__pdf_pages',
+            'column_info' => 'pma__column_info',
+            'history' => 'pma__history',
+            'table_uiprefs' => 'pma__table_uiprefs',
+            'tracking' => 'pma__tracking',
+            'userconfig' => 'pma__userconfig',
+            'recent' => 'pma__recent',
+            'favorite' => 'pma__favorite',
+            'users' => 'pma__users',
+            'usergroups' => 'pma__usergroups',
+            'navigationhiding' => 'pma__navigationhiding',
+            'savedsearches' => 'pma__savedsearches',
+            'central_columns' => 'pma__central_columns',
+            'designer_settings' => 'pma__designer_settings',
+            'export_templates' => 'pma__export_templates',
         ],
     ],
 ]);")"
 is_different=
-if php -r "$php" is_different \
-    /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-    "$reference";then
+if php -r "$php" is_different "$path" "$reference";then
     is_different=1
     __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
@@ -457,20 +689,17 @@ ____
 
 if [ -n "$is_different" ];then
     chapter Memodifikasi file '`'config.inc.php'`'.
-    __ Backup file /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-    backupFile copy /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php
-    php -r "$php" save \
-        /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-        "$reference"
-    if php -r "$php" is_different \
-        /usr/local/share/phpmyadmin/${phpmyadmin_version}/config.inc.php \
-        "$reference";then
+    __ Backup file "$path"
+    backupFile copy "$path"
+    php -r "$php" save "$path" "$reference"
+    if php -r "$php" is_different "$path" "$reference";then
         __; red Modifikasi file '`'config.inc.php'`' gagal.; x
     else
         __; green Modifikasi file '`'config.inc.php'`' berhasil.; _.
     fi
     ____
 fi
+____
 
 chapter Mengecek HTTP Response Code.
 code curl http://127.0.0.1 -H '"'Host: ${PHPMYADMIN_FQDN_LOCALHOST}'"'
