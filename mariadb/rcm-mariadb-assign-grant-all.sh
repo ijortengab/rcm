@@ -189,14 +189,19 @@ fi
 
 chapter Mengecek grants user '`'$db_user'`' ke database '`'$db_name'`'.
 notfound=
-msg=$(mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}")
 # GRANT USAGE ON *.* TO `xxx`@`localhost` IDENTIFIED BY PASSWORD '*650AEE8441BAF8090D260F1E4A0430DD2AF92FBA'
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, REFERENCES, INDEX, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, EVENT, TRIGGER ON `xxx\\_%`.* TO `xxx`@`localhost`
 # GRANT USAGE ON *.* TO `yyy`@`localhost` IDENTIFIED BY PASSWORD '*23FF9BDB84CBF879F19D46CB6B85F0550CB64F5C'
 # GRANT ALL PRIVILEGES ON `yyy_drupal`.* TO `yyy`@`localhost`
 # GRANT ALL PRIVILEGES ON `yyy_drupal\\_%`.* TO `yyy`@`localhost`
 # "The first grant was auto-generated." Source: https://phoenixnap.com/kb/mysql-show-user-privileges
-if grep -q "GRANT.*ON.*${db_name}.*TO.*${db_user}.*@.*${db_user_host}.*" <<< "$msg";then
+# GRANT USAGE ON *.* TO `roundcube`@`localhost` IDENTIFIED BY PASSWORD '*C75329CD384E7527992AED32A0A0DF1FA0342B15'
+# GRANT ALL PRIVILEGES ON `roundcubemail`.* TO `roundcube`@`localhost`
+__; magenta mysql '"'$db_name'"' --silent --skip-column-names -e '"'show grants for ${db_user}@${db_user_host}'"'; _.
+while read line; do e "$line"; done <<< `mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}"`
+msg=$(mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}")
+__; magenta grep -F "'"GRANT ALL PRIVILEGES ON '`'$db_name'`'.* TO '`'$db_user'`'@'`'$db_user_host'`'"'"; _.
+if grep -q -F 'GRANT ALL PRIVILEGES ON `'"$db_name"'`.* TO `'"$db_user"'`@`'"$db_user_host"'`' <<< "$msg";then
     __ Granted.
 else
     __ Not granted.
@@ -209,7 +214,7 @@ if [ -n "$notfound" ];then
     mysql -e "grant all privileges on \`${db_name}\`.* TO '${db_user}'@'${db_user_host}';"
     mysql -e "grant all privileges on \`${db_name}\_%\`.* TO '${db_user}'@'${db_user_host}';"
     msg=$(mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}")
-    if grep -q "GRANT.*ON.*${db_name}.*TO.*${db_user}.*@.*${db_user_host}.*" <<< "$msg";then
+    if grep -q -F 'GRANT ALL PRIVILEGES ON `'"$db_name"'`.* TO `'"$db_user"'`@`'"$db_user_host"'`' <<< "$msg";then
         __; green Granted.; _.
     else
         __; red Not granted.; x
