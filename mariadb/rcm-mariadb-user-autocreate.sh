@@ -45,7 +45,7 @@ printVersion() {
     echo '0.16.3'
 }
 printHelp() {
-    title RCM MariaDB User Autocreate
+    title RCM MariaDB Database User Autocreate
     _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
@@ -114,7 +114,7 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek Database user '`'$db_user'`'.
+chapter Mengecek database user '`'$db_user'`'.
 code mysql --silent --skip-column-names -e '"''select COUNT(*) FROM mysql.user WHERE user = '"'""$db_user""'"';''"'
 msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
 notfound=
@@ -127,7 +127,7 @@ fi
 ____
 
 if [ -n "$notfound" ];then
-    chapter Membuat user database.
+    chapter Membuat database user.
     code 'mysql -e ''"''create user '"'""${db_user}""'"'@'"'""${db_user_host}""'"' identified by '"'""${db_user_password}""'"';''"'
     mysql -e "create user '${db_user}'@'${db_user_host}' identified by '${db_user_password}';"
     msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
@@ -138,14 +138,14 @@ if [ -n "$notfound" ];then
     fi
     ____
 else
-    chapter Mengecek password user.
+    chapter Mengecek password database user.
     u="$db_user"
     p="$db_user_password"
     code 'mysql --defaults-extra-file=<(printf ''"''[client]\nuser = %s\npassword = %s''"'' ''"'"$u"'"'' ''"'"$p"'"'') -h ''"'"$db_user_host"'"'' -r -N -s -e ''"''"'
     if mysql --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "$u" "$p") -h "$db_user_host" -r -N -s -e "";then
-        __ User password valid.
+        __ Database user password valid.
     else
-        __; red User password tidak valid; x
+        __; red Database user password tidak valid; x
     fi
     ____
 fi
