@@ -51,7 +51,7 @@ printHelp() {
 Usage: rcm-roundcube-autoinstaller-nginx [options]
 
 Options:
-   --php-version
+   --php-version *
         Set the version of PHP FPM.
    --roundcube-version *
         Set the version of RoundCube.
@@ -69,21 +69,18 @@ Global Options:
 Environment Variables:
    ROUNDCUBE_FQDN_LOCALHOST
         Default to roundcube.localhost
-   ROUNDCUBE_DB_NAME
-        Default to roundcubemail
-   ROUNDCUBE_DB_USER
-        Default to roundcube
-   ROUNDCUBE_DB_USER_HOST
-        Default to localhost
    ROUNDCUBE_NGINX_CONFIG_FILE
         Default to roundcube
+   MARIADB_PREFIX_MASTER
+        Default to /usr/local/share/mariadb
+   MARIADB_USERS_CONTAINER_MASTER
+        Default to users
 
 Dependency:
    mysql
-   pwgen
    php
    curl
-   rcm-nginx-setup-php
+   rcm-nginx-virtual-host-autocreate-php
 EOF
 }
 
@@ -97,6 +94,40 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+databaseCredentialRoundcube() {
+    local DB_USER DB_USER_PASSWORD
+    __ Memerlukan file '`'"${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"'`'
+    isFileExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    [ -n "$notfound" ] && fileMustExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    # Populate.
+    . "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    db_user=$DB_USER
+    db_user_password=$DB_USER_PASSWORD
+}
+fileMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -120,26 +151,186 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-databaseCredentialRoundcube() {
-    if [ -f /usr/local/share/roundcube/credential/database ];then
-        local ROUNDCUBE_DB_USER ROUNDCUBE_DB_USER_PASSWORD ROUNDCUBE_BLOWFISH
-        . /usr/local/share/roundcube/credential/database
-        roundcube_db_user=$ROUNDCUBE_DB_USER
-        roundcube_db_user_password=$ROUNDCUBE_DB_USER_PASSWORD
-        roundcube_blowfish=$ROUNDCUBE_BLOWFISH
-    else
-        roundcube_db_user=$ROUNDCUBE_DB_USER # global variable
-        roundcube_db_user_password=$(pwgen -s 32 -1)
-        roundcube_blowfish=$(pwgen -s 32 -1)
-        mkdir -p /usr/local/share/roundcube/credential
-        cat << EOF > /usr/local/share/roundcube/credential/database
-ROUNDCUBE_DB_USER=$roundcube_db_user
-ROUNDCUBE_DB_USER_PASSWORD=$roundcube_db_user_password
-ROUNDCUBE_BLOWFISH=$roundcube_blowfish
-EOF
-        chmod 0500 /usr/local/share/roundcube/credential
-        chmod 0400 /usr/local/share/roundcube/credential/database
+backupDir() {
+    local oldpath="$1" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -e "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -e "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
     fi
+    mv "$oldpath" "$newpath"
+}
+dirMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -d "$1" ];then
+        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -f "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular file: '`'"$target"'`'.
+            backupFile move "$target"
+            create=1
+        fi
+    elif [ -d "$target" ];then
+        __ Melakukan backup direktori: '`'"$target"'`'.
+        backupDir "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
+        else
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
+}
+link_symbolic_dir() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -d "$source" ] || { error Source exists but not directory: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+    chapter Membuat symbolic link directory.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -d "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan directory symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupDir "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular direktori: '`'"$target"'`'.
+            backupDir "$target"
+            create=1
+        fi
+    elif [ -f "$target" ];then
+        __ Melakukan backup file: '`'"$target"'`'.
+        backupFile move "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
+        else
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
 }
 
 # Title.
@@ -151,20 +342,44 @@ chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 code 'ROUNDCUBE_FQDN_LOCALHOST="'$ROUNDCUBE_FQDN_LOCALHOST'"'
-ROUNDCUBE_DB_NAME=${ROUNDCUBE_DB_NAME:=roundcubemail}
-code 'ROUNDCUBE_DB_NAME="'$ROUNDCUBE_DB_NAME'"'
-ROUNDCUBE_DB_USER=${ROUNDCUBE_DB_USER:=roundcube}
-code 'ROUNDCUBE_DB_USER="'$ROUNDCUBE_DB_USER'"'
-ROUNDCUBE_DB_USER_HOST=${ROUNDCUBE_DB_USER_HOST:=localhost}
-code 'ROUNDCUBE_DB_USER_HOST="'$ROUNDCUBE_DB_USER_HOST'"'
 ROUNDCUBE_NGINX_CONFIG_FILE=${ROUNDCUBE_NGINX_CONFIG_FILE:=roundcube}
 code 'ROUNDCUBE_NGINX_CONFIG_FILE="'$ROUNDCUBE_NGINX_CONFIG_FILE'"'
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
+code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 delay=.5; [ -n "$fast" ] && unset delay
 if [ -z "$roundcube_version" ];then
     error "Argument --roundcube-version required."; x
 fi
 code 'roundcube_version="'$roundcube_version'"'
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
 code 'php_version="'$php_version'"'
+nginx_user=
+conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+if [ -f "$conf_nginx" ];then
+    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
+fi
+code 'nginx_user="'$nginx_user'"'
+if [ -z "$nginx_user" ];then
+    error "Variable \$nginx_user failed to populate."; x
+fi
+php_fpm_user="$nginx_user"
+code 'php_fpm_user="'$php_fpm_user'"'
+prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+code 'prefix="'$prefix'"'
+project_container="$ROUNDCUBE_FQDN_LOCALHOST"
+code 'project_container="'$project_container'"'
+php_project_name=www
+code 'php_project_name="'$php_project_name'"'
+mariadb_project_name=roundcube
+code 'mariadb_project_name="'$mariadb_project_name'"'
+root="$prefix/${project_container}/web"
+code 'root="'$root'"'
+root_source="$prefix/${project_container}/${roundcube_version}"
+code 'root_source="'$root_source'"'
 ____
 
 if [ -z "$root_sure" ];then
@@ -177,88 +392,27 @@ if [ -z "$root_sure" ];then
     ____
 fi
 
-chapter Mengecek database '`'$ROUNDCUBE_DB_NAME'`'.
-msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$ROUNDCUBE_DB_NAME'")
-notfound=
-if [[ $msg == $ROUNDCUBE_DB_NAME ]];then
-    __ Database ditemukan.
-else
-    __ Database tidak ditemukan
-    notfound=1
-fi
+target_project_container="${prefix}/${project_container}"
+chapter Mengecek direktori project container '`'$target_project_container'`'.
+isDirExists "$target_project_container"
 ____
 
 if [ -n "$notfound" ];then
-    chapter Membuat database.
-    mysql -e "create database $ROUNDCUBE_DB_NAME character set utf8 collate utf8_general_ci;"
-    msg=$(mysql --silent --skip-column-names -e "select schema_name from information_schema.schemata where schema_name = '$ROUNDCUBE_DB_NAME'")
-    if [[ $msg == $ROUNDCUBE_DB_NAME ]];then
-        __; green Database ditemukan.; _.
-    else
-        __; red Database tidak ditemukan; x
-    fi
-    ____
-fi
-
-chapter Mengecek database credentials RoundCube.
-databaseCredentialRoundcube
-if [[ -z "$roundcube_db_user" || -z "$roundcube_db_user_password" || -z "$roundcube_blowfish" ]];then
-    __; red Informasi credentials tidak lengkap: '`'/usr/local/share/roundcube/credential/database'`'.; x
-else
-    code roundcube_db_user="$roundcube_db_user"
-    code roundcube_db_user_password="$roundcube_db_user_password"
-    code roundcube_blowfish="$roundcube_blowfish"
-fi
-____
-
-chapter Mengecek user database '`'$roundcube_db_user'`'.
-msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$roundcube_db_user';")
-notfound=
-if [ $msg -gt 0 ];then
-    __ User database ditemukan.
-else
-    __ User database tidak ditemukan.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat user database '`'$roundcube_db_user'`'.
-    mysql -e "create user '${roundcube_db_user}'@'${ROUNDCUBE_DB_USER_HOST}' identified by '${roundcube_db_user_password}';"
-    msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$roundcube_db_user';")
-    if [ $msg -gt 0 ];then
-        __; green User database ditemukan.; _.
-    else
-        __; red User database tidak ditemukan; x
-    fi
-    ____
-fi
-
-chapter Mengecek grants user '`'$roundcube_db_user'`' ke database '`'$ROUNDCUBE_DB_NAME'`'.
-notfound=
-msg=$(mysql "$ROUNDCUBE_DB_NAME" --silent --skip-column-names -e "show grants for ${roundcube_db_user}@${ROUNDCUBE_DB_USER_HOST}")
-if grep -q "GRANT.*ON.*${ROUNDCUBE_DB_NAME}.*TO.*${roundcube_db_user}.*@.*${ROUNDCUBE_DB_USER_HOST}.*" <<< "$msg";then
-    __ Granted.
-else
-    __ Not granted.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Memberi grants user '`'$roundcube_db_user'`' ke database '`'$ROUNDCUBE_DB_NAME'`'.
-    mysql -e "grant all privileges on \`${ROUNDCUBE_DB_NAME}\`.* TO '${roundcube_db_user}'@'${ROUNDCUBE_DB_USER_HOST}';"
-    msg=$(mysql "$ROUNDCUBE_DB_NAME" --silent --skip-column-names -e "show grants for ${roundcube_db_user}@${ROUNDCUBE_DB_USER_HOST}")
-    if grep -q "GRANT.*ON.*${ROUNDCUBE_DB_NAME}.*TO.*${roundcube_db_user}.*@.*${ROUNDCUBE_DB_USER_HOST}.*" <<< "$msg";then
-        __; green Granted.; _.
-    else
-        __; red Not granted.; x
-    fi
+    chapter Membuat direktori project container.
+    code mkdir -p '"'$target_project_container'"'
+    code chown $php_fpm_user:$php_fpm_user '"'$target_project_container'"'
+    mkdir -p "$target_project_container"
+    chown $php_fpm_user:$php_fpm_user "$target_project_container"
+    dirMustExists "$target_project_container"
     ____
 fi
 
 chapter Prepare arguments.
-root="/usr/local/share/roundcube/${roundcube_version}"
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+if [ -z "$socket_filename" ];then
+    __; red Socket Filename of PHP-FPM not found.; x
+fi
+code socket_filename="$socket_filename"
 code root="$root"
 filename="$ROUNDCUBE_NGINX_CONFIG_FILE"
 code filename="$filename"
@@ -267,11 +421,11 @@ code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-php $isfast --root-sure \
+rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --root="$root" \
-    --php-version="$php_version" \
     --filename="$filename" \
     --server-name="$server_name" \
+    --fastcgi-pass="unix:${socket_filename}" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek subdomain '`'$ROUNDCUBE_FQDN_LOCALHOST'`'.
@@ -297,59 +451,103 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-chapter Mencari informasi PHP-FPM User.
-__ Membuat file "${root}/.well-known/__getuser.php"
-mkdir -p "${root}/.well-known"
-cat << 'EOF' > "${root}/.well-known/__getuser.php"
-<?php
-echo $_SERVER['USER'];
-EOF
-__ Eksekusi file script.
-__; magenta curl http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}"; _.
-user_nginx=$(curl -Ss http://127.0.0.1/.well-known/__getuser.php -H "Host: ${ROUNDCUBE_FQDN_LOCALHOST}")
-__; magenta user_nginx="$user_nginx"; _.
-if [ -z "$user_nginx" ];then
-    error PHP-FPM User tidak ditemukan; x
-fi
-__ Menghapus file "${root}/.well-known/__getuser.php"
-rm "${root}/.well-known/__getuser.php"
-rmdir "${root}/.well-known" --ignore-fail-on-non-empty
-____
-
 chapter Mengecek file '`'composer.json'`' untuk project '`'roundcube/roundcubemail'`'
-notfound=
-if [ -f /usr/local/share/roundcube/${roundcube_version}/composer.json ];then
-    __ File '`'composer.json'`' ditemukan.
-else
-    __ File '`'composer.json'`' tidak ditemukan.
-    notfound=1
-fi
+path="${root_source}/composer.json"
+isFileExists "$path"
 ____
 
 if [ -n "$notfound" ];then
     chapter Mendownload RoundCube
-    cd          /tmp
-    wget        https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version}/roundcubemail-${roundcube_version}-complete.tar.gz
-    tar xfz     roundcubemail-${roundcube_version}-complete.tar.gz
-    mkdir -p    /usr/local/share/roundcube/${roundcube_version}
-    mv          roundcubemail-${roundcube_version}/* -t /usr/local/share/roundcube/${roundcube_version}/
-    mv          roundcubemail-${roundcube_version}/.[!.]* -t /usr/local/share/roundcube/${roundcube_version}/
-    rmdir       roundcubemail-${roundcube_version}
-    chown -R $user_nginx:$user_nginx /usr/local/share/roundcube/${roundcube_version}
-    if [ -f /usr/local/share/roundcube/${roundcube_version}/composer.json ];then
-        __; green File '`'composer.json'`' ditemukan.; _.
-    else
-        __; red File '`'composer.json'`' tidak ditemukan.; x
+    code sudo -u $php_fpm_user mkdir -p '"'$root_source'"'
+    sudo -u $php_fpm_user mkdir -p "$root_source"
+    cd $root_source
+    __ Mendownload RoundCube
+    path="${root_source}/roundcubemail-${roundcube_version}-complete.tar.gz"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        code sudo -u $php_fpm_user wget "https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version}/roundcubemail-${roundcube_version}-complete.tar.gz"
+        sudo -u $php_fpm_user wget "https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version}/roundcubemail-${roundcube_version}-complete.tar.gz"
+        fileMustExists "$path"
     fi
+    [ -f "$path" ] || fileMustExists "$path"
+    __ Extract File.
+    path_tar_gz="$path"
+    path="${root_source}/roundcubemail-${roundcube_version}/composer.json"
+    isFileExists "$path"
+    if [ -n "$notfound" ];then
+        code sudo -u $php_fpm_user tar xfz "$path_tar_gz"
+        sudo -u $php_fpm_user tar xfz "$path_tar_gz"
+        fileMustExists "$path"
+        __ Memindahkan hasil download ke parent.
+        code sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
+        sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
+    fi
+    [ -f "$path" ] || fileMustExists "$path"
+    __ Memindahkan codebase.
+    code mv "${root_source}/roundcubemail-${roundcube_version}/"'*' -t '"'$root_source'"'
+    code mv "${root_source}/roundcubemail-${roundcube_version}/"'.[!.]*' -t '"'$root_source'"'
+    code rmdir "${root_source}/roundcubemail-${roundcube_version}"
+    mv "${root_source}/roundcubemail-${roundcube_version}/"* -t "$root_source"
+    mv "${root_source}/roundcubemail-${roundcube_version}/".[!.]* -t "$root_source"
+    rmdir "${root_source}/roundcubemail-${roundcube_version}"
+    path="${root_source}/composer.json"
+    fileMustExists "$path"
+    cd - >/dev/null
     ____
 fi
+[ -f "$path" ] || fileMustExists "$path"
+
+source="${root_source}/public_html"
+[ -d "$source" ] || dirMustExists "$source"
+target="$root"
+link_symbolic_dir "$source" "$target" "$php_fpm_user"
+
+chapter Mengecek file konfigurasi RoundCube.
+path="${root_source}/config/config.inc.php"
+isFileExists "$path"
+if [ -n "$notfound" ];then
+    source="${root_source}/config/config.inc.php.sample"
+    fileMustExists "$source"
+    code sudo -u $php_fpm_user cp "$source" "$path"
+    sudo -u $php_fpm_user cp "$source" "$path"
+    fileMustExists "$path"
+    __ Mengosongkan variable '`''$'"config['des_key']"'`'
+    if grep -q -E "\\\$config\\['des_key'\]\s+=\s+'.*';" < "$path";then
+        __ Variable '`''$'"config['des_key']"'`' ditemukan.
+        sed -i "s,\$config\['des_key'\]\s*=\s*'.*';,\$config['des_key'] = '';," "$path"
+        if grep -q -E "\\\$config\\['des_key'\]\s+=\s+'';" < "$path";then
+            __; green Variable berhasil dikosongkan.; _.
+        else
+            __; red Variable tidak berhasil dikosongkan.; x
+        fi
+    else
+        __; red Variable '`''$'"config['des_key']"'`' tidak ditemukan.; x
+    fi
+fi
+[ -f "$path" ] || fileMustExists "$path"
+
+INDENT+="    " \
+rcm-mariadb-setup-project-database $isfast --root-sure \
+    --project-name="$mariadb_project_name" \
+    ; [ ! $? -eq 0 ] && x
+
+chapter Prepare arguments.
+db_name="$mariadb_project_name"
+db_user="$mariadb_project_name"
+code 'db_name="'$db_name'"'
+code 'db_user="'$db_user'"'
+databaseCredentialRoundcube
+code 'db_user_password="'$db_user_password'"'
+db_user_host=localhost
+code 'db_user_host="'$db_user_host'"'
+____
 
 chapter Mengecek apakah RoundCube sudah imported SQL.
 notfound=
 msg=$(mysql \
-    --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${roundcube_db_user}" "${roundcube_db_user_password}") \
+    --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
     --silent --skip-column-names \
-    $ROUNDCUBE_DB_NAME -e "show tables;" | wc -l)
+    $db_name -e "show tables;" | wc -l)
 if [[ $msg -gt 0 ]];then
     __ RoundCube sudah imported SQL.
 else
@@ -360,13 +558,15 @@ ____
 
 if [ -n "$notfound" ];then
     chapter RoundCube Import SQL
+    isFileExists "${root_source}/SQL/mysql.initial.sql"
+    [ -n "$notfound" ] && fileMustExists "${root_source}/SQL/mysql.initial.sql"
     mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${roundcube_db_user}" "${roundcube_db_user_password}") \
-        $ROUNDCUBE_DB_NAME < /usr/local/share/roundcube/${roundcube_version}/SQL/mysql.initial.sql
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
+        $db_name < "${root_source}/SQL/mysql.initial.sql"
     msg=$(mysql \
-        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${roundcube_db_user}" "${roundcube_db_user_password}") \
+        --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
         --silent --skip-column-names \
-        $ROUNDCUBE_DB_NAME -e "show tables;" | wc -l)
+        $db_name -e "show tables;" | wc -l)
     if [[ $msg -gt 0 ]];then
         __; green RoundCube sudah imported SQL.; _.
     else
@@ -375,59 +575,94 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-chapter Mengecek file konfigurasi RoundCube.
-notfound=
-if [ -f /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php ];then
-    __ File '`'config.inc.php'`' ditemukan.
-else
-    __ File '`'config.inc.php'`' tidak ditemukan.
-    notfound=1
-fi
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat file konfigurasi RoundCube.
-    cp /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php.sample \
-        /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-    if [ -f /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php ];then
-        __; green File '`'config.inc.php'`' ditemukan.; _.
-        chown $user_nginx:$user_nginx /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-        chmod a-w /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-    else
-        __; red File '`'config.inc.php'`' tidak ditemukan.; x
-    fi
-    ____
-fi
-
-chapter Mengecek informasi file konfigurasi RoundCube.
 php=$(cat <<'EOF'
 $mode = $_SERVER['argv'][1];
-$file = $_SERVER['argv'][2];
-$array = unserialize($_SERVER['argv'][3]);
-include($file);
-$config = isset($config) ? $config : [];
-$is_different = !empty(array_diff_assoc($array, $config));
+switch ($mode) {
+    case 'is_empty' :
+        $path = $_SERVER['argv'][2];
+        $key = $_SERVER['argv'][3];
+        include($path);
+        $config = isset($config) ? $config : [];
+        if (array_key_exists($key, $config)) {
+            if (is_string($config[$key]) && strlen($config[$key]) === 0) {
+                exit(0);
+            }
+        }
+        exit(1);
+        break;
+    case 'generate_des_key':
+        $path = $_SERVER['argv'][2];
+        include($path."/program/lib/Roundcube/rcube_utils.php");
+        echo rcube_utils::random_bytes(24);
+        break;
+    case 'is_different':
+    case 'save':
+        # Populate variable $is_different.
+        $file = $_SERVER['argv'][2];
+        $reference = unserialize($_SERVER['argv'][3]);
+        include($file);
+        $config = isset($config) ? $config : [];
+        $is_different = !empty(array_diff_assoc(array_map('serialize',$reference), array_map('serialize',$config)));
+        break;
+}
 switch ($mode) {
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
     case 'save':
-        if ($is_different) {
-            $config = array_replace_recursive($config, $array);
-            $content = '$config = '.var_export($config, true).';'.PHP_EOL;
-            $content = <<< EOF
-<?php
-$content
-EOF;
-            file_put_contents($file, $content);
+        if (!$is_different) {
+            exit(0);
         }
+        $contents = file_get_contents($file);
+        $need_edit = array_diff_assoc($reference, $config);
+        $new_lines = [];
+        foreach ($need_edit as $key => $value) {
+            $new_line = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            // Jika indexed array dan hanya satu , maka buat one line.
+            if (is_array($value) && array_key_exists(0, $value) && count($value) === 1) {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), "['".$value[0]."']"], $new_line);
+            }
+            else {
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+            }
+            $is_one_line = preg_match('/\n/', $new_line) ? false : true;
+            $find_existing = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
+            $find_existing = str_replace(['__PARAMETER__','__KEY__'],['$config', var_export($key, true)], $find_existing);
+            $find_existing = preg_quote($find_existing);
+            $find_existing = str_replace('__VALUE__', '.*', $find_existing);
+            $find_existing = '/\s*'.$find_existing.'\s*/';
+            if ($is_one_line && preg_match_all($find_existing, $contents, $matches, PREG_PATTERN_ORDER)) {
+                $contents = str_replace($matches[0], '', $contents);
+            }
+            $new_lines[] = $new_line;
+        }
+        if (substr($contents, -1) != "\n") {
+            $contents .= "\n";
+        }
+        $contents .= implode("\n", $new_lines);
+        $contents .= "\n";
+        file_put_contents($file, $contents);
         break;
 }
 EOF
 )
+chapter Mengecek informasi file konfigurasi RoundCube.
+path="${root_source}/config/config.inc.php"
+if php -r "$php" is_empty "$path" des_key;then
+    __ Key '`'des_key'`' belum berisi nilai. Diperlukan modifikasi file '`'config.inc.php'`'.
+    des_key=`php -r "$php" generate_des_key "$root_source"`
+    sed -i "s,\$config\['des_key'\] = '';.*,\$config['des_key'] = '$des_key';," "$path"
+    if php -r "$php" is_empty "$path" des_key;then
+        __; red Key '`'des_key'`' belum berisi nilai. Gagal modifikasi file '`'config.inc.php'`'.
+    else
+        __; green Key '`'des_key'`' sudah terisi nilai. Berhasil modifikasi file '`'config.inc.php'`'.; _.
+    fi
+else
+    __ Key '`'des_key'`' sudah terisi nilai. Tidak diperlukan modifikasi file '`'config.inc.php'`'.
+fi
+
 reference="$(php -r "echo serialize([
-    'des_key' => '$roundcube_blowfish',
-    'db_dsnw' => 'mysql://${roundcube_db_user}:${roundcube_db_user_password}@${ROUNDCUBE_DB_USER_HOST}/${ROUNDCUBE_DB_NAME}',
+    'db_dsnw' => 'mysql://${db_user}:${db_user_password}@${db_user_host}/${db_name}',
     'smtp_host' => 'localhost:25',
     'smtp_user' => '',
     'smtp_pass' => '',
@@ -436,9 +671,7 @@ reference="$(php -r "echo serialize([
     'default_list_mode' => 'threads',
 ]);")"
 is_different=
-if php -r "$php" is_different \
-    /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-    "$reference";then
+if php -r "$php" is_different "$path" "$reference";then
     is_different=1
     __ Diperlukan modifikasi file '`'config.inc.php'`'.
 else
@@ -448,14 +681,10 @@ ____
 
 if [ -n "$is_different" ];then
     chapter Memodifikasi file '`'config.inc.php'`'.
-    __ Backup file /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-    backupFile copy /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php
-    php -r "$php" save \
-        /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-        "$reference"
-    if php -r "$php" is_different \
-        /usr/local/share/roundcube/${roundcube_version}/config/config.inc.php \
-        "$reference";then
+    __ Backup file "$path"
+    backupFile copy "$path"
+    php -r "$php" save "$path" "$reference"
+    if php -r "$php" is_different "$path" "$reference";then
         __; red Modifikasi file '`'config.inc.php'`' gagal.; x
     else
         __; green Modifikasi file '`'config.inc.php'`' berhasil.; _.
