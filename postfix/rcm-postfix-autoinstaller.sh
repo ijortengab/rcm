@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.16.3'
+    echo '0.16.4'
 }
 printHelp() {
     title RCM Postfix Auto-Installer
