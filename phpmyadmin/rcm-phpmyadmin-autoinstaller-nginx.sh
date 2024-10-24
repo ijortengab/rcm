@@ -608,10 +608,10 @@ switch ($mode) {
             $new_line = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
             // Jika indexed array dan hanya satu , maka buat one line.
             if (is_array($value) && array_key_exists(0, $value) && count($value) === 1) {
-                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), "['".$value[0]."']"], $new_line);
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$cfg'."['Servers'][1]", var_export($key, true), "['".$value[0]."']"], $new_line);
             }
             else {
-                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$config', var_export($key, true), var_export($value, true)], $new_line);
+                $new_line = str_replace(['__PARAMETER__','__KEY__','__VALUE__'],['$cfg'."['Servers'][1]", var_export($key, true), var_export($value, true)], $new_line);
             }
             $is_one_line = preg_match('/\n/', $new_line) ? false : true;
             $find_existing = "__PARAMETER__[__KEY__] = __VALUE__; # managed by RCM";
