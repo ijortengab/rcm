@@ -264,7 +264,10 @@ link_symbolic_dir() {
     local source="$1"
     local target="$2"
     local sudo="$3"
+    local source_mode="$4"
     local create
+    [ "$sudo" == - ] && sudo=
+    [ "$source_mode" == absolute ] || source_mode=
     [ -e "$source" ] || { error Source not exist: $source.; x; }
     [ -d "$source" ] || { error Source exists but not directory: $source.; x; }
     [ -n "$target" ] || { error Target not defined.; x; }
@@ -315,13 +318,15 @@ link_symbolic_dir() {
         local target_parent=$(dirname "$target")
         code mkdir -p "$target_parent"
         mkdir -p "$target_parent"
-        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -z "$source_mode" ];then
+            source=$(realpath -s --relative-to="$target_parent" "$source")
+        fi
         if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
-            sudo -u "$sudo" ln -s "$source_relative" "$target"
+            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source" "$target"
         else
-            code ln -s '"'$source_relative'"' '"'$target'"'
-            ln -s "$source_relative" "$target"
+            code ln -s '"'$source'"' '"'$target'"'
+            ln -s "$source" "$target"
         fi
         if [ $? -eq 0 ];then
             __; green Symbolic link berhasil dibuat.; _.
