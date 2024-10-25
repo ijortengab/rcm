@@ -78,7 +78,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1;= }
+[ -n "$version" ] && { printVersion; exit 1; }
 
 # Dependency.
 while IFS= read -r line; do
