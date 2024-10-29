@@ -116,6 +116,15 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-php-fpm-setup-project-config
+____
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
 # Functions.
 backupFile() {
     local mode="$1"
@@ -150,15 +159,6 @@ fileMustExists() {
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
-
-# Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-
-# Title.
-title rcm-php-fpm-setup-project-config
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
