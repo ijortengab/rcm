@@ -70,8 +70,12 @@ EOF
 
 # Title.
 title rcm-php-setup-adjust-cli-version
-
 ____
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
 chapter Dump variable.
