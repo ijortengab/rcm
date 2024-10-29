@@ -79,6 +79,16 @@ EOF
 title rcm-postfix-autoinstaller
 ____
 
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
@@ -130,16 +140,6 @@ code 'hostname="'$hostname'"'
 fqdn_string="${hostname}.${domain}"
 code fqdn_string="$fqdn_string"
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 debconf-set-selections <<< "postfix postfix/mailname string ${fqdn_string}"
 debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"

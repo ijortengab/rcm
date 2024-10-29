@@ -79,6 +79,16 @@ EOF
 title rcm-certbot-obtain-authenticator-nginx
 ____
 
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
@@ -95,16 +105,6 @@ if [[ "${#domain[@]}" -eq 0 ]];then
     error Argument --domain is required.; x
 fi
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 chapter Populate variable email.
 email=$(certbot show_account 2>/dev/null | grep -o -P 'Email contact: \K(.*)')

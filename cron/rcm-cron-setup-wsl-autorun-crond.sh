@@ -73,6 +73,16 @@ EOF
 title rcm-cron-setup-wsl-autorun-crond
 ____
 
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
@@ -115,16 +125,6 @@ esac
 code 'is_cygwin="'$is_cygwin'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 filename_string="/var/log/${BASENAME}.log"
 chapter Mengecek file log '`'$filename_string'`'

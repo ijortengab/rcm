@@ -75,6 +75,16 @@ EOF
 title rcm-mariadb-database-autocreate
 ____
 
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'$line'`'.; x; }
@@ -87,16 +97,6 @@ if [ -z "$db_name" ];then
 fi
 code 'db_name="'$db_name'"'
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 chapter Mengecek database '`'$db_name'`'.
 code 'mysql --silent --skip-column-names -e ''"''select schema_name from information_schema.schemata where schema_name = '"'""$db_name""'"'"'
