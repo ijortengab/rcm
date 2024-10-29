@@ -93,6 +93,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-mariadb-setup-project-database
+____
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -116,10 +120,6 @@ EOF
         chmod 0400 "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
     fi
 }
-
-# Title.
-title rcm-mariadb-setup-project-database
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.

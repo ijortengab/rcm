@@ -76,6 +76,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ubuntu-22.04-setup-basic
+____
+
 # Functions.
 downloadApplication() {
     local aptnotfound=
@@ -130,10 +134,6 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
-
-# Title.
-title rcm-ubuntu-22.04-setup-basic
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.

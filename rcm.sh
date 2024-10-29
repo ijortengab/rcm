@@ -199,6 +199,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm
+____
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -1564,10 +1568,6 @@ Rcm_get() {
     code chmod a+x "$BINARY_DIRECTORY/$filename"
     chmod a+x "$BINARY_DIRECTORY/$filename"
 }
-
-# Title.
-title rcm
-____
 
 # Prompt.
 if [ -z "$fast" ];then

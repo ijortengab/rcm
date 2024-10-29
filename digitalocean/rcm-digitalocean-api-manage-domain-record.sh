@@ -118,6 +118,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-digitalocean-api-manage-domain-record
+____
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -264,10 +268,6 @@ EOF
 )
     php -r "$php" <<< "$json"
 }
-
-# Title.
-title rcm-digitalocean-api-manage-domain-record
-____
 
 # Require, validate, and populate value.
 chapter Dump variable.

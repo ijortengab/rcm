@@ -62,14 +62,14 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-composer-autoinstaller
+____
+
 # Dependency.
 command -v "php" >/dev/null || { echo -e "\e[91m" "Unable to proceed, php command not found." "\e[39m"; exit 1; }
 
 # Functions.
-
-# Title.
-title rcm-composer-autoinstaller
-____
 
 # Require, validate, and populate value.
 chapter Dump variable.

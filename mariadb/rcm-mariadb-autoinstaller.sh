@@ -62,6 +62,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-mariadb-autoinstaller
+____
+
 # Functions.
 downloadApplication() {
     local aptnotfound=
@@ -93,10 +97,6 @@ validateApplication() {
         __; red Gagal menginstall aplikasi:"$aptnotfound"; x
     fi
 }
-
-# Title.
-title rcm-mariadb-autoinstaller
-____
 
 # Requirement, validate, and populate value.
 chapter Dump variable.

@@ -89,6 +89,10 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-ssh-setup-sshd-listen-port
+____
+
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { echo -e "\e[91m""Unable to proceed, "'`'"${line}"'`'" command not found." "\e[39m"; exit 1; }
@@ -105,10 +109,6 @@ fileMustExists() {
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
-
-# Title.
-title rcm-ssh-setup-sshd-listen-port
-____
 
 # Require, validate, and populate value.
 chapter Dump variable.
