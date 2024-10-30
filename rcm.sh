@@ -8,6 +8,8 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --fast) fast=1; shift ;;
+        --immediately) immediately=1; shift ;;
+        --non-immediately) immediately=0; shift ;;
         --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --) shift
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
+
 
 # Command.
 command="$1"; shift
@@ -1827,14 +1830,17 @@ chapter Execute:
 code ${command}${isfast}${isnoninteractive} "$@"
 ____
 
-if [ -z "$non_interactive" ];then
-    sleepExtended 3
+if [ -n "$non_interactive" ];then
+    immediately=1
+elif [[ -z "$fast" && -z "$immediately" ]];then
+    immediately=0
 fi
 
-if [ -z "$fast" ];then
-    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    sleepExtended 2
-    ____
+if [[ "$immediately" == "0" ]];then
+    if [ -z "$fast" ];then
+        _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    fi
+    sleepExtended 3
 fi
 
 chapter Timer Start.
@@ -1871,6 +1877,7 @@ exit 0
 # --root-sure
 # --binary-directory-exists-sure
 # --non-interactive
+# --immediately
 # )
 # VALUE=(
 # )
@@ -1879,6 +1886,7 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--non-immediately,parameter:immediately,flag_option:reverse'
 # )
 # OPERAND=(
 # install
