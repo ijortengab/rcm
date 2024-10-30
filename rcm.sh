@@ -646,7 +646,6 @@ Rcm_resolve_dependencies() {
     commands_exists=()
     table_downloads=
     if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
-        _ Resolve dependency. Please wait.
         display_waiting=1
     fi
     until [[ ${#commands_required[@]} -eq 0 ]];do
@@ -1858,7 +1857,23 @@ fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
 
-Rcm_resolve_dependencies $command
+if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+    chapter Resolve dependencies.
+    Rcm_resolve_dependencies $command &
+    pid=$!
+    spin='-\|/'
+    i=0
+    while kill -0 $pid 2>/dev/null
+    do
+      i=$(( (i+1) %4 ))
+      printf "\r" >&2; __; _, "Waiting...${spin:$i:1}"
+      sleep .1
+    done
+    __ Resolved.
+    ____
+else
+    Rcm_resolve_dependencies $command
+fi
 
 if [ -z "$non_interactive" ];then
     _new_arguments=()
