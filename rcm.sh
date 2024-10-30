@@ -647,6 +647,7 @@ Rcm_resolve_dependencies() {
     table_downloads=
     if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
         _ Resolve dependency. Please wait.
+        display_waiting=1
     fi
     until [[ ${#commands_required[@]} -eq 0 ]];do
         _commands_required=()
@@ -693,11 +694,17 @@ Rcm_resolve_dependencies() {
                         if [[ "$verbose" -gt 0 ]];then
                             _.
                         fi
+                        if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                                display_waiting=
+                            fi
+                        fi
                         is_updated=
                         if Rcm_is_internal "$command_required";then
                             github_owner_repo=ijortengab/rcm
                             github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                            OLDINDENT="$INDENT"; INDENT+='    '
+                            OLDINDENT="$INDENT"; INDENT+=''
                             code rcm update $(sed s,^rcm-,, <<< "$command_required")
                             INDENT+='    '
                             blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
@@ -705,7 +712,7 @@ Rcm_resolve_dependencies() {
                             INDENT="$OLDINDENT"
                             is_updated=1
                         elif [[ "$command_required" == rcm ]];then
-                            OLDINDENT="$INDENT"; INDENT+='    '
+                            OLDINDENT="$INDENT"; INDENT+=''
                             code rcm self-update
                             INDENT+='    '
                             set -- update rcm ijortengab/rcm rcm.sh
@@ -724,7 +731,7 @@ Rcm_resolve_dependencies() {
                                     if [[ $github_media_type == raw ]];then
                                         github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                         github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                        OLDINDENT="$INDENT"; INDENT+='    '
+                                        OLDINDENT="$INDENT"; INDENT+=''
                                         code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                         INDENT+='    '
                                         Rcm_github_release update $command_required $github_owner_repo $github_file_path
@@ -749,12 +756,18 @@ Rcm_resolve_dependencies() {
                     rm "$BINARY_DIRECTORY/$command_required"
                 fi
                 if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
+                    if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+                        if [ -n "$display_waiting" ];then
+                            printf "\r\033[K"
+                            display_waiting=
+                        fi
+                    fi
                     if Rcm_is_internal "$command_required";then
                         PHP_URL_SCHEME='https://'
                         PHP_URL_HOST='github.com'
                         github_owner_repo=ijortengab/rcm
                         github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                        OLDINDENT="$INDENT"; INDENT+='    '
+                        OLDINDENT="$INDENT"; INDENT+=''
                         code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         INDENT+='    '
                         Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
@@ -773,7 +786,7 @@ Rcm_resolve_dependencies() {
                                 if [[ $_github_media_type == raw ]];then
                                     github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                     github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                    OLDINDENT="$INDENT"; INDENT+='    '
+                                    OLDINDENT="$INDENT"; INDENT+=''
                                     code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                     INDENT+='    '
                                     Rcm_github_release install $command_required $github_owner_repo $github_file_path
@@ -785,7 +798,7 @@ Rcm_resolve_dependencies() {
                         url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                         if [ -n "$url" ];then
                             Rcm_parse_url "$url"
-                            OLDINDENT="$INDENT"; INDENT+='    '
+                            OLDINDENT="$INDENT"; INDENT+=''
                             save_as="$command_required"
                             if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
                                 code rcm get "$url"
@@ -844,7 +857,9 @@ Rcm_resolve_dependencies() {
         fi
     done
     if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
-        printf "\r\033[K"
+        if [ -n "$display_waiting" ];then
+            printf "\r\033[K"
+        fi
     fi
 }
 Rcm_prompt() {
