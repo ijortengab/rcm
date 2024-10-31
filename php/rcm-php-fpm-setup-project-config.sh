@@ -183,9 +183,6 @@ code 'nginx_user="'$nginx_user'"'
 if [ -z "$nginx_user" ];then
     error "Variable \$nginx_user failed to populate."; x
 fi
-if [[ "$php_fpm_user" == - ]];then
-    php_fpm_user="$nginx_user"
-fi
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
