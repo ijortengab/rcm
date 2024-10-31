@@ -122,11 +122,13 @@ fi
 code 'waiting_time="'$waiting_time'"'
 ____
 
-chapter Watching
+chapter Watching Begin
 __ Make sure the DNS Record '(A or CNAME)' of '`'$domain'`' is exist.
 finish=
 e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
+____
+
 until [ -n "$finish" ];do
     _finish=""
 
@@ -146,6 +148,7 @@ until [ -n "$finish" ];do
         ; [ $? -eq 0 ] && _finish+="1"
 
     if [[ "$_finish" =~ 1 ]];then
+        chapter Watching End
         success The required DNS Records already exist '(A or CNAME)'.
         e End: $(date +%Y%m%d-%H%M%S)
         Rcm_END=$SECONDS
@@ -154,13 +157,13 @@ until [ -n "$finish" ];do
         runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
         _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
         finish=1
+        ____
     else
         error There are not exist DNS Record of '`'$domain'`' '(neither A nor CNAME)'.
         e We are still waiting.
         sleepExtended $waiting_time
     fi
 done
-____
 
 exit 0
 
