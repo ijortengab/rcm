@@ -1924,7 +1924,12 @@ command -v "$command" >/dev/null || { red "Unable to proceed, $command command n
 chapter Execute:
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 [ -n "$non_interactive" ] && isnoninteractive=' --non-interactive' || isnoninteractive=''
-code ${command}${isfast}${isnoninteractive} "$@"
+[ -n "$verbose" ] && {
+    for ((i = 0 ; i < "$verbose" ; i++)); do
+        isverbose+=' --verbose'
+    done
+} || isverbose=
+code ${command}${isfast}${isnoninteractive}${isverbose} "$@"
 ____
 
 if [ -n "$non_interactive" ];then
@@ -1945,7 +1950,7 @@ e Begin: $(date +%Y%m%d-%H%M%S)
 Rcm_BEGIN=$SECONDS
 ____
 
-INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive --root-sure "$@"
+INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose --root-sure "$@"
 
 chapter Timer Finish.
 e End: $(date +%Y%m%d-%H%M%S)
