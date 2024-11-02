@@ -1000,9 +1000,24 @@ Rcm_prompt() {
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
                 _ "${label}"; _.
-                _;_.
-                __; _, Add this argument?; _.
-                userInputBooleanDefaultNo
+                _boolean=
+                for each in "${argument_prepopulate[@]}";do
+                    if grep -q -- "^${parameter}\$" <<< "$each";then
+                        # @todo, flag juga perlu di backup nih
+                        _boolean=1
+                        break
+                    fi
+                done
+                if [ -z "$_boolean" ];then
+                    _;_.
+                    __; _, Add this argument?; _.
+                    userInputBooleanDefaultNo
+                else
+                    _;_.
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated,' '; green pass; _, .; _.
+                    boolean=1
+                fi
+
                 if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         __; _, Do you want fill with value?; _.
@@ -1071,14 +1086,12 @@ Rcm_prompt() {
                     _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
                     _ "${label}"; _.
                 fi
-                # @todo, argument prepopulate untuk flag.
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
                         _;_.
                         __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, prepopulated.; _.
                         backup_value=
-                        # argument_pass+=("${parameter}=${value}")
                         break
                     fi
                 done
