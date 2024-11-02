@@ -862,7 +862,6 @@ Rcm_resolve_dependencies() {
     fi
 }
 Rcm_prompt() {
-
     local command="$1"
     local chapter_printed=
     argument_pass=()
@@ -1032,6 +1031,21 @@ Rcm_prompt() {
                     else
                         argument_pass+=("${parameter}")
                     fi
+                    # Populate placeholders.
+                    if [ -n "$argument_placeholders" ];then
+                        argument_placeholders+=$'\n'
+                    fi
+                    if [ -n "$value" ];then
+                        argument_placeholders+='['"$parameter"']: '"$value"
+                    else
+                        argument_placeholders+='['"$parameter"']: '"1"
+                    fi
+                else
+                    # Populate placeholders.
+                    if [ -n "$argument_placeholders" ];then
+                        argument_placeholders+=$'\n'
+                    fi
+                    argument_placeholders+='['"$parameter"']: '"0"
                 fi
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
@@ -1082,7 +1096,6 @@ Rcm_prompt() {
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
                             __; _, Get the output of '`'${_command}${_arguments}'`'.;_.
-
                             while read line;do
                                 available_values+=("$line")
                             done <<< `${_command}${_arguments}`
