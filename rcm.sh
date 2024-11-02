@@ -1097,11 +1097,10 @@ Rcm_prompt() {
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
                             __; _, Get the output of '`'${_command}${_arguments}'`'.;_.
                             while read line;do
-                                available_values+=("$line")
+                                [ -n "$line" ] && available_values+=("$line")
                             done <<< `${_command}${_arguments}`
                         fi
                     fi
-
                     if [ "${#available_values[@]}" -gt 0 ];then
                         if [ -n "$or_other" ];then
                             printSelectOtherDialog available_values[@]
@@ -1110,10 +1109,15 @@ Rcm_prompt() {
                         fi
                     else
                         _; _.
-                        if [ -n "$is_required" ];then
-                            __; read -p "Type the value: " value
+                        if [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
+                            is_required=
+                            __; _, No value available,' '; green pass; _, .; _.
                         else
-                            __; read -p "Type the value or leave blank to skip: " value
+                            if [ -n "$is_required" ];then
+                                __; read -p "Type the value: " value
+                            else
+                                __; read -p "Type the value or leave blank to skip: " value
+                            fi
                         fi
                     fi
                 fi
