@@ -1779,10 +1779,16 @@ case $command in
     get)
         Rcm_get "${@}"; x;;
     install)
+        # @todo, sementara gunakan ini dulu.
+        verbose=2
         Rcm_install "${@}"; x;;
     update)
+        # @todo, sementara gunakan ini dulu.
+        verbose=2
         Rcm_update "${@}"; x;;
     self-update|selfupdate)
+        # @todo, sementara gunakan ini dulu.
+        verbose=2
         Rcm_github_release "${@}"; x;;
 esac
 
