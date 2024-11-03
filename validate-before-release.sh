@@ -52,5 +52,14 @@ if [ $? -eq 0 ];then
     green There no changes.; _.
 else
     rm "${file}.txt"
-    red Need update; x
+    red Need update;_.
+fi
+_.
+yellow 'Set chmod a+x'; _.
+magenta 'find * -mindepth 1 -type f -perm 0644 -name '"'"'*.sh'"'"; _.
+find * -mindepth 1 -type f -perm 0644 -name '*.sh'
+if [[ $(find * -mindepth 1 -type f -perm 0644 -name '*.sh' | wc -l) -eq 0 ]];then
+    green There no changes.; _.
+else
+    red Need update;_.
 fi
