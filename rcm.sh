@@ -703,16 +703,20 @@ Rcm_resolve_dependencies() {
                         if Rcm_is_internal "$command_required";then
                             github_owner_repo=ijortengab/rcm
                             github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                            if [[ "$verbose" -gt 0 ]];then
+                                code rcm update $(sed s,^rcm-,, <<< "$command_required")
+                            fi
                             OLDINDENT="$INDENT"; INDENT+=''
-                            code rcm update $(sed s,^rcm-,, <<< "$command_required")
                             INDENT+='    '
                             blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
                             Rcm_github_release update $command_required $github_owner_repo $github_file_path
                             INDENT="$OLDINDENT"
                             is_updated=1
                         elif [[ "$command_required" == rcm ]];then
+                            if [[ "$verbose" -gt 0 ]];then
+                                code rcm self-update
+                            fi
                             OLDINDENT="$INDENT"; INDENT+=''
-                            code rcm self-update
                             INDENT+='    '
                             set -- update rcm ijortengab/rcm rcm.sh
                             Rcm_github_release "$@"
@@ -730,8 +734,10 @@ Rcm_resolve_dependencies() {
                                     if [[ $github_media_type == raw ]];then
                                         github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                         github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                        if [[ "$verbose" -gt 0 ]];then
+                                            code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                        fi
                                         OLDINDENT="$INDENT"; INDENT+=''
-                                        code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                         INDENT+='    '
                                         Rcm_github_release update $command_required $github_owner_repo $github_file_path
                                         INDENT="$OLDINDENT"
@@ -755,19 +761,15 @@ Rcm_resolve_dependencies() {
                     rm "$BINARY_DIRECTORY/$command_required"
                 fi
                 if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
-                    if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
-                        if [ -n "$display_waiting" ];then
-                            printf "\r\033[K"
-                            display_waiting=
-                        fi
-                    fi
                     if Rcm_is_internal "$command_required";then
                         PHP_URL_SCHEME='https://'
                         PHP_URL_HOST='github.com'
                         github_owner_repo=ijortengab/rcm
                         github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                        if [[ "$verbose" -gt 0 ]];then
+                            code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                        fi
                         OLDINDENT="$INDENT"; INDENT+=''
-                        code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         INDENT+='    '
                         Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
                         INDENT="$OLDINDENT"
@@ -785,8 +787,10 @@ Rcm_resolve_dependencies() {
                                 if [[ $_github_media_type == raw ]];then
                                     github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                     github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                    if [[ "$verbose" -gt 0 ]];then
+                                        code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                    fi
                                     OLDINDENT="$INDENT"; INDENT+=''
-                                    code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                     INDENT+='    '
                                     Rcm_github_release install $command_required $github_owner_repo $github_file_path
                                     INDENT="$OLDINDENT"
@@ -800,11 +804,15 @@ Rcm_resolve_dependencies() {
                             OLDINDENT="$INDENT"; INDENT+=''
                             save_as="$command_required"
                             if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
-                                code rcm get "$url"
+                                if [[ "$verbose" -gt 0 ]];then
+                                    code rcm get "$url"
+                                fi
                                 INDENT+='    '
                                 Rcm_get "$url"
                             else
-                                code rcm get "$url" --save-as='"'"$command_required"'"'
+                                if [[ "$verbose" -gt 0 ]];then
+                                    code rcm get "$url" --save-as='"'"$command_required"'"'
+                                fi
                                 INDENT+='    '
                                 Rcm_get "$url"
                             fi
@@ -1272,7 +1280,9 @@ Rcm_github_release() {
             fi
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
             if [ "$current_version" == "$latest_version" ];then
-                _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
+                if [[ "$verbose" -gt 0 ]];then
+                    _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
+                fi
                 exit 0
             fi
             backup_path=$HOME/.cache/rcm/$github_repo/rollback/$shell_script
@@ -1284,7 +1294,9 @@ Rcm_github_release() {
     esac
     local cache_directory=$HOME/.cache/rcm/$github_repo/$latest_version
     if [ ! -d "$cache_directory" ];then
-        _ 'Downloading version: '; yellow $latest_version; _.
+        if [[ "$verbose" -gt 0 ]];then
+            _ 'Downloading version: '; yellow $latest_version; _.
+        fi
         url='https://api.github.com/repos/'$github_repo'/tarball/'$tag_name
         tempdir=$(mktemp -d)
         cd "$tempdir"
@@ -1308,7 +1320,9 @@ Rcm_github_release() {
         cd - >/dev/null
         rm -rf "$tempdir"
     else
-        _ 'Using downloaded version: '; yellow $latest_version; _.
+        if [[ "$verbose" -gt 0 ]];then
+            _ 'Using downloaded version: '; yellow $latest_version; _.
+        fi
     fi
     local filename="${cache_directory}/${blob_path}"
     if [ ! -f "$filename" ];then
@@ -1317,23 +1331,33 @@ Rcm_github_release() {
     case $mode in
         install)
             if [ -f "${BINARY_DIRECTORY}/${shell_script}" ];then
-                __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                if [[ "$verbose" -gt 1 ]];then
+                    __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                fi
                 backupFile move "${BINARY_DIRECTORY}/${shell_script}"
             elif [ -h "${BINARY_DIRECTORY}/${shell_script}" ];then
-                __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                if [[ "$verbose" -gt 1 ]];then
+                    __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
+                fi
                 backupFile move "${BINARY_DIRECTORY}/${shell_script}"
             fi
-            code cp '"'$filename'"' '"'$BINARY_DIRECTORY/$shell_script'"'
+            if [[ "$verbose" -gt 0 ]];then
+                code cp '"'$filename'"' '"'$BINARY_DIRECTORY/$shell_script'"'
+            fi
             cp "$filename" $BINARY_DIRECTORY/$shell_script
             current_version=`$shell_script --version`
-            _ 'Success install '; magenta $shell_script; _, ' version: '; yellow $current_version; _.
+            if [[ "$verbose" -gt 0 ]];then
+                _ 'Success install '; magenta $shell_script; _, ' version: '; yellow $current_version; _.
+            fi
         ;;
         update)
             cp "$filename" "$current_path"
             old_version=$current_version
             current_version=`$shell_script --version`
-            _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
-            e To rollback version $old_version, execute the latest command with --rollback options.
+            if [[ "$verbose" -gt 0 ]];then
+                _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
+                e To rollback version $old_version, execute the latest command with --rollback options.
+            fi
         ;;
     esac
 }
