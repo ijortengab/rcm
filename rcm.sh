@@ -1998,6 +1998,8 @@ if [ -z "$non_interactive" ];then
                     fi
                     shift
                     ;;
+                *)
+                    shift
             esac
         done
     fi
