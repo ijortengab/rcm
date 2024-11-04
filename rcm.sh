@@ -1190,7 +1190,9 @@ Rcm_prompt() {
                 fi
             fi
             # Backup to text file.
-            value=$(echo "$value" | sed -E 's/[^/a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+            # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
+            # Credit: https://stackoverflow.com/a/47918586
+            value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
             if [ -n "$value" ];then
                 mkdir -p $(dirname "$backup_storage")
                 echo "${parameter}=${value}" >> "$backup_storage"
@@ -1984,15 +1986,11 @@ if [ -z "$non_interactive" ];then
                     done
                     ;;
                 --[^-]*)
-                    if [[ "$1" =~ ^-- ]];then
-                        if [[ "$2" =~ ^-- ]];then
-                            argument_prepopulate+=("$1");
-                        elif [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]];then
-                            argument_prepopulate+=("$1"="$2");
-                            shift
-                        else
-                            argument_prepopulate+=("$1");
-                        fi
+                    if [[ "$2" =~ ^-- ]];then
+                        argument_prepopulate+=("$1");
+                    elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
+                        argument_prepopulate+=("$1"="$2");
+                        shift
                     else
                         argument_prepopulate+=("$1");
                     fi
