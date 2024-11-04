@@ -1010,17 +1010,24 @@ Rcm_prompt() {
                 _ "${label}"; _.
                 _boolean=
                 for each in "${argument_prepopulate[@]}";do
-                    if grep -q -- "^${parameter}\$" <<< "$each";then
+                    if grep -q -- "^${parameter}-\$" <<< "$each";then
+                        _boolean=0
+                        break
+                    elif grep -q -- "^${parameter}\$" <<< "$each";then
                         # @todo, flag juga perlu di backup nih
                         _boolean=1
                         break
                     fi
                 done
+                boolean=
                 if [ -z "$_boolean" ];then
                     _;_.
                     __; _, Add this argument?; _.
                     userInputBooleanDefaultNo
-                else
+                elif [[ "$_boolean" == 0 ]];then
+                    _;_.
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; green pass; _, .; _.
+                elif [[ "$_boolean" == 1 ]];then
                     _;_.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated,' '; green pass; _, .; _.
                     boolean=1
