@@ -1013,12 +1013,27 @@ Rcm_prompt() {
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _boolean=0
                         break
+                    elif grep -q -- "^${parameter}-=" <<< "$each";then
+                        # Ada argument lupa dihapus, contoh: --with-roundcube- mail.example.org
+                        # maka set sebagai skip.
+                        _boolean=0
+                        break
                     elif grep -q -- "^${parameter}\$" <<< "$each";then
                         # @todo, flag juga perlu di backup nih
                         _boolean=1
+                        if [[ "$value_addon" == 'canhavevalue' ]];then
+                            value_addon=
+                        fi
                         break
+                    elif grep -q -- "^${parameter}=" <<< "$each";then
+                        if [[ "$value_addon" == 'canhavevalue' ]];then
+                            _boolean=1
+                            value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
+                            break
+                        fi
                     fi
                 done
+                # Reset first.
                 boolean=
                 if [ -z "$_boolean" ];then
                     _;_.
@@ -1029,17 +1044,29 @@ Rcm_prompt() {
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; green pass; _, .; _.
                 elif [[ "$_boolean" == 1 ]];then
                     _;_.
-                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated,' '; green pass; _, .; _.
+                    if [ -n "$value" ];then
+                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated with value' '; yellow $value; _, .; _.
+                    else
+                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated,' '; green pass; _, .; _.
+                    fi
                     boolean=1
                 fi
-
                 if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
-                        __; _, Do you want fill with value?; _.
-                        userInputBooleanDefaultNo
+                        if [ -z "$value" ];then
+                            _;_.
+                            __; _, Do you want fill with value?; _.
+                            userInputBooleanDefaultNo
+                        fi
+                        if [ -n "$value" ];then
+                            # fill from prepopulated
+                            boolean=1
+                        fi
                         if [ -n "$boolean" ]; then
-                            if [ -n "$backup_value" ];then
-                                printBackupDialog
+                            if [ -z "$value" ];then
+                                if [ -n "$backup_value" ];then
+                                    printBackupDialog
+                                fi
                             fi
                             if [ -z "$value" ];then
                                 if [ -n "$history_value" ];then
