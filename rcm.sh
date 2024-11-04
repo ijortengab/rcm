@@ -1129,7 +1129,15 @@ Rcm_prompt() {
                     _ "${label}"; _.
                 fi
                 for each in "${argument_prepopulate[@]}";do
-                    if grep -q -- "^${parameter}=" <<< "$each";then
+                    if grep -q -- "^${parameter}-\$" <<< "$each";then
+                        _;_.
+                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; green pass; _, .; _.
+                        backup_value=
+                        history_value=
+                        is_required=
+                        value=' '
+                        break
+                    elif grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
                         _;_.
                         __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, prepopulated.; _.
@@ -1180,6 +1188,9 @@ Rcm_prompt() {
                     until [[ -n "$value" ]];do
                         __; read -p "Type the value: " value
                     done
+                fi
+                if [[ "$value" == ' ' ]];then
+                    value=
                 fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
