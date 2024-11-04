@@ -9,7 +9,7 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timezone="$2"; shift; fi; shift ;;
+        --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --with-update-system) update_system=1; shift ;;
         --without-update-system) update_system=0; shift ;;
         --with-upgrade-system) upgrade_system=1; shift ;;

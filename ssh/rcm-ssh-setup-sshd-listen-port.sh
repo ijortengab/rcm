@@ -7,11 +7,11 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --config-file=*) config_file="${1#*=}"; shift ;;
-        --config-file) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then config_file="$2"; shift; fi; shift ;;
+        --config-file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_file="$2"; shift; fi; shift ;;
         --disable=*) disable+=("${1#*=}"); shift ;;
-        --disable) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then disable+=("$2"); shift; fi; shift ;;
+        --disable) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then disable+=("$2"); shift; fi; shift ;;
         --enable=*) enable+=("${1#*=}"); shift ;;
-        --enable) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then enable+=("$2"); shift; fi; shift ;;
+        --enable) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then enable+=("$2"); shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;

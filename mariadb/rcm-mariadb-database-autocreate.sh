@@ -7,7 +7,7 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --db-name=*) db_name="${1#*=}"; shift ;;
-        --db-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then db_name="$2"; shift; fi; shift ;;
+        --db-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;

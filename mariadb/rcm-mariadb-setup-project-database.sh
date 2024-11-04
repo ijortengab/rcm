@@ -7,12 +7,12 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --db-suffix-name=*) db_suffix_name="${1#*=}"; shift ;;
-        --db-suffix-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then db_suffix_name="$2"; shift; fi; shift ;;
+        --db-suffix-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_suffix_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
-        --project-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_name="$2"; shift; fi; shift ;;
+        --project-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
-        --project-parent-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then project_parent_name="$2"; shift; fi; shift ;;
+        --project-parent-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_parent_name="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --with-autocreate-db) autocreate_db=1; shift ;;
         --without-autocreate-db) autocreate_db=0; shift ;;

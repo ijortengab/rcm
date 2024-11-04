@@ -8,14 +8,14 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
         --filename=*) filename="${1#*=}"; shift ;;
-        --filename) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then filename="$2"; shift; fi; shift ;;
+        --filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then filename="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
-        --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
-        --root) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then root="$2"; shift; fi; shift ;;
+        --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --server-name=*) server_name+=("${1#*=}"); shift ;;
-        --server-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then server_name+=("$2"); shift; fi; shift ;;
+        --server-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then server_name+=("$2"); shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac

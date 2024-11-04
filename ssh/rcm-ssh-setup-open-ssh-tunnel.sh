@@ -7,13 +7,13 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --autorun=*) autorun="${1#*=}"; shift ;;
-        --autorun) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then autorun="$2"; shift; fi; shift ;;
+        --autorun) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then autorun="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --pattern=*) pattern="${1#*=}"; shift ;;
-        --pattern) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then pattern="$2"; shift; fi; shift ;;
+        --pattern) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then pattern="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --timeout-trigger-command=*) timeout_trigger_command="${1#*=}"; shift ;;
-        --timeout-trigger-command) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then timeout_trigger_command="$2"; shift; fi; shift ;;
+        --timeout-trigger-command) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timeout_trigger_command="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac

@@ -91,7 +91,7 @@ if [ "$command" == 'get' ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --save-as=*) save_as="${1#*=}"; shift ;;
-            --save-as) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then save_as="$2"; shift; fi; shift ;;
+            --save-as) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then save_as="$2"; shift; fi; shift ;;
             --[^-]*) shift ;;
             *) _new_arguments+=("$1"); shift ;;
         esac
@@ -105,11 +105,11 @@ if [ "$command" == 'install' ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --path=*) path="${1#*=}"; shift ;;
-            --path) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path="$2"; shift; fi; shift ;;
+            --path) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then path="$2"; shift; fi; shift ;;
             --source=*) source="${1#*=}"; shift ;;
-            --source) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then source="$2"; shift; fi; shift ;;
+            --source) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then source="$2"; shift; fi; shift ;;
             --url=*) url="${1#*=}"; shift ;;
-            --url) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then url="$2"; shift; fi; shift ;;
+            --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
             --[^-]*) shift ;;
             *) _new_arguments+=("$1"); shift ;;
         esac
@@ -123,7 +123,7 @@ if [ "$command" == 'history' ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --delete=*) delete+=("${1#*=}"); shift ;;
-            --delete) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then delete+=("$2"); shift; fi; shift ;;
+            --delete) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then delete+=("$2"); shift; fi; shift ;;
             --delete-all) delete_all=1; shift ;;
             --fast) fast=1; shift ;;
             --) shift
@@ -167,10 +167,10 @@ if [[ "$command" == 'update' ]];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --path=*) path="${1#*=}"; shift ;;
-            --path) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then path="$2"; shift; fi; shift ;;
+            --path) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then path="$2"; shift; fi; shift ;;
             --rollback) rollback=1; shift ;;
             --url=*) url="${1#*=}"; shift ;;
-            --url) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then url="$2"; shift; fi; shift ;;
+            --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
             --[^-]*) shift ;;
             *) _new_arguments+=("$1"); shift ;;
         esac
@@ -1987,7 +1987,7 @@ if [ -z "$non_interactive" ];then
                     if [[ "$1" =~ ^-- ]];then
                         if [[ "$2" =~ ^-- ]];then
                             argument_prepopulate+=("$1");
-                        elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
+                        elif [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]];then
                             argument_prepopulate+=("$1"="$2");
                             shift
                         else

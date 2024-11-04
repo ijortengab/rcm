@@ -7,10 +7,10 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then domain="$2"; shift; fi; shift ;;
+        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --name-server=*) name_server="${1#*=}"; shift ;;
-        --name-server) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then name_server="$2"; shift; fi; shift ;;
+        --name-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name_server="$2"; shift; fi; shift ;;
         --reverse) reverse=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;

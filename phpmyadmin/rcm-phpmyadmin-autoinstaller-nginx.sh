@@ -8,9 +8,9 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
-        --php-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then php_version="$2"; shift; fi; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --phpmyadmin-version=*) phpmyadmin_version="${1#*=}"; shift ;;
-        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
+        --phpmyadmin-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then phpmyadmin_version="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;

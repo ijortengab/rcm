@@ -8,9 +8,9 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
         --guest-port=*) guest_port="${1#*=}"; shift ;;
-        --guest-port) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then guest_port="$2"; shift; fi; shift ;;
+        --guest-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then guest_port="$2"; shift; fi; shift ;;
         --host-port=*) host_port="${1#*=}"; shift ;;
-        --host-port) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then host_port="$2"; shift; fi; shift ;;
+        --host-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then host_port="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;

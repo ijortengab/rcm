@@ -8,11 +8,11 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --database-exists-sure) database_exists_sure=1; shift ;;
         --db-name=*) db_name="${1#*=}"; shift ;;
-        --db-name) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then db_name="$2"; shift; fi; shift ;;
+        --db-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_name="$2"; shift; fi; shift ;;
         --db-user=*) db_user="${1#*=}"; shift ;;
-        --db-user) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then db_user="$2"; shift; fi; shift ;;
+        --db-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_user="$2"; shift; fi; shift ;;
         --db-user-host=*) db_user_host="${1#*=}"; shift ;;
-        --db-user-host) if [[ ! $2 == "" && ! $2 =~ ^-[^-] ]]; then db_user_host="$2"; shift; fi; shift ;;
+        --db-user-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_user_host="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --user-exists-sure) user_exists_sure=1; shift ;;
