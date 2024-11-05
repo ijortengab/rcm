@@ -1005,9 +1005,14 @@ Rcm_prompt() {
                     fi
                 fi
             fi
+            find=". "
+            replace="."$'\n'
+            label="${label//"$find"/"$replace"}"
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
-                _ "${label}"; _.
+                while read line; do
+                    __ "$line"
+                done <<< "$label"
                 _boolean=
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
@@ -1104,7 +1109,9 @@ Rcm_prompt() {
                 fi
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
-                _ "${label}"; _.
+                while read line; do
+                    __ "$line"
+                done <<< "$label"
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
@@ -1121,11 +1128,12 @@ Rcm_prompt() {
             else
                 if [ -n "$is_required" ];then
                     _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
-                    _ "${label}"; _.
                 else
                     _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
-                    _ "${label}"; _.
                 fi
+                while read line; do
+                    __ "$line"
+                done <<< "$label"
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _;_.
