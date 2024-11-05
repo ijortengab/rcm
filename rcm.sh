@@ -1041,7 +1041,7 @@ Rcm_prompt() {
                     userInputBooleanDefaultNo
                 elif [[ "$_boolean" == 0 ]];then
                     _;_.
-                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; green pass; _, .; _.
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; _, pass; _, .; _.
                 elif [[ "$_boolean" == 1 ]];then
                     _;_.
                     if [ -n "$value" ];then
@@ -1131,7 +1131,7 @@ Rcm_prompt() {
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _;_.
-                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; green pass; _, .; _.
+                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; _, pass; _, .; _.
                         backup_value=
                         history_value=
                         is_required=
@@ -1155,6 +1155,7 @@ Rcm_prompt() {
                 fi
                 if [ -z "$value" ];then
                     if [ -n "$_available_values_from_command" ];then
+
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
@@ -1181,7 +1182,7 @@ Rcm_prompt() {
                             __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
                         elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
                             is_required=
-                            __; _, No value available,' '; green pass; _, .; _.
+                            __; _, No value available,' '; _, pass; _, .; _.
                         else
                             if [ -n "$is_required" ];then
                                 __; read -p "Type the value: " value
