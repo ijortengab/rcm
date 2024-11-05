@@ -1159,9 +1159,13 @@ Rcm_prompt() {
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
                             __; _, Get the output of '`'${_command}${_arguments}'`'.;_.
+                            mktemp=$(mktemp -p /dev/shm)
+                            ${_command}${_arguments} > "$mktemp"
+                            exit_code=$?
                             while read line;do
                                 [ -n "$line" ] && available_values+=("$line")
-                            done <<< `${_command}${_arguments}`
+                            done < "$mktemp"
+                            rm "$mktemp"
                         fi
                     fi
                     if [ "${#available_values[@]}" -gt 0 ];then
@@ -1172,7 +1176,10 @@ Rcm_prompt() {
                         fi
                     else
                         _; _.
-                        if [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
+                        if [[ -n "$_available_values_from_command" && ! $exit_code -eq 0 ]];then
+                            is_required=
+                            __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
+                        elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
                             is_required=
                             __; _, No value available,' '; green pass; _, .; _.
                         else
