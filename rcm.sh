@@ -1051,6 +1051,10 @@ Rcm_prompt() {
                     fi
                     boolean=1
                 fi
+                # Populate placeholders.
+                if [ -n "$argument_placeholders" ];then
+                    argument_placeholders+=$'\n'
+                fi
                 if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         if [ -z "$value" ];then
@@ -1089,9 +1093,6 @@ Rcm_prompt() {
                         argument_pass+=("${parameter}")
                     fi
                     # Populate placeholders.
-                    if [ -n "$argument_placeholders" ];then
-                        argument_placeholders+=$'\n'
-                    fi
                     if [ -n "$value" ];then
                         argument_placeholders+='['"$parameter"']: '"$value"
                     else
@@ -1099,9 +1100,6 @@ Rcm_prompt() {
                     fi
                 else
                     # Populate placeholders.
-                    if [ -n "$argument_placeholders" ];then
-                        argument_placeholders+=$'\n'
-                    fi
                     argument_placeholders+='['"$parameter"']: '"0"
                 fi
             elif [[ "$parameter" == '--' ]];then
@@ -1200,12 +1198,15 @@ Rcm_prompt() {
                 if [[ "$value" == ' ' ]];then
                     value=
                 fi
+                # Populate placeholders.
+                if [ -n "$argument_placeholders" ];then
+                    argument_placeholders+=$'\n'
+                fi
                 if [ -n "$value" ];then
                     argument_pass+=("${parameter}=${value}")
-                    if [ -n "$argument_placeholders" ];then
-                        argument_placeholders+=$'\n'
-                    fi
                     argument_placeholders+='['"$parameter"']: '"$value"
+                else
+                    argument_placeholders+='['"$parameter"']: -'
                 fi
             fi
             # Backup to text file.
