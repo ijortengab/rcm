@@ -387,18 +387,32 @@ printSelectDialog() {
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
+    if [ -z "$is_required" ];then
+        __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
+    fi
     select_mode=
     while true; do
         __; read -rsn 1 -p "Select: " char;
         if [ -z "$char" ];then
             char=t
         fi
-        case $char in
-            t|T) echo "$char"; break ;;
-            s|S) select_mode=1; echo "$char"; break ;;
-            $'\177') select_mode=1; echo "s"; break ;;
-            *) echo
-        esac
+        if [ -n "$is_required" ];then
+            case $char in
+                t|T) echo "$char"; break ;;
+                s|S) select_mode=1; echo "$char"; break ;;
+                $'\177') select_mode=1; echo "s"; break ;;
+                *) echo
+            esac
+        else
+            case $char in
+                t|T) echo "$char"; break ;;
+                s|S) select_mode=1; echo "$char"; break ;;
+                $'\177') select_mode=1; echo "s"; break ;;
+                $'\33') skip=1; echo "l"; break ;;
+                l|L) skip=1; echo "$char"; break ;;
+                *) echo
+            esac
+        fi
     done
     if [[ -n "$select_mode" ]];then
         _; _.
@@ -490,18 +504,33 @@ printSelectOtherDialog() {
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
-    select_mode=
+    if [ -z "$is_required" ];then
+        __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
+    fi
+    local select_mode=
+    local skip=
     while true; do
         __; read -rsn 1 -p "Select: " char;
         if [ -z "$char" ];then
             char=t
         fi
-        case $char in
-            t|T) echo "$char"; break ;;
-            s|S) select_mode=1; echo "$char"; break ;;
-            $'\177') select_mode=1; echo "s"; break ;;
-            *) echo
-        esac
+        if [ -n "$is_required" ];then
+            case $char in
+                t|T) echo "$char"; break ;;
+                s|S) select_mode=1; echo "$char"; break ;;
+                $'\177') select_mode=1; echo "s"; break ;;
+                *) echo
+            esac
+        else
+            case $char in
+                t|T) echo "$char"; break ;;
+                s|S) select_mode=1; echo "$char"; break ;;
+                $'\177') select_mode=1; echo "s"; break ;;
+                $'\33') skip=1; echo "l"; break ;;
+                l|L) skip=1; echo "$char"; break ;;
+                *) echo
+            esac
+        fi
     done
     if [[ -n "$select_mode" ]];then
         _; _.
@@ -553,7 +582,7 @@ printSelectOtherDialog() {
     if [ -z "$value" ];then
         if [ -n "$is_required" ];then
             __; read -p "Type the value: " value
-        else
+        elif [ -z "$skip" ];then
             __; read -p "Type the value or leave blank to skip: " value
         fi
         is_typing=1
