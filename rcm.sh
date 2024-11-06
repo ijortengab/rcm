@@ -323,8 +323,13 @@ printBackupDialog() {
     __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _.
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
-        __; _, Value; _, ' '; yellow "$backup_value"; _, ' ';  _, used.; _.
+        e
         value="$backup_value";
+        if [ -n "$is_flag" ];then
+            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'which is restored.; _.
+        else
+            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow $value; green ' 'which is restored.; _.
+        fi
     fi
 }
 printHistoryDialog() {
@@ -352,7 +357,8 @@ printHistoryDialog() {
             [1-$count_max])
                 echo "$char"
                 value=$(sed -n ${char}p <<< "$history_value")
-                __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+                e
+                __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list of history.; _.
                 save_history=
                 break ;;
             *) echo
@@ -438,7 +444,8 @@ printSelectDialog() {
                 value="${source[$value]}"
             fi
         done
-        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+        e
+        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
     fi
     while true; do
         if [ -n "$value" ];then
@@ -540,7 +547,8 @@ printSelectOtherDialog() {
                 value="${source[$value]}"
             fi
         done
-        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, selected.; _.
+        e
+        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
     fi
     if [ -z "$value" ];then
         if [ -n "$is_required" ];then
@@ -548,6 +556,7 @@ printSelectOtherDialog() {
         else
             __; read -p "Type the value or leave blank to skip: " value
         fi
+        is_typing=1
     fi
 }
 ArraySearch() {
@@ -903,6 +912,8 @@ Rcm_prompt() {
             value_addon=
             is_flagvalue=
             save_history=1
+            is_typing=
+            is_press=
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
@@ -1009,7 +1020,7 @@ Rcm_prompt() {
             replace="."$'\n'
             label="${label//"$find"/"$replace"}"
             if [ -n "$is_flag" ];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
                     __ "$line"
                 done <<< "$label"
@@ -1041,18 +1052,19 @@ Rcm_prompt() {
                 # Reset first.
                 boolean=
                 if [ -z "$_boolean" ];then
-                    _;_.
+                    e
                     __; _, Add this argument?; _.
                     userInputBooleanDefaultNo
+                    is_press=1
                 elif [[ "$_boolean" == 0 ]];then
-                    _;_.
-                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; _, pass; _, .; _.
+                    e
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 elif [[ "$_boolean" == 1 ]];then
-                    _;_.
+                    e
                     if [ -n "$value" ];then
-                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated with value' '; yellow $value; _, .; _.
+                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
                     else
-                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, prepopulated,' '; green pass; _, .; _.
+                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated.; _.
                     fi
                     boolean=1
                 fi
@@ -1060,10 +1072,11 @@ Rcm_prompt() {
                 if [ -n "$argument_placeholders" ];then
                     argument_placeholders+=$'\n'
                 fi
+                argument_boolean="$boolean"
                 if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         if [ -z "$value" ];then
-                            _;_.
+                            e
                             __; _, Do you want fill with value?; _.
                             userInputBooleanDefaultNo
                         fi
@@ -1089,7 +1102,12 @@ Rcm_prompt() {
                             fi
                             until [[ -n "$value" ]];do
                                 __; read -p "Type the value: " value
+                                is_typing=1
                             done
+                            # Sanitize user input
+                            # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
+                            # Credit: https://stackoverflow.com/a/47918586
+                            value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                             argument_pass+=("${parameter}=${value}")
                         else
                             argument_pass+=("${parameter}")
@@ -1107,8 +1125,21 @@ Rcm_prompt() {
                     # Populate placeholders.
                     argument_placeholders+='['"$parameter"']: '"0"
                 fi
+                if [ -n "$argument_boolean" ];then
+                    if [ -n "$is_press" ];then
+                        if [ -n "$value" ];then
+                            if [ -n "$is_typing" ];then
+                                e
+                                __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'manually.; _.
+                            fi
+                        else
+                            e
+                            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added manually.; _.
+                        fi
+                    fi
+                fi
             elif [[ "$parameter" == '--' ]];then
-                _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
                     __ "$line"
                 done <<< "$label"
@@ -1127,17 +1158,17 @@ Rcm_prompt() {
                 fi
             else
                 if [ -n "$is_required" ];then
-                    _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
+                    _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
                 else
-                    _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+                    _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 fi
                 while read line; do
                     __ "$line"
                 done <<< "$label"
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
-                        _;_.
-                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip,' '; _, pass; _, .; _.
+                        e
+                        __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                         backup_value=
                         history_value=
                         is_required=
@@ -1145,8 +1176,8 @@ Rcm_prompt() {
                         break
                     elif grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
-                        _;_.
-                        __; _, Value; _, ' '; yellow "$value"; _, ' ';  _, prepopulated.; _.
+                        e
+                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
                         backup_value=
                         break
                     fi
@@ -1195,12 +1226,14 @@ Rcm_prompt() {
                             else
                                 __; read -p "Type the value or leave blank to skip: " value
                             fi
+                            is_typing=1
                         fi
                     fi
                 fi
                 if [ -n "$is_required" ];then
                     until [[ -n "$value" ]];do
                         __; read -p "Type the value: " value
+                        is_typing=1
                     done
                 fi
                 if [[ "$value" == ' ' ]];then
@@ -1211,16 +1244,21 @@ Rcm_prompt() {
                     argument_placeholders+=$'\n'
                 fi
                 if [ -n "$value" ];then
+                    # Sanitize user input
+                    # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
+                    # Credit: https://stackoverflow.com/a/47918586
+                    value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                     argument_pass+=("${parameter}=${value}")
                     argument_placeholders+='['"$parameter"']: '"$value"
                 else
                     argument_placeholders+='['"$parameter"']: -'
                 fi
+                if [[ -n "$value" && "$is_typing" ]];then
+                    e
+                    __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'manually.; _.
+                fi
             fi
             # Backup to text file.
-            # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
-            # Credit: https://stackoverflow.com/a/47918586
-            value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
             if [ -n "$value" ];then
                 mkdir -p $(dirname "$backup_storage")
                 echo "${parameter}=${value}" >> "$backup_storage"
@@ -1660,7 +1698,7 @@ Rcm_update() {
         notfound=1
         parameter='--url'
         label='The URL repository.'
-        _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
+        _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
         _ "${label}"; _.
     fi
     until [ -n "$url" ];do
@@ -1670,7 +1708,7 @@ Rcm_update() {
         notfound=1
         parameter='--path'
         label='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
-        _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+        _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
         _ "${label}"; _.
         __; read -p "Type the value or leave blank to skip: " path
     fi
@@ -1720,7 +1758,7 @@ Rcm_install() {
         notfound=1
         parameter='--url'
         label='The URL repository.'
-        _ 'Argument '; magenta ${parameter};_, ' is '; red required;_, '.'; _.
+        _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
         _ "${label}"; _.
     fi
     until [ -n "$url" ];do
@@ -1736,7 +1774,7 @@ Rcm_install() {
         notfound=1
         parameter='--path'
         label='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
-        _ 'Argument '; magenta ${parameter};_, ' is '; green optional;_, '.'; _.
+        _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
         _ "${label}"; _.
         __; read -p "Type the value or leave blank to skip: " path
     fi
