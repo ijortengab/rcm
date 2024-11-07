@@ -494,7 +494,7 @@ printSelectOtherDialog() {
     __; _, Available $what:; for e in "${source[@]}"; do
         if [ -n "$first" ];then first=; else _, ','; fi
         _, ' '; yellow "$e"
-    done; _, ', or other.'; _.
+    done; _, ', or '; yellow other; _, .; _.
     _; _.
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
@@ -971,10 +971,16 @@ Rcm_prompt() {
                 if [ -z "$below" ];then
                     break
                 fi
-                if [ -n "$placeholders" ];then
-                    placeholders+=$'\n'
+                if [[ "${below:0:1}" == '[' ]];then
+                    if [ -n "$placeholders" ];then
+                        placeholders+=$'\n'
+                    fi
+                    placeholders+="$below"
+                else
+                    label+=$'\n'
+                    label+="$below"
                 fi
-                placeholders+="$below"
+
                 count+=1
             done
             options=`sed -n ${count}',$p' <<< "$options"`
@@ -1017,8 +1023,7 @@ Rcm_prompt() {
             fi
             _; _.
             if [ -n "$_available_values_from_command" ];then
-                # Tidak ada cache jika value dari command.
-                backup_value=
+                # Tidak ada history jika value dari command.
                 history_value=
                 save_history=
             fi
@@ -1040,9 +1045,6 @@ Rcm_prompt() {
                     fi
                 fi
             fi
-            find=". "
-            replace="."$'\n'
-            label="${label//"$find"/"$replace"}"
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
