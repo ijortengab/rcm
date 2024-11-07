@@ -197,6 +197,26 @@ __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
+
+# Define variables.
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
+
+# Functions.
 printVersion() {
     echo '0.16.4'
 }
@@ -205,7 +225,7 @@ printHelp() {
     _ 'Variation '; yellow Default; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm
        rcm [command]
        rcm history --delete-all
@@ -232,7 +252,7 @@ Global Options:
 
 Environment Variables:
    BINARY_DIRECTORY
-        Default to $__DIR__
+        Default to $BINARY_DIRECTORY
 EOF
 }
 
@@ -250,19 +270,6 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
-resolve_relative_path() {
-    if [ -d "$1" ];then
-        cd "$1" || return 1
-        pwd
-    elif [ -e "$1" ];then
-        if [ ! "${1%/*}" = "$1" ]; then
-            cd "${1%/*}" || return 1
-        fi
-        echo "$(pwd)/${1##*/}"
-    else
-        return 1
-    fi
-}
 fileMustExists() {
     # global used:
     # global modified:
@@ -1889,9 +1896,6 @@ fi
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
-__FILE__=$(resolve_relative_path "$0")
-__DIR__=$(dirname "$__FILE__")
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 rcm_version=`printVersion`
 immediately=
