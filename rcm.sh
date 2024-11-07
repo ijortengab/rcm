@@ -9,8 +9,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --fast) fast=1; shift ;;
-        --immediately) immediately=1; shift ;;
-        --non-immediately) immediately=0; shift ;;
         --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
@@ -245,16 +243,6 @@ EOF
 # Title.
 title rcm
 ____
-
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
 
 # Dependency.
 while IFS= read -r line; do
@@ -1849,13 +1837,15 @@ Rcm_get() {
     chmod a+x "$BINARY_DIRECTORY/$filename"
 }
 
-# Prompt.
-if [ -z "$fast" ];then
-    if [[ $command =~ ^rcm ]];then
-        _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-        sleepExtended 2
-        ____
+if [[ -z "$non_interactive" && -z "$fast" ]];then
+    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    e
+    __ Press the yellow key to select.
+    userInputBooleanDefaultYes
+    if [ -n "$boolean" ];then
+        fast=1
     fi
+    ____
 fi
 
 # Execute command.
@@ -1904,7 +1894,18 @@ __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 rcm_version=`printVersion`
+immediately=
 ____
+
+if [ -z "$root_sure" ];then
+    chapter Mengecek akses root.
+    if [[ "$EUID" -ne 0 ]]; then
+        error This script needs to be run with superuser privileges.; x
+    else
+        __ Privileges.
+    fi
+    ____
+fi
 
 case $command in
     get)
@@ -2067,51 +2068,52 @@ else
     Rcm_resolve_dependencies $command
 fi
 
-if [ -z "$non_interactive" ];then
-    _new_arguments=()
-    argument_prepopulate=()
-    if [ $# -gt 0 ];then
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --)
-                    while [[ $# -gt 0 ]]; do
-                        case "$1" in
-                            *) _new_arguments+=("$1"); shift ;;
-                        esac
-                    done
-                    ;;
-                --[^-]*)
-                    if [[ "$2" =~ ^-- ]];then
-                        argument_prepopulate+=("$1");
-                    elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
-                        argument_prepopulate+=("$1"="$2");
-                        shift
-                    else
-                        argument_prepopulate+=("$1");
-                    fi
+_new_arguments=()
+argument_prepopulate=()
+if [ $# -gt 0 ];then
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --)
+                immediately=1
+                while [[ $# -gt 0 ]]; do
+                    case "$1" in
+                        *) _new_arguments+=("$1"); shift ;;
+                    esac
+                done
+                ;;
+            --[^-]*)
+                if [[ "$2" =~ ^-- ]];then
+                    argument_prepopulate+=("$1");
+                elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
+                    argument_prepopulate+=("$1"="$2");
                     shift
-                    ;;
-                *)
-                    shift
-            esac
-        done
-    fi
-    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
-    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-    Rcm_prompt $command
-    if [[ "${#argument_pass[@]}" -gt 0 ]];then
-        set -- "${argument_pass[@]}" "${_new_arguments[@]}"
-        unset argument_pass _new_arguments
-    else
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
-    fi
-    [ -f "$backup_storage" ] && rm "$backup_storage"
+                else
+                    argument_prepopulate+=("$1");
+                fi
+                shift
+                ;;
+            *)
+                shift
+        esac
+    done
 fi
+backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
+history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
+Rcm_prompt $command
+if [[ "${#argument_pass[@]}" -gt 0 ]];then
+    set -- "${argument_pass[@]}" "${_new_arguments[@]}"
+    unset argument_pass _new_arguments
+else
+    set -- "${_new_arguments[@]}"
+    unset _new_arguments
+fi
+[ -f "$backup_storage" ] && rm "$backup_storage"
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 chapter Execute:
+e
+
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 [ -n "$non_interactive" ] && isnoninteractive=' --non-interactive' || isnoninteractive=''
 [ -n "$verbose" ] && {
@@ -2120,20 +2122,15 @@ chapter Execute:
     done
 } || isverbose=
 code ${command}${isfast}${isnoninteractive}${isverbose} "$@"
-____
 
-if [ -n "$non_interactive" ];then
-    immediately=1
-elif [[ -z "$fast" && -z "$immediately" ]];then
-    immediately=0
-fi
-
-if [[ "$immediately" == "0" ]];then
-    if [ -z "$fast" ];then
-        _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+if [ -z "$immediately" ];then
+    e
+    userInputBooleanDefaultYes
+    if [ -z "$boolean" ];then
+        x
     fi
-    sleepExtended 3
 fi
+____
 
 chapter Timer Start.
 e Begin: $(date +%Y%m%d-%H%M%S)
@@ -2172,7 +2169,6 @@ exit 0
 # --root-sure
 # --binary-directory-exists-sure
 # --non-interactive
-# --immediately
 # )
 # VALUE=(
 # )
@@ -2181,7 +2177,6 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--non-immediately,parameter:immediately,flag_option:reverse'
 # )
 # OPERAND=(
 # install
