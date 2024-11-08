@@ -28,6 +28,8 @@ while [[ $# -gt 0 ]]; do
         --value) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then value="$2"; shift; fi; shift ;;
         --value-summarize=*) value_summarize="${1#*=}"; shift ;;
         --value-summarize) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then value_summarize="$2"; shift; fi; shift ;;
+        --with-color) colorize=1; shift ;;
+        --without-color) colorize=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -316,11 +318,18 @@ if [ -n "$record_found" ];then
     if [ -n "$reverse" ];then
         result='error'
     fi
+    if [ "$colorize" == 0 ];then
+        result=e
+    fi
+
     $result "$log"
 else
     result='error'
     if [ -n "$reverse" ];then
         result='success'
+    fi
+    if [ "$colorize" == 0 ];then
+        result=e
     fi
     $result "$log"
 fi
@@ -360,6 +369,8 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--with-color,parameter:colorize'
+    # 'long:--without-color,parameter:colorize,flag_option:reverse'
 # )
 # EOF
 # clear
