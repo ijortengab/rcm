@@ -134,6 +134,7 @@ until [ -n "$finish" ];do
 
     INDENT+="    " \
     rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+        --without-color \
         --domain="$domain" \
         --type=a \
         --ip-address="*" \
@@ -141,6 +142,7 @@ until [ -n "$finish" ];do
 
     INDENT+="    " \
     rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+        --without-color \
         --domain="$domain" \
         --type=cname \
         --hostname="@" \
