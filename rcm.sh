@@ -1035,8 +1035,8 @@ Rcm_prompt() {
                 if command -v "$_command" > /dev/null;then
                     if [ -n "$argument_placeholders" ];then
                         while read line; do
-                            find=$(echo ${line} | cut -d: -f1 | xargs)
-                            replace=$(echo ${line} | cut -d: -f2 | xargs)
+                            find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | xargs)
+                            replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | xargs)
                             label="${label/"$find"/"$replace"}"
                             if [ -n "$_arguments" ];then
                                 _arguments="${_arguments/"$find"/"$replace"}"
