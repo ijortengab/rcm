@@ -1636,6 +1636,8 @@ cron-setup-wsl-autorun-sshd
 cron-setup-wsl-port-forwarding
 debian-11-setup-basic
 debian-12-setup-basic
+dig-autoinstaller
+dig-has-address
 dig-is-name-exists
 dig-is-record-exists
 dig-watch-domain-exists
@@ -1647,11 +1649,13 @@ mariadb-database-autocreate
 mariadb-setup-project-database
 mariadb-user-autocreate
 nginx-autoinstaller
+nginx-reload
 nginx-setup-front-controller-php
 nginx-setup-hello-world-php
 nginx-setup-hello-world-static
 nginx-setup-php
 nginx-setup-static
+nginx-virtual-host-autocreate-php-multiple-root
 nginx-virtual-host-autocreate-php
 php-autoinstaller
 php-fpm-setup-project-config
