@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        install|update|get|history|selfupdate|self-update)
+        install|update|get|history)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -58,7 +58,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        install|update|get|history|selfupdate|self-update)
+        install|update|get|history)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -77,7 +77,6 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install|get) ;;
-        self-update|selfupdate) ;;
         *) command="rcm-${command}"
     esac
 else
@@ -114,6 +113,10 @@ if [ "$command" == 'install' ];then
     done
     set -- "${_new_arguments[@]}"
     unset _new_arguments
+    if [ $# -eq 0 ];then
+        # Langsung saja bikin argument position.
+        set -- update rcm ijortengab/rcm rcm.sh
+    fi
 fi
 
 if [ "$command" == 'history' ];then
@@ -153,9 +156,6 @@ if [[ "$command" =~ ^self-*update$ ]];then
     done
     set -- "${_new_arguments[@]}"
     unset _new_arguments
-
-    # Langsung saja bikin argument position.
-    set -- update rcm ijortengab/rcm rcm.sh
 fi
 
 if [[ "$command" == 'update' ]];then
@@ -175,6 +175,10 @@ if [[ "$command" == 'update' ]];then
     done
     set -- "${_new_arguments[@]}"
     unset _new_arguments
+    if [ $# -eq 0 ];then
+        # Langsung saja bikin argument position.
+        set -- update rcm ijortengab/rcm rcm.sh
+    fi
 fi
 
 # Common Functions.
@@ -1915,19 +1919,25 @@ fi
 
 case $command in
     get)
-        Rcm_get "${@}"; x;;
+        Rcm_get "${@}"; exit 0
+        ;;
     install)
         # @todo, sementara gunakan ini dulu.
         verbose=2
-        Rcm_install "${@}"; x;;
+        if [ $1 == update ];then
+            Rcm_github_release "${@}"; exit 0
+        else
+            Rcm_install "${@}"; exit 0
+        fi
+        ;;
     update)
         # @todo, sementara gunakan ini dulu.
         verbose=2
-        Rcm_update "${@}"; x;;
-    self-update|selfupdate)
-        # @todo, sementara gunakan ini dulu.
-        verbose=2
-        Rcm_github_release "${@}"; x;;
+        if [ $1 == update ];then
+            Rcm_github_release "${@}"; exit 0
+        else
+            Rcm_update "${@}"; exit 0
+        fi
 esac
 
 if [ $command == list ];then
