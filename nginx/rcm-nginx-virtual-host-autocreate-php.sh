@@ -6,6 +6,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --certbot-certificate-name=*) certbot_certificate_name="${1#*=}"; shift ;;
+        --certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_certificate_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
@@ -14,8 +16,16 @@ while [[ $# -gt 0 ]]; do
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --server-name=*) server_name+=("${1#*=}"); shift ;;
-        --server-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then server_name+=("$2"); shift; fi; shift ;;
+        --url-host=*) url_host="${1#*=}"; shift ;;
+        --url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_host="$2"; shift; fi; shift ;;
+        --url-port=*) url_port="${1#*=}"; shift ;;
+        --url-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_port="$2"; shift; fi; shift ;;
+        --url-scheme=*) url_scheme="${1#*=}"; shift ;;
+        --url-scheme) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_scheme="$2"; shift; fi; shift ;;
+        --with-certbot-obtain) certbot_obtain=1; shift ;;
+        --without-certbot-obtain) certbot_obtain=0; shift ;;
+        --with-nginx-reload) nginx_reload=1; shift ;;
+        --without-nginx-reload) nginx_reload=0; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -60,8 +70,22 @@ Options:
         Set the value of root directive.
    --fastcgi-pass *
         Set the value of fastcgi_pass directive.
-   --server-name *
-        Set the value of server_name directive. Multivalue.
+   --url-scheme *
+        The URL Scheme. Available value: http, https.
+   --url-port *
+        The URL Port. Set the value of listen directive.
+   --url-host *
+        The URL Host. Set the value of server_name directive.
+        Only support one value even the directive may have multivalue.
+   --without-certbot-obtain ^
+        Prevent auto obtain certificate if not exists.
+        Default value is --with-certbot-obtain.
+   --without-nginx-reload ^
+        Prevent auto reload nginx after add/edit file config.
+        Default value is --with-nginx-reload.
+   --certbot-certificate-name
+        The name of certificate. Leave blank to use default value.
+        Default value is --url-host.
 
 Global Options.
    --fast
@@ -72,6 +96,10 @@ Global Options.
         Show this help.
    --root-sure
         Bypass root checking.
+
+Dependency:
+   rcm-certbot-obtain-authenticator-nginx
+   rcm-nginx-reload
 EOF
 }
 
@@ -99,6 +127,102 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+fileMustExists() {
+    # global used:
+    # global modified:
+    # function used: __, success, error, x
+    if [ -f "$1" ];then
+        __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    else
+        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+    fi
+}
+isFileExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -f "$1" ];then
+        __ File '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ File '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
+link_symbolic() {
+    local source="$1"
+    local target="$2"
+    local sudo="$3"
+    local create
+    [ -e "$source" ] || { error Source not exist: $source.; x; }
+    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
+    [ -n "$target" ] || { error Target not defined.; x; }
+    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
+    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
+
+    chapter Membuat symbolic link.
+    __ source: '`'$source'`'
+    __ target: '`'$target'`'
+    if [ -f "$target" ];then
+        if [ -h "$target" ];then
+            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
+            local _readlink=$(readlink "$target")
+            __; magenta readlink "$target"; _.
+            e $_readlink
+            if [[ "$_readlink" =~ ^[^/\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+            elif [[ "$_readlink" =~ ^[\.] ]];then
+                local target_parent=$(dirname "$target")
+                local _dereference="${target_parent}/${_readlink}"
+                _dereference=$(realpath -s "$_dereference")
+            else
+                _dereference="$_readlink"
+            fi
+            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            if [[ "$source" == "$_dereference" ]];then
+                _, merujuk.; _.
+            else
+                _, tidak merujuk.; _.
+                __ Melakukan backup.
+                backupFile move "$target"
+                create=1
+            fi
+        else
+            __ Melakukan backup regular file: '`'"$target"'`'.
+            backupFile move "$target"
+            create=1
+        fi
+    elif [ -d "$target" ];then
+        __ Melakukan backup direktori: '`'"$target"'`'.
+        backupDir "$target"
+        create=1
+    else
+        create=1
+    fi
+    if [ -n "$create" ];then
+        __ Membuat symbolic link: '`'$target'`'.
+        local target_parent=$(dirname "$target")
+        code mkdir -p "$target_parent"
+        mkdir -p "$target_parent"
+        local source_relative=$(realpath -s --relative-to="$target_parent" "$source")
+        if [ -n "$sudo" ];then
+            code sudo -u '"'$sudo'"' ln -s '"'$source_relative'"' '"'$target'"'
+            sudo -u "$sudo" ln -s "$source_relative" "$target"
+        else
+            code ln -s '"'$source_relative'"' '"'$target'"'
+            ln -s "$source_relative" "$target"
+        fi
+        if [ $? -eq 0 ];then
+            __; green Symbolic link berhasil dibuat.; _.
+        else
+            __; red Symbolic link gagal dibuat.; x
+        fi
+    fi
+    ____
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -122,75 +246,268 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+backupDir() {
+    local oldpath="$1" i newpath
+    i=1
+    newpath="${oldpath}.${i}"
+    if [ -e "$newpath" ]; then
+        let i++
+        newpath="${oldpath}.${i}"
+        while [ -e "$newpath" ] ; do
+            let i++
+            newpath="${oldpath}.${i}"
+        done
+    fi
+    mv "$oldpath" "$newpath"
+}
+findString() {
+    local find="$1" find_quoted string path="$2"
+    __ Memeriksa baris dengan kalimat: '`'$find'`'.
+    find_quoted="$find"
+    find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
+    find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")
+    find_quoted=$(sed "s/;$/\\\s\*;/g" <<< "$find_quoted")
+    code grep -E '"'"^\s*${find_quoted}"'"' '"'"\$path"'"'
+    if grep -q -E "^\s*${find_quoted}" "$path";then
+        string=$(grep -E "$find_quoted" "$path")
+        while read -r line; do e "$line"; done <<< "$string"
+        __ Baris ditemukan.
+        return 0
+    else
+        __ Baris tidak ditemukan.
+        return 1
+    fi
+}
+validateContent() {
+    local find path="$1"
+    # listen
+    find="listen __URL_PORT____SSL__;"
+    find=$(echo "$find" | sed "s|__URL_PORT__|${url_port}|g")
+    if [ "$url_scheme" == https ];then
+        find=$(echo "$find" | sed "s|__SSL__| ssl|g")
+    else
+        find=$(echo "$find" | sed "s|__SSL__||g")
+    fi
+    if ! findString "$find" "$path";then
+        __; yellow File akan dibuat ulang.; _.
+            return 1
+    fi
+    # root
+    find="root __ROOT__;"
+    find=$(echo "$find" | sed "s|__ROOT__|${root}|g")
+    if ! findString "$find" "$path";then
+        __; yellow File akan dibuat ulang.; _.
+            return 1
+    fi
+    # server_name
+    find="server_name __URL_HOST__;"
+    find=$(echo "$find" | sed "s|__URL_HOST__|${url_host}|g")
+    if ! findString "$find" "$path";then
+        __; yellow File akan dibuat ulang.; _.
+            return 1
+    fi
+    # fastcgi_pass
+    find="fastcgi_pass __FASTCGI_PASS__;"
+    find=$(echo "$find" | sed "s|__FASTCGI_PASS__|${fastcgi_pass}|g")
+    if ! findString "$find" "$path";then
+        __; yellow File akan dibuat ulang.; _.
+            return 1
+    fi
+    if [ "$url_scheme" == https ];then
+        # ssl_certificate
+        find="ssl_certificate /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
+        find=$(echo "$find" | sed "s|__CERTBOT_CERTIFICATE_NAME__|${certbot_certificate_name}|g")
+        if ! findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        # ssl_certificate_key
+        find="ssl_certificate_key /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/privkey.pem"
+        find=$(echo "$find" | sed "s|__CERTBOT_CERTIFICATE_NAME__|${certbot_certificate_name}|g")
+        if ! findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        find="include /etc/letsencrypt/options-ssl-nginx.conf"
+        if ! findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
+        if ! findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+    fi
+    if [ "$url_scheme" == http ];then
+        # ssl_certificate
+        find="ssl_certificate /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
+        find=$(echo "$find" | sed "s|__CERTBOT_CERTIFICATE_NAME__|${certbot_certificate_name}|g")
+        if findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        # ssl_certificate_key
+        find="ssl_certificate_key /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/privkey.pem"
+        find=$(echo "$find" | sed "s|__CERTBOT_CERTIFICATE_NAME__|${certbot_certificate_name}|g")
+        if findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        find="include /etc/letsencrypt/options-ssl-nginx.conf"
+        if findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
+        if findString "$find" "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+    fi
+
+    return 0
+}
+isDirExists() {
+    # global used:
+    # global modified: found, notfound
+    # function used: __
+    found=
+    notfound=
+    if [ -d "$1" ];then
+        __ Direktori '`'$(basename "$1")'`' ditemukan.
+        found=1
+    else
+        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
+        notfound=1
+    fi
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
 if [ -z "$filename" ];then
     error "Argument --filename required."; x
 fi
-code 'filename="'$filename'"'
 if [ -z "$root" ];then
     error "Argument --root required."; x
 fi
-code 'root="'$root'"'
-if [[ ${#server_name[@]} -eq 0 ]];then
-    error "Argument --server-name required."; x
+if [ -z "$fastcgi_pass" ];then
+    error "Argument --fastcgi-pass required."; x
 fi
-code 'server_name=('"${server_name[@]}"')'
+if [ -z "$url_scheme" ];then
+    error "Argument --url-scheme required."; x
+fi
+if [ -z "$url_port" ];then
+    error "Argument --url-port required."; x
+fi
+if [ -z "$url_host" ];then
+    error "Argument --url-host required."; x
+fi
+if [ -z "$certbot_obtain" ];then
+    certbot_obtain=1
+fi
+if [ -z "$nginx_reload" ];then
+    nginx_reload=1
+fi
+case "$url_scheme" in
+    http|https) ;;
+    *) error "Argument --url-scheme is not valid."; x
+esac
+if [[ "$url_port" =~ [^0-9] ]];then
+    error "Argument --url-port is not valid."; x
+fi
+if [ -z "$certbot_certificate_name" ];then
+    certbot_certificate_name="$url_host"
+fi
+code 'filename="'$filename'"'
+code 'root="'$root'"'
 code 'fastcgi_pass="'$fastcgi_pass'"'
+code 'url_scheme="'$url_scheme'"'
+code 'url_port="'$url_port'"'
+code 'url_host="'$url_host'"'
+code 'certbot_obtain="'$certbot_obtain'"'
+code 'nginx_reload="'$nginx_reload'"'
+code 'certbot_certificate_name="'$certbot_certificate_name'"'
 delay=.5; [ -n "$fast" ] && unset delay
 ____
 
-file_config="/etc/nginx/sites-available/$filename"
-create_new=
-chapter Memeriksa file konfigurasi.
-if [ -f "$file_config" ];then
-    __ File ditemukan: '`'$file_config'`'.
-    string="$fastcgi_pass"
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __ Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.
-    else
-        __ Directive fastcgi_pass '`'$string'`' belum terdapat pada file config.
-        create_new=1
-    fi
-    string="$root"
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __ Directive root '`'$string'`' sudah terdapat pada file config.
-    else
-        __ Directive root '`'$string'`' belum terdapat pada file config.
-        create_new=1
-    fi
-    for string in "${server_name[@]}" ;do
-        string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-        if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
-            __ Directive server_name '`'$string'`' sudah terdapat pada file config.
-        else
-            __ Directive server_name '`'$string'`' belum terdapat pada file config.
-            create_new=1
-        fi
-    done
-else
-    __ File tidak ditemukan: '`'$file_config'`'.
-    create_new=1
-fi
+path="/etc/nginx/sites-available/$filename"
+chapter Mengecek nginx config file: '`'$filename'`'.
+code 'path="'$path'"'
+isFileExists "$path"
 ____
 
-if [ -n "$create_new" ];then
-    chapter Membuat file konfigurasi $file_config.
-    if [ -f "$file_config" ];then
-        __ Backup file "$file_config".
-        backupFile move "$file_config"
+create_new=
+rcm_nginx_reload=
+if [ -n "$found" ];then
+    chapter Memeriksa konten.
+    validateContent "$path"
+    [ ! $? -eq 0 ] && create_new=1;
+    ____
+else
+    create_new=1
+fi
+
+if [[ -n "$create_new" && "$url_scheme" == https ]];then
+    path="/etc/letsencrypt/live/${certbot_certificate_name}"
+    chapter Mengecek direktori certbot '`'$path'`'.
+    isDirExists "$path"
+    ____
+
+    if [ -n "$notfound" ];then
+        if [[ "$certbot_obtain" == 1 ]];then
+            chapter Mengecek '$PATH'.
+            code PATH="$PATH"
+            if grep -q '/snap/bin' <<< "$PATH";then
+                __ '$PATH' sudah lengkap.
+            else
+                __ '$PATH' belum lengkap.
+                __ Memperbaiki '$PATH'
+                PATH=/snap/bin:$PATH
+                if grep -q '/snap/bin' <<< "$PATH";then
+                    __; green '$PATH' sudah lengkap.; _.
+                    __; magenta PATH="$PATH"; _.
+                else
+                    __; red '$PATH' belum lengkap.; x
+                fi
+            fi
+            ____
+
+            INDENT+="    " \
+            PATH=$PATH \
+            rcm-certbot-obtain-authenticator-nginx \
+                --domain "$url_host" \
+                ; [ ! $? -eq 0 ] && x
+            nginx_reload=1
+        fi
     fi
-    __ Membuat file "$file_config".
-    cat <<'EOF' > "$file_config"
+
+    chapter Memeriksa certificate SSL.
+    path="/etc/letsencrypt/live/${certbot_certificate_name}/fullchain.pem"
+    code 'path="'$path'"'
+    [ -f "$path" ] || fileMustExists "$path"
+    path="/etc/letsencrypt/live/${certbot_certificate_name}/privkey.pem"
+    code 'path="'$path'"'
+    [ -f "$path" ] || fileMustExists "$path"
+    ____
+fi
+
+if [ -n "$create_new" ];then
+    path="/etc/nginx/sites-available/$filename"
+    chapter Membuat nginx config file: '`'$filename'`'.
+    code 'path="'$path'"'
+    if [ -f "$path" ];then
+        __ Backup file "$filename".
+        backupFile move "$path"
+    fi
+    __ Membuat file "$filename".
+    cat <<'EOF' > "$path"
 server {
-    listen 80;
-    listen [::]:80;
+    listen __URL_PORT____SSL__;
+    listen [::]:__URL_PORT____SSL____IPV6ONLY__;
     root __ROOT__;
     index index.php;
-    server_name ;
+    server_name __URL_HOST__;
     location = /favicon.ico {
         log_not_found off;
         access_log off;
@@ -207,70 +524,55 @@ server {
         include snippets/fastcgi-php.conf;
         fastcgi_pass __FASTCGI_PASS__;
     }
+    # ssl_certificate /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/privkey.pem;
+    # include /etc/letsencrypt/options-ssl-nginx.conf;
+    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 EOF
-    sed -i "s|__ROOT__|${root}|g" "$file_config"
-    sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$file_config"
-    cd /etc/nginx/sites-enabled/
-    ln -sf ../sites-available/$filename
-    cd - >/dev/null
-    for string in "${server_name[@]}" ;do
-        sed -i -E "s/server_name([^;]+);/server_name\1 "${string}";/" "$file_config"
-    done
-    sed -i -E "s/server_name\s{2}/server_name /" "$file_config"
-    __; _, Mengecek link di direktori sites-enabled:' ';
-    if [ -L /etc/nginx/sites-enabled/$filename ];then
-        _, Link sudah ada.; _.
-    else
-        _ Membuat link.' '
-        cd /etc/nginx/sites-enabled/
-        ln -sf ../sites-available/$filename
-        cd - >/dev/null
-        if [ -L /etc/nginx/sites-enabled/$filename ];then
-            success Berhasil dibuat.
+    fileMustExists "$path"
+    sed -i "s|__ROOT__|${root}|g" "$path"
+    sed -i "s|__URL_HOST__|${url_host}|g" "$path"
+    sed -i "s|__CERTBOT_CERTIFICATE_NAME__|${certbot_certificate_name}|g" "$path"
+    sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
+    sed -i "s|__URL_PORT__|${url_port}|g" "$path"
+    if [ "$url_scheme" == https ];then
+        sed -i "s|__SSL__| ssl|g" "$path"
+        # Hanya satu ipv6only=on yang boleh exist pada setiap virtual host.
+        if grep -R -q ipv6only=on /etc/nginx/sites-enabled/;then
+            sed -i "s|__IPV6ONLY__||g" "$path"
         else
-            error Gagal dibuat.; x
+            sed -i "s|__IPV6ONLY__| ipv6only=on|g" "$path"
         fi
+        sed -i -E 's|^(\s*)# ssl_certificate (.*);|\1ssl_certificate \2;|g' "$path"
+        sed -i -E 's|^(\s*)# ssl_certificate_key (.*);|\1ssl_certificate_key \2;|g' "$path"
+        sed -i -E 's|^(\s*)# include /etc/letsencrypt/options-ssl-nginx.conf;|\1include /etc/letsencrypt/options-ssl-nginx.conf;|g' "$path"
+        sed -i -E 's|^(\s*)# ssl_dhparam (.*);|\1ssl_dhparam \2;|g' "$path"
+    else
+        sed -i "s|__SSL__||g" "$path"
+        sed -i "s|__IPV6ONLY__||g" "$path"
     fi
     ____
 
-    chapter Reload nginx configuration.
-    __ Cleaning broken symbolic link.
-    code find /etc/nginx/sites-enabled -xtype l -delete -print
-    find /etc/nginx/sites-enabled -xtype l -delete -print
-    if nginx -t 2> /dev/null;then
-        code nginx -s reload
-        nginx -s reload; sleep .5
-    else
-        error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
-    fi
+    chapter Memeriksa ulang konten.
+    validateContent "$path"
+    [ ! $? -eq 0 ] && x
     ____
 
-    chapter Memeriksa ulang file konfigurasi.
-    string="$fastcgi_pass"
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*fastcgi_pass\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __; green Directive fastcgi_pass '`'$string'`' sudah terdapat pada file config.; _.
-    else
-        __; red Directive fastcgi_pass '`'$string'`' belum terdapat pada file config.; x
-    fi
-    string="$root"
-    string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-    if grep -q -E "^\s*root\s+.*$string_quoted.*;\s*$" "$file_config";then
-        __; green Directive root "$string" sudah terdapat pada file config.; _.
-        reload=1
-    else
-        __; red Directive root "$string" belum terdapat pada file config.; x
-    fi
-    for string in "${server_name[@]}" ;do
-        string_quoted=$(sed "s/\./\\\./g" <<< "$string")
-        if grep -q -E "^\s*server_name\s+.*$string_quoted.*;\s*$" "$file_config";then
-            __; green Directive server_name "$string" sudah terdapat pada file config.; _.
-        else
-            __; red Directive server_name "$string" belum terdapat pada file config.; x
-        fi
-    done
-    ____
+    rcm_nginx_reload=1
+fi
+
+source="$path"
+target="/etc/nginx/sites-enabled/$filename"
+link_symbolic "$source" "$target"
+
+if [ "$nginx_reload" == 0 ];then
+    rcm_nginx_reload=
+fi
+if [ -n "$rcm_nginx_reload" ];then
+    INDENT+="    " \
+    rcm-nginx-reload \
+        ; [ ! $? -eq 0 ] && x
 fi
 
 exit 0
@@ -282,7 +584,7 @@ exit 0
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --no-error-require-arguments << EOF
+# --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --fast
 # --version
@@ -293,10 +595,20 @@ exit 0
 # --root
 # --fastcgi-pass
 # --filename
+# --url-port
+# --url-scheme
+# --url-host
+# --certbot-certificate-name
 # )
 # MULTIVALUE=(
-# --server-name
 # )
 # FLAG_VALUE=(
 # )
+# CSV=(
+    # 'long:--with-certbot-obtain,parameter:certbot_obtain'
+    # 'long:--without-certbot-obtain,parameter:certbot_obtain,flag_option:reverse'
+    # 'long:--with-nginx-reload,parameter:nginx_reload'
+    # 'long:--without-nginx-reload,parameter:nginx_reload,flag_option:reverse'
+# )
 # EOF
+# clear
