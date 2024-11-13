@@ -5,13 +5,15 @@ _new_arguments=()
 _n=
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --help) help=1; shift ;;
-        --version) version=1; shift ;;
+        --help|-h) help=1; shift ;;
+        --version|-V) version=1; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
-        --fast) fast=1; shift ;;
+        --fast|-f) fast=1; shift ;;
         --non-interactive) non_interactive=1; shift ;;
         --root-sure) root_sure=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
+        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
+        --without-resolve-dependencies) resolve_dependencies=0; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -20,7 +22,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        install|update|get|history)
+        install|update|get|history|selfupdate|self-update)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -35,8 +37,11 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":v" opt; do
+            while getopts ":hVfv" opt; do
                 case $opt in
+                    h) help=1 ;;
+                    V) version=1 ;;
+                    f) fast=1 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
             done
@@ -58,7 +63,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        install|update|get|history)
+        install|update|get|history|selfupdate|self-update)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -682,12 +687,12 @@ Rcm_resolve_dependencies() {
     PATH="${BINARY_DIRECTORY}:${PATH}"
     commands_exists=()
     table_downloads=
-    if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+    if [ -n "$quiet" ];then
         display_waiting=1
     fi
     until [[ ${#commands_required[@]} -eq 0 ]];do
         _commands_required=()
-        if [[ "$verbose" -gt 0 ]];then
+        if [ -n "$loud" ];then
             chapter Requires command.
             e Versi rcm saat ini: ${rcm_version}.
         fi
@@ -699,15 +704,15 @@ Rcm_resolve_dependencies() {
             elif Rcm_is_internal "$command_required";then
                 command_required_version=${rcm_version}
             fi
-            if [[ "$verbose" -gt 0 ]];then
+            if [ -n "$loud" ];then
                 _ Requires command: "$command_required"
             fi
             if command -v "$command_required" > /dev/null;then
-                if [[ "$verbose" -gt 0 ]];then
+                if [ -n "$loud" ];then
                     _, ' [FOUND].';
                 fi
                 if [ -z "$command_required_version" ];then
-                    if [[ "$verbose" -gt 0 ]];then
+                    if [ -n "$loud" ];then
                         _.
                     fi
                 else
@@ -716,21 +721,21 @@ Rcm_resolve_dependencies() {
                         command_current_version=0
                     fi
                     if [[ ! "$command_required_version" == "$command_current_version" ]];then
-                        if [[ "$verbose" -gt 0 ]];then
+                        if [ -n "$loud" ];then
                             _, ' Version required: '$command_required_version'.'
                             _, ' Current version: '$command_current_version'.'
                         fi
                     fi
                     vercomp $command_current_version $command_required_version
                     if [[ $? -lt 2 ]];then
-                        if [[ "$verbose" -gt 0 ]];then
+                        if [ -n "$loud" ];then
                             _.
                         fi
                     else
-                        if [[ "$verbose" -gt 0 ]];then
+                        if [ -n "$loud" ];then
                             _.
                         fi
-                        if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+                        if [ -n "$quiet" ];then
                             if [ -n "$display_waiting" ];then
                                 printf "\r\033[K"
                                 display_waiting=
@@ -740,7 +745,7 @@ Rcm_resolve_dependencies() {
                         if Rcm_is_internal "$command_required";then
                             github_owner_repo=ijortengab/rcm
                             github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                            if [[ "$verbose" -gt 0 ]];then
+                            if [ -n "$loud" ];then
                                 code rcm update $(sed s,^rcm-,, <<< "$command_required")
                             fi
                             OLDINDENT="$INDENT"; INDENT+=''
@@ -750,7 +755,7 @@ Rcm_resolve_dependencies() {
                             INDENT="$OLDINDENT"
                             is_updated=1
                         elif [[ "$command_required" == rcm ]];then
-                            if [[ "$verbose" -gt 0 ]];then
+                            if [ -n "$loud" ];then
                                 code rcm self-update
                             fi
                             OLDINDENT="$INDENT"; INDENT+=''
@@ -771,7 +776,7 @@ Rcm_resolve_dependencies() {
                                     if [[ $github_media_type == raw ]];then
                                         github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                         github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                        if [[ "$verbose" -gt 0 ]];then
+                                        if [ -n "$loud" ];then
                                             code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                         fi
                                         OLDINDENT="$INDENT"; INDENT+=''
@@ -789,7 +794,7 @@ Rcm_resolve_dependencies() {
                     fi
                 fi
             else
-                if [[ "$verbose" -gt 0 ]];then
+                if [ -n "$loud" ];then
                     _, ' [NOTFOUND].'; _.
                 fi
                 if [[ -f "$BINARY_DIRECTORY/$command_required" && ! -s "$BINARY_DIRECTORY/$command_required" ]];then
@@ -803,7 +808,7 @@ Rcm_resolve_dependencies() {
                         PHP_URL_HOST='github.com'
                         github_owner_repo=ijortengab/rcm
                         github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                        if [[ "$verbose" -gt 0 ]];then
+                        if [ -n "$loud" ];then
                             code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         fi
                         OLDINDENT="$INDENT"; INDENT+=''
@@ -824,7 +829,7 @@ Rcm_resolve_dependencies() {
                                 if [[ $_github_media_type == raw ]];then
                                     github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
                                     github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                    if [[ "$verbose" -gt 0 ]];then
+                                    if [ -n "$loud" ];then
                                         code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                     fi
                                     OLDINDENT="$INDENT"; INDENT+=''
@@ -841,13 +846,13 @@ Rcm_resolve_dependencies() {
                             OLDINDENT="$INDENT"; INDENT+=''
                             save_as="$command_required"
                             if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
-                                if [[ "$verbose" -gt 0 ]];then
+                                if [ -n "$loud" ];then
                                     code rcm get "$url"
                                 fi
                                 INDENT+='    '
                                 Rcm_get "$url"
                             else
-                                if [[ "$verbose" -gt 0 ]];then
+                                if [ -n "$loud" ];then
                                     code rcm get "$url" --save-as='"'"$command_required"'"'
                                 fi
                                 INDENT+='    '
@@ -885,22 +890,22 @@ Rcm_resolve_dependencies() {
                 unset _dependency
             fi
         done
-        if [[ "$verbose" -gt 0 ]];then
+        if [ -n "$loud" ];then
             ____
         fi
-        if [[ "$verbose" -gt 1 ]];then
+        if [ -n "$debug" ];then
             chapter Dump variable.
         fi
         ArrayUnique _commands_required[@]
         commands_required=("${_return[@]}")
         unset _return
         unset _commands_required
-        if [[ "$verbose" -gt 1 ]];then
+        if [ -n "$debug" ];then
             code 'commands_required=('"${commands_required[@]}"')'
             ____
         fi
     done
-    if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
+    if [ -n "$quiet" ];then
         if [ -n "$display_waiting" ];then
             printf "\r\033[K"
         fi
@@ -1412,7 +1417,7 @@ Rcm_github_release() {
             fi
             latest_version=$(sed -E 's/v?(.*)/\1/' <<< "$tag_name")
             if [ "$current_version" == "$latest_version" ];then
-                if [[ "$verbose" -gt 0 ]];then
+                if [ -n "$loud" ];then
                     _ 'You are already using the latest available '; magenta $shell_script; _, ' version: '; yellow $latest_version; _.
                 fi
                 exit 0
@@ -1426,7 +1431,7 @@ Rcm_github_release() {
     esac
     local cache_directory=$HOME/.cache/rcm/$github_repo/$latest_version
     if [ ! -d "$cache_directory" ];then
-        if [[ "$verbose" -gt 0 ]];then
+        if [ -n "$loud" ];then
             _ 'Downloading version: '; yellow $latest_version; _.
         fi
         url='https://api.github.com/repos/'$github_repo'/tarball/'$tag_name
@@ -1452,7 +1457,7 @@ Rcm_github_release() {
         cd - >/dev/null
         rm -rf "$tempdir"
     else
-        if [[ "$verbose" -gt 0 ]];then
+        if [ -n "$loud" ];then
             _ 'Using downloaded version: '; yellow $latest_version; _.
         fi
     fi
@@ -1463,22 +1468,22 @@ Rcm_github_release() {
     case $mode in
         install)
             if [ -f "${BINARY_DIRECTORY}/${shell_script}" ];then
-                if [[ "$verbose" -gt 1 ]];then
+                if [ -n "$debug" ];then
                     __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
                 fi
                 backupFile move "${BINARY_DIRECTORY}/${shell_script}"
             elif [ -h "${BINARY_DIRECTORY}/${shell_script}" ];then
-                if [[ "$verbose" -gt 1 ]];then
+                if [ -n "$debug" ];then
                     __ Backup file "${BINARY_DIRECTORY}/${shell_script}".
                 fi
                 backupFile move "${BINARY_DIRECTORY}/${shell_script}"
             fi
-            if [[ "$verbose" -gt 0 ]];then
+            if [ -n "$loud" ];then
                 code cp '"'$filename'"' '"'$BINARY_DIRECTORY/$shell_script'"'
             fi
             cp "$filename" $BINARY_DIRECTORY/$shell_script
             current_version=`$shell_script --version`
-            if [[ "$verbose" -gt 0 ]];then
+            if [ -n "$loud" ];then
                 _ 'Success install '; magenta $shell_script; _, ' version: '; yellow $current_version; _.
             fi
         ;;
@@ -1486,7 +1491,7 @@ Rcm_github_release() {
             cp "$filename" "$current_path"
             old_version=$current_version
             current_version=`$shell_script --version`
-            if [[ "$verbose" -gt 0 ]];then
+            if [ -n "$loud" ];then
                 _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
                 e To rollback version $old_version, execute the latest command with --rollback options.
             fi
@@ -1909,6 +1914,10 @@ delay=.5; [ -n "$fast" ] && unset delay
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 rcm_version=`printVersion`
 immediately=
+[ -z "$resolve_dependencies" ] && resolve_dependencies=1
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1 || loud=
+[[ "$verbose" -gt 1 ]] && debug=1 || debug=
 ____
 
 if [ -z "$root_sure" ];then
@@ -2070,22 +2079,24 @@ fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
 
-if [[ -z "$verbose" || "$verbose" -lt 1 ]];then
-    chapter Resolve dependencies.
-    Rcm_resolve_dependencies $command &
-    pid=$!
-    spin='-\|/'
-    i=0
-    while kill -0 $pid 2>/dev/null
-    do
-      i=$(( (i+1) %4 ))
-      printf "\r" >&2; __; _, "Waiting...${spin:$i:1}"
-      sleep .1
-    done
-    __ Resolved.
-    ____
-else
-    Rcm_resolve_dependencies $command
+if [ "$resolve_dependencies" == 1 ];then
+    if [ -n "$quiet" ];then
+        chapter Resolve dependencies.
+        Rcm_resolve_dependencies $command &
+        pid=$!
+        spin='-\|/'
+        i=0
+        while kill -0 $pid 2>/dev/null
+        do
+          i=$(( (i+1) %4 ))
+          printf "\r" >&2; __; _, "Waiting...${spin:$i:1}"
+          sleep .1
+        done
+        __ Resolved.
+        ____
+    else
+        Rcm_resolve_dependencies $command
+    fi
 fi
 
 _new_arguments=()
@@ -2183,9 +2194,9 @@ exit 0
     # '--verbose|-v'
 # )
 # FLAG=(
-# --fast
-# --version
-# --help
+# '--fast|-f'
+# '--version|-V'
+# '--help|-h'
 # --root-sure
 # --binary-directory-exists-sure
 # --non-interactive
@@ -2197,6 +2208,8 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+    # 'long:--with-resolve-dependencies,parameter:resolve_dependencies'
+    # 'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
 # )
 # OPERAND=(
 # install
