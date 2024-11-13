@@ -222,7 +222,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 
 # Functions.
 printVersion() {
-    echo '0.16.4'
+    echo '0.16.5'
 }
 printHelp() {
     title Rapid Construct Massive
