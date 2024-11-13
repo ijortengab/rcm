@@ -7,6 +7,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
+        -x) resolve_dependencies=0; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --fast|-f) fast=1; shift ;;
         --non-interactive) non_interactive=1; shift ;;
@@ -22,7 +23,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        install|update|get|history|selfupdate|self-update)
+        install|update|get|history)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -37,10 +38,11 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVfv" opt; do
+            while getopts ":hVxfv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
+                    x) resolve_dependencies=0 ;;
                     f) fast=1 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
@@ -63,7 +65,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        install|update|get|history|selfupdate|self-update)
+        install|update|get|history)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -82,7 +84,7 @@ command="$1"; shift
 if [ -n "$command" ];then
     case "$command" in
         update|history|install|get) ;;
-        *) command="rcm-${command}"
+        *) command_raw="${command}"; command="rcm-${command}"
     esac
 else
     command=list # internal only.
@@ -224,6 +226,19 @@ resolve_relative_path() {
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
+if [ -n "$RCM_FAST" ];then
+    fast="$RCM_FAST"
+fi
+if [ -n "$RCM_NON_INTERACTIVE" ];then
+    non_interactive="$RCM_NON_INTERACTIVE"
+fi
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+if [ -n "$RCM_RESOLVE_DEPENDENCIES" ];then
+    resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
+fi
+delay=.5; [ -n "$fast" ] && unset delay
 
 # Functions.
 printVersion() {
@@ -678,6 +693,14 @@ ArrayUnique() {
         fi
     done
 }
+ArrayShift() {
+    local index
+    local source=("${!1}")
+    _return=()
+    for (( index=1; index < ${#source[@]} ; index++ )); do
+        _return+=("${source[$index]}")
+    done
+}
 Rcm_resolve_dependencies() {
     local commands_required
     local command_required command_required_version
@@ -915,24 +938,42 @@ Rcm_prompt() {
     local command="$1"
     local chapter_printed=
     argument_pass=()
+    argument_preview=()
     argument_placeholders=
+    parameter='<command>'
     available_subcommands=()
     _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
     if [ -n "$_available_subcommands" ];then
         available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
     fi
-    if [ "${#available_subcommands[@]}" -gt 0 ];then
+    for value in "${argument_operand_prepopulate[@]}";do
+        ArrayShift argument_operand_prepopulate[@]
+        break
+    done
+    if [ -n "$value" ];then
         chapter Prepare argument for command '`'$command'`'.
         chapter_printed=1
-        what=subcommand
-        if [ "${#available_subcommands[@]}" -gt 1 ];then
-            what=subcommands
-        fi
-        printSelectDialog available_subcommands[@] "$what"
-        if [ -n "$value" ];then
-            argument_pass+=("${value}")
+        e
+        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
+
+        argument_operand_prepopulate=("$_return[@]")
+        unset _return
+    else
+        if [ "${#available_subcommands[@]}" -gt 0 ];then
+            chapter Prepare argument for command '`'$command'`'.
+            chapter_printed=1
+            what=subcommand
+            if [ "${#available_subcommands[@]}" -gt 1 ];then
+                what=subcommands
+            fi
+            printSelectDialog available_subcommands[@] "$what"
         fi
     fi
+    if [ -n "$value" ];then
+        argument_pass+=("${value}")
+        argument_preview+=("${value}")
+    fi
+
     options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
@@ -1144,11 +1185,14 @@ Rcm_prompt() {
                             # Credit: https://stackoverflow.com/a/47918586
                             value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                             argument_pass+=("${parameter}=${value}")
+                            argument_preview+=("${parameter}=${value}")
                         else
                             argument_pass+=("${parameter}")
+                            argument_preview+=("${parameter}")
                         fi
                     else
                         argument_pass+=("${parameter}")
+                        argument_preview+=("${parameter}")
                     fi
                     # Populate placeholders.
                     if [ -n "$value" ];then
@@ -1159,6 +1203,7 @@ Rcm_prompt() {
                 else
                     # Populate placeholders.
                     argument_placeholders+='['"$parameter"']: '"0"
+                    argument_preview+=("${parameter}-")
                 fi
                 if [ -n "$argument_boolean" ];then
                     if [ -n "$is_press" ];then
@@ -1189,6 +1234,7 @@ Rcm_prompt() {
                     fi
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
+                        argument_preview+=("${parameter} ${value}")
                     fi
                 fi
             else
@@ -1284,9 +1330,11 @@ Rcm_prompt() {
                     # Credit: https://stackoverflow.com/a/47918586
                     value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                     argument_pass+=("${parameter}=${value}")
+                    argument_preview+=("${parameter}=${value}")
                     argument_placeholders+='['"$parameter"']: '"$value"
                 else
                     argument_placeholders+='['"$parameter"']: -'
+                    argument_preview+=("${parameter}-")
                 fi
                 if [[ -n "$value" && "$is_typing" ]];then
                     e
@@ -1322,6 +1370,7 @@ Rcm_prompt() {
                     if [ -n "$boolean" ];then
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
+                            argument_preview+=("${parameter}")
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
                                 printHistoryDialog
@@ -1331,10 +1380,14 @@ Rcm_prompt() {
                             fi
                             if [ -n "$value" ];then
                                 argument_pass+=("${value}")
+                                argument_preview+=("${value}")
                             fi
                         else
                             __; read -p "Type the value: " value
-                            [ -n "$value" ] && argument_pass+=("${parameter}=${value}")
+                            if [ -n "$value" ];then
+                                argument_pass+=("${parameter}=${value}")
+                                argument_preview+=("${parameter}=${value}")
+                            fi
                         fi
                         # Backup to text file.
                         value=$(echo "$value" | sed -E 's/[^/a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -1866,6 +1919,7 @@ if [[ -z "$non_interactive" && -z "$fast" ]];then
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
         fast=1
+        unset delay
     fi
     ____
 fi
@@ -1910,10 +1964,10 @@ fi
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 rcm_version=`printVersion`
 immediately=
+resolved=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1 || loud=
@@ -2097,10 +2151,12 @@ if [ "$resolve_dependencies" == 1 ];then
     else
         Rcm_resolve_dependencies $command
     fi
+    resolved=1
 fi
 
 _new_arguments=()
 argument_prepopulate=()
+argument_operand_prepopulate=()
 if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -2123,7 +2179,12 @@ if [ $# -gt 0 ];then
                 fi
                 shift
                 ;;
+            -[^-]*)
+                # Short option tidak bisa dijadikan prepopulate.
+                shift
+                ;;
             *)
+                argument_operand_prepopulate+=("$1");
                 shift
         esac
     done
@@ -2142,26 +2203,62 @@ fi
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
-chapter Execute:
+chapter Command has been built.
 e
-
+_ Use' '; yellow rcm; _, ' 'command:; _.
+e
+shortoptions=
+[ "$resolve_dependencies" == 0 ] && resolved=1
+[ -n "$resolved" ] && shortoptions+='x'
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-[ -n "$non_interactive" ] && isnoninteractive=' --non-interactive' || isnoninteractive=''
+[ -n "$fast" ] && shortoptions+='f'
 [ -n "$verbose" ] && {
     for ((i = 0 ; i < "$verbose" ; i++)); do
         isverbose+=' --verbose'
+        shortoptions+='v'
     done
 } || isverbose=
-code ${command}${isfast}${isnoninteractive}${isverbose} "$@"
+[ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
+argument_preview+=(--)
+if [ -z "$RCM_FAST" ];then
+    RCM_FAST="$fast"
+    export RCM_FAST="$RCM_FAST"
+fi
+if [ -z "$RCM_NON_INTERACTIVE" ];then
+    RCM_NON_INTERACTIVE="$non_interactive"
+    export RCM_NON_INTERACTIVE="$RCM_NON_INTERACTIVE"
+fi
+if [ -z "$RCM_VERBOSE" ];then
+    RCM_VERBOSE="$verbose"
+    export RCM_VERBOSE="$RCM_VERBOSE"
+fi
+if [ -z "$RCM_RESOLVE_DEPENDENCIES" ];then
+    RCM_RESOLVE_DEPENDENCIES="$resolve_dependencies"
+    export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
+fi
+if [ -z "$RCM_LAST_COMMAND" ];then
+    RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
+fi
+for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
+export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
+code "$RCM_LAST_COMMAND"
+e
+_ Use' '; yellow $command; _, ' 'command:; _.
+e
+# Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
+# Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
+code ${command}${isfast}${isverbose} "$@"
+____
 
 if [ -z "$immediately" ];then
+    chapter Execute:
     e
     userInputBooleanDefaultYes
     if [ -z "$boolean" ];then
-        x
+        exit 0
     fi
+    ____
 fi
-____
 
 chapter Timer Start.
 e Begin: $(date +%Y%m%d-%H%M%S)
@@ -2210,14 +2307,13 @@ exit 0
 # CSV=(
     # 'long:--with-resolve-dependencies,parameter:resolve_dependencies'
     # 'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
+    # 'short:-x,parameter:resolve_dependencies,flag_option:reverse'
 # )
 # OPERAND=(
 # install
 # update
 # get
 # history
-# selfupdate
-# self-update
 # )
 # EOF
 # clear
