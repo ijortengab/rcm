@@ -420,16 +420,22 @@ code socket_filename="$socket_filename"
 code root="$root"
 filename="$PHPMYADMIN_NGINX_CONFIG_FILE"
 code filename="$filename"
-server_name="$PHPMYADMIN_FQDN_LOCALHOST"
-code server_name="$server_name"
+url_scheme=http
+url_port=80
+url_host="$PHPMYADMIN_FQDN_LOCALHOST"
+code 'url_scheme="'$url_scheme'"'
+code 'url_host="'$url_host'"'
+code 'url_port="'$url_port'"'
 ____
 
 INDENT+="    " \
 rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --root="$root" \
     --filename="$filename" \
-    --server-name="$server_name" \
     --fastcgi-pass="unix:${socket_filename}" \
+    --url-host="$url_host" \
+    --url-scheme="$url_scheme" \
+    --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek subdomain '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
