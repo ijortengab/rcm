@@ -214,7 +214,7 @@ if [[ -n "$is_dash" ]];then
     echo "dash dash/sh boolean false" | debconf-set-selections
     DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
     if [[ $(realpath /bin/sh) =~ dash$ ]];then
-        __; red '`'sh'`' command link to dash.; _.
+        __ '`'sh'`' command link to dash.
     else
         __; green '`'sh'`' command link to $(realpath /bin/sh).; _.
         is_dash=
