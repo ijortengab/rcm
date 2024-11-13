@@ -177,7 +177,7 @@ deb-src http://deb.debian.org/debian bullseye-updates main
 EOF
 )
                 application=
-                application+=' cron'
+                application+=' cron git'
                 application+=' lsb-release apt-transport-https ca-certificates software-properties-common'
                 application+=' sudo patch curl wget net-tools apache2-utils openssl rkhunter'
                 application+=' binutils dnsutils pwgen daemon apt-listchanges lrzip p7zip'

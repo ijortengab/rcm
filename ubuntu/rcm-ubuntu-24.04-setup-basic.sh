@@ -176,6 +176,7 @@ deb http://archive.canonical.com/ubuntu/ noble partner
 EOF
 )
                 application=
+                application+=' git'
                 application+=' lsb-release apt-transport-https ca-certificates'
                 application+=' sudo patch curl wget net-tools apache2-utils openssl rkhunter'
                 application+=' binutils dnsutils pwgen daemon apt-listchanges lrzip p7zip'
