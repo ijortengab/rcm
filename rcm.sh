@@ -374,7 +374,7 @@ printHistoryDialog() {
 printSelectDialog() {
     local source=("${!1}")
     local what="$2"
-    local first=1 e reference_key
+    local each reference_key
     if [ -z "$what" ];then
         what=value
         if [ "${#source[@]}" -gt 1 ];then
@@ -384,11 +384,30 @@ printSelectDialog() {
     unset count
     declare -i count
     count=0
-    _; _.
-    __; _, Available $what:; for e in "${source[@]}"; do
-        if [ -n "$first" ];then first=; else _, ','; fi
-        _, ' '; yellow "$e"
+    e
+    declare -i min; min=80
+    declare -i max; max=100
+    __; _, Available $what:; _.
+    current_line=
+    for each in "${source[@]}"; do
+        if [ -z "$current_line" ]; then
+            current_line="$each"
+            __; yellow "$each"
+        else
+            _current_line="${current_line}, ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=", ${each}"
+                _, ,' '; yellow "$each"
+            elif [ "${#_current_line}" -le $max ];then
+                _, ,' '; yellow "$each"; _.
+                current_line=
+            else
+                _.; __; yellow "$each"
+                current_line="$each"
+            fi
+        fi
     done; _, '.'; _.
+    e
     _; _.
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
@@ -491,7 +510,7 @@ printSelectDialog() {
 printSelectOtherDialog() {
     local source=("${!1}")
     local what="$2"
-    local first=1 e reference_key
+    local each reference_key
     if [ -z "$what" ];then
         what=value
         if [ "${#source[@]}" -gt 1 ];then
@@ -501,12 +520,35 @@ printSelectOtherDialog() {
     unset count
     declare -i count
     count=0
-    _; _.
-    __; _, Available $what:; for e in "${source[@]}"; do
-        if [ -n "$first" ];then first=; else _, ','; fi
-        _, ' '; yellow "$e"
-    done; _, ', or '; yellow other; _, .; _.
-    _; _.
+    e
+    declare -i min; min=80
+    declare -i max; max=100
+    __; _, Available $what:; _.
+    current_line=
+    for each in "${source[@]}"; do
+        if [ -z "$current_line" ]; then
+            current_line="$each"
+            __; yellow "$each"
+        else
+            _current_line="${current_line}, ${each},"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=" ${each},"
+                _, ,' '; yellow "$each"; _, ,
+            elif [ "${#_current_line}" -le $max ];then
+                _, ' '; yellow "$each"; _, ,; _.
+                current_line=
+            else
+                _.; __; yellow "$each"
+                current_line="$each"
+            fi
+        fi
+    done;
+    if [ -z "$current_line" ]; then
+        __; _, 'or '; yellow other; _, .; _.
+    else
+        _, ' or '; yellow other; _, .; _.
+    fi
+    e
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
@@ -514,6 +556,7 @@ printSelectOtherDialog() {
         __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
     fi
     local select_mode=
+    local type_mode=
     local skip=
     while true; do
         __; read -rsn 1 -p "Select: " char;
@@ -549,7 +592,8 @@ printSelectOtherDialog() {
                 __; _, '['$count']' "${source[$i]}"; _.
             fi
         done
-        __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
+        __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
+        __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to type other value.'; _.
         count_max="${#source[@]}"
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -560,6 +604,8 @@ printSelectOtherDialog() {
                 char=t
             fi
             case $char in
+                s|S) type_mode=1; echo "$char"; break ;;
+                $'\177') type_mode=1; echo "s"; break ;;
                 t|T) echo "$char"; break ;;
                 [1-$count_max])
                     echo "$char"
@@ -569,21 +615,23 @@ printSelectOtherDialog() {
                 *) echo
             esac
         done
-        until [ -n "$value" ];do
-            __; read -p "Type the number: " value
-            if [[ $value =~ [^0-9] ]];then
-                value=
-            fi
-            if [[ $value =~ ^0 ]];then
-                value=
-            fi
-            if [ -n "$value" ];then
-                value=$((value - 1))
-                value="${source[$value]}"
-            fi
-        done
-        e
-        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+        if [[ -z "$type_mode" ]];then
+            until [ -n "$value" ];do
+                __; read -p "Type the number: " value
+                if [[ $value =~ [^0-9] ]];then
+                    value=
+                fi
+                if [[ $value =~ ^0 ]];then
+                    value=
+                fi
+                if [ -n "$value" ];then
+                    value=$((value - 1))
+                    value="${source[$value]}"
+                fi
+            done
+            e
+            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+        fi
     fi
     if [ -z "$value" ];then
         if [ -n "$is_required" ];then
@@ -1031,9 +1079,16 @@ Rcm_prompt() {
                 history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             fi
             available_values=()
-            _available_values=`echo "$label" | grep -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/p'`
+            _available_values=`echo "$label" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+            if [ -n "$_available_values" ];then
+                label=`echo "$label" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
+            fi
             _available_values_from_command=`echo "$label" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+            if [ -n "$_available_values_from_command" ];then
+                label=`echo "$label" | sed -E 's/ *Values? available from command: ([^\.]+)\.//i'`
+            fi
             or_other=
+
             if [ -n "$_available_values" ];then
                 if grep -i -q -E 'or others?' <<< "$_available_values";then
                     or_other=1
@@ -1049,7 +1104,6 @@ Rcm_prompt() {
                 while read line; do
                     find=$(echo ${line} | cut -d: -f1 | xargs)
                     replace=$(echo ${line} | cut -d: -f2 | xargs)
-                    label="${label/"$find"/"$replace"}"
                     if [ -n "$_available_values" ];then
                         _available_values="${_available_values/"$find"/"$replace"}"
                     fi
@@ -1264,7 +1318,7 @@ Rcm_prompt() {
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                            __; _, Get the output of '`'${_command}${_arguments}'`'.;_.
+                            __; _, Value available from command: '`'${_command}${_arguments}'`'.;_.
                             mktemp=$(mktemp -p /dev/shm)
                             ${_command}${_arguments} > "$mktemp"
                             exit_code=$?
