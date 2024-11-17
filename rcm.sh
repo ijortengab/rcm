@@ -208,6 +208,23 @@ resolve_relative_path() {
         return 1
     fi
 }
+userInputBooleanDefaultYes() {
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
+    boolean=
+    while true; do
+        __; read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            char=y
+        fi
+        case $char in
+            y|Y) echo "$char"; boolean=1; break;;
+            n|N) echo "$char"; break ;;
+            $'\33') echo "n"; break ;;
+            *) echo
+        esac
+    done
+}
 
 # Define variables.
 __FILE__=$(resolve_relative_path "$0")
@@ -271,6 +288,18 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+if [[ -z "$non_interactive" && -z "$fast" ]];then
+    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    _; _.
+    __ Press the yellow key to select.
+    userInputBooleanDefaultYes
+    if [ -n "$boolean" ];then
+        fast=1
+        unset delay
+    fi
+    ____
+fi
+
 # Title.
 title rcm
 ____
@@ -307,29 +336,12 @@ userInputBooleanDefaultNo() {
         esac
     done
 }
-userInputBooleanDefaultYes() {
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-    __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    boolean=
-    while true; do
-        __; read -rsn 1 -p "Select: " char
-        if [ -z "$char" ];then
-            char=y
-        fi
-        case $char in
-            y|Y) echo "$char"; boolean=1; break;;
-            n|N) echo "$char"; break ;;
-            $'\33') echo "n"; break ;;
-            *) echo
-        esac
-    done
-}
 printBackupDialog() {
     _; _.
     __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _.
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
-        e
+        _; _.
         value="$backup_value";
         if [ -n "$is_flag" ];then
             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'which is restored.; _.
@@ -363,7 +375,7 @@ printHistoryDialog() {
             [1-$count_max])
                 echo "$char"
                 value=$(sed -n ${char}p <<< "$history_value")
-                e
+                _; _.
                 __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list of history.; _.
                 save_history=
                 break ;;
@@ -384,30 +396,9 @@ printSelectDialog() {
     unset count
     declare -i count
     count=0
-    e
-    declare -i min; min=80
-    declare -i max; max=100
-    __; _, Available $what:; _.
-    current_line=
-    for each in "${source[@]}"; do
-        if [ -z "$current_line" ]; then
-            current_line="$each"
-            __; yellow "$each"
-        else
-            _current_line="${current_line}, ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                current_line+=", ${each}"
-                _, ,' '; yellow "$each"
-            elif [ "${#_current_line}" -le $max ];then
-                _, ,' '; yellow "$each"; _.
-                current_line=
-            else
-                _.; __; yellow "$each"
-                current_line="$each"
-            fi
-        fi
-    done; _, '.'; _.
-    e
+    _; _.
+    words_array=("${source[@]}")
+    wordWrapList "Available ${what}:"
     _; _.
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
@@ -483,7 +474,7 @@ printSelectDialog() {
                 value="${source[$value]}"
             fi
         done
-        e
+        _; _.
         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
     fi
     while true; do
@@ -517,38 +508,11 @@ printSelectOtherDialog() {
             what=values
         fi
     fi
-    unset count
-    declare -i count
-    count=0
-    e
-    declare -i min; min=80
-    declare -i max; max=100
-    __; _, Available $what:; _.
-    current_line=
-    for each in "${source[@]}"; do
-        if [ -z "$current_line" ]; then
-            current_line="$each"
-            __; yellow "$each"
-        else
-            _current_line="${current_line}, ${each},"
-            if [ "${#_current_line}" -le $min ];then
-                current_line+=" ${each},"
-                _, ,' '; yellow "$each"; _, ,
-            elif [ "${#_current_line}" -le $max ];then
-                _, ' '; yellow "$each"; _, ,; _.
-                current_line=
-            else
-                _.; __; yellow "$each"
-                current_line="$each"
-            fi
-        fi
-    done;
-    if [ -z "$current_line" ]; then
-        __; _, 'or '; yellow other; _, .; _.
-    else
-        _, ' or '; yellow other; _, .; _.
-    fi
-    e
+    _; _.
+    words_array=("${source[@]}")
+    words_array+=(other)
+    wordWrapList "Available ${what}:"
+    _; _.
     __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
@@ -629,7 +593,7 @@ printSelectOtherDialog() {
                     value="${source[$value]}"
                 fi
             done
-            e
+            _; _.
             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
         fi
     fi
@@ -988,7 +952,7 @@ Rcm_prompt() {
     if [ -n "$value" ];then
         chapter Prepare argument for command '`'$command'`'.
         chapter_printed=1
-        e
+        _; _.
         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
 
         argument_operand_prepopulate=("$_return[@]")
@@ -1139,7 +1103,7 @@ Rcm_prompt() {
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
-                    __ "$line"
+                    wordWrapDescription "$line"
                 done <<< "$label"
                 _boolean=
                 for each in "${argument_prepopulate[@]}";do
@@ -1169,15 +1133,15 @@ Rcm_prompt() {
                 # Reset first.
                 boolean=
                 if [ -z "$_boolean" ];then
-                    e
+                    _; _.
                     __; _, Add this argument?; _.
                     userInputBooleanDefaultNo
                     is_press=1
                 elif [[ "$_boolean" == 0 ]];then
-                    e
+                    _; _.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 elif [[ "$_boolean" == 1 ]];then
-                    e
+                    _; _.
                     if [ -n "$value" ];then
                         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
                     else
@@ -1193,7 +1157,7 @@ Rcm_prompt() {
                 if [ -n "$boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         if [ -z "$value" ];then
-                            e
+                            _; _.
                             __; _, Do you want fill with value?; _.
                             userInputBooleanDefaultNo
                         fi
@@ -1250,11 +1214,11 @@ Rcm_prompt() {
                     if [ -n "$is_press" ];then
                         if [ -n "$value" ];then
                             if [ -n "$is_typing" ];then
-                                e
+                                _; _.
                                 __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'manually.; _.
                             fi
                         else
-                            e
+                            _; _.
                             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added manually.; _.
                         fi
                     fi
@@ -1262,7 +1226,7 @@ Rcm_prompt() {
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
-                    __ "$line"
+                    wordWrapDescription "$line"
                 done <<< "$label"
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
@@ -1285,11 +1249,11 @@ Rcm_prompt() {
                     _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 fi
                 while read line; do
-                    __ "$line"
+                    wordWrapDescription "$line"
                 done <<< "$label"
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
-                        e
+                        _; _.
                         __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                         backup_value=
                         history_value=
@@ -1298,7 +1262,7 @@ Rcm_prompt() {
                         break
                     elif grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
-                        e
+                        _; _.
                         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
                         backup_value=
                         break
@@ -1318,7 +1282,8 @@ Rcm_prompt() {
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                            __; _, Value available from command: '`'${_command}${_arguments}'`'.;_.
+                            words_array=(${_command}${_arguments})
+                            wordWrapCommandInline "Value available from command:"
                             mktemp=$(mktemp -p /dev/shm)
                             ${_command}${_arguments} > "$mktemp"
                             exit_code=$?
@@ -1378,7 +1343,7 @@ Rcm_prompt() {
                     argument_preview+=("${parameter}-")
                 fi
                 if [[ -n "$value" && "$is_typing" ]];then
-                    e
+                    _; _.
                     __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'manually.; _.
                 fi
             fi
@@ -1593,7 +1558,7 @@ Rcm_github_release() {
     esac
 }
 sleepExtended() {
-    local countdown=$1
+    local countdown=$1 sleep
     local width=$2
     if [ -z "$width" ];then
         width=80
@@ -1965,18 +1930,194 @@ Rcm_get() {
     code chmod a+x "$BINARY_DIRECTORY/$filename"
     chmod a+x "$BINARY_DIRECTORY/$filename"
 }
-
-if [[ -z "$non_interactive" && -z "$fast" ]];then
-    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
-    e
-    __ Press the yellow key to select.
-    userInputBooleanDefaultYes
-    if [ -n "$boolean" ];then
-        fast=1
-        unset delay
-    fi
-    ____
-fi
+wordWrapDescription() {
+    local paragraph="$1" words_array current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    words_array=($paragraph)
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="$each"
+                __; _, "$each"
+            else
+                first_line=
+                current_line="$each"
+                __; _, "$each"
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=" ${each}"
+                _, " ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                _, " ${each}"; _.
+                current_line=
+            else
+                _.; __; _, "$each"
+                current_line="$each"
+            fi
+        fi
+    done
+    _.
+}
+wordWrapCommand() {
+    # global words_array
+    local inline_label="$1"
+    local parts current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="    ${each}"
+                e; magenta "    $each";
+            else
+                first_line=
+                if [ -n "$inline_label" ];then
+                    e; _, "${inline_label} "; magenta "$each"
+                    current_line="${inline_label} ${each}"
+                else
+                    e; magenta "$each"
+                    current_line="$each"
+                fi
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "$each"; _.
+                else
+                    _, ' '; magenta "$each"
+                fi
+                current_line+=" ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "${each}"''; _.
+                else
+                    _, ' '; magenta "${each}"' \'; _.
+                fi
+                current_line=
+            else
+                magenta ' \'; _.; e; magenta "$each"
+                current_line="    ${each}"
+            fi
+        fi
+    done
+}
+wordWrapCommandInline() {
+    # global words_array
+    local inline_label="$1"
+    local parts current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="    ${each}"
+                __; magenta "    $each";
+            else
+                first_line=
+                if [ -n "$inline_label" ];then
+                    __; _, "${inline_label} "; magenta "$each"
+                    current_line="${inline_label} ${each}"
+                else
+                    __; magenta "$each"
+                    current_line="$each"
+                fi
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "$each"; _.
+                else
+                    _, ' '; magenta "$each"
+                fi
+                current_line+=" ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "${each}"''; _.
+                else
+                    _, ' '; magenta "${each}"' \'; _.
+                fi
+                current_line=
+            else
+                magenta ' \'; _.; __; magenta "$each"
+                current_line="    ${each}"
+            fi
+        fi
+    done
+}
+wordWrapList() {
+    # global words_array
+    local inline_label="$1"
+    local parts current_line first_line last
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="$each"
+                __; yellow "$each"
+            else
+                first_line=
+                current_line="${inline_label} ${each}"
+                __; _, "${inline_label} "; yellow "$each"
+            fi
+            if [ -n "$last" ];then
+                _, '.'; _.
+            fi
+        else
+            if [ -n "$last" ];then
+                _current_line="${current_line}, or ${each}"
+            else
+                _current_line="${current_line}, ${each}"
+            fi
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ', or '; yellow "$each"; _, '.'; _.
+                else
+                    _, ', '; yellow "$each"
+                fi
+                current_line+=", ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ', '; yellow "$each"; _, '.'; _.
+                else
+                    _, ', '; yellow "$each"; _, ','; _.
+                fi
+                current_line=
+            else
+                _.; __; yellow "$each"
+                current_line="$each"
+            fi
+        fi
+    done
+}
 
 # Execute command.
 if [ $command == history ];then
@@ -2085,7 +2226,6 @@ if [ $command == list ];then
         _ After quit, you should select one command to execute.; _.
         _; _.
         _ Please press Ctrl+C to open the contents immediately.; _.
-
         trap immediately SIGINT
         sleepExtended 30
         trap x SIGINT
@@ -2254,10 +2394,6 @@ fi
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
-chapter Command has been built.
-e
-_ Use' '; yellow rcm; _, ' 'command:; _.
-e
 shortoptions=
 [ "$resolve_dependencies" == 0 ] && resolved=1
 [ -n "$resolved" ] && shortoptions+='x'
@@ -2292,23 +2428,32 @@ if [ -z "$RCM_LAST_COMMAND" ];then
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
-code "$RCM_LAST_COMMAND"
-e
-_ Use' '; yellow $command; _, ' 'command:; _.
-e
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
-code ${command}${isfast}${isverbose} "$@"
+chapter Command has been built.
+words_array=(${command} ${isfast} ${isverbose} "$@")
+wordWrapCommand
+____
+
+chapter Another command has been built.
+_ Keep using '`'rcm'`' command with the same result.; _.
+words_array=($RCM_LAST_COMMAND)
+wordWrapCommand
 ____
 
 if [ -z "$immediately" ];then
     chapter Execute:
-    e
+    _; _.
     userInputBooleanDefaultYes
     if [ -z "$boolean" ];then
         exit 0
     fi
     ____
+else
+    chapter Command is being executed.
+    ____
+
+    sleepExtended 1
 fi
 
 chapter Timer Start.
