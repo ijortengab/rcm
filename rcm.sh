@@ -717,7 +717,7 @@ Rcm_resolve_dependencies() {
         _commands_required=()
         if [ -n "$loud" ];then
             chapter Requires command.
-            e Versi rcm saat ini: ${rcm_version}.
+            _ Versi rcm saat ini: ${rcm_version}.; _.
         fi
         for command_required in "${commands_required[@]}"; do
             command_required_version=
@@ -1546,7 +1546,7 @@ Rcm_github_release() {
             current_version=`$shell_script --version`
             if [ -n "$loud" ];then
                 _ 'Success update '; magenta $shell_script; _, ' to version: '; yellow $current_version; _.
-                e To rollback version $old_version, execute the latest command with --rollback options.
+                _ To rollback version $old_version, execute the latest command with --rollback options.; _.
             fi
         ;;
     esac
@@ -1893,7 +1893,7 @@ Rcm_install() {
 }
 Rcm_get() {
     local url="$1"
-    e Memulai download.
+    _ Memulai download.; _.
     if [ -n "$save_as" ];then
         local filename="$save_as"
     else
@@ -1934,7 +1934,7 @@ if [ $command == history ];then
     if [ -n "$delete_all" ];then
         rm *.bak 2>/dev/null
         rm *.history 2>/dev/null
-        e All history deleted.
+        _ All history deleted.; _.
     elif [ "${#delete[@]}" -gt 0 ];then
         for each in "${delete[@]}";do
             if [ -f rcm."$each".history ];then
@@ -1943,7 +1943,7 @@ if [ $command == history ];then
             if [ -f rcm."$each".bak ];then
                 rm rcm."$each".bak
             fi
-            e History "$each" deleted.
+            _ History "$each" deleted.; _.
         done
     else
         ls *.history 2>/dev/null | sed -E 's,^rcm\.(.*)\.history$,\1,' | while read line; do
@@ -2014,7 +2014,7 @@ if [ $command == list ];then
     save_history=1
     history_value=
 
-    e Execute the command.
+    _ Execute the command.; _.
     if [ -f "$history_storage" ];then
         history_value=$(tail -9 "$history_storage")
         printHistoryDialog
@@ -2022,18 +2022,18 @@ if [ $command == list ];then
     ____
 
     if [ -z "$value" ];then
-        e The contents of list commands will be open.
+        _ The contents of list commands will be open.; _.
         _; _.
-        e Guide to navigate the contents:
+        _ Guide to navigate the contents:; _.
         __; _, Press ; _, ' ['; yellow space; _, '] '; _, key for next page.; _.
         __; _, Press ; _, ' ['; yellow Page Up; _, '] '; _, for previous page.; _.
         __; _, Press ; _, ' ['; yellow Page Down; _, '] '; _, for next page.; _.
         __; _, Press ; _, ' ['; yellow /; _, '] '; _, to find string, then; _, ' ['; yellow n; _, '] '; _, to find next and; _, ' ['; yellow p; _, '] ';_, to find previous.; _.
         __; _, Press ; _, ' ['; yellow q; _, '] '; _, to quit from contents.; _.
         _; _.
-        e After quit, you should select one command to execute.
+        _ After quit, you should select one command to execute.; _.
         _; _.
-        e Please press Ctrl+C to open the contents immediately.
+        _ Please press Ctrl+C to open the contents immediately.; _.
 
         trap immediately SIGINT
         sleepExtended 30
@@ -2047,7 +2047,7 @@ if [ $command == list ];then
     until [ -n "$value" ];do
         if [ -n "$printDialogSecondary" ];then
             printDialogSecondary=
-            e Press the yellow key to select.;
+            _ Press the yellow key to select.; _.
             _; _.
             __; _, '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
             __; _, '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
@@ -2261,14 +2261,14 @@ if [ -z "$immediately" ];then
 fi
 
 chapter Timer Start.
-e Begin: $(date +%Y%m%d-%H%M%S)
+_ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
 INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose --root-sure "$@"
 
 chapter Timer Finish.
-e End: $(date +%Y%m%d-%H%M%S)
+_ End: $(date +%Y%m%d-%H%M%S); _.
 Rcm_END=$SECONDS
 duration=$(( Rcm_END - Rcm_BEGIN ))
 hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
