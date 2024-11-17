@@ -125,7 +125,7 @@ link_symbolic() {
             __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
             local _readlink=$(readlink "$target")
             __; magenta readlink "$target"; _.
-            e $_readlink
+            _ $_readlink; _.
             if [[ "$_readlink" =~ ^[^/\.] ]];then
                 local target_parent=$(dirname "$target")
                 local _dereference="${target_parent}/${_readlink}"
@@ -413,10 +413,11 @@ if [[ "$autorun" == cron ]];then
         ____
     fi
 
-    chapter Dump crontab.
-    code crontab -l
-    e $'\n'; crontab -l
-    ____
+	chapter Dump crontab.
+	code crontab -l
+	_; _.
+	crontab -l;
+	____
 fi
 
 if [[ "$autorun" == systemd ]];then

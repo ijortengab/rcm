@@ -125,7 +125,7 @@ ____
 chapter Watching Begin
 __ Make sure the DNS Record '(A or CNAME)' of '`'$domain'`' is exist.
 finish=
-e Begin: $(date +%Y%m%d-%H%M%S)
+_ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
@@ -152,7 +152,7 @@ until [ -n "$finish" ];do
     if [[ "$_finish" =~ 1 ]];then
         chapter Watching End
         success The required DNS Records already exist '(A or CNAME)'.
-        e End: $(date +%Y%m%d-%H%M%S)
+        _ End: $(date +%Y%m%d-%H%M%S); _.
         Rcm_END=$SECONDS
         duration=$(( Rcm_END - Rcm_BEGIN ))
         hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
@@ -162,7 +162,7 @@ until [ -n "$finish" ];do
         ____
     else
         error There are not exist DNS Record of '`'$domain'`' '(neither A nor CNAME)'.
-        e We are still waiting.
+        _ We are still waiting.; _.
         sleepExtended $waiting_time
     fi
 done

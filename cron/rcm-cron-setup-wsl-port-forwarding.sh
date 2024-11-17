@@ -265,7 +265,9 @@ fi
 
 chapter Dump crontab.
 code crontab -l
-e $'\n'; crontab -l
+_; _.
+crontab -l;
+____
 
 exit 0
 

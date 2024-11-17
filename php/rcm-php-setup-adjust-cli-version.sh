@@ -135,7 +135,7 @@ if [ -n "$update" ];then
         fi
     else
         error Alternative "$expected_value" tidak dapat dijadikan sebagai link.;
-        e Periksa menggunakan command berikut:
+        _ Periksa menggunakan command berikut:; _.
         code update-alternatives --query php
         x
     fi
