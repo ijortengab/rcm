@@ -6,11 +6,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --domain=*) domain="${1#*=}"; shift ;;
-        --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --hostname=*) hostname="${1#*=}"; shift ;;
-        --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
+        --fqdn=*) fqdn="${1#*=}"; shift ;;
+        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --root-sure) root_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -51,10 +49,8 @@ printHelp() {
 Usage: rcm-postfix-autoinstaller [options]
 
 Options:
-   --hostname
-        Set the hostname of server.
-   --domain
-        Set the domain of server.
+   --fqdn *
+        Fully Qualified Domain Name of this server, for example: \`server1.example.org\`.
 
 Global Options:
    --fast
@@ -129,19 +125,13 @@ validateApplication() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
-if [ -z "$domain" ];then
-    error "Argument --domain required."; x
+if [ -z "$fqdn" ];then
+    error "Argument --fqdn required."; x
 fi
-code 'domain="'$domain'"'
-if [ -z "$hostname" ];then
-    error "Argument --hostname required."; x
-fi
-code 'hostname="'$hostname'"'
-fqdn_string="${hostname}.${domain}"
-code fqdn_string="$fqdn_string"
+code 'fqdn="'$fqdn'"'
 ____
 
-debconf-set-selections <<< "postfix postfix/mailname string ${fqdn_string}"
+debconf-set-selections <<< "postfix postfix/mailname string ${fqdn}"
 debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
 downloadApplication postfix
 validateApplication postfix
@@ -164,8 +154,7 @@ exit 0
 # --root-sure
 # )
 # VALUE=(
-# --hostname
-# --domain
+# --fqdn
 # )
 # FLAG_VALUE=(
 # )
