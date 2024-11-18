@@ -289,7 +289,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 if [[ -z "$non_interactive" && -z "$fast" ]];then
-    _ ''; yellow It is highly recommended that you use; _, ' ' ; magenta --fast; _, ' ' ; yellow option.; _.
+    _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
     _; _.
     __ Press the yellow key to select.
     userInputBooleanDefaultYes
@@ -384,6 +384,7 @@ printHistoryDialog() {
     done
 }
 printSelectDialog() {
+    declare -i count
     local source=("${!1}")
     local what="$2"
     local each reference_key
@@ -499,6 +500,7 @@ printSelectDialog() {
     done
 }
 printSelectOtherDialog() {
+    declare -i count
     local source=("${!1}")
     local what="$2"
     local each reference_key
@@ -2010,7 +2012,7 @@ wordWrapCommand() {
                 fi
                 current_line=
             else
-                magenta ' \'; _.; e; magenta "$each"
+                magenta ' \'; _.; e; magenta "    $each"
                 current_line="    ${each}"
             fi
         fi
@@ -2018,7 +2020,7 @@ wordWrapCommand() {
 }
 wordWrapCommandInline() {
     # global words_array
-    local inline_label="$1"
+    local inline_label="$1" i
     local parts current_line first_line
     declare -i min; min=80
     declare -i max; max=100
@@ -2042,6 +2044,9 @@ wordWrapCommandInline() {
                     __; magenta "$each"
                     current_line="$each"
                 fi
+            fi
+            if [ -n "$last" ];then
+                _.
             fi
         else
             _current_line="${current_line} ${each}"
@@ -2106,7 +2111,7 @@ wordWrapList() {
                 current_line+=", ${each}"
             elif [ "${#_current_line}" -le $max ];then
                 if [ -n "$last" ];then
-                    _, ', '; yellow "$each"; _, '.'; _.
+                    _, ', or '; yellow "$each"; _, '.'; _.
                 else
                     _, ', '; yellow "$each"; _, ','; _.
                 fi
