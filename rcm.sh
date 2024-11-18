@@ -246,7 +246,7 @@ delay=.5; [ -n "$fast" ] && unset delay
 
 # Functions.
 printVersion() {
-    echo '0.16.5'
+    echo '0.16.6'
 }
 printHelp() {
     title Rapid Construct Massive

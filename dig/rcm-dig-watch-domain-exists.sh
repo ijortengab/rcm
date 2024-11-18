@@ -40,7 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.16.5'
+    echo '0.16.6'
 }
 printHelp() {
     title RCM Dig Watch
