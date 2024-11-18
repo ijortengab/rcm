@@ -2458,7 +2458,7 @@ else
     chapter Command is being executed.
     ____
 
-    sleepExtended 1
+    sleepExtended 1 10
 fi
 
 chapter Timer Start.
