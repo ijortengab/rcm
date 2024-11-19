@@ -1023,11 +1023,11 @@ Rcm_prompt() {
                 is_flag=
                 value_addon=multivalue
             fi
-            label=`sed -n 2p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$label";then
+            description=`sed -n 2p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
                 value_addon=multivalue
             fi
-            if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$label";then
+            if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$description";then
                 value_addon=canhavevalue
             fi
             unset count
@@ -1048,8 +1048,8 @@ Rcm_prompt() {
                     fi
                     placeholders+="$below"
                 else
-                    label+=$'\n'
-                    label+="$below"
+                    description+=$'\n'
+                    description+="$below"
                 fi
 
                 count+=1
@@ -1065,13 +1065,13 @@ Rcm_prompt() {
                 history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
             fi
             available_values=()
-            _available_values=`echo "$label" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+            _available_values=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
             if [ -n "$_available_values" ];then
-                label=`echo "$label" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
+                description=`echo "$description" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
             fi
-            _available_values_from_command=`echo "$label" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+            _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
             if [ -n "$_available_values_from_command" ];then
-                label=`echo "$label" | sed -E 's/ *Values? available from command: ([^\.]+)\.//i'`
+                description=`echo "$description" | sed -E 's/ *Values? available from command: ([^\.]+)\.//i'`
             fi
             or_other=
 
@@ -1114,7 +1114,7 @@ Rcm_prompt() {
                         while read line; do
                             find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | xargs)
                             replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | xargs)
-                            label="${label/"$find"/"$replace"}"
+                            description="${description/"$find"/"$replace"}"
                             if [ -n "$_arguments" ];then
                                 _arguments="${_arguments/"$find"/"$replace"}"
                             fi
@@ -1126,7 +1126,7 @@ Rcm_prompt() {
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
                     wordWrapDescription "$line"
-                done <<< "$label"
+                done <<< "$description"
                 _boolean=
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
@@ -1249,7 +1249,7 @@ Rcm_prompt() {
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 while read line; do
                     wordWrapDescription "$line"
-                done <<< "$label"
+                done <<< "$description"
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
                 if [ -n "$boolean" ]; then
@@ -1272,7 +1272,7 @@ Rcm_prompt() {
                 fi
                 while read line; do
                     wordWrapDescription "$line"
-                done <<< "$label"
+                done <<< "$description"
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _; _.
@@ -1835,9 +1835,9 @@ Rcm_update() {
     if [ -z "$url" ];then
         notfound=1
         parameter='--url'
-        label='The URL repository.'
+        description='The URL repository.'
         _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
-        _ "${label}"; _.
+        _ "${description}"; _.
     fi
     until [ -n "$url" ];do
         __; read -p "Type the value: " url
@@ -1845,9 +1845,9 @@ Rcm_update() {
     if [ -z "$path" ];then
         notfound=1
         parameter='--path'
-        label='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
+        description='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
         _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
-        _ "${label}"; _.
+        _ "${description}"; _.
         __; read -p "Type the value or leave blank to skip: " path
     fi
     if [ -z "$path" ];then
@@ -1895,9 +1895,9 @@ Rcm_install() {
     if [ -z "$url" ];then
         notfound=1
         parameter='--url'
-        label='The URL repository.'
+        description='The URL repository.'
         _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
-        _ "${label}"; _.
+        _ "${description}"; _.
     fi
     until [ -n "$url" ];do
         __; read -p "Type the value: " url
@@ -1911,9 +1911,9 @@ Rcm_install() {
     if [ -z "$path" ];then
         notfound=1
         parameter='--path'
-        label='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
+        description='Path to the file. Default value is `'rcm/rcm-${extension}.sh'`.'
         _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
-        _ "${label}"; _.
+        _ "${description}"; _.
         __; read -p "Type the value or leave blank to skip: " path
     fi
     if [ -n "$notfound" ];then
@@ -1992,7 +1992,7 @@ wordWrapDescription() {
 }
 wordWrapCommand() {
     # global words_array
-    local inline_label="$1"
+    local inline_description="$1"
     local parts current_line first_line
     declare -i min; min=80
     declare -i max; max=100
@@ -2009,9 +2009,9 @@ wordWrapCommand() {
                 e; magenta "    $each";
             else
                 first_line=
-                if [ -n "$inline_label" ];then
-                    e; _, "${inline_label} "; magenta "$each"
-                    current_line="${inline_label} ${each}"
+                if [ -n "$inline_description" ];then
+                    e; _, "${inline_description} "; magenta "$each"
+                    current_line="${inline_description} ${each}"
                 else
                     e; magenta "$each"
                     current_line="$each"
@@ -2045,7 +2045,7 @@ wordWrapCommand() {
 }
 wordWrapCommandInline() {
     # global words_array
-    local inline_label="$1" i
+    local inline_description="$1" i
     local parts current_line first_line
     declare -i min; min=80
     declare -i max; max=100
@@ -2062,9 +2062,9 @@ wordWrapCommandInline() {
                 __; magenta "    $each";
             else
                 first_line=
-                if [ -n "$inline_label" ];then
-                    __; _, "${inline_label} "; magenta "$each"
-                    current_line="${inline_label} ${each}"
+                if [ -n "$inline_description" ];then
+                    __; _, "${inline_description} "; magenta "$each"
+                    current_line="${inline_description} ${each}"
                 else
                     __; magenta "$each"
                     current_line="$each"
@@ -2098,7 +2098,7 @@ wordWrapCommandInline() {
 }
 wordWrapList() {
     # global words_array
-    local inline_label="$1"
+    local inline_description="$1"
     local parts current_line first_line last
     declare -i min; min=80
     declare -i max; max=100
@@ -2112,8 +2112,8 @@ wordWrapList() {
         if [ -z "$current_line" ]; then
             if [ -n "$first_line" ];then
                 first_line=
-                current_line="${inline_label} ${each}"
-                __; _, "${inline_label} "; yellow "$each"
+                current_line="${inline_description} ${each}"
+                __; _, "${inline_description} "; yellow "$each"
             else
                 if [ -n "$last" ];then
                     __; _, 'or '; yellow "$each"
