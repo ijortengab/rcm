@@ -1320,6 +1320,8 @@ Rcm_prompt() {
                         elif [ "${#available_values[@]}" -eq 1 ];then
                             value="${available_values[0]}"
                             _; _.
+                            __; _, "Available value: "; yellow "$value";  _, '.'; _.
+                            _; _.
                             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with the only available value' '; yellow "$value"; green ' 'automatically.; _.
                         else
                             printSelectDialog available_values[@]
