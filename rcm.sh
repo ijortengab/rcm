@@ -529,23 +529,21 @@ printSelectOtherDialog() {
         if [ -z "$char" ];then
             char=t
         fi
-        if [ -n "$is_required" ];then
-            case $char in
-                t|T) echo "$char"; break ;;
-                s|S) select_mode=1; echo "$char"; break ;;
-                $'\177') select_mode=1; echo "s"; break ;;
-                *) echo
-            esac
-        else
-            case $char in
-                t|T) echo "$char"; break ;;
-                s|S) select_mode=1; echo "$char"; break ;;
-                $'\177') select_mode=1; echo "s"; break ;;
-                $'\33') skip=1; echo "l"; break ;;
-                l|L) skip=1; echo "$char"; break ;;
-                *) echo
-            esac
-        fi
+        case $char in
+            t|T) echo "$char"; break ;;
+            s|S) select_mode=1; echo "$char"; break ;;
+            $'\177') select_mode=1; echo "s"; break ;;
+            *)
+                if [ -n "$is_required" ];then
+                    echo
+                else
+                    case $char in
+                        $'\33') skip=1; echo "l"; break ;;
+                        l|L) skip=1; echo "$char"; break ;;
+                        *) echo
+                    esac
+                fi
+        esac
     done
     if [[ -n "$select_mode" ]];then
         _; _.
@@ -560,6 +558,9 @@ printSelectOtherDialog() {
         done
         __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
         __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to type other value.'; _.
+        if [ -z "$is_required" ];then
+            __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
+        fi
         count_max="${#source[@]}"
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -578,10 +579,19 @@ printSelectOtherDialog() {
                     i=$((char - 1))
                     value="${source[$i]}"
                     break ;;
-                *) echo
+                *)
+                    if [ -n "$is_required" ];then
+                        echo
+                    else
+                        case $char in
+                            $'\33') skip=1; echo "l"; break ;;
+                            l|L) skip=1; echo "$char"; break ;;
+                            *) echo
+                        esac
+                    fi
             esac
         done
-        if [[ -z "$type_mode" ]];then
+        if [[ -z "$type_mode" && -z "$skip" ]];then
             until [ -n "$value" ];do
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
@@ -599,13 +609,15 @@ printSelectOtherDialog() {
             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
         fi
     fi
-    if [ -z "$value" ];then
-        if [ -n "$is_required" ];then
-            __; read -p "Type the value: " value
-        elif [ -z "$skip" ];then
-            __; read -p "Type the value or leave blank to skip: " value
+    if [[ -n "$type_mode" ]];then
+        if [ -z "$value" ];then
+            if [ -n "$is_required" ];then
+                __; read -p "Type the value: " value
+            elif [ -z "$skip" ];then
+                __; read -p "Type the value or leave blank to skip: " value
+            fi
+            is_typing=1
         fi
-        is_typing=1
     fi
 }
 ArraySearch() {
@@ -2096,13 +2108,18 @@ wordWrapList() {
         i+=1
         [ "$i" == "$count" ] && last=1 || last=
         if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="$each"
-                __; yellow "$each"
-            else
+            if [ -n "$first_line" ];then
                 first_line=
                 current_line="${inline_label} ${each}"
                 __; _, "${inline_label} "; yellow "$each"
+            else
+                if [ -n "$last" ];then
+                    __; _, 'or '; yellow "$each"
+                    current_line="or ${each}"
+                else
+                    __; yellow "$each"
+                    current_line="$each"
+                fi
             fi
             if [ -n "$last" ];then
                 _, '.'; _.
@@ -2128,8 +2145,13 @@ wordWrapList() {
                 fi
                 current_line=
             else
-                _.; __; yellow "$each"
-                current_line="$each"
+                if [ -n "$last" ];then
+                    _.; __; _, 'or '; yellow "$each"; _, '.'; _.
+                    current_line="or ${each}"
+                else
+                    _.; __; yellow "$each"
+                    current_line="$each"
+                fi
             fi
         fi
     done
