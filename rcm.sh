@@ -1288,7 +1288,6 @@ Rcm_prompt() {
                 fi
                 if [ -z "$value" ];then
                     if [ -n "$_available_values_from_command" ];then
-
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
@@ -1306,6 +1305,10 @@ Rcm_prompt() {
                     if [ "${#available_values[@]}" -gt 0 ];then
                         if [ -n "$or_other" ];then
                             printSelectOtherDialog available_values[@]
+                        elif [ "${#available_values[@]}" -eq 1 ];then
+                            value="${available_values[0]}"
+                            _; _.
+                            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with the only available value' '; yellow "$value"; green ' 'automatically.; _.
                         else
                             printSelectDialog available_values[@]
                         fi
