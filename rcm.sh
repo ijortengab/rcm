@@ -813,7 +813,11 @@ Rcm_resolve_dependencies() {
                             fi
                         fi
                         if [[ -z "$is_updated" ]];then
-                            error Gagal Update; x
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                            fi
+                            error Gagal Update;
+                            [ -n "$quiet" ] && kill -SIGTERM $$ || x
                         fi
                     fi
                 fi
@@ -886,7 +890,11 @@ Rcm_resolve_dependencies() {
                         fi
                     fi
                     if ! command -v "$command_required" > /dev/null;then
-                        error Command '`'$command_required'`' not found, unable to auto download.; x
+                        if [ -n "$display_waiting" ];then
+                            printf "\r\033[K"
+                        fi
+                        error Command '`'$command_required'`' not found, unable to auto download.;
+                        [ -n "$quiet" ] && kill -SIGTERM $$ || x
                     fi
                 elif [[ ! -x "$BINARY_DIRECTORY/$command_required" ]];then
                     __; magenta chmod a+x "$BINARY_DIRECTORY/$command_required"; _.
@@ -2332,6 +2340,7 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 if [ "$resolve_dependencies" == 1 ];then
     if [ -n "$quiet" ];then
         chapter Resolve dependencies.
+        trap x SIGTERM
         Rcm_resolve_dependencies $command &
         pid=$!
         spin='-\|/'
