@@ -589,100 +589,6 @@ printSelectOtherDialog() {
         fi
     fi
 }
-ArraySearch() {
-    local index match="$1"
-    local source=("${!2}")
-    for index in "${!source[@]}"; do
-       if [[ "${source[$index]}" == "${match}" ]]; then
-           _return=$index; return 0
-       fi
-    done
-    return 1
-}
-ArrayDiff() {
-    # Computes the difference of arrays.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the array to compare from.
-    #   2 = Parameter of the array to compare against.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   yours=("cherry" "blackberry")
-    #   ArrayDiff my[@] yours[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("manggo" "manggo")
-    #   ```
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
-ArrayUnique() {
-    # Removes duplicate values from an array.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the input array.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   ArrayUnique my[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("cherry" "manggo" "blackberry")
-    #   ```
-    local e source=("${!1}")
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    _return=()
-    for e in "${source[@]}";do
-        if ! inArray "$e" "${_return[@]}";then
-            _return+=("$e")
-        fi
-    done
-}
-ArrayShift() {
-    local index
-    local source=("${!1}")
-    _return=()
-    for (( index=1; index < ${#source[@]} ; index++ )); do
-        _return+=("${source[$index]}")
-    done
-}
 Rcm_github_release() {
     local tag_name latest_version current_version current_path
     local backup_path url tempdir
@@ -859,32 +765,6 @@ sleepExtended() {
 }
 immediately() {
     countdown=0
-}
-vercomp() {
-    # https://www.google.com/search?q=bash+compare+version
-    # https://stackoverflow.com/a/4025065
-    if [[ $1 == $2 ]]; then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    # fill empty fields in ver1 with zeros
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++)); do
-        if [[ -z ${ver2[i]} ]];then
-            # fill empty fields in ver2 with zeros
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]})); then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]})); then
-            return 2
-        fi
-    done
-    return 0
 }
 backupFile() {
     local mode="$1"
@@ -1596,6 +1476,126 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
+ArrayDiff() {
+    # Computes the difference of arrays.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = Parameter of the array to compare from.
+    #   2 = Parameter of the array to compare against.
+    #
+    # Returns:
+    #   None
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   yours=("cherry" "blackberry")
+    #   ArrayDiff my[@] yours[@]
+    #   # Get result in variable `$_return`.
+    #   # _return=("manggo" "manggo")
+    #   ```
+    local e
+    local source=("${!1}")
+    local reference=("${!2}")
+    _return=()
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    if [[ "${#reference[@]}" -gt 0 ]];then
+        for e in "${source[@]}";do
+            if ! inArray "$e" "${reference[@]}";then
+                _return+=("$e")
+            fi
+        done
+    else
+        _return=("${source[@]}")
+    fi
+}
+ArrayUnique() {
+    # Removes duplicate values from an array.
+    #
+    # Globals:
+    #   Modified: _return
+    #
+    # Arguments:
+    #   1 = Parameter of the input array.
+    #
+    # Returns:
+    #   None
+    #
+    # Example:
+    #   ```
+    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
+    #   ArrayUnique my[@]
+    #   # Get result in variable `$_return`.
+    #   # _return=("cherry" "manggo" "blackberry")
+    #   ```
+    local e source=("${!1}")
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    _return=()
+    for e in "${source[@]}";do
+        if ! inArray "$e" "${_return[@]}";then
+            _return+=("$e")
+        fi
+    done
+}
+ArrayShift() {
+    local index
+    local source=("${!1}")
+    _return=()
+    for (( index=1; index < ${#source[@]} ; index++ )); do
+        _return+=("${source[$index]}")
+    done
+}
+vercomp() {
+    # https://www.google.com/search?q=bash+compare+version
+    # https://stackoverflow.com/a/4025065
+    if [[ $1 == $2 ]]; then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]];then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            return 2
+        fi
+    done
+    return 0
+}
 Rcm_resolve_dependencies() {
     local commands_required
     local command_required command_required_version
