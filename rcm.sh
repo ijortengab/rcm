@@ -1585,27 +1585,37 @@ Rcm_github_release() {
     esac
 }
 sleepExtended() {
-    local countdown=$1
+    # Menggunakan global variable countdown agar sleep ini dapat di-interupsi.
+    # Contoh:
+    # ```
+    # immediately() {
+    #     countdown=0
+    # }
+    # trap immediately SIGINT
+    # sleepExtended 30
+    # trap x SIGINT
+    # ```
+    local timer=$1
     local width=$2
     if [ -z "$width" ];then
         width=80
     fi
-    if [ "$countdown" -gt 0 ];then
-        dikali10=$((countdown*10))
-        _dikali10=$dikali10
-        _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
+    if [ "$timer" -gt 0 ];then
+        dikali10=$((timer*10))
+        countdown=$dikali10
+        _dotLength=$(( ( width * countdown ) / dikali10 ))
         printf "\r\033[K" >&2
         e; printf %"$_dotLength"s | tr " " "." >&2
         printf "\r"
-        while [ "$_dikali10" -ge 0 ]; do
-            dotLength=$(( ( width * _dikali10 ) / dikali10 ))
+        while [ "$countdown" -ge 0 ]; do
+            dotLength=$(( ( width * countdown ) / dikali10 ))
             if [[ ! "$dotLength" == "$_dotLength" ]];then
                 _dotLength="$dotLength"
                 printf "\r\033[K" >&2
                 e; printf %"$dotLength"s | tr " " "." >&2
                 printf "\r"
             fi
-            _dikali10=$((_dikali10 - 1))
+            countdown=$((countdown - 1))
             sleep .1
         done
     fi
