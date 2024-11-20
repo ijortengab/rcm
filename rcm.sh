@@ -683,247 +683,6 @@ ArrayShift() {
         _return+=("${source[$index]}")
     done
 }
-Rcm_resolve_dependencies() {
-    local commands_required
-    local command_required command_required_version
-    local url github_owner_repo github_file_path github_media_type
-    local is_updated
-    commands_required=("$1")
-    PATH="${BINARY_DIRECTORY}:${PATH}"
-    commands_exists=()
-    table_downloads=
-    if [ -n "$quiet" ];then
-        display_waiting=1
-    fi
-    until [[ ${#commands_required[@]} -eq 0 ]];do
-        _commands_required=()
-        if [ -n "$loud" ];then
-            chapter Requires command.
-            _ Versi rcm saat ini: ${rcm_version}.; _.
-        fi
-        for command_required in "${commands_required[@]}"; do
-            command_required_version=
-            if grep -q -F : <<< "$command_required";then
-                command_required_version=$(cut -d: -f2 <<< "$command_required")
-                command_required=$(cut -d: -f1 <<< "$command_required")
-            elif Rcm_is_internal "$command_required";then
-                command_required_version=${rcm_version}
-            fi
-            if [ -n "$loud" ];then
-                _ Requires command: "$command_required"
-            fi
-            if command -v "$command_required" > /dev/null;then
-                if [ -n "$loud" ];then
-                    _, ' [FOUND].';
-                fi
-                if [ -z "$command_required_version" ];then
-                    if [ -n "$loud" ];then
-                        _.
-                    fi
-                else
-                    command_current_version=$("$command_required" --version)
-                    if [[ "$command_current_version" =~ [^0-9\.]+ ]];then
-                        command_current_version=0
-                    fi
-                    if [[ ! "$command_required_version" == "$command_current_version" ]];then
-                        if [ -n "$loud" ];then
-                            _, ' Version required: '$command_required_version'.'
-                            _, ' Current version: '$command_current_version'.'
-                        fi
-                    fi
-                    vercomp $command_current_version $command_required_version
-                    if [[ $? -lt 2 ]];then
-                        if [ -n "$loud" ];then
-                            _.
-                        fi
-                    else
-                        if [ -n "$loud" ];then
-                            _.
-                        fi
-                        if [ -n "$quiet" ];then
-                            if [ -n "$display_waiting" ];then
-                                printf "\r\033[K"
-                                display_waiting=
-                            fi
-                        fi
-                        is_updated=
-                        if Rcm_is_internal "$command_required";then
-                            github_owner_repo=ijortengab/rcm
-                            github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                            if [ -n "$loud" ];then
-                                code rcm update $(sed s,^rcm-,, <<< "$command_required")
-                            fi
-                            OLDINDENT="$INDENT"; INDENT+=''
-                            INDENT+='    '
-                            blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                            Rcm_github_release update $command_required $github_owner_repo $github_file_path
-                            INDENT="$OLDINDENT"
-                            is_updated=1
-                        elif [[ "$command_required" == rcm ]];then
-                            if [ -n "$loud" ];then
-                                code rcm self-update
-                            fi
-                            OLDINDENT="$INDENT"; INDENT+=''
-                            INDENT+='    '
-                            set -- update rcm ijortengab/rcm rcm.sh
-                            Rcm_github_release "$@"
-                            INDENT="$OLDINDENT"
-                            is_updated=1
-                        else
-                            url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
-                            if [ -n "$url" ];then
-                                Rcm_parse_url "$url"
-                                if [[ "$PHP_URL_HOST" == github.com ]];then
-                                    # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
-                                    # https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
-                                    # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
-                                    github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
-                                    if [[ $github_media_type == raw ]];then
-                                        github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
-                                        github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                        if [ -n "$loud" ];then
-                                            code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
-                                        fi
-                                        OLDINDENT="$INDENT"; INDENT+=''
-                                        INDENT+='    '
-                                        Rcm_github_release update $command_required $github_owner_repo $github_file_path
-                                        INDENT="$OLDINDENT"
-                                        is_updated=1
-                                    fi
-                                fi
-                            fi
-                        fi
-                        if [[ -z "$is_updated" ]];then
-                            if [ -n "$display_waiting" ];then
-                                printf "\r\033[K"
-                            fi
-                            error Gagal Update;
-                            [ -n "$quiet" ] && kill -SIGTERM $$ || x
-                        fi
-                    fi
-                fi
-            else
-                if [ -n "$loud" ];then
-                    _, ' [NOTFOUND].'; _.
-                fi
-                if [[ -f "$BINARY_DIRECTORY/$command_required" && ! -s "$BINARY_DIRECTORY/$command_required" ]];then
-                    __ Empty file detected.
-                    __; magenta rm "$BINARY_DIRECTORY/$command_required"; _.
-                    rm "$BINARY_DIRECTORY/$command_required"
-                fi
-                if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
-                    if Rcm_is_internal "$command_required";then
-                        PHP_URL_SCHEME='https://'
-                        PHP_URL_HOST='github.com'
-                        github_owner_repo=ijortengab/rcm
-                        github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                        if [ -n "$loud" ];then
-                            code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
-                        fi
-                        OLDINDENT="$INDENT"; INDENT+=''
-                        INDENT+='    '
-                        Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
-                        INDENT="$OLDINDENT"
-                    elif [[ "$command_required" =~ ^rcm- ]];then
-                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
-                        if [ -n "$url" ];then
-                            Rcm_parse_url "$url"
-                            if [[ "$PHP_URL_HOST" == github.com ]];then
-                                # Jika host dari Github, maka terdapat beberapa kemungkinan.
-                                # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
-                                # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-autorun-crond.sh
-                                # https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh
-                                # https://github.com/ijortengab/bash/raw/refs/heads/master/commands/ssh-keep-alive-symlink-reference.sh
-                                _github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
-                                if [[ $_github_media_type == raw ]];then
-                                    github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
-                                    github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
-                                    if [ -n "$loud" ];then
-                                        code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
-                                    fi
-                                    OLDINDENT="$INDENT"; INDENT+=''
-                                    INDENT+='    '
-                                    Rcm_github_release install $command_required $github_owner_repo $github_file_path
-                                    INDENT="$OLDINDENT"
-                                fi
-                            fi
-                        fi
-                    elif [[ "$command_required" =~ \.sh$ ]];then
-                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
-                        if [ -n "$url" ];then
-                            Rcm_parse_url "$url"
-                            OLDINDENT="$INDENT"; INDENT+=''
-                            save_as="$command_required"
-                            if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
-                                if [ -n "$loud" ];then
-                                    code rcm get "$url"
-                                fi
-                                INDENT+='    '
-                                Rcm_get "$url"
-                            else
-                                if [ -n "$loud" ];then
-                                    code rcm get "$url" --save-as='"'"$command_required"'"'
-                                fi
-                                INDENT+='    '
-                                Rcm_get "$url"
-                            fi
-                            INDENT="$OLDINDENT"
-                        fi
-                    fi
-                    if ! command -v "$command_required" > /dev/null;then
-                        if [ -n "$display_waiting" ];then
-                            printf "\r\033[K"
-                        fi
-                        error Command '`'$command_required'`' not found, unable to auto download.;
-                        [ -n "$quiet" ] && kill -SIGTERM $$ || x
-                    fi
-                elif [[ ! -x "$BINARY_DIRECTORY/$command_required" ]];then
-                    __; magenta chmod a+x "$BINARY_DIRECTORY/$command_required"; _.
-                    chmod a+x "$BINARY_DIRECTORY/$command_required"
-                fi
-            fi
-            commands_exists+=("$command_required")
-            _help=$("$command_required" --help 2>/dev/null)
-            # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
-            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
-            if [ -n "$_dependency" ];then
-                [ -n "$table_downloads" ] && table_downloads+=$'\n'
-                table_downloads+="$_download"
-            fi
-            unset _download
-            unset _help
-            if [ -n "$_dependency" ];then
-                _dependency=($_dependency)
-                ArrayDiff _dependency[@] commands_exists[@]
-                if [[ ${#_return[@]} -gt 0 ]];then
-                    _commands_required+=("${_return[@]}")
-                    unset _return
-                fi
-                unset _dependency
-            fi
-        done
-        if [ -n "$loud" ];then
-            ____
-        fi
-        if [ -n "$debug" ];then
-            chapter Dump variable.
-        fi
-        ArrayUnique _commands_required[@]
-        commands_required=("${_return[@]}")
-        unset _return
-        unset _commands_required
-        if [ -n "$debug" ];then
-            code 'commands_required=('"${commands_required[@]}"')'
-            ____
-        fi
-    done
-    if [ -n "$quiet" ];then
-        if [ -n "$display_waiting" ];then
-            printf "\r\033[K"
-        fi
-    fi
-}
 Rcm_prompt() {
     local value
     local command="$1"
@@ -2327,6 +2086,247 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+Rcm_resolve_dependencies() {
+    local commands_required
+    local command_required command_required_version
+    local url github_owner_repo github_file_path github_media_type
+    local is_updated
+    commands_required=("$1")
+    PATH="${BINARY_DIRECTORY}:${PATH}"
+    commands_exists=()
+    table_downloads=
+    if [ -n "$quiet" ];then
+        display_waiting=1
+    fi
+    until [[ ${#commands_required[@]} -eq 0 ]];do
+        _commands_required=()
+        if [ -n "$loud" ];then
+            chapter Requires command.
+            _ Versi rcm saat ini: ${rcm_version}.; _.
+        fi
+        for command_required in "${commands_required[@]}"; do
+            command_required_version=
+            if grep -q -F : <<< "$command_required";then
+                command_required_version=$(cut -d: -f2 <<< "$command_required")
+                command_required=$(cut -d: -f1 <<< "$command_required")
+            elif Rcm_is_internal "$command_required";then
+                command_required_version=${rcm_version}
+            fi
+            if [ -n "$loud" ];then
+                _ Requires command: "$command_required"
+            fi
+            if command -v "$command_required" > /dev/null;then
+                if [ -n "$loud" ];then
+                    _, ' [FOUND].';
+                fi
+                if [ -z "$command_required_version" ];then
+                    if [ -n "$loud" ];then
+                        _.
+                    fi
+                else
+                    command_current_version=$("$command_required" --version)
+                    if [[ "$command_current_version" =~ [^0-9\.]+ ]];then
+                        command_current_version=0
+                    fi
+                    if [[ ! "$command_required_version" == "$command_current_version" ]];then
+                        if [ -n "$loud" ];then
+                            _, ' Version required: '$command_required_version'.'
+                            _, ' Current version: '$command_current_version'.'
+                        fi
+                    fi
+                    vercomp $command_current_version $command_required_version
+                    if [[ $? -lt 2 ]];then
+                        if [ -n "$loud" ];then
+                            _.
+                        fi
+                    else
+                        if [ -n "$loud" ];then
+                            _.
+                        fi
+                        if [ -n "$quiet" ];then
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                                display_waiting=
+                            fi
+                        fi
+                        is_updated=
+                        if Rcm_is_internal "$command_required";then
+                            github_owner_repo=ijortengab/rcm
+                            github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                            if [ -n "$loud" ];then
+                                code rcm update $(sed s,^rcm-,, <<< "$command_required")
+                            fi
+                            OLDINDENT="$INDENT"; INDENT+=''
+                            INDENT+='    '
+                            blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                            Rcm_github_release update $command_required $github_owner_repo $github_file_path
+                            INDENT="$OLDINDENT"
+                            is_updated=1
+                        elif [[ "$command_required" == rcm ]];then
+                            if [ -n "$loud" ];then
+                                code rcm self-update
+                            fi
+                            OLDINDENT="$INDENT"; INDENT+=''
+                            INDENT+='    '
+                            set -- update rcm ijortengab/rcm rcm.sh
+                            Rcm_github_release "$@"
+                            INDENT="$OLDINDENT"
+                            is_updated=1
+                        else
+                            url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                            if [ -n "$url" ];then
+                                Rcm_parse_url "$url"
+                                if [[ "$PHP_URL_HOST" == github.com ]];then
+                                    # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    # https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                    github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
+                                    if [[ $github_media_type == raw ]];then
+                                        github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+                                        github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                        if [ -n "$loud" ];then
+                                            code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                        fi
+                                        OLDINDENT="$INDENT"; INDENT+=''
+                                        INDENT+='    '
+                                        Rcm_github_release update $command_required $github_owner_repo $github_file_path
+                                        INDENT="$OLDINDENT"
+                                        is_updated=1
+                                    fi
+                                fi
+                            fi
+                        fi
+                        if [[ -z "$is_updated" ]];then
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                            fi
+                            error Gagal Update;
+                            [ -n "$quiet" ] && kill -SIGTERM $$ || x
+                        fi
+                    fi
+                fi
+            else
+                if [ -n "$loud" ];then
+                    _, ' [NOTFOUND].'; _.
+                fi
+                if [[ -f "$BINARY_DIRECTORY/$command_required" && ! -s "$BINARY_DIRECTORY/$command_required" ]];then
+                    __ Empty file detected.
+                    __; magenta rm "$BINARY_DIRECTORY/$command_required"; _.
+                    rm "$BINARY_DIRECTORY/$command_required"
+                fi
+                if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
+                    if Rcm_is_internal "$command_required";then
+                        PHP_URL_SCHEME='https://'
+                        PHP_URL_HOST='github.com'
+                        github_owner_repo=ijortengab/rcm
+                        github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                        if [ -n "$loud" ];then
+                            code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                        fi
+                        OLDINDENT="$INDENT"; INDENT+=''
+                        INDENT+='    '
+                        Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
+                        INDENT="$OLDINDENT"
+                    elif [[ "$command_required" =~ ^rcm- ]];then
+                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                        if [ -n "$url" ];then
+                            Rcm_parse_url "$url"
+                            if [[ "$PHP_URL_HOST" == github.com ]];then
+                                # Jika host dari Github, maka terdapat beberapa kemungkinan.
+                                # https://github.com/ijortengab/rcm/blob/master/cron/rcm-cron-setup-wsl-port-forwarding.sh
+                                # https://github.com/ijortengab/rcm/raw/refs/heads/master/cron/rcm-cron-setup-wsl-autorun-crond.sh
+                                # https://github.com/ijortengab/bash/raw/master/commands/ssh-keep-alive-symlink-reference.sh
+                                # https://github.com/ijortengab/bash/raw/refs/heads/master/commands/ssh-keep-alive-symlink-reference.sh
+                                _github_media_type=$(cut -d/ -f 3 <<< $PHP_URL_PATH)
+                                if [[ $_github_media_type == raw ]];then
+                                    github_owner_repo=$(cut -d/ -f 1,2 <<< $PHP_URL_PATH)
+                                    github_file_path=$(cut -d/ -f 5- <<< $PHP_URL_PATH)
+                                    if [ -n "$loud" ];then
+                                        code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
+                                    fi
+                                    OLDINDENT="$INDENT"; INDENT+=''
+                                    INDENT+='    '
+                                    Rcm_github_release install $command_required $github_owner_repo $github_file_path
+                                    INDENT="$OLDINDENT"
+                                fi
+                            fi
+                        fi
+                    elif [[ "$command_required" =~ \.sh$ ]];then
+                        url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+                        if [ -n "$url" ];then
+                            Rcm_parse_url "$url"
+                            OLDINDENT="$INDENT"; INDENT+=''
+                            save_as="$command_required"
+                            if [[ $(basename "$PHP_URL_PATH") == "$command_required" ]];then
+                                if [ -n "$loud" ];then
+                                    code rcm get "$url"
+                                fi
+                                INDENT+='    '
+                                Rcm_get "$url"
+                            else
+                                if [ -n "$loud" ];then
+                                    code rcm get "$url" --save-as='"'"$command_required"'"'
+                                fi
+                                INDENT+='    '
+                                Rcm_get "$url"
+                            fi
+                            INDENT="$OLDINDENT"
+                        fi
+                    fi
+                    if ! command -v "$command_required" > /dev/null;then
+                        if [ -n "$display_waiting" ];then
+                            printf "\r\033[K"
+                        fi
+                        error Command '`'$command_required'`' not found, unable to auto download.;
+                        [ -n "$quiet" ] && kill -SIGTERM $$ || x
+                    fi
+                elif [[ ! -x "$BINARY_DIRECTORY/$command_required" ]];then
+                    __; magenta chmod a+x "$BINARY_DIRECTORY/$command_required"; _.
+                    chmod a+x "$BINARY_DIRECTORY/$command_required"
+                fi
+            fi
+            commands_exists+=("$command_required")
+            _help=$("$command_required" --help 2>/dev/null)
+            # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
+            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+            if [ -n "$_dependency" ];then
+                [ -n "$table_downloads" ] && table_downloads+=$'\n'
+                table_downloads+="$_download"
+            fi
+            unset _download
+            unset _help
+            if [ -n "$_dependency" ];then
+                _dependency=($_dependency)
+                ArrayDiff _dependency[@] commands_exists[@]
+                if [[ ${#_return[@]} -gt 0 ]];then
+                    _commands_required+=("${_return[@]}")
+                    unset _return
+                fi
+                unset _dependency
+            fi
+        done
+        if [ -n "$loud" ];then
+            ____
+        fi
+        if [ -n "$debug" ];then
+            chapter Dump variable.
+        fi
+        ArrayUnique _commands_required[@]
+        commands_required=("${_return[@]}")
+        unset _return
+        unset _commands_required
+        if [ -n "$debug" ];then
+            code 'commands_required=('"${commands_required[@]}"')'
+            ____
+        fi
+    done
+    if [ -n "$quiet" ];then
+        if [ -n "$display_waiting" ];then
+            printf "\r\033[K"
+        fi
+    fi
+}
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
