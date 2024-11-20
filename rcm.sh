@@ -1637,42 +1637,55 @@ Rcm_resolve_dependencies() {
     fi
 }
 wordWrapDescription() {
-    local paragraph="$1" words_array current_line first_line
+    local paragraph="$1" words_array
+    local current_line first_line last
     declare -i min; min=80
     declare -i max; max=100
+    declare -i i; i=0
     words_array=($paragraph)
+    local count="${#words_array[@]}"
     current_line=
     first_line=1
     for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
         if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="$each"
-                __; _, "$each"
-            else
+            if [ -n "$first_line" ];then
                 first_line=
                 current_line="$each"
                 __; _, "$each"
+            else
+                current_line="$each"
+                __; _, "$each"
+            fi
+            if [ -n "$last" ];then
+                _.
             fi
         else
             _current_line="${current_line} ${each}"
             if [ "${#_current_line}" -le $min ];then
                 current_line+=" ${each}"
                 _, " ${each}"
+                if [ -n "$last" ];then
+                    _.
+                fi
             elif [ "${#_current_line}" -le $max ];then
                 _, " ${each}"; _.
                 current_line=
             else
                 _.; __; _, "$each"
                 current_line="$each"
+                if [ -n "$last" ];then
+                    _.
+                fi
             fi
         fi
     done
-    _.
 }
 wordWrapCommand() {
     # global words_array
     local inline_description="$1"
-    local parts current_line first_line
+    local current_line first_line
     declare -i min; min=80
     declare -i max; max=100
     declare -i i; i=0
@@ -1725,7 +1738,7 @@ wordWrapCommand() {
 wordWrapCommandInline() {
     # global words_array
     local inline_description="$1" i
-    local parts current_line first_line
+    local current_line first_line
     declare -i min; min=80
     declare -i max; max=100
     declare -i i; i=0
@@ -1778,7 +1791,7 @@ wordWrapCommandInline() {
 wordWrapList() {
     # global words_array
     local inline_description="$1"
-    local parts current_line first_line last
+    local current_line first_line last
     declare -i min; min=80
     declare -i max; max=100
     declare -i i; i=0
