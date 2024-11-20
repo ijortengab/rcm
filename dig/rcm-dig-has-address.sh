@@ -104,6 +104,8 @@ fi
 if [ -z "$ip_address" ];then
     error "Argument --ip-address required."; x
 fi
+fqdn_raw="$fqdn"
+code 'fqdn_raw="'$fqdn_raw'"'
 code 'fqdn="'$fqdn'"'
 code 'ip_address="'$ip_address'"'
 tempfile=$(mktemp -p /dev/shm -t rcm-dig-has-address.XXXXXX)
@@ -114,28 +116,71 @@ code host -t A $fqdn
 host -t A "$fqdn" | tee "$tempfile"
 stdout=$(<"$tempfile")
 found=
-data="$ip_address"
-data_escape=${data//\./\\.}
-code grep -E --ignore-case "'"" has address ${data_escape}""'"
-if grep -q -E --ignore-case ' has address '"$data_escape" <<< "$stdout";then
-    found=1
-fi
+code found="$found"
+code fqdn="$fqdn"
+while read line; do
+    _ "$line"; _.
+    __ Try
+    data="${fqdn} is an alias for "
+    data_escape=${data//\./\\.}
+    __; magenta grep -E --ignore-case '"'"^${data_escape}"'"'; _.
+    if grep -q -E --ignore-case "^${data_escape}" <<< "$line";then
+        __ Alias ditemukan.
+        __; magenta sed -E '"'"s|^${data_escape}(.*)\.$|\1|"'"'; _.
+        __ Value of variable '`'\$fqdn'`' diperbarui.
+        fqdn=$(echo "$line"| sed -E "s|^${data_escape}(.*)\.$|\1|")
+        __; magenta fqdn="$fqdn"; _.
+    else
+        __ Try
+        data="${fqdn} has address ${ip_address}"
+        data_escape=${data//\./\\.}
+        __; magenta grep -E --ignore-case "'""^${data_escape}""'"; _.
+        if grep -q -E --ignore-case "^${data_escape}" <<< "$line";then
+            found=1
+            __; magenta found="$found"; _.
+            __ Get Address
+            data="${fqdn} has address "
+            data_escape=${data//\./\\.}
+            __; magenta sed -E '"'"s|^${data_escape}(.*)$|\1|"'"'; _.
+            address=$(echo "$line"| sed -E "s|^${data_escape}(.*)$|\1|")
+            __; magenta address="$address"; _.
+            break
+        else
+            __ Try
+            data="${fqdn} has address "
+            data_escape=${data//\./\\.}
+            __; magenta grep -E --ignore-case "'""^${data_escape}""'"; _.
+            if grep -q -E --ignore-case "^${data_escape}" <<< "$line";then
+                found=2
+                __; magenta found="$found"; _.
+                __ Get Address
+                __; magenta sed -E '"'"s|^${data_escape}(.*)$|\1|"'"'; _.
+                address=$(echo "$line"| sed -E "s|^${data_escape}(.*)$|\1|")
+                __; magenta address="$address"; _.
+                break
+            fi
+        fi
+    fi
+done <<< "$stdout"
 ____
 
 chapter Result
 rm "$tempfile"
-if [ -n "$found" ];then
+if [ "$found" == 1 ];then
     result='success'
     if [ -n "$reverse" ];then
         result='error'
     fi
-    $result FQDN "$fqdn" has address "$ip_address".
+    $result FQDN "$fqdn_raw" has address "$ip_address".
 else
     result='error'
     if [ -n "$reverse" ];then
         result='success'
     fi
-    $result FQDN "$fqdn" has not address "$ip_address".
+    $result FQDN "$fqdn_raw" has not address "$ip_address".
+    if [ "$found" == 2 ];then
+        _ FQDN "$fqdn_raw" has address "$address".; _.
+    fi
 fi
 
 [ "$result" == error ] && x
