@@ -1084,207 +1084,6 @@ Rcm_get() {
     code chmod a+x "$BINARY_DIRECTORY/$filename"
     chmod a+x "$BINARY_DIRECTORY/$filename"
 }
-wordWrapDescription() {
-    local paragraph="$1" words_array current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
-    words_array=($paragraph)
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="$each"
-                __; _, "$each"
-            else
-                first_line=
-                current_line="$each"
-                __; _, "$each"
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                current_line+=" ${each}"
-                _, " ${each}"
-            elif [ "${#_current_line}" -le $max ];then
-                _, " ${each}"; _.
-                current_line=
-            else
-                _.; __; _, "$each"
-                current_line="$each"
-            fi
-        fi
-    done
-    _.
-}
-wordWrapCommand() {
-    # global words_array
-    local inline_description="$1"
-    local parts current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
-    declare -i i; i=0
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        i+=1
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="    ${each}"
-                e; magenta "    $each";
-            else
-                first_line=
-                if [ -n "$inline_description" ];then
-                    e; _, "${inline_description} "; magenta "$each"
-                    current_line="${inline_description} ${each}"
-                else
-                    e; magenta "$each"
-                    current_line="$each"
-                fi
-            fi
-            if [ -n "$last" ];then
-                _.
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "$each"; _.
-                else
-                    _, ' '; magenta "$each"
-                fi
-                current_line+=" ${each}"
-            elif [ "${#_current_line}" -le $max ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "${each}"''; _.
-                else
-                    _, ' '; magenta "${each}"' \'; _.
-                fi
-                current_line=
-            else
-                magenta ' \'; _.; e; magenta "    $each"
-                current_line="    ${each}"
-            fi
-        fi
-    done
-}
-wordWrapCommandInline() {
-    # global words_array
-    local inline_description="$1" i
-    local parts current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
-    declare -i i; i=0
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        i+=1
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="    ${each}"
-                __; magenta "    $each";
-            else
-                first_line=
-                if [ -n "$inline_description" ];then
-                    __; _, "${inline_description} "; magenta "$each"
-                    current_line="${inline_description} ${each}"
-                else
-                    __; magenta "$each"
-                    current_line="$each"
-                fi
-            fi
-            if [ -n "$last" ];then
-                _.
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "$each"; _.
-                else
-                    _, ' '; magenta "$each"
-                fi
-                current_line+=" ${each}"
-            elif [ "${#_current_line}" -le $max ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "${each}"''; _.
-                else
-                    _, ' '; magenta "${each}"' \'; _.
-                fi
-                current_line=
-            else
-                magenta ' \'; _.; __; magenta "$each"
-                current_line="    ${each}"
-            fi
-        fi
-    done
-}
-wordWrapList() {
-    # global words_array
-    local inline_description="$1"
-    local parts current_line first_line last
-    declare -i min; min=80
-    declare -i max; max=100
-    declare -i i; i=0
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        i+=1
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -n "$first_line" ];then
-                first_line=
-                current_line="${inline_description} ${each}"
-                __; _, "${inline_description} "; yellow "$each"
-            else
-                if [ -n "$last" ];then
-                    __; _, 'or '; yellow "$each"
-                    current_line="or ${each}"
-                else
-                    __; yellow "$each"
-                    current_line="$each"
-                fi
-            fi
-            if [ -n "$last" ];then
-                _, '.'; _.
-            fi
-        else
-            if [ -n "$last" ];then
-                _current_line="${current_line}, or ${each}"
-            else
-                _current_line="${current_line}, ${each}"
-            fi
-            if [ "${#_current_line}" -le $min ];then
-                if [ -n "$last" ];then
-                    _, ', or '; yellow "$each"; _, '.'; _.
-                else
-                    _, ', '; yellow "$each"
-                fi
-                current_line+=", ${each}"
-            elif [ "${#_current_line}" -le $max ];then
-                if [ -n "$last" ];then
-                    _, ', or '; yellow "$each"; _, '.'; _.
-                else
-                    _, ', '; yellow "$each"; _, ','; _.
-                fi
-                current_line=
-            else
-                if [ -n "$last" ];then
-                    _.; __; _, 'or '; yellow "$each"; _, '.'; _.
-                    current_line="or ${each}"
-                else
-                    _.; __; yellow "$each"
-                    current_line="$each"
-                fi
-            fi
-        fi
-    done
-}
 command-install() {
     loud=1;debug=1
     if [ $# -eq 0 ];then
@@ -1836,6 +1635,207 @@ Rcm_resolve_dependencies() {
             printf "\r\033[K"
         fi
     fi
+}
+wordWrapDescription() {
+    local paragraph="$1" words_array current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    words_array=($paragraph)
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="$each"
+                __; _, "$each"
+            else
+                first_line=
+                current_line="$each"
+                __; _, "$each"
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=" ${each}"
+                _, " ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                _, " ${each}"; _.
+                current_line=
+            else
+                _.; __; _, "$each"
+                current_line="$each"
+            fi
+        fi
+    done
+    _.
+}
+wordWrapCommand() {
+    # global words_array
+    local inline_description="$1"
+    local parts current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="    ${each}"
+                e; magenta "    $each";
+            else
+                first_line=
+                if [ -n "$inline_description" ];then
+                    e; _, "${inline_description} "; magenta "$each"
+                    current_line="${inline_description} ${each}"
+                else
+                    e; magenta "$each"
+                    current_line="$each"
+                fi
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "$each"; _.
+                else
+                    _, ' '; magenta "$each"
+                fi
+                current_line+=" ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "${each}"''; _.
+                else
+                    _, ' '; magenta "${each}"' \'; _.
+                fi
+                current_line=
+            else
+                magenta ' \'; _.; e; magenta "    $each"
+                current_line="    ${each}"
+            fi
+        fi
+    done
+}
+wordWrapCommandInline() {
+    # global words_array
+    local inline_description="$1" i
+    local parts current_line first_line
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -z "$first_line" ];then
+                current_line="    ${each}"
+                __; magenta "    $each";
+            else
+                first_line=
+                if [ -n "$inline_description" ];then
+                    __; _, "${inline_description} "; magenta "$each"
+                    current_line="${inline_description} ${each}"
+                else
+                    __; magenta "$each"
+                    current_line="$each"
+                fi
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "$each"; _.
+                else
+                    _, ' '; magenta "$each"
+                fi
+                current_line+=" ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ' '; magenta "${each}"''; _.
+                else
+                    _, ' '; magenta "${each}"' \'; _.
+                fi
+                current_line=
+            else
+                magenta ' \'; _.; __; magenta "$each"
+                current_line="    ${each}"
+            fi
+        fi
+    done
+}
+wordWrapList() {
+    # global words_array
+    local inline_description="$1"
+    local parts current_line first_line last
+    declare -i min; min=80
+    declare -i max; max=100
+    declare -i i; i=0
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -n "$first_line" ];then
+                first_line=
+                current_line="${inline_description} ${each}"
+                __; _, "${inline_description} "; yellow "$each"
+            else
+                if [ -n "$last" ];then
+                    __; _, 'or '; yellow "$each"
+                    current_line="or ${each}"
+                else
+                    __; yellow "$each"
+                    current_line="$each"
+                fi
+            fi
+            if [ -n "$last" ];then
+                _, '.'; _.
+            fi
+        else
+            if [ -n "$last" ];then
+                _current_line="${current_line}, or ${each}"
+            else
+                _current_line="${current_line}, ${each}"
+            fi
+            if [ "${#_current_line}" -le $min ];then
+                if [ -n "$last" ];then
+                    _, ', or '; yellow "$each"; _, '.'; _.
+                else
+                    _, ', '; yellow "$each"
+                fi
+                current_line+=", ${each}"
+            elif [ "${#_current_line}" -le $max ];then
+                if [ -n "$last" ];then
+                    _, ', or '; yellow "$each"; _, '.'; _.
+                else
+                    _, ', '; yellow "$each"; _, ','; _.
+                fi
+                current_line=
+            else
+                if [ -n "$last" ];then
+                    _.; __; _, 'or '; yellow "$each"; _, '.'; _.
+                    current_line="or ${each}"
+                else
+                    _.; __; yellow "$each"
+                    current_line="$each"
+                fi
+            fi
+        fi
+    done
 }
 Rcm_prompt() {
     local value
