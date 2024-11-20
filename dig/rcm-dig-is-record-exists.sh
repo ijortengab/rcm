@@ -319,7 +319,7 @@ if [ -n "$record_found" ];then
         result='error'
     fi
     if [ "$colorize" == 0 ];then
-        result=e
+        result=__
     fi
 
     $result "$log"
@@ -329,7 +329,7 @@ else
         result='success'
     fi
     if [ "$colorize" == 0 ];then
-        result=e
+        result=__
     fi
     $result "$log"
 fi
