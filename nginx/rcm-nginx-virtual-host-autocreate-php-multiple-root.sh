@@ -151,6 +151,284 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+ArraySearch() {
+    local index match="$1"
+    local source=("${!2}")
+    for index in "${!source[@]}"; do
+       if [[ "${source[$index]}" == "${match}" ]]; then
+           _return=$index; return 0
+       fi
+    done
+    return 1
+}
+# Required function: ArraySearch.
+# Karakter operator yang berlaku adalah: = != < > <= >= ~ !~
+tokenToBinary () {
+    local token=$1; shift;
+    [ -z "$token" ] && { error 'Argument <token> is empty. '; x; }
+    local token_list=$1; shift;
+    [ -z "$token_list" ] && { error 'Argument <token_list> is empty. '; x; }
+    local string=$1; shift;
+    [ -z "$string" ] && { error 'Argument <string> is empty. '; x; }
+    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
+    local array
+    # Jika terjadi pengulangan, contoh:
+    # a contains 80  a contains 8080
+    # Maka kita ambil yang paling akhir.
+    local token_list_last=$(echo "$token_list" | grep "^[$token]\s" | tail -1)
+    local operator=$(echo "$token_list_last" | cut -d' ' -f2 )
+    local value=$(echo "$token_list_last" | cut -d' ' -f3- )
+    case "$operator" in
+        =)
+            if [[ "$string" == "$value" ]];then echo 1; else echo 0; fi
+            ;;
+        '<>')
+            if [[ "$string" == "$value" ]];then echo 0; else echo 1; fi
+            ;;
+        '<')
+            if [[ "$string" -lt "$value" ]];then echo 1; else echo 0; fi
+            ;;
+        '>')
+            if [[ "$string" -gt "$value" ]];then echo 1; else echo 0; fi
+            ;;
+        '<=')
+            if [[ "$string" -le "$value" ]];then echo 1; else echo 0; fi
+            ;;
+        '>=')
+            if [[ "$string" -ge "$value" ]];then echo 1; else echo 0; fi
+            ;;
+        '[]')
+            read -ra array -d '' <<< "$string"
+            if ArraySearch "$value" array[@];then echo 1; else echo 0; fi
+            ;;
+        '![]')
+            read -ra array -d '' <<< "$string"
+            if ArraySearch "$value" array[@];then echo 0; else echo 1; fi
+            ;;
+        '~')
+            if grep -q -E "$value" <<< "$string";then echo 1; else echo 0; fi
+            ;;
+        '!~')
+            if grep -q -E "$value" <<< "$string";then echo 0; else echo 1; fi
+            ;;
+        *)
+            echo 0
+            error Operator is not valid: '`'$operator'`'; x
+    esac
+}
+# Required function: tokenToBinary.
+# Reference: https://github.com/parsecsv/parsecsv-for-php/blob/main/src/Csv.php#L1055
+resolveCondition() {
+    local condition=$1; shift;
+    local token_list=$1; shift;
+    local string=$1; shift;
+    local i
+    i=0
+    binary="$condition"
+    conditionToBinary() {
+        local condition=$1; shift;
+        [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
+        local token_list=$1; shift;
+        local string=$1; shift;
+        local each array
+        local or=
+        local and=
+        conditionToBinaryOr () {
+            local condition=$1; shift;
+            [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
+            local token_list=$1; shift;
+            local string=$1; shift;
+            local each array
+            local or=
+            IFS='|' read -ra array <<< "$condition"
+            for each in "${array[@]}"; do
+                if [ -n "$token_list" ];then
+                    or+=$(conditionToBinaryAnd "$each" "$token_list" "$string")
+                else
+                    or+=$(conditionToBinaryAnd "$each")
+                fi
+            done
+            [[ "$or" =~ 1 ]] && echo 1 || echo 0
+        }
+        conditionToBinaryAnd () {
+            local condition=$1; shift;
+            [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
+            local token_list=$1; shift;
+            local string=$1; shift;
+            local each array
+            local and=
+            IFS='&' read -ra array <<< "$condition"
+            for each in "${array[@]}"; do
+                if [ -n "$token_list" ];then
+                    and+=$(tokenToBinary "$each" "$token_list" "$string")
+                else
+                    and+="$each"
+                fi
+            done
+            [[ "$and" =~ 0 ]] && echo 0 || echo 1
+        }
+        conditionToBinaryOr "$condition" "$token_list" "$string"
+    }
+    until [[ "$binary" =~ ^(0|1)$ ]];do
+        i=$(( i + 1 ))
+        # e 'Looping ke-' "$i" ; _.
+        # e '< "$binary"' "$binary" ; _.
+        if [[ $(echo "$binary" | grep -i -o -E '\([^\(\)]+\)' | grep -o -E '[^\(\)]+' | wc -l) -eq 0 ]];then
+            if [[ "$binary" =~ ^[a-z]$ ]];then
+                # e '< "$binary"' "$binary"; _.
+                binary=$(conditionToBinary "$binary" "$token_list" "$string")
+                # e '> "$binary"' "$binary"; _.
+            else
+                # error Token tidak valid: '`'$token'`'; x
+                # e '< "$binary"' "$binary"; _.
+                binary=$(conditionToBinary "$binary")
+                # e '> "$binary"' "$binary"; _.
+            fi
+        else
+            while IFS= read insideBraces; do
+                find="(${insideBraces})"
+                # e '"$find"' "$find" ; _.
+                replace=$(conditionToBinary "$insideBraces" "$token_list" "$string")
+                # e '"$replace"' "$replace" ; _.
+                # _ Jangan gunakan replace all, karena bisa jadi ada tanda kurung yang sama.
+                # _ Contoh: binary='(a&b)|c|(a&c)|((m&r|(a&b)))'
+                # e '< "$binary"' "$binary" ; _.
+                binary="${binary/"$find"/"$replace"}"
+                # e '> "$binary"' "$binary" ; _.
+            done <<< `echo "$binary" | grep -o -E '\([^\(\)]+\)' | grep -o -E   '[^\(\)]+'`
+        fi
+        # e '> "$binary"' "$binary"; _.
+        # __ Limit adalah 100 ya gaes.
+        # __ 100 lopping belum ketemu juga, artinya set error dan kembalikan false
+        if [[ $i == 100 ]];then
+            error Kesalahan Logic.
+            binary=0
+        fi
+    done
+    echo "$binary"
+}
+# Required function: resolveCondition.
+nginxGrep(){
+    validateToken() {
+        # global token
+        if [[ ! "$token" =~ ^[a-z]$ ]];then
+            error Token tidak valid: '`'$token'`'; x
+        fi
+    }
+    # Mengubah operator dari text string menjadi simbol, sekaligus validasi.
+    # Karakter operator yang berlaku adalah: = != < > <= >= ~ !~
+    validateOperator() {
+        # global operator
+        case "$operator" in
+            is|equals|=)
+                operator='=' ;;
+            '!='|'is not'|'<>')
+                operator='<>' ;;
+            '<'|'is less than')
+                operator='<' ;;
+            '>'|'is greater than')
+                operator='>' ;;
+            '<='|'is less than or equals')
+                operator='<=' ;;
+            '>='|'is greater than or equals')
+                operator='>=' ;;
+            '[]'|'contains')
+                operator='[]' ;;
+            '![]'|'does not contain')
+                operator='![]' ;;
+            '~'|'match')
+                operator='~' ;;
+            '!~'|'does not match')
+                operator='!~' ;;
+            *)
+                error Operator is not valid: '`'$operator'`'; x
+        esac
+    }
+    [[ $(type -t resolveCondition) == function ]] || { error Function resolveCondition not found.; x; }
+    local i token operator
+    local directive=$1; shift
+    # Jika total argument setelah directive adalah 7, 10, 13, dst.,
+    # maka berarti conditional complex. Contohnya.
+    # nginxGrep listen '(a&b)' a contains 8080 b contains ssl < a.txt
+    # nginxGrep listen '(a&b)|c' a contain6s 8080 b contains ssl c contains ipv6only=on < a.txt
+    token_list=
+    if [[ $# -gt 6 && $(( $# % 3 )) == 1 ]];then
+        condition=$1; shift
+        while [ $# -gt 0 ];do
+            token=$1
+            validateToken
+            operator=$2
+            validateOperator
+            token_list+="${token} ${operator} $3"
+            token_list+=$'\n'
+            shift 3;
+        done
+    # Jika total argument setelah directive adalah 1, maka mencari fix value.
+    # Contohnya:
+    # nginxGrep listen 8080
+    elif [[ $# -eq 1 ]];then
+        condition=a
+        token_list+="a = $1"
+        token_list+=$'\n'
+    # Jika total argument setelah directive adalah 2, maka berarti conditional
+    # sederhana. Contohnya.
+    # nginxGrep listen contains ssl
+    # nginxGrep listen 'is not contain' ssl
+    elif [[ $# -eq 2 ]];then
+        condition=a
+        operator=$1
+        validateOperator
+        token_list+="a ${operator} $2"
+        token_list+=$'\n'
+    fi
+    lines_directive=()
+    if [ ! -t 0 ]; then
+        i=0
+        _ Mencari directive: '`'${directive}'`'; _.
+        _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.
+        while IFS= read line; do
+            i=$(( i + 1))
+            if [ "${#line}" -eq 0 ];then
+                __;
+            else
+            _; _, ' '; yellow "$line"; _, ' # Line:' $i;
+            fi
+            if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
+                _, ' '; green Baris ditemukan.
+                lines_directive+=("$line")
+            fi
+            _.
+        done </dev/stdin
+    fi
+    if [ "${#lines_directive[@]}" -eq 0 ];then
+        return 1
+    fi
+    _; _.
+    _ Dump variable '`'\$condition'`'.; _.
+    e; magenta $condition; _.
+    _; _.
+    _ Dump variable '`'\$token_list'`'.; _.
+    while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"
+    # _; _.
+    # Directive bisa berulang.
+    # Contoh: directive listen bisa berulang sebanyak dua kali.
+    # Jadi jika satu saja sudah solve, maka langsung break saja.
+    local resolved
+    for line in "${lines_directive[@]}"; do
+        # e '"$line"' "$line" ; _.
+        directive_reverse=$(echo "$line" | sed -E -e "s;\s*${directive}\s+(.*);\1;" -e 's|;\s*$||')
+        # e '"$directive_reverse"' "$directive_reverse" ; _.
+        resolved=$(resolveCondition "$condition" "$token_list" "$directive_reverse")
+        # e '"$resolved"' "$resolved" ; _.
+        if [ "$resolved" == 1 ];then
+            _; _.
+            _ Condition solved pada baris:' '; yellow  "$line"; _.
+            _; _.
+            return 0
+        fi
+    done
+    return 1
+}
 backupFile() {
     local mode="$1"
     local oldpath="$2" i newpath
@@ -351,81 +629,81 @@ findString() {
     fi
 }
 validateContentMaster() {
-    local find path="$1"
+    local path="$1"
     # listen
-    find="listen __MASTER_URL_PORT____SSL__;"
-    find=$(echo "$find" | sed "s|__MASTER_URL_PORT__|${master_url_port}|g")
     if [ "$master_url_scheme" == https ];then
-        find=$(echo "$find" | sed "s|__SSL__| ssl|g")
-    else
-        find=$(echo "$find" | sed "s|__SSL__||g")
-    fi
-    if ! findString "$find" "$path";then
-        __; yellow File akan dibuat ulang.; _.
+        if ! nginxGrep listen '(a&b)|(a&b&c)' a contains "$master_url_port" b contains ssl c contains ipv6only=on < "$path";then
+            __; yellow File akan dibuat ulang.; _.
             return 1
+        fi
+    else
+        if ! nginxGrep listen contains "$master_url_port" < "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
     fi
     # root
-    find="root __MASTER_ROOT__;"
-    find=$(echo "$find" | sed "s|__MASTER_ROOT__|${master_root}|g")
-    if ! findString "$find" "$path";then
+    if ! nginxGrep root "$master_root" < "$path";then
         __; yellow File akan dibuat ulang.; _.
-            return 1
+        return 1
     fi
     # server_name
-    find="server_name __MASTER_URL_HOST__;"
-    find=$(echo "$find" | sed "s|__MASTER_URL_HOST__|${master_url_host}|g")
-    if ! findString "$find" "$path";then
+    if ! nginxGrep server_name contains "$master_url_host" < "$path";then
         __; yellow File akan dibuat ulang.; _.
-            return 1
+        return 1
     fi
+
     if [ "$master_url_scheme" == https ];then
         # ssl_certificate
-        find="ssl_certificate /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if ! findString "$find" "$path";then
+        if ! nginxGrep ssl_certificate is "/etc/letsencrypt/live/${master_certbot_certificate_name}/fullchain.pem" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        find="ssl_certificate_key /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/privkey.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if ! findString "$find" "$path";then
+        if ! nginxGrep ssl_certificate_key is "/etc/letsencrypt/live/${master_certbot_certificate_name}/privkey.pem" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
-        find="include /etc/letsencrypt/options-ssl-nginx.conf"
-        if ! findString "$find" "$path";then
+        # include
+        if ! nginxGrep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
-        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
-        if ! findString "$find" "$path";then
+        # include
+        if ! nginxGrep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     fi
     if [ "$master_url_scheme" == http ];then
         # ssl_certificate
-        find="ssl_certificate /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if findString "$find" "$path";then
+        if nginxGrep ssl_certificate is "/etc/letsencrypt/live/${master_certbot_certificate_name}/fullchain.pem" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        find="ssl_certificate_key /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/privkey.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if findString "$find" "$path";then
+        if nginxGrep ssl_certificate_key is "/etc/letsencrypt/live/${master_certbot_certificate_name}/privkey.pem" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
-        find="include /etc/letsencrypt/options-ssl-nginx.conf"
-        if findString "$find" "$path";then
+        # include
+        if nginxGrep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
-        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
-        if findString "$find" "$path";then
+        # include
+        if nginxGrep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+    fi
+    if [ -z "$slave_url_path" ];then
+        if ! nginxGrep include is "$master_include_2" < "$path";then
+            __; yellow File akan dibuat ulang.; _.
+            return 1
+        fi
+    else
+        if ! nginxGrep include is "$master_include" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -433,115 +711,19 @@ validateContentMaster() {
     return 0
 }
 validateContentSlave() {
-    local find
+    local path="$1"
     # fastcgi_pass
-    find="fastcgi_pass __SLAVE_FASTCGI_PASS__;"
-    find=$(echo "$find" | sed "s|__SLAVE_FASTCGI_PASS__|${slave_fastcgi_pass}|g")
-    if ! findString "$find" "$path";then
+    if ! nginxGrep fastcgi_pass is "$slave_fastcgi_pass" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
     if [ -z "$slave_url_path" ];then
         # root
-        find="root __SLAVE_ROOT__;"
-        find=$(echo "$find" | sed "s|__SLAVE_ROOT__|${slave_root}|g")
-        if ! findString "$find" "$path";then
+        if ! nginxGrep root is "$slave_root" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     fi
-
-    return 0
-
-    # listen
-    # find="listen __MASTER_URL_PORT____SSL__;"
-    # find=$(echo "$find" | sed "s|__MASTER_URL_PORT__|${master_url_port}|g")
-    # if [ "$master_url_scheme" == https ];then
-        # find=$(echo "$find" | sed "s|__SSL__| ssl|g")
-    # else
-        # find=$(echo "$find" | sed "s|__SSL__||g")
-    # fi
-    # if ! findString "$find" "$path";then
-        # __; yellow File akan dibuat ulang.; _.
-            # return 1
-    # fi
-
-    # server_name
-    # find="server_name __MASTER_URL_HOST__;"
-    # find=$(echo "$find" | sed "s|__MASTER_URL_HOST__|${master_url_host}|g")
-    # if ! findString "$find" "$path";then
-        # __; yellow File akan dibuat ulang.; _.
-            # return 1
-    # fi
-
-    if [ "$master_url_scheme" == https ];then
-        # ssl_certificate
-        find="ssl_certificate /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        # ssl_certificate_key
-        find="ssl_certificate_key /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/privkey.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        find="include /etc/letsencrypt/options-ssl-nginx.conf"
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    fi
-    if [ "$master_url_scheme" == http ];then
-        # ssl_certificate
-        find="ssl_certificate /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/fullchain.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        # ssl_certificate_key
-        find="ssl_certificate_key /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/privkey.pem"
-        find=$(echo "$find" | sed "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g")
-        if findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        find="include /etc/letsencrypt/options-ssl-nginx.conf"
-        if findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-        find="ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem"
-        if findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    fi
-    if [ -z "$slave_url_path" ];then
-        find="include __MASTER_INCLUDE_2__;"
-        find=$(echo "$find" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    else
-        find="include __MASTER_INCLUDE__/*;"
-        find=$(echo "$find" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
-        if ! findString "$find" "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    fi
-
     return 0
 }
 
@@ -763,15 +945,16 @@ link_symbolic "$source" "$target"
 
 chapter Enable the line to include sub nginx config file: '`'$filename'`'.
 if [ -z "$slave_url_path" ];then
-    find="# include __MASTER_INCLUDE_2__;"
-    find=$(echo "$find" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
+
+    template="# include __MASTER_INCLUDE_2__;"
+    find=$(echo "$template" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
     if findString "$find" "$path";then
         code sed -i "'"'s|# include '"${master_include_2}"';|include '"${master_include_2}"';|g'"'" "$path"
         sed -i 's|# include '"${master_include_2}"';|include '"${master_include_2}"';|g' "$path"
     fi
 else
-    find="# include __MASTER_INCLUDE__/*;"
-    find=$(echo "$find" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
+    template="# include __MASTER_INCLUDE__/*;"
+    find=$(echo "$template" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
     if findString "$find" "$path";then
         code sed -i "'"'s|# include '"${master_include}"'/\*;|include '"${master_include}"'/\*;|g'"'" "$path"
         sed -i 's|# include '"${master_include}"'/\*;|include '"${master_include}"'/\*;|g' "$path"
