@@ -525,8 +525,8 @@ printSelectOtherDialog() {
                 __; _, '['$count']' "${source[$i]}"; _.
             fi
         done
-        __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
-        __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to type other value.'; _.
+        __; _, '['; yellow Enter; _, ']'; _, ' '; _, 'Type the '; yellow N; _, 'umber key.'; _.
+        __; _, '['; yellow Backspace; _, ']'; _, ' '; _, 'Switch to '; yellow T; _, 'ype other value.'; _.
         if [ -z "$is_required" ];then
             __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
         fi
@@ -537,12 +537,12 @@ printSelectOtherDialog() {
         while true; do
             __; read -rsn 1 -p "Select: " char;
             if [ -z "$char" ];then
-                char=t
+                char=n
             fi
             case $char in
-                s|S) type_mode=1; echo "$char"; break ;;
+                t|T) type_mode=1; echo "$char"; break ;;
                 $'\177') type_mode=1; echo "s"; break ;;
-                t|T) echo "$char"; break ;;
+                n|N) echo "$char"; break ;;
                 [1-$count_max])
                     echo "$char"
                     i=$((char - 1))
