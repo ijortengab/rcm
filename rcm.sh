@@ -2340,7 +2340,29 @@ Rcm_prompt() {
         ____
     fi
 }
-
+Rcm_prompt_sigint() {
+    local shortoptions
+    [ "$resolve_dependencies" == 0 ] && resolved=1
+    [ -n "$resolved" ] && shortoptions+='x'
+    [ -n "$fast" ] && shortoptions+='f'
+    if [ -n "$verbose" ];then
+        for ((i = 0 ; i < "$verbose" ; i++)); do
+            shortoptions+='v'
+        done
+    fi
+    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
+    _.;
+    _.;
+    error Interrupt by User.; _.
+    _ Use command below to return to the last dialog.; _.
+    if [ -z "$RCM_LAST_COMMAND" ];then
+        RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
+    fi
+    for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
+    words_array=($RCM_LAST_COMMAND)
+    wordWrapCommand
+    exit 0
+}
 # Requirement, validate, and populate value.
 chapter Dump variable.
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
@@ -2446,7 +2468,9 @@ if [ $# -gt 0 ];then
 fi
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
+trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
+trap x SIGINT
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
     set -- "${argument_pass[@]}" "${_new_arguments[@]}"
     unset argument_pass _new_arguments
