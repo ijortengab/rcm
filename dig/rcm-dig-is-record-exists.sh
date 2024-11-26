@@ -318,19 +318,16 @@ if [ -n "$record_found" ];then
     if [ -n "$reverse" ];then
         result='error'
     fi
-    if [ "$colorize" == 0 ];then
-        result=__
-    fi
-
-    $result "$log"
 else
     result='error'
     if [ -n "$reverse" ];then
         result='success'
     fi
-    if [ "$colorize" == 0 ];then
-        result=__
-    fi
+fi
+
+if [ "$colorize" == 0 ];then
+    __ "$log"
+else
     $result "$log"
 fi
 
