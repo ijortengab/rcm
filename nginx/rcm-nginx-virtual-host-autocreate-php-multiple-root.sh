@@ -387,7 +387,7 @@ nginxGrep(){
         _ Mencari directive: '`'${directive}'`'; _.
         _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.
         while IFS= read line; do
-            i=$(( i + 1))
+            i=$(( i + 1 ))
             if [ "${#line}" -eq 0 ];then
                 __;
             else
@@ -610,7 +610,8 @@ isDirExists() {
     fi
 }
 findString() {
-    local find="$1" find_quoted string path="$2"
+    # global find_quoted # agar bisa di gunakan oleh sed.
+    local find="$1" string path="$2"
     __ Memeriksa baris dengan kalimat: '`'$find'`'.
     find_quoted="$find"
     find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
@@ -620,7 +621,7 @@ findString() {
     code grep -E '"'"^\s*${find_quoted}"'"' '"'"\$path"'"'
     if grep -q -E "^\s*${find_quoted}" "$path";then
         string=$(grep -E "$find_quoted" "$path")
-        while read -r line; do e "$line"; done <<< "$string"
+        while read -r line; do e "$line"; _.; done <<< "$string"
         __ Baris ditemukan.
         return 0
     else
@@ -693,17 +694,6 @@ validateContentMaster() {
         fi
         # include
         if nginxGrep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    fi
-    if [ -z "$slave_url_path" ];then
-        if ! nginxGrep include is "$master_include_2" < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
-        fi
-    else
-        if ! nginxGrep include is "$master_include" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -814,6 +804,7 @@ isFileExists "$path"
 ____
 
 create_new=
+rcm_nginx_reload=
 if [ -n "$found" ];then
     chapter Memeriksa konten.
     validateContentMaster "$path"
@@ -894,7 +885,7 @@ server {
         access_log off;
     }
 
-    # include __MASTER_INCLUDE__/*;
+    # include __MASTER_INCLUDE__;
     # include __MASTER_INCLUDE_2__;
 
     # ssl_certificate /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/fullchain.pem;
@@ -929,7 +920,7 @@ EOF
     if [ -z "$slave_url_path" ];then
         sed -i 's|# include '"${master_include_2}"';|include '"${master_include_2}"';|g' "$path"
     else
-        sed -i 's|# include '"${master_include}"'/\*;|include '"${master_include}"'/\*;|g' "$path"
+        sed -i 's|# include '"${master_include}"';|include '"${master_include}"';|g' "$path"
     fi
     ____
 
@@ -937,6 +928,8 @@ EOF
     validateContentMaster "$path"
     [ ! $? -eq 0 ] && x
     ____
+
+    rcm_nginx_reload=1
 fi
 
 source="$path"
@@ -945,19 +938,24 @@ link_symbolic "$source" "$target"
 
 chapter Enable the line to include sub nginx config file: '`'$filename'`'.
 if [ -z "$slave_url_path" ];then
-
-    template="# include __MASTER_INCLUDE_2__;"
+    template="include __MASTER_INCLUDE_2__;"
     find=$(echo "$template" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
-    if findString "$find" "$path";then
-        code sed -i "'"'s|# include '"${master_include_2}"';|include '"${master_include_2}"';|g'"'" "$path"
-        sed -i 's|# include '"${master_include_2}"';|include '"${master_include_2}"';|g' "$path"
+    if findString "# ${find}" "$path";then
+        code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
+        sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
+    fi
+    if ! nginxGrep include is "$master_include_2" < "$path";then
+        error Enable gagal.; x
     fi
 else
-    template="# include __MASTER_INCLUDE__/*;"
+    template="include __MASTER_INCLUDE__;"
     find=$(echo "$template" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
-    if findString "$find" "$path";then
-        code sed -i "'"'s|# include '"${master_include}"'/\*;|include '"${master_include}"'/\*;|g'"'" "$path"
-        sed -i 's|# include '"${master_include}"'/\*;|include '"${master_include}"'/\*;|g' "$path"
+    if findString "# ${find}" "$path";then
+        code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
+        sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
+    fi
+    if ! nginxGrep include is "$master_include" < "$path";then
+        error Enable gagal.; x
     fi
 fi
 ____
@@ -970,7 +968,6 @@ isFileExists "$path"
 ____
 
 create_new=
-rcm_nginx_reload=
 if [ -n "$found" ];then
     chapter Memeriksa konten.
     validateContentSlave "$path"
