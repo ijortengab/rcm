@@ -219,7 +219,7 @@ loud=; debug=; quiet=
 
 # Functions. Help and Version.
 printVersion() {
-    echo '0.16.6'
+    echo '0.16.7'
 }
 printHelp() {
     title Rapid Construct Massive
