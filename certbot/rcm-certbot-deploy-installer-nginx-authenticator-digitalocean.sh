@@ -235,9 +235,9 @@ for each in "${domain[@]}"; do
 done
 set -- "${arguments[@]}"
 # https://eff-certbot.readthedocs.io/en/latest/using.html#combination
-code certbot --non-interactive --installer nginx --agree-tos --email="$email" \
+code certbot -v --non-interactive --installer nginx --agree-tos --email="$email" \
     --dns-digitalocean --dns-digitalocean-credentials="$TOKEN_INI" "$@"
-certbot --non-interactive --installer nginx --agree-tos --email="$email" \
+certbot -v --non-interactive --installer nginx --agree-tos --email="$email" \
     --dns-digitalocean --dns-digitalocean-credentials="$TOKEN_INI" "$@" \
     ; [ ! $? -eq 0 ] && x
 ____

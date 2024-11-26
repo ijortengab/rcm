@@ -123,9 +123,9 @@ for each in "${domain[@]}"; do
 done
 set -- "${arguments[@]}"
 # https://eff-certbot.readthedocs.io/en/latest/using.html#combination
-code certbot certonly --non-interactive --nginx --agree-tos --email="$email" \
+code certbot -v certonly --non-interactive --nginx --agree-tos --email="$email" \
     "$@"
-certbot certonly --non-interactive --nginx --agree-tos --email="$email" \
+certbot -v certonly --non-interactive --nginx --agree-tos --email="$email" \
     "$@" \
     ; [ ! $? -eq 0 ] && x
 ____
