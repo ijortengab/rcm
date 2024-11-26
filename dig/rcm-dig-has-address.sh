@@ -39,6 +39,12 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+if [ -n "$1" ];then
+    case "$1" in
+        get-ipv4) command="$1"; shift ;;
+    esac
+fi
+
 # Functions.
 printVersion() {
     echo '0.16.6'
@@ -56,6 +62,7 @@ Options:
         Fully Qualified Domain Name to be checked.
    --ip-address *
         Set the IP Address. Used to verify A record in DNS.
+        Value available from command: rcm-dig-has-address(get-ipv4), or other.
 
 Global Options:
    --fast
@@ -75,6 +82,21 @@ EOF
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
+
+command-get-ipv4() {
+    _ip=`wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/"`
+    if [ -n "$_ip" ];then
+        echo "$_ip"
+    else
+        ip addr show | grep -o "inet [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*" | grep -o "[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*"
+    fi
+}
+
+# Execute command.
+if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
+    command-${command} "$@"
+    exit 0
+fi
 
 # Title.
 title rcm-dig-has-address
@@ -113,7 +135,8 @@ ____
 
 chapter Mengecek IP Address FQDN '`'$fqdn'`'
 code host -t A $fqdn
-host -t A "$fqdn" | tee "$tempfile"
+host -t A "$fqdn" > "$tempfile"
+while IFS= read line; do e "$line"; _.; done < "$tempfile"
 stdout=$(<"$tempfile")
 found=
 code found="$found"
