@@ -319,6 +319,15 @@ printBackupDialog() {
         fi
     fi
 }
+printBackupFlagDialog() {
+    _; _.
+    __; _, This argument has been added before. Would you like to restore this argument?; _.
+    userInputBooleanDefaultYes
+    if [ -n "$boolean" ];then
+        _; _.
+        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added which is restored.; _.
+    fi
+}
 printHistoryDialog() {
     local count_max=$(wc -l <<< "$history_value")
     if [ $count_max -gt 9 ];then
@@ -1952,8 +1961,10 @@ Rcm_prompt() {
             options=`sed -n ${count}',$p' <<< "$options"`
             value=
             backup_value=
+            backup_flag=
             if [ -f "$backup_storage" ];then
                 backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+                backup_flag=$(grep -q -- "^${parameter}$" "$backup_storage" && echo 1)
             fi
             history_value=
             if [ -f "$history_storage" ];then
@@ -2032,7 +2043,6 @@ Rcm_prompt() {
                         _boolean=0
                         break
                     elif grep -q -- "^${parameter}\$" <<< "$each";then
-                        # @todo, flag juga perlu di backup nih
                         _boolean=1
                         if [[ "$value_addon" == 'canhavevalue' ]];then
                             value_addon=
@@ -2048,14 +2058,14 @@ Rcm_prompt() {
                 done
                 # Reset first.
                 boolean=
-                if [ -z "$_boolean" ];then
-                    _; _.
-                    __; _, Add this argument?; _.
-                    userInputBooleanDefaultNo
-                    is_press=1
-                elif [[ "$_boolean" == 0 ]];then
+                # Variable $boolean digunakan dimana-mana, jadi kita gunakan
+                # variable terpisah.
+                argument_boolean=
+                if [[ "$_boolean" == 0 ]];then
                     _; _.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                    backup_flag=
+                    argument_boolean=' '
                 elif [[ "$_boolean" == 1 ]];then
                     _; _.
                     if [ -n "$value" ];then
@@ -2063,14 +2073,28 @@ Rcm_prompt() {
                     else
                         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated.; _.
                     fi
-                    boolean=1
+                    backup_flag=
+                    argument_boolean=1
+                fi
+                if [ -n "$backup_flag" ];then
+                    printBackupFlagDialog
+                    argument_boolean="$boolean"
+                fi
+                if [ -z "$argument_boolean" ];then
+                    _; _.
+                    __; _, Add this argument?; _.
+                    userInputBooleanDefaultNo
+                    argument_boolean="$boolean"
+                    is_press=1
+                fi
+                if [[ "$argument_boolean" == ' ' ]];then
+                    argument_boolean=
                 fi
                 # Populate placeholders.
                 if [ -n "$argument_placeholders" ];then
                     argument_placeholders+=$'\n'
                 fi
-                argument_boolean="$boolean"
-                if [ -n "$boolean" ]; then
+                if [ -n "$argument_boolean" ]; then
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         if [ -z "$value" ];then
                             _; _.
@@ -2281,6 +2305,11 @@ Rcm_prompt() {
                     mkdir -p $(dirname "$history_storage");
                     echo "${parameter}=${value}" >> "$history_storage"
                 fi
+            fi
+            # Backup to text file for flag.
+            if [ -n "$argument_boolean" ];then
+                mkdir -p $(dirname "$backup_storage")
+                echo "${parameter}" >> "$backup_storage"
             fi
             if [[ "$value_addon" == 'multivalue' ]];then
                 again=1
