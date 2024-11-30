@@ -386,6 +386,8 @@ printSelectDialog() {
         __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
     fi
     select_mode=
+    local type_mode=
+    local skip=
     while true; do
         __; read -rsn 1 -p "Select: " char;
         if [ -z "$char" ];then
@@ -420,7 +422,10 @@ printSelectDialog() {
                 __; _, '['$count']' "${source[$i]}"; _.
             fi
         done
-        __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the number key.'; _.
+        __; _, '['; yellow Enter; _, ']'; _, ' '; _, 'Type the '; yellow N; _, 'umber key.'; _.
+        if [ -z "$is_required" ];then
+            __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
+        fi
         count_max="${#source[@]}"
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -428,33 +433,44 @@ printSelectDialog() {
         while true; do
             __; read -rsn 1 -p "Select: " char;
             if [ -z "$char" ];then
-                char=t
+                char=n
             fi
             case $char in
-                t|T) echo "$char"; break ;;
+                n|N) echo "$char"; break ;;
                 [1-$count_max])
                     echo "$char"
                     i=$((char - 1))
                     value="${source[$i]}"
                     break ;;
-                *) echo
+                *)
+                    if [ -n "$is_required" ];then
+                        echo
+                    else
+                        case $char in
+                            $'\33') skip=1; echo "l"; break ;;
+                            l|L) skip=1; echo "$char"; break ;;
+                            *) echo
+                        esac
+                    fi
             esac
         done
-        until [ -n "$value" ];do
-            __; read -p "Type the number: " value
-            if [[ $value =~ [^0-9] ]];then
-                value=
-            fi
-            if [[ $value =~ ^0 ]];then
-                value=
-            fi
-            if [ -n "$value" ];then
-                value=$((value - 1))
-                value="${source[$value]}"
-            fi
-        done
-        _; _.
-        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+        if [[ -z "$skip" ]];then
+            until [ -n "$value" ];do
+                __; read -p "Type the number: " value
+                if [[ $value =~ [^0-9] ]];then
+                    value=
+                fi
+                if [[ $value =~ ^0 ]];then
+                    value=
+                fi
+                if [ -n "$value" ];then
+                    value=$((value - 1))
+                    value="${source[$value]}"
+                fi
+            done
+            _; _.
+            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+        fi
     fi
     while true; do
         if [ -n "$value" ];then
@@ -468,11 +484,13 @@ printSelectDialog() {
         else
             if [ -n "$is_required" ];then
                 __; read -p "Type the value: " value
-            else
+            elif [ -z "$skip" ];then
                 __; read -p "Type the value or leave blank to skip: " value
                 if [ -z "$value" ];then
                     break
                 fi
+            else
+                break
             fi
         fi
     done
