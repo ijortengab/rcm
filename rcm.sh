@@ -1912,12 +1912,16 @@ Rcm_prompt() {
             printSelectDialog available_subcommands[@] "$what"
         fi
     fi
+    local subcommand=
     if [ -n "$value" ];then
         argument_pass+=("${value}")
         argument_preview+=("${value}")
+        subcommand="$value"
+        options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
+    else
+        options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     fi
 
-    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
             chapter Prepare argument for command '`'$command'`'.
