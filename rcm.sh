@@ -1441,6 +1441,7 @@ Rcm_resolve_dependencies() {
             _ Versi rcm saat ini: ${rcm_version}.; _.
         fi
         for command_required in "${commands_required[@]}"; do
+            command_required_raw="$command_required"
             command_required_version=
             if grep -q -F : <<< "$command_required";then
                 command_required_version=$(cut -d: -f2 <<< "$command_required")
@@ -1622,6 +1623,9 @@ Rcm_resolve_dependencies() {
                 fi
             fi
             commands_exists+=("$command_required")
+            if [ ! "$command_required_raw" == "$command_required" ];then
+                commands_exists+=("$command_required_raw")
+            fi
             _help=$("$command_required" --help 2>/dev/null)
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
             _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
