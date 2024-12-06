@@ -442,25 +442,25 @@ rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
     --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
-chapter Mengecek subdomain '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
+chapter Mengecek address host local '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
 notfound=
 string="$PHPMYADMIN_FQDN_LOCALHOST"
 string_quoted=$(sed "s/\./\\\./g" <<< "$string")
 if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
-    __ Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    __ Address Host local terdapat pada local DNS resolver '`'/etc/hosts'`'.
 else
-    __ Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.
+    __ Address Host local tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.
     notfound=1
 fi
 ____
 
 if [ -n "$notfound" ];then
-    chapter Menambahkan subdomain '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
+    chapter Menambahkan host '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
     echo "127.0.0.1"$'\t'"${PHPMYADMIN_FQDN_LOCALHOST}" >> /etc/hosts
     if grep -q -E "^\s*127\.0\.0\.1\s+${string_quoted}" /etc/hosts;then
-        __; green Subdomain terdapat pada local DNS resolver '`'/etc/hosts'`'.; _.
+        __; green Address Host local terdapat pada local DNS resolver '`'/etc/hosts'`'.; _.
     else
-        __; red Subdomain tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.; x
+        __; red Address Host local tidak terdapat pada local DNS resolver '`'/etc/hosts'`'.; x
     fi
     ____
 fi
