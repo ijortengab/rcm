@@ -936,6 +936,7 @@ EOF
     rcm_nginx_reload=1
 fi
 
+path="/etc/nginx/sites-available/$master_filename"
 source="$path"
 target="/etc/nginx/sites-enabled/$master_filename"
 link_symbolic "$source" "$target"
@@ -1010,6 +1011,7 @@ location = __SLAVE_URL_PATH__ {
     return 302 __SLAVE_URL_PATH__/;
 }
 location __SLAVE_URL_PATH__/ {
+    root __MASTER_ROOT__;
     try_files $uri $uri/ __SLAVE_URL_PATH__/index.php$is_args$args;
     location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
@@ -1019,6 +1021,7 @@ location __SLAVE_URL_PATH__/ {
 EOF
         sed -i "s|__SLAVE_URL_PATH__|${slave_url_path}|g" "$path"
         sed -i "s|__SLAVE_FASTCGI_PASS__|${slave_fastcgi_pass}|g" "$path"
+        sed -i "s|__MASTER_ROOT__|${master_root}|g" "$path"
     fi
     fileMustExists "$path"
     ____
