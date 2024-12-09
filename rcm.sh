@@ -1665,7 +1665,6 @@ Rcm_resolve_dependencies() {
             ____
         fi
     done
-    export RCM_TABLE_DOWNLOADS="$table_downloads"
     if [ -n "$quiet" ];then
         if [ -n "$display_waiting" ];then
             printf "\r\033[K"
@@ -2487,6 +2486,13 @@ if [ "$resolve_dependencies" == 1 ];then
         done
         __ Resolved.
         ____
+        # Simpan informasi download.
+        _help=$("$command" --help 2>/dev/null)
+        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+        if [ -n "$_download" ];then
+            [ -n "$table_downloads" ] && table_downloads+=$'\n'
+            table_downloads+="$_download"
+        fi
     else
         Rcm_resolve_dependencies $command
     fi
@@ -2579,6 +2585,7 @@ if [ -z "$RCM_LAST_COMMAND" ];then
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
+export RCM_TABLE_DOWNLOADS="$table_downloads"
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
 chapter Command has been built.
