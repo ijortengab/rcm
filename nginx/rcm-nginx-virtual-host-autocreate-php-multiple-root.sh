@@ -818,7 +818,7 @@ else
     create_new=1
 fi
 
-if [[ -n "$create_new" && "$url_scheme" == https ]];then
+if [[ -n "$create_new" && "$master_url_scheme" == https ]];then
     path="/etc/letsencrypt/live/${master_certbot_certificate_name}"
     chapter Mengecek direktori certbot '`'$path'`'.
     isDirExists "$path"
