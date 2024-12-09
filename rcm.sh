@@ -208,6 +208,11 @@ fi
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
 fi
+if [ -n "$RCM_TABLE_DOWNLOADS" ];then
+    table_downloads="$RCM_TABLE_DOWNLOADS"
+fi
+____
+
 if [ -n "$RCM_RESOLVE_DEPENDENCIES" ];then
     resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
 fi
@@ -1430,7 +1435,6 @@ Rcm_resolve_dependencies() {
     commands_required=("$1")
     PATH="${BINARY_DIRECTORY}:${PATH}"
     commands_exists=()
-    table_downloads=
     if [ -n "$quiet" ];then
         display_waiting=1
     fi
@@ -1630,7 +1634,7 @@ Rcm_resolve_dependencies() {
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
             _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
             _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
-            if [ -n "$_dependency" ];then
+            if [ -n "$_download" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
                 table_downloads+="$_download"
             fi
@@ -1661,6 +1665,7 @@ Rcm_resolve_dependencies() {
             ____
         fi
     done
+    export RCM_TABLE_DOWNLOADS="$table_downloads"
     if [ -n "$quiet" ];then
         if [ -n "$display_waiting" ];then
             printf "\r\033[K"
