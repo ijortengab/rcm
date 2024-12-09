@@ -1767,6 +1767,9 @@ wordWrapCommand() {
             else
                 magenta ' \'; _.; e; magenta "    $each"
                 current_line="    ${each}"
+                if [ -n "$last" ];then
+                    _.
+                fi
             fi
         fi
     done
