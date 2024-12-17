@@ -325,6 +325,7 @@ if [ -z "$found" ];then
     __ Membuat file '`'"$config_file"'`'.
     php -r "$php" create "$config_file" "$reference"
     fileMustExists "$config_file"
+    found_file="$config_file"
     restart=1
     ____
 fi
@@ -356,7 +357,7 @@ fi
 if [ -n "$restart" ];then
     chapter Restart PHP-FPM configuration.
     code /etc/init.d/php${php_version}-fpm restart
-    /etc/init.d/php${php_version}-fpm restart
+    /etc/init.d/php${php_version}-fpm restart 2>&1 &>/dev/null
     ____
 fi
 
