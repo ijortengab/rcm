@@ -249,9 +249,11 @@ $file = $_SERVER['argv'][2];
 switch ($mode) {
     case 'is_exists':
         $section_name = $_SERVER['argv'][3];
-        $array = parse_ini_file($file, true);
-        if (array_key_exists($section_name, $array)) {
-            exit(0);
+        if (file_exists($file)) {
+            $array = parse_ini_file($file, true);
+            if (array_key_exists($section_name, $array)) {
+                exit(0);
+            }
         }
         exit(1);
         break;
@@ -263,11 +265,13 @@ switch ($mode) {
     case 'get':
         $section_name = $_SERVER['argv'][3];
         $what = $_SERVER['argv'][4];
-        $array = parse_ini_file($file, true);
-        if (array_key_exists($section_name, $array)) {
-            if (array_key_exists($what, $array[$section_name])) {
-                echo $array[$section_name][$what];
-                exit(0);
+        if (file_exists($file)) {
+            $array = parse_ini_file($file, true);
+            if (array_key_exists($section_name, $array)) {
+                if (array_key_exists($what, $array[$section_name])) {
+                    echo $array[$section_name][$what];
+                    exit(0);
+                }
             }
         }
         exit(1);
