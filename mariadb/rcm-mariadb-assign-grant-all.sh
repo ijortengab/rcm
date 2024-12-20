@@ -198,7 +198,7 @@ notfound=
 # GRANT USAGE ON *.* TO `roundcube`@`localhost` IDENTIFIED BY PASSWORD '*C75329CD384E7527992AED32A0A0DF1FA0342B15'
 # GRANT ALL PRIVILEGES ON `roundcubemail`.* TO `roundcube`@`localhost`
 __; magenta mysql '"'$db_name'"' --silent --skip-column-names -e '"'show grants for ${db_user}@${db_user_host}'"'; _.
-while read line; do e "$line"; done <<< `mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}"`
+while read line; do e "$line"; _.; done <<< `mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}"`
 msg=$(mysql "$db_name" --silent --skip-column-names -e "show grants for ${db_user}@${db_user_host}")
 __; magenta grep -F "'"GRANT ALL PRIVILEGES ON '`'$db_name'`'.* TO '`'$db_user'`'@'`'$db_user_host'`'"'"; _.
 if grep -q -F 'GRANT ALL PRIVILEGES ON `'"$db_name"'`.* TO `'"$db_user"'`@`'"$db_user_host"'`' <<< "$msg";then
