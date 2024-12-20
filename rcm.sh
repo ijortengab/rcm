@@ -531,7 +531,7 @@ printSelectOtherDialog() {
             char=t
         fi
         case $char in
-            t|T) echo "$char"; break ;;
+            t|T) type_mode=1; echo "$char"; break ;;
             s|S) select_mode=1; echo "$char"; break ;;
             $'\177') select_mode=1; echo "s"; break ;;
             *)
