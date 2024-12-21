@@ -565,6 +565,8 @@ link_symbolic() {
 }
 backupDir() {
     local oldpath="$1" i newpath
+    # Trim trailing slash.
+    oldpath=$(echo "$oldpath" | sed -E 's|/+$||g')
     i=1
     newpath="${oldpath}.${i}"
     if [ -e "$newpath" ]; then
