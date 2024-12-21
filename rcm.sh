@@ -211,7 +211,6 @@ fi
 if [ -n "$RCM_TABLE_DOWNLOADS" ];then
     table_downloads="$RCM_TABLE_DOWNLOADS"
 fi
-____
 
 if [ -n "$RCM_RESOLVE_DEPENDENCIES" ];then
     resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
