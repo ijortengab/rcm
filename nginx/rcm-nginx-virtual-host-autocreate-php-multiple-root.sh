@@ -552,29 +552,6 @@ link_symbolic() {
     fi
     ____
 }
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
 backupDir() {
     local oldpath="$1" i newpath
     i=1
