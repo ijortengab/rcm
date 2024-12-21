@@ -977,7 +977,7 @@ if [ -n "$create_new" ];then
     code 'path="'$path'"'
     if [ -f "$path" ];then
         __ Backup file: '`'"$filename"'`'.
-        backupFile move "$path"
+        backupFile move "$path" parent
     fi
     __ Membuat file "$filename".
     if [ -z "$slave_url_path" ];then
