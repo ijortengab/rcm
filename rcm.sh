@@ -724,7 +724,12 @@ Rcm_github_release() {
     fi
     local filename="${cache_directory}/${blob_path}"
     if [ ! -f "$filename" ];then
-        error File is not found: "$filename".; x
+        if [ -n "$display_waiting" ];then
+            printf "\r\033[K"
+        fi
+        error File is not found: "$filename".;
+        [ -n "$quiet" ] && kill -SIGTERM $$
+        x
     fi
     case $mode in
         install)
@@ -1484,12 +1489,6 @@ Rcm_resolve_dependencies() {
                         if [ -n "$loud" ];then
                             _.
                         fi
-                        if [ -n "$quiet" ];then
-                            if [ -n "$display_waiting" ];then
-                                printf "\r\033[K"
-                                display_waiting=
-                            fi
-                        fi
                         is_updated=
                         if Rcm_is_internal "$command_required";then
                             github_owner_repo=ijortengab/rcm
@@ -1542,7 +1541,14 @@ Rcm_resolve_dependencies() {
                                 printf "\r\033[K"
                             fi
                             error Gagal Update;
-                            [ -n "$quiet" ] && kill -SIGTERM $$ || x
+                            [ -n "$quiet" ] && kill -SIGTERM $$
+                            x
+                        fi
+                        if [ -n "$quiet" ];then
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                                display_waiting=
+                            fi
                         fi
                     fi
                 fi
@@ -1619,7 +1625,8 @@ Rcm_resolve_dependencies() {
                             printf "\r\033[K"
                         fi
                         error Command '`'$command_required'`' not found, unable to auto download.;
-                        [ -n "$quiet" ] && kill -SIGTERM $$ || x
+                        [ -n "$quiet" ] && kill -SIGTERM $$
+                        x
                     fi
                 elif [[ ! -x "$BINARY_DIRECTORY/$command_required" ]];then
                     __; magenta chmod a+x "$BINARY_DIRECTORY/$command_required"; _.
