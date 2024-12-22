@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.16.9'
+    echo '0.16.10'
 }
 printHelp() {
     title RCM Certbot Deploy
