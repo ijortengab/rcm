@@ -56,9 +56,9 @@ else
 fi
 _.
 yellow 'Set chmod a+x'; _.
-magenta 'find * -mindepth 1 -type f -perm 0644 -name '"'"'*.sh'"'"; _.
-find * -mindepth 1 -type f -perm 0644 -name '*.sh'
-if [[ $(find * -mindepth 1 -type f -perm 0644 -name '*.sh' | wc -l) -eq 0 ]];then
+magenta "find * -mindepth 1 -type f \( ! -perm -g+x -or  ! -perm -u+x -or ! -perm -o+x \) -and \( -name '*.sh' -or  -name '*.php' \)"; _.
+find * -mindepth 1 -type f \( ! -perm -g+x -or  ! -perm -u+x -or ! -perm -o+x \) -and \( -name '*.sh' -or  -name '*.php' \)
+if [[ $( find * -mindepth 1 -type f \( ! -perm -g+x -or  ! -perm -u+x -or ! -perm -o+x \) -and \( -name '*.sh' -or  -name '*.php' \)|wc -l) -eq 0 ]];then
     green There no changes.; _.
 else
     red Need update;_.
