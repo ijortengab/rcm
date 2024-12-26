@@ -7,14 +7,14 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
-        -x) resolve_dependencies=0; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
-        --fast|-f) fast=1; shift ;;
         --non-interactive) non_interactive=1; shift ;;
+        -x) resolve_dependencies=0; shift ;;
         --root-sure) root_sure=1; shift ;;
+        --slow) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
-        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
         --without-resolve-dependencies) resolve_dependencies=0; shift ;;
+        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -38,12 +38,11 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVxfv" opt; do
+            while getopts ":hVxv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
                     x) resolve_dependencies=0 ;;
-                    f) fast=1 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
             done
@@ -211,10 +210,10 @@ fi
 if [ -n "$RCM_TABLE_DOWNLOADS" ];then
     table_downloads="$RCM_TABLE_DOWNLOADS"
 fi
-
 if [ -n "$RCM_RESOLVE_DEPENDENCIES" ];then
     resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
 fi
+[ -n "$slow" ] || fast=1
 delay=.5; [ -n "$fast" ] && unset delay
 loud=; debug=; quiet=
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
@@ -249,8 +248,8 @@ Available commands: history, update, install, get, list.
 Options:
 
 Global Options:
-   --fast
-        No delay every subtask.
+   --slow
+        Add delay every subtask.
    --version
         Print version of this script.
    --help
@@ -1301,12 +1300,6 @@ command-usage() {
 
 # Execute command.
 if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
-    if [ ! "$command" == usage ];then
-        if [[ -z "$non_interactive" && -z "$fast" ]];then
-            _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
-            _; _.
-        fi
-    fi
     if [ "$command" == list ];then
         command-${command} "$@"
     else
@@ -1934,7 +1927,7 @@ Rcm_prompt() {
         unset _return
     else
         if [ "${#available_subcommands[@]}" -gt 0 ];then
-            chapter Prepare argument for command '`'$command'`'.
+            chapter Prepare argument for command '`'$command_raw'`'.
             chapter_printed=1
             what=subcommand
             if [ "${#available_subcommands[@]}" -gt 1 ];then
@@ -1955,7 +1948,7 @@ Rcm_prompt() {
 
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
-            chapter Prepare argument for command '`'$command'`'.
+            chapter Prepare argument for command '`'$command_raw'`'.
         fi
         until [[ -z "$options" ]];do
             parameter=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
@@ -2559,18 +2552,6 @@ fi
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
-if [[ -z "$non_interactive" && -z "$fast" ]];then
-    _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
-    _; _.
-    __ Press the yellow key to select.
-    userInputBooleanDefaultYes
-    if [ -n "$boolean" ];then
-        fast=1
-        unset delay
-    fi
-    ____
-fi
-
 Rcm_prompt $command
 trap x SIGINT
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
@@ -2688,7 +2669,7 @@ exit 0
     # '--verbose|-v'
 # )
 # FLAG=(
-# '--fast|-f'
+# '--slow'
 # '--version|-V'
 # '--help|-h'
 # --root-sure
