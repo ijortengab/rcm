@@ -8,10 +8,10 @@ while [[ $# -gt 0 ]]; do
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
-        --non-interactive) non_interactive=1; shift ;;
+        --interactive|-i) interactive=1; shift ;;
         -x) resolve_dependencies=0; shift ;;
         --root-sure) root_sure=1; shift ;;
-        --slow) slow=1; shift ;;
+        --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --without-resolve-dependencies) resolve_dependencies=0; shift ;;
         --with-resolve-dependencies) resolve_dependencies=1; shift ;;
@@ -38,11 +38,13 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVxv" opt; do
+            while getopts ":hVixsv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
+                    i) interactive=1 ;;
                     x) resolve_dependencies=0 ;;
+                    s) slow=1 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
             done
@@ -201,8 +203,8 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
 if [ -n "$RCM_FAST" ];then
     fast="$RCM_FAST"
 fi
-if [ -n "$RCM_NON_INTERACTIVE" ];then
-    non_interactive="$RCM_NON_INTERACTIVE"
+if [ -n "$RCM_INTERACTIVE" ];then
+    interactive="$RCM_INTERACTIVE"
 fi
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
@@ -248,7 +250,7 @@ Available commands: history, update, install, get, list.
 Options:
 
 Global Options:
-   --slow
+   --slow, -s
         Add delay every subtask.
    --version
         Print version of this script.
@@ -258,8 +260,8 @@ Global Options:
         Bypass binary directory checking.
    --root-sure
         Bypass root checking.
-   --non-interactive ^
-        Skip prompt for every options.
+   --interactive, -i ^
+        Show prompt if needed.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -2441,6 +2443,7 @@ Rcm_prompt_sigint() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
 rcm_version=`printVersion`
 immediately=
 resolved=
@@ -2582,9 +2585,9 @@ if [ -z "$RCM_FAST" ];then
     RCM_FAST="$fast"
     export RCM_FAST="$RCM_FAST"
 fi
-if [ -z "$RCM_NON_INTERACTIVE" ];then
-    RCM_NON_INTERACTIVE="$non_interactive"
-    export RCM_NON_INTERACTIVE="$RCM_NON_INTERACTIVE"
+if [ -z "$RCM_INTERACTIVE" ];then
+    RCM_INTERACTIVE="$interactive"
+    export RCM_INTERACTIVE="$RCM_INTERACTIVE"
 fi
 if [ -z "$RCM_VERBOSE" ];then
     RCM_VERBOSE="$verbose"
@@ -2623,7 +2626,17 @@ words_array=(${command} ${isfast} ${isverbose} "$@")
 wordWrapCommand
 ____
 
-if [ -z "$immediately" ];then
+if [ -n "$immediately" ];then
+    chapter Command is being executed.
+    ____
+
+    sleepExtended 1 10
+elif [ -z "$interactive" ];then
+    chapter Command is being executed.
+    ____
+
+    sleepExtended 3 30
+else
     chapter Execute:
     _; _.
     userInputBooleanDefaultYes
@@ -2631,11 +2644,6 @@ if [ -z "$immediately" ];then
         exit 0
     fi
     ____
-else
-    chapter Command is being executed.
-    ____
-
-    sleepExtended 1 10
 fi
 
 chapter Timer Start.
@@ -2669,12 +2677,12 @@ exit 0
     # '--verbose|-v'
 # )
 # FLAG=(
-# '--slow'
+# '--slow|-s'
 # '--version|-V'
 # '--help|-h'
 # --root-sure
 # --binary-directory-exists-sure
-# --non-interactive
+# '--interactive|-i'
 # )
 # VALUE=(
 # )
