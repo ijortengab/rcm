@@ -2283,7 +2283,7 @@ Rcm_prompt() {
                     if [ "${#available_values[@]}" -gt 0 ];then
                         if [ -n "$or_other" ];then
                             printSelectOtherDialog available_values[@]
-                        elif [ "${#available_values[@]}" -eq 1 ];then
+                        elif [[ "${#available_values[@]}" -eq 1 && -n "$is_required" ]];then
                             value="${available_values[0]}"
                             _; _.
                             __; _, "Available value: "; yellow "$value";  _, '.'; _.
