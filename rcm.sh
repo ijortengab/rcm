@@ -1279,7 +1279,7 @@ command-list() {
     command_raw="${value}"
     command="rcm-${value}"
     _; _.
-    _ Command' '; magenta $command; _, ' 'will be executed.; _.
+    _ Command' '; magenta $command_raw; _, ' 'selected.; _.
     ____
 
     if [ -n "$value" ];then
@@ -1295,18 +1295,18 @@ command-list() {
     fi
 }
 command-usage() {
-    _; blue ' 'Rapid Construct Massive' '; magenta --version; yellow ' '`printVersion`' '; magenta --url; yellow ' 'git.io/rcm; _.
+    _; blue ' 'rcm' '; magenta --version; yellow ' '`printVersion`' '; magenta --url; yellow ' 'git.io/rcm; _.
     _ Try 'rcm --help' for more information.; _.
 }
 
-# Modify value before execute command.
-if [[ -z "$non_interactive" && -z "$fast" ]];then
-    _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
-    _; _.
-fi
-
 # Execute command.
 if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
+    if [ ! "$command" == usage ];then
+        if [[ -z "$non_interactive" && -z "$fast" ]];then
+            _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
+            _; _.
+        fi
+    fi
     if [ "$command" == list ];then
         command-${command} "$@"
     else
@@ -1926,11 +1926,11 @@ Rcm_prompt() {
         break
     done
     if [ -n "$value" ];then
-        chapter Prepare argument for command '`'$command'`'.
+        chapter Prepare argument for command '`'$command_raw'`'.
         chapter_printed=1
         _; _.
         __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
-        argument_operand_prepopulate=("$_return[@]")
+        argument_operand_prepopulate=("${_return[@]}")
         unset _return
     else
         if [ "${#available_subcommands[@]}" -gt 0 ];then
@@ -2522,6 +2522,7 @@ fi
 _new_arguments=()
 argument_prepopulate=()
 argument_operand_prepopulate=()
+argument_after_doubledash=()
 
 if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
@@ -2530,7 +2531,7 @@ if [ $# -gt 0 ];then
                 immediately=1
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
-                        *) _new_arguments+=("$1"); shift ;;
+                        *) _new_arguments+=("$1"); argument_after_doubledash+=("$1"); shift ;;
                     esac
                 done
                 ;;
@@ -2558,6 +2559,18 @@ fi
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
+if [[ -z "$non_interactive" && -z "$fast" ]];then
+    _; yellow ' 'It is highly recommended that you use' '; magenta --fast; yellow ' or '; magenta -f; yellow ' 'option.; _.
+    _; _.
+    __ Press the yellow key to select.
+    userInputBooleanDefaultYes
+    if [ -n "$boolean" ];then
+        fast=1
+        unset delay
+    fi
+    ____
+fi
+
 Rcm_prompt $command
 trap x SIGINT
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
@@ -2606,16 +2619,26 @@ fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
-# Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
-# Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
+
 chapter Command has been built.
-words_array=(${command} ${isfast} ${isverbose} "$@")
+if [ "${#preview[@]}" -gt 0 ];then
+    words_array=($RCM_LAST_COMMAND)
+else
+    _rcm_last_command="$RCM_LAST_COMMAND"
+    ArrayShift argument_after_doubledash[@]
+    argument_after_doubledash=("${_return[@]}")
+    unset _return
+    for each in "${argument_after_doubledash[@]}"; do _rcm_last_command+=" ${each}"; done
+    words_array=($_rcm_last_command)
+fi
 wordWrapCommand
 ____
 
-chapter Another command has been built.
-_ Keep using '`'rcm'`' command with the same result.; _.
-words_array=($RCM_LAST_COMMAND)
+chapter The real command has been built.
+_ Direct to '`'${command}'`' command.; _.
+# Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
+# Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
+words_array=(${command} ${isfast} ${isverbose} "$@")
 wordWrapCommand
 ____
 
