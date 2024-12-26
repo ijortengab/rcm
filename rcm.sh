@@ -2421,7 +2421,7 @@ Rcm_prompt_sigint() {
     local shortoptions
     [ "$resolve_dependencies" == 0 ] && resolved=1
     [ -n "$resolved" ] && shortoptions+='x'
-    [ -n "$fast" ] && shortoptions+='f'
+    [ -n "$slow" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
             shortoptions+='v'
@@ -2571,8 +2571,8 @@ command -v "$command" >/dev/null || { red "Unable to proceed, $command command n
 shortoptions=
 [ "$resolve_dependencies" == 0 ] && resolved=1
 [ -n "$resolved" ] && shortoptions+='x'
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-[ -n "$fast" ] && shortoptions+='f'
+[ -n "$slow" ] && isfast='' || isfast=' --fast'
+[ -n "$slow" ] && shortoptions+='s'
 [ -n "$verbose" ] && {
     for ((i = 0 ; i < "$verbose" ; i++)); do
         isverbose+=' --verbose'
@@ -2621,7 +2621,7 @@ ____
 chapter The real command has been built.
 _ Direct to '`'${command}'`' command.; _.
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
-# Option yang tidak dikirim adalah --non-interactive, dan --with(out)-resolve-dependencies
+# Option yang tidak dikirim adalah --interactive, dan --with(out)-resolve-dependencies
 words_array=(${command} ${isfast} ${isverbose} "$@")
 wordWrapCommand
 ____
