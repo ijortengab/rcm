@@ -684,7 +684,7 @@ if [ -z "$url_host" ];then
     error "Argument --url-host required."; x
 fi
 if [ -z "$certbot_obtain" ];then
-    certbot_obtain=1
+    certbot_obtain=0
 fi
 if [ -z "$nginx_reload" ];then
     nginx_reload=1
