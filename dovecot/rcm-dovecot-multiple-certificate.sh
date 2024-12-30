@@ -135,9 +135,7 @@ isFileExists() {
 }
 findString() {
     # global find_quoted
-    # global string
     # $find_quoted agar bisa di gunakan oleh sed.
-    # $string agar bisa di gunakan sebagai reference.
     local find="$1" string path="$2" tempfile="$3" deletetempfile
     if [ -z "$tempfile" ];then
         tempfile=$(mktemp -p /dev/shm)
