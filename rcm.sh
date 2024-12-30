@@ -928,6 +928,7 @@ dig-is-record-exists
 dig-watch-domain-exists
 digitalocean-api-manage-domain-record
 digitalocean-api-manage-domain
+dovecot-multiple-certificate
 mariadb-assign-grant-all
 mariadb-autoinstaller
 mariadb-database-autocreate
@@ -947,6 +948,7 @@ php-fpm-setup-project-config
 php-setup-adjust-cli-version
 phpmyadmin-autoinstaller-nginx
 postfix-autoinstaller
+postfix-multiple-certificate
 roundcube-autoinstaller-nginx
 ssh-setup-open-ssh-tunnel
 ssh-setup-sshd-listen-port
