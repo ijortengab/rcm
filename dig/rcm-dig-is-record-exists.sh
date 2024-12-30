@@ -58,7 +58,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.16.11'
+    echo '0.16.12'
 }
 printHelp() {
     title RCM Dig Is Record Exists
