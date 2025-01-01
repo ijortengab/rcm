@@ -260,8 +260,16 @@ Global Options:
         Bypass binary directory checking.
    --root-sure
         Bypass root checking.
-   --interactive, -i ^
+   --interactive, -i
         Show prompt if needed.
+   --verbose, -v
+        Verbose mode. Causes rcm to print debugging messages about its progress.
+        Multiple -v options increase the verbosity.
+        The maximum is 2.
+   --without-resolve-dependencies, -x
+        Skip resolve dependenices.
+   --with-resolve-dependencies
+        Resolve dependenices. Default action.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -1298,8 +1306,10 @@ command-list() {
     fi
 }
 command-usage() {
-    _; blue ' 'rcm' '; magenta --version; yellow ' '`printVersion`' '; magenta --url; yellow ' 'git.io/rcm; _.
-    _ Try 'rcm --help' for more information.; _.
+    title Rapid Construct Massive
+    _ Version; yellow ' '`printVersion`; _.
+    _ URL; yellow ' 'git.io/rcm; _.
+    _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
 }
 
 # Execute command.
@@ -2629,12 +2639,12 @@ wordWrapCommand
 ____
 
 if [ -n "$immediately" ];then
-    chapter Command is being executed.
+    chapter The real command is being executed.
     ____
 
     sleepExtended 1 10
 elif [ -z "$interactive" ];then
-    chapter Command is being executed.
+    chapter The real command is being executed.
     ____
 
     sleepExtended 3 30
