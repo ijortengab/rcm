@@ -499,6 +499,7 @@ printSelectDialog() {
             if [ -n "$reference_key" ];then
                 break
             else
+                __; red Please type one of available values.;_.
                 value=
             fi
         else
