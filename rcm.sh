@@ -431,6 +431,15 @@ printSelectDialog() {
             esac
         fi
     done
+    # Credit: https://stackoverflow.com/questions/5861428/bash-script-erase-previous-line
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    if [ -z "$is_required" ];then
+        printf '\e[A\e[K'
+    fi
     if [[ -n "$select_mode" ]];then
         _; _.
         __ Press the yellow key to select.
@@ -479,13 +488,18 @@ printSelectDialog() {
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
+                    __; red Please type one of available number.;_.
                 fi
                 if [[ $value =~ ^0 ]];then
                     value=
+                    __; red Please type one of available number.;_.
                 fi
                 if [ -n "$value" ];then
                     value=$((value - 1))
                     value="${source[$value]}"
+                    if [ -z "$value" ];then
+                        __; red Please type one of available number.;_.
+                    fi
                 fi
             done
             _; _.
@@ -562,6 +576,15 @@ printSelectOtherDialog() {
                 fi
         esac
     done
+    # Credit: https://stackoverflow.com/questions/5861428/bash-script-erase-previous-line
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    printf '\e[A\e[K'
+    if [ -z "$is_required" ];then
+        printf '\e[A\e[K'
+    fi
     if [[ -n "$select_mode" ]];then
         _; _.
         __ Press the yellow key to select.
@@ -613,13 +636,18 @@ printSelectOtherDialog() {
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
+                    __; red Please type one of available number.;_.
                 fi
                 if [[ $value =~ ^0 ]];then
                     value=
+                    __; red Please type one of available number.;_.
                 fi
                 if [ -n "$value" ];then
                     value=$((value - 1))
                     value="${source[$value]}"
+                    if [ -z "$value" ];then
+                        __; red Please type one of available number.;_.
+                    fi
                 fi
             done
             _; _.
