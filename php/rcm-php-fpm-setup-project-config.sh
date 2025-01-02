@@ -295,7 +295,12 @@ chapter Mengecek file '*.conf' yang mengandung section '`'$section_name'`'
 found=
 found_file=
 while read file; do
-    if php -r "$php" is_exists "$file" "$section_name";then
+    # if php -r "$php" is_exists "$file" "$section_name";then
+        # found=1
+        # found_file="$file"
+        # break;
+    # fi
+    if grep -q -F "[$section_name]" "$file";then
         found=1
         found_file="$file"
         break;
