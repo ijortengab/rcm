@@ -416,14 +416,14 @@ printSelectDialog() {
         fi
         if [ -n "$is_required" ];then
             case $char in
-                t|T) echo "$char"; break ;;
+                t|T) type_mode=1; echo "$char"; break ;;
                 s|S) select_mode=1; echo "$char"; break ;;
                 $'\177') select_mode=1; echo "s"; break ;;
                 *) echo
             esac
         else
             case $char in
-                t|T) echo "$char"; break ;;
+                t|T) type_mode=1; echo "$char"; break ;;
                 s|S) select_mode=1; echo "$char"; break ;;
                 $'\177') select_mode=1; echo "s"; break ;;
                 $'\33') skip=1; echo "l"; break ;;
@@ -433,15 +433,20 @@ printSelectDialog() {
         fi
     done
     # Credit: https://stackoverflow.com/questions/5861428/bash-script-erase-previous-line
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
+    PREVIOUS_LINE=5
     if [ -z "$is_required" ];then
-        printf '\e[A\e[K'
+        PREVIOUS_LINE=$((PREVIOUS_LINE+1))
+    fi
+    if [[ -n "$type_mode" ]];then
+        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
+            printf '\e[A\e[K'
+        done
     fi
     if [[ -n "$select_mode" ]];then
+        PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1))
+        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
+            printf '\e[A\e[K'
+        done
         _; _.
         __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
@@ -506,6 +511,9 @@ printSelectDialog() {
             _; _.
             __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
         fi
+    fi
+    if [[ -n "$type_mode" ]];then
+        _; _.
     fi
     while true; do
         if [ -n "$value" ];then
@@ -578,15 +586,20 @@ printSelectOtherDialog() {
         esac
     done
     # Credit: https://stackoverflow.com/questions/5861428/bash-script-erase-previous-line
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
-    printf '\e[A\e[K'
+    PREVIOUS_LINE=5
     if [ -z "$is_required" ];then
-        printf '\e[A\e[K'
+        PREVIOUS_LINE=$((PREVIOUS_LINE+1))
+    fi
+    if [[ -n "$type_mode" ]];then
+        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
+            printf '\e[A\e[K'
+        done
     fi
     if [[ -n "$select_mode" ]];then
+        PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1))
+        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
+            printf '\e[A\e[K'
+        done
         _; _.
         __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
@@ -656,6 +669,7 @@ printSelectOtherDialog() {
         fi
     fi
     if [[ -n "$type_mode" ]];then
+        _; _.
         if [ -z "$value" ];then
             if [ -n "$is_required" ];then
                 __; read -p "Type the value: " value
@@ -1891,6 +1905,7 @@ wordWrapList() {
     declare -i min; min=80
     declare -i max; max=100
     declare -i i; i=0
+    WRAP_LINE=1
     local count="${#words_array[@]}"
     current_line=
     first_line=1
@@ -1932,9 +1947,11 @@ wordWrapList() {
                     _, ', or '; yellow "$each"; _, '.'; _.
                 else
                     _, ', '; yellow "$each"; _, ','; _.
+                    WRAP_LINE=$((WRAP_LINE+1))
                 fi
                 current_line=
             else
+                WRAP_LINE=$((WRAP_LINE+1))
                 if [ -n "$last" ];then
                     _.; __; _, 'or '; yellow "$each"; _, '.'; _.
                     current_line="or ${each}"
@@ -2665,7 +2682,6 @@ wordWrapCommand
 ____
 
 chapter The real command has been built.
-_ Direct to '`'${command}'`' command.; _.
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Option yang tidak dikirim adalah --interactive, dan --with(out)-resolve-dependencies
 words_array=(${command} ${isfast} ${isverbose} "$@")
@@ -2673,12 +2689,13 @@ wordWrapCommand
 ____
 
 if [ -n "$immediately" ];then
-    chapter The real command is being executed.
+    chapter The real command is execute.
+    _ Direct to '`'${command}'`' command.; _.
     ____
 
-    sleepExtended 1 10
 elif [ -z "$interactive" ];then
     chapter The real command is being executed.
+    _ Direct to '`'${command}'`' command.; _.
     ____
 
     sleepExtended 3 30
