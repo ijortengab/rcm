@@ -56,6 +56,14 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
 # Functions.
 printVersion() {
     echo '0.16.12'
@@ -145,10 +153,11 @@ isRecordExist() {
         data="$domain"
     fi
     code dig "$type" $name${add_name_server}
-    dig "$type" $name $add_name_server | tee "$tempfile"
+    dig "$type" $name $add_name_server > "$tempfile"
     name_dot="${name}."
     name_dot_escape=${name_dot//\./\\.}
     stdout=$(<"$tempfile")
+    [ -n "$debug" ] && { while read line; do e "$line"; _.; done < "$tempfile" ; }
     case "$type" in
         TXT)
             if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" <<< "$stdout";then
