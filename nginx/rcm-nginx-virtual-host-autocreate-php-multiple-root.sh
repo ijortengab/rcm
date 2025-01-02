@@ -64,6 +64,14 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
 # Functions.
 printVersion() {
     echo '0.16.12'
@@ -385,30 +393,30 @@ nginxGrep(){
     if [ ! -t 0 ]; then
         i=0
         _ Mencari directive: '`'${directive}'`'; _.
-        _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.
+        [ -n "$debug" ] && { _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
         while IFS= read line; do
             i=$(( i + 1 ))
             if [ "${#line}" -eq 0 ];then
-                __;
+                [ -n "$debug" ] && { __; }
             else
-            _; _, ' '; yellow "$line"; _, ' # Line:' $i;
+                [ -n "$debug" ] && { _; _, ' '; yellow "$line"; _, ' # Line:' $i; }
             fi
             if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
-                _, ' '; green Baris ditemukan.
+                [ -n "$debug" ] && { _, ' '; green Baris ditemukan.; }
                 lines_directive+=("$line")
             fi
-            _.
+            [ -n "$debug" ] && { _.; }
         done </dev/stdin
     fi
     if [ "${#lines_directive[@]}" -eq 0 ];then
         return 1
     fi
-    _; _.
-    _ Dump variable '`'\$condition'`'.; _.
-    e; magenta $condition; _.
-    _; _.
-    _ Dump variable '`'\$token_list'`'.; _.
-    while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"
+    [ -n "$debug" ] && { _; _.; }
+    [ -n "$debug" ] && { _ Dump variable '`'\$condition'`'.; _.; }
+    [ -n "$debug" ] && { e; magenta $condition; _.; }
+    [ -n "$debug" ] && { _; _.; }
+    [ -n "$debug" ] && { _ Dump variable '`'\$token_list'`'.; _.; }
+    [ -n "$debug" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
     # _; _.
     # Directive bisa berulang.
     # Contoh: directive listen bisa berulang sebanyak dua kali.
@@ -421,9 +429,9 @@ nginxGrep(){
         resolved=$(resolveCondition "$condition" "$token_list" "$directive_reverse")
         # e '"$resolved"' "$resolved" ; _.
         if [ "$resolved" == 1 ];then
-            _; _.
+            [ -n "$debug" ] && { _; _.; }
             _ Condition solved pada baris:' '; yellow  "$line"; _.
-            _; _.
+            [ -n "$debug" ] && { _; _.; }
             return 0
         fi
     done
@@ -645,11 +653,6 @@ validateContentMaster() {
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
-    fi
-    # root
-    if ! nginxGrep root "$master_root" < "$path";then
-        __; yellow File akan dibuat ulang.; _.
-        return 1
     fi
     # server_name
     if ! nginxGrep server_name contains "$master_url_host" < "$path";then
@@ -875,7 +878,6 @@ if [ -n "$create_new" ];then
 server {
     listen [::]:__MASTER_URL_PORT____SSL__;
     listen __MASTER_URL_PORT____SSL____IPV6ONLY__;
-    root __MASTER_ROOT__;
     index index.php;
     server_name __MASTER_URL_HOST__;
     location = /favicon.ico {
@@ -898,7 +900,6 @@ server {
 }
 EOF
     fileMustExists "$path"
-    sed -i "s|__MASTER_ROOT__|${master_root}|g" "$path"
     sed -i "s|__MASTER_URL_HOST__|${master_url_host}|g" "$path"
     sed -i "s|__MASTER_CERTBOT_CERTIFICATE_NAME__|${master_certbot_certificate_name}|g" "$path"
     sed -i "s|__MASTER_INCLUDE__|${master_include}|g" "$path"
@@ -942,7 +943,7 @@ link_symbolic "$source" "$target"
 
 chapter Enable the line to include sub nginx config file: '`'$filename'`'.
 if [ -z "$slave_url_path" ];then
-    template="include __MASTER_INCLUDE_2__;"
+    template="    include __MASTER_INCLUDE_2__;"
     find=$(echo "$template" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
     if findString "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
@@ -952,7 +953,7 @@ if [ -z "$slave_url_path" ];then
         error Enable gagal.; x
     fi
 else
-    template="include __MASTER_INCLUDE__;"
+    template="    include __MASTER_INCLUDE__;"
     find=$(echo "$template" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
     if findString "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
