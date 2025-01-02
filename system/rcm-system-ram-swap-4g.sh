@@ -21,7 +21,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions. Help and Version.
 printVersion() {
-    echo '0.16.12'
+    echo '0.16.13'
 }
 printHelp() {
     title RCM System RAM Swap

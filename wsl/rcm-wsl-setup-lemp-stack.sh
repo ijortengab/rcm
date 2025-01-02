@@ -38,7 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Functions.
 printVersion() {
-    echo '0.16.12'
+    echo '0.16.13'
 }
 printHelp() {
     title RCM WSL Setup
