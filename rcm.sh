@@ -990,6 +990,7 @@ postfix-multiple-certificate
 roundcube-autoinstaller-nginx
 ssh-setup-open-ssh-tunnel
 ssh-setup-sshd-listen-port
+system-ram-swap-4g
 ubuntu-22.04-setup-basic
 ubuntu-24.04-setup-basic
 wsl-setup-lemp-stack
