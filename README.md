@@ -27,13 +27,13 @@ sudo mv rcm -t /usr/local/bin
 
 ## How to use
 
+Getting started.
+
+```
+rcm list
+```
+
 **General**
-
-Just execute.
-
-```
-rcm
-```
 
 ```
 Usage: rcm [options] [<command> [ -- [options]]]
@@ -45,11 +45,3 @@ Inspired from Git LFS which is the extension of Git, we have some extension of R
 
  1. [Drupal Auto Installer](https://github.com/ijortengab/drupal-autoinstaller)
  2. [ISPConfig Auto Installer](https://github.com/ijortengab/ispconfig-autoinstaller)
-
-## Tips
-
-Always fast.
-
-```
-alias rcm='rcm --fast'
-```
