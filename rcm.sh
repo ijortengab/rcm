@@ -220,7 +220,8 @@ delay=.5; [ -n "$fast" ] && unset delay
 loud=; debug=; quiet=
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && debug=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Functions. Help and Version.
 printVersion() {
@@ -265,7 +266,7 @@ Global Options:
    --verbose, -v
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
-        The maximum is 2.
+        The maximum is 3.
    --without-resolve-dependencies, -x
         Skip resolve dependenices.
    --with-resolve-dependencies
@@ -2118,6 +2119,7 @@ Rcm_prompt() {
             fi
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
+                _; _.
                 while read line; do
                     wordWrapDescription "$line"
                 done <<< "$description"
@@ -2254,6 +2256,7 @@ Rcm_prompt() {
                 fi
             elif [[ "$parameter" == '--' ]];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
+                _; _.
                 while read line; do
                     wordWrapDescription "$line"
                 done <<< "$description"
@@ -2277,6 +2280,7 @@ Rcm_prompt() {
                 else
                     _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 fi
+                _; _.
                 while read line; do
                     wordWrapDescription "$line"
                 done <<< "$description"
