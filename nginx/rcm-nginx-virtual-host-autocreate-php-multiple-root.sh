@@ -1000,6 +1000,7 @@ location / {
     location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass __SLAVE_FASTCGI_PASS__;
+        fastcgi_read_timeout 3600;
     }
 }
 EOF

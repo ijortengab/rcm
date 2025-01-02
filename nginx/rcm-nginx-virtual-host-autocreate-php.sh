@@ -815,6 +815,7 @@ server {
     location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass __FASTCGI_PASS__;
+        fastcgi_read_timeout 3600;
     }
     # ssl_certificate /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/fullchain.pem;
     # ssl_certificate_key /etc/letsencrypt/live/__CERTBOT_CERTIFICATE_NAME__/privkey.pem;
