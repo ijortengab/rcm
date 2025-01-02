@@ -2668,6 +2668,7 @@ export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 
 chapter Command has been built.
+_ Use command below to arrive in this position.; _.
 if [ "${#preview[@]}" -gt 0 ];then
     words_array=($RCM_LAST_COMMAND)
 else
