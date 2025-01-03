@@ -159,6 +159,37 @@ backupFile() {
             chown ${user}:${group} "$newpath"
     esac
 }
+findString() {
+    # global debug
+    # global find_quoted
+    # $find_quoted agar bisa di gunakan oleh sed.
+    local find="$1" string path="$2" tempfile="$3" deletetempfile
+    if [ -z "$tempfile" ];then
+        tempfile=$(mktemp -p /dev/shm)
+        deletetempfile=1
+    fi
+    _; _, ' 'Memeriksa baris dengan kalimat: '`'$find'`'.;_.
+    find_quoted="$find"
+    find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
+    find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")
+    find_quoted=$(sed "s/\*/\\\*/g" <<< "$find_quoted")
+    find_quoted=$(sed "s/;$/\\\s\*;/g" <<< "$find_quoted")
+    if [[ ! "${find_quoted:0:1}" == '^' ]];then
+        find_quoted="^\s*${find_quoted}"
+    fi
+    __; code grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'
+    if grep -E "${find_quoted}" "$path" > "$tempfile";then
+        string="$(< "$tempfile")"
+        while read -r line; do __; e "$line"; _.; done <<< "$string"
+        __ Baris ditemukan.
+        [ -n "$deletetempfile" ] && rm "$tempfile"
+        return 0
+    else
+        __ Baris tidak ditemukan.
+        [ -n "$deletetempfile" ] && rm "$tempfile"
+        return 1
+    fi
+}
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
@@ -277,11 +308,14 @@ if [[ -n "$adjust" ]];then
 fi
 
 chapter Update Repository
+path=/etc/apt/sources.list
+code path='"'$path'"'
 while IFS= read -r string; do
-    if [[ -n $(grep "# $string" /etc/apt/sources.list) ]];then
-        sed -i 's,^# '"$string"','"$string"',' /etc/apt/sources.list
-        update_now=1
-    elif [[ -z $(grep "$string" /etc/apt/sources.list) ]];then
+    array=($string)
+    deb="${array[0]}"
+    uri="${array[1]}"
+    suite="${array[2]}"
+    if ! findString "${deb} ${uri}/? ${suite} " "$path"; then
         CONTENT+="$string"$'\n'
         update_now=1
     fi
