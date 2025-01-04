@@ -696,12 +696,9 @@ fi
 if [ -z "$url_host" ];then
     error "Argument --url-host required."; x
 fi
-if [ -z "$certbot_obtain" ];then
-    certbot_obtain=0
-fi
-if [ -z "$nginx_reload" ];then
-    nginx_reload=1
-fi
+[ "$certbot_obtain" == 0 ] && certbot_obtain=
+[ -z "$nginx_reload" ] && nginx_reload=1
+[ "$nginx_reload" == 0 ] && nginx_reload=
 case "$url_scheme" in
     http|https) ;;
     *) error "Argument --url-scheme is not valid."; x
@@ -748,7 +745,7 @@ if [[ -n "$create_new" && "$url_scheme" == https ]];then
     ____
 
     if [ -n "$notfound" ];then
-        if [[ "$certbot_obtain" == 1 ]];then
+        if [ -n "$certbot_obtain" ];then
             chapter Mengecek '$PATH'.
             code PATH="$PATH"
             if grep -q '/snap/bin' <<< "$PATH";then
@@ -860,7 +857,7 @@ source="$path"
 target="/etc/nginx/sites-enabled/$filename"
 link_symbolic "$source" "$target"
 
-if [ "$nginx_reload" == 0 ];then
+if [ -z "$nginx_reload" ];then
     rcm_nginx_reload=
 fi
 if [ -n "$rcm_nginx_reload" ];then

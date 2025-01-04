@@ -194,6 +194,10 @@ findString() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 delay=.5; [ -n "$fast" ] && unset delay
+[ -z "$update_system" ] && update_system=1
+[ "$update_system" == 0 ] && update_system=
+[ -z "$upgrade_system" ] && upgrade_system=1
+[ "$upgrade_system" == 0 ] && upgrade_system=
 code update_system="$update_system"
 code upgrade_system="$upgrade_system"
 if [ -f /etc/os-release ];then
@@ -328,11 +332,11 @@ if [ -n "$update_now" ];then
     code apt -y update
     apt -y update
 else
-    if [[ ! "$update_system" == "0" ]];then
+    if [ -n "$update_system" ];then
         code apt -y update
         apt -y update
     fi
-    if [[ ! "$upgrade_system" == "0" ]];then
+    if [ -n "$upgrade_system" ];then
         code apt -y upgrade
         apt -y upgrade
     fi

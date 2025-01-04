@@ -251,6 +251,8 @@ code 'hostname="'$hostname'"'
 code 'mail_provider="'$mail_provider'"'
 code 'value="'$value'"'
 code 'value_summarize="'$value_summarize'"'
+[ -z "$colorize" ] && colorize=1
+[ "$colorize" == 0 ] && colorize=
 ____
 
 if [ -z "$name_exists_sure" ];then
@@ -334,7 +336,7 @@ else
     fi
 fi
 
-if [ "$colorize" == 0 ];then
+if [ -z "$colorize" ];then
     __ "$log"
 else
     $result "$log"

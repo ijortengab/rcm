@@ -226,6 +226,8 @@ find='[php-version]'
 replace="$php_version"
 PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
 code 'PHP_FPM_POOL_DIRECTORY="'$PHP_FPM_POOL_DIRECTORY'"'
+[ -z "$autocreate_user" ] && autocreate_user=1
+[ "$autocreate_user" == 0 ] && autocreate_user=
 ____
 
 php=$(cat <<'EOF'
@@ -359,7 +361,7 @@ if [ -n "$restart" ];then
 fi
 if [ -z "$found" ];then
     chapter Membuat Unix user.
-    if [[ ! "$autocreate_user" == "0" ]];then
+    if [ -n "$autocreate_user" ];then
         code adduser $php_fpm_user --disabled-password --gecos "''"
         adduser "$php_fpm_user" --disabled-password --gecos ''
     else

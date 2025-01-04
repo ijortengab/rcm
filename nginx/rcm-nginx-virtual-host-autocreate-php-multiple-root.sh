@@ -766,12 +766,9 @@ fi
 if [ -z "$slave_filename" ];then
     error "Argument --slave-filename required."; x
 fi
-if [ -z "$certbot_obtain" ];then
-    certbot_obtain=0
-fi
-if [ -z "$nginx_reload" ];then
-    nginx_reload=1
-fi
+[ "$certbot_obtain" == 0 ] && certbot_obtain=
+[ -z "$nginx_reload" ] && nginx_reload=1
+[ "$nginx_reload" == 0 ] && nginx_reload=
 if [ -z "$master_certbot_certificate_name" ];then
     master_certbot_certificate_name="$master_url_host"
 fi
@@ -828,7 +825,7 @@ if [[ -n "$create_new" && "$master_url_scheme" == https ]];then
     ____
 
     if [ -n "$notfound" ];then
-        if [[ "$certbot_obtain" == 1 ]];then
+        if [ -n "$certbot_obtain" ];then
             chapter Mengecek '$PATH'.
             code PATH="$PATH"
             if grep -q '/snap/bin' <<< "$PATH";then
@@ -1036,7 +1033,7 @@ EOF
     rcm_nginx_reload=1
 fi
 
-if [ "$nginx_reload" == 0 ];then
+if [ -z "$nginx_reload" ];then
     rcm_nginx_reload=
 fi
 if [ -n "$rcm_nginx_reload" ];then

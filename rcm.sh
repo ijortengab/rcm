@@ -2486,7 +2486,7 @@ Rcm_prompt() {
 }
 Rcm_prompt_sigint() {
     local shortoptions
-    [ "$resolve_dependencies" == 0 ] && resolved=1
+    [ -z "$resolve_dependencies" ] && resolved=1
     [ -n "$resolved" ] && shortoptions+='x'
     [ -n "$slow" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
@@ -2516,6 +2516,8 @@ rcm_version=`printVersion`
 immediately=
 resolved=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
+[ "$resolve_dependencies" == 0 ] && resolve_dependencies=
+[ "$interactive" == 0 ] && interactive=
 ____
 
 if [ -z "$root_sure" ];then
@@ -2554,7 +2556,7 @@ fi
 
 PATH="${BINARY_DIRECTORY}:${PATH}"
 
-if [ "$resolve_dependencies" == 1 ];then
+if [ -n "$resolve_dependencies" ];then
     if [ -n "$quiet" ];then
         chapter Resolve dependencies.
         trap x SIGTERM
@@ -2637,7 +2639,7 @@ fi
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 shortoptions=
-[ "$resolve_dependencies" == 0 ] && resolved=1
+[ -z "$resolve_dependencies" ] && resolved=1
 [ -n "$resolved" ] && shortoptions+='x'
 [ -n "$slow" ] && isfast='' || isfast=' --fast'
 [ -n "$slow" ] && shortoptions+='s'

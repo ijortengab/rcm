@@ -156,6 +156,8 @@ MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+[ -z "$autocreate_db" ] && autocreate_db=1
+[ "$autocreate_db" == 0 ] && autocreate_db=
 ____
 
 chapter Mengecek database credentials: '`'$MARIADB_PREFIX_MASTER/$MARIADB_USERS_CONTAINER_MASTER/$db_user'`'.
@@ -178,7 +180,7 @@ rcm-mariadb-user-autocreate $isfast --root-sure \
     --db-user-host="$db_user_host" \
     --db-user-password="$db_user_password" \
     ; [ ! $? -eq 0 ] && x
-if [[ ! "$autocreate_db" == "0" ]];then
+if [ -n "$autocreate_db" ];then
     INDENT+="    " \
     rcm-mariadb-database-autocreate $isfast --root-sure \
         --db-name="$db_name" \
