@@ -177,10 +177,10 @@ findString() {
     if [[ ! "${find_quoted:0:1}" == '^' ]];then
         find_quoted="^\s*${find_quoted}"
     fi
-    __; code grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'
+    _; magenta grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'
     if grep -E "${find_quoted}" "$path" > "$tempfile";then
         string="$(< "$tempfile")"
-        while read -r line; do __; e "$line"; _.; done <<< "$string"
+        while read -r line; do e "$line"; _.; done <<< "$string"
         __ Baris ditemukan.
         [ -n "$deletetempfile" ] && rm "$tempfile"
         return 0
