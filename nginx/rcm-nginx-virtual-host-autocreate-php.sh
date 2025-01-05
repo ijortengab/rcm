@@ -52,6 +52,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
 fi
@@ -726,7 +729,6 @@ code 'url_host="'$url_host'"'
 code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'certbot_certificate_name="'$certbot_certificate_name'"'
-delay=.5; [ -n "$fast" ] && unset delay
 ____
 
 path="/etc/nginx/sites-available/$filename"

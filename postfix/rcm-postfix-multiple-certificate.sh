@@ -44,7 +44,8 @@ __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >
 ___() { echo -n "$INDENT" >&2; echo -n "#" '        ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
-# Define variables.
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
 POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.cf}
 

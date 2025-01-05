@@ -40,6 +40,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.16.14'
@@ -193,7 +196,6 @@ findString() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-delay=.5; [ -n "$fast" ] && unset delay
 [ -z "$update_system" ] && update_system=1
 [ "$update_system" == 0 ] && update_system=
 [ -z "$upgrade_system" ] && upgrade_system=1

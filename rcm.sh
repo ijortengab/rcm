@@ -198,7 +198,16 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
-# Functions. Functions before define constants.
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+[ -n "$slow" ] || fast=1
+loud=; debug=; quiet=
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
+# Functions.
 resolve_relative_path() {
     if [ -d "$1" ];then
         cd "$1" || return 1
@@ -217,13 +226,6 @@ resolve_relative_path() {
 __FILE__=$(resolve_relative_path "$0")
 __DIR__=$(dirname "$__FILE__")
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=$__DIR__}
-[ -n "$slow" ] || fast=1
-delay=.5; [ -n "$fast" ] && unset delay
-loud=; debug=; quiet=
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Functions. Help and Version.
 printVersion() {

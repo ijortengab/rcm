@@ -36,6 +36,9 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+# Define variables and constants.
+delay=.5; [ -n "$fast" ] && unset delay
+
 # Functions.
 printVersion() {
     echo '0.16.14'
@@ -143,7 +146,6 @@ if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
-delay=.5; [ -n "$fast" ] && unset delay
 ____
 
 chapter Prepare arguments.
