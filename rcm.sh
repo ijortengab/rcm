@@ -15,7 +15,6 @@ while [[ $# -gt 0 ]]; do
         --binary-directory-exists-sure) binary_directory_exists_sure=1; shift ;;
         --interactive|-i) interactive=1; shift ;;
         --non-interactive) interactive=0; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --without-resolve-dependencies|-x) resolve_dependencies=0; shift ;;
@@ -235,8 +234,6 @@ Global Options:
         Show this help.
    --binary-directory-exists-sure
         Bypass binary directory checking.
-   --root-sure
-        Bypass root checking.
    --interactive, -i
         Show asking for confirmation if needed.
    --non-interactive
@@ -2527,15 +2524,7 @@ if [ -n "$louder" ];then
     ____
 fi
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 if [ -z "$binary_directory_exists_sure" ];then
     chapter Mempersiapkan directory binary.
@@ -2729,7 +2718,7 @@ _ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
-INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose --root-sure "$@"
+INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
 
 chapter Timer Finish.
 _ End: $(date +%Y%m%d-%H%M%S); _.
@@ -2758,7 +2747,6 @@ exit 0
 # '--slow|-s'
 # '--version|-V'
 # '--help|-h'
-# --root-sure
 # --binary-directory-exists-sure
 # )
 # VALUE=(

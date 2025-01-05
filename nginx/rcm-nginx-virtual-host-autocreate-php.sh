@@ -15,7 +15,6 @@ while [[ $# -gt 0 ]]; do
         --filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then filename="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --url-host=*) url_host="${1#*=}"; shift ;;
         --url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_host="$2"; shift; fi; shift ;;
         --url-port=*) url_port="${1#*=}"; shift ;;
@@ -105,8 +104,6 @@ Global Options.
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    rcm-certbot-obtain-authenticator-nginx
@@ -122,15 +119,7 @@ EOF
 title rcm-nginx-virtual-host-autocreate-php
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -890,7 +879,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --root

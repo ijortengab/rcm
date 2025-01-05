@@ -13,7 +13,6 @@ while [[ $# -gt 0 ]]; do
         --project-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
         --project-parent-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_parent_name="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --with-autocreate-db) autocreate_db=1; shift ;;
         --without-autocreate-db) autocreate_db=0; shift ;;
         --[^-]*) shift ;;
@@ -74,8 +73,6 @@ Global Options.
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables.
    MARIADB_PREFIX_MASTER
@@ -100,15 +97,7 @@ EOF
 title rcm-mariadb-setup-project-database
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -178,17 +167,17 @@ fi
 ____
 
 INDENT+="    " \
-rcm-mariadb-user-autocreate $isfast --root-sure \
+rcm-mariadb-user-autocreate $isfast \
     --db-user="$db_user" \
     --db-user-host="$db_user_host" \
     --db-user-password="$db_user_password" \
     ; [ ! $? -eq 0 ] && x
 if [ -n "$autocreate_db" ];then
     INDENT+="    " \
-    rcm-mariadb-database-autocreate $isfast --root-sure \
+    rcm-mariadb-database-autocreate $isfast \
         --db-name="$db_name" \
         && INDENT+="    " \
-    rcm-mariadb-assign-grant-all $isfast --root-sure \
+    rcm-mariadb-assign-grant-all $isfast \
         --db-name="$db_name" \
         --db-user="$db_user" \
         --db-user-host="$db_user_host" \
@@ -211,7 +200,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --project-name

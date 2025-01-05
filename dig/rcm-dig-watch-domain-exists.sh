@@ -9,7 +9,6 @@ while [[ $# -gt 0 ]]; do
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --waiting-time=*) waiting_time="${1#*=}"; shift ;;
         --waiting-time) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then waiting_time="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -66,8 +65,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    rcm-dig-is-record-exists
@@ -82,15 +79,7 @@ EOF
 title rcm-dig-watch-domain-exists
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -149,7 +138,7 @@ until [ -n "$finish" ];do
     _finish=""
 
     INDENT+="    " \
-    rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+    rcm-dig-is-record-exists $isfast --name-exists-sure \
         --without-color \
         --domain="$domain" \
         --type=a \
@@ -157,7 +146,7 @@ until [ -n "$finish" ];do
         ; [ $? -eq 0 ] && _finish+="1"
 
     INDENT+="    " \
-    rcm-dig-is-record-exists $isfast --root-sure --name-exists-sure \
+    rcm-dig-is-record-exists $isfast --name-exists-sure \
         --without-color \
         --domain="$domain" \
         --type=cname \
@@ -197,7 +186,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --domain

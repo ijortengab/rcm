@@ -9,7 +9,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --roundcube-version=*) roundcube_version="${1#*=}"; shift ;;
         --roundcube-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then roundcube_version="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -70,8 +69,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    ROUNDCUBE_FQDN_LOCALHOST
@@ -99,15 +96,7 @@ EOF
 title rcm-roundcube-autoinstaller-nginx
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -439,7 +428,7 @@ if [ -n "$notfound" ];then
 fi
 
 chapter Prepare arguments.
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --root-sure --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
@@ -456,7 +445,7 @@ code 'url_port="'$url_port'"'
 ____
 
 INDENT+="    " \
-rcm-nginx-virtual-host-autocreate-php $isfast --root-sure \
+rcm-nginx-virtual-host-autocreate-php $isfast \
     --root="$root" \
     --filename="$filename" \
     --fastcgi-pass="unix:${socket_filename}" \
@@ -565,7 +554,7 @@ fi
 ____
 
 INDENT+="    " \
-rcm-mariadb-setup-project-database $isfast --root-sure \
+rcm-mariadb-setup-project-database $isfast \
     --project-name="$mariadb_project_name" \
     ; [ ! $? -eq 0 ] && x
 
@@ -761,7 +750,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --roundcube-version

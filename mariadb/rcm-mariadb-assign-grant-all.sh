@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
         --db-user-host=*) db_user_host="${1#*=}"; shift ;;
         --db-user-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_user_host="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --user-exists-sure) user_exists_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -114,8 +113,6 @@ Global Options.
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    mysql
@@ -130,15 +127,7 @@ EOF
 title rcm-mariadb-assign-grant-all
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -239,7 +228,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --database-exists-sure
 # --user-exists-sure
 # )

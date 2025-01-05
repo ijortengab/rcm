@@ -22,7 +22,6 @@ while [[ $# -gt 0 ]]; do
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --mail-provider=*) mail_provider="${1#*=}"; shift ;;
         --mail-provider) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_provider="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --type=*) type="${1#*=}"; shift ;;
         --type) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then type="$2"; shift; fi; shift ;;
         --value=*) value="${1#*=}"; shift ;;
@@ -108,8 +107,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Dependency:
    php
@@ -125,15 +122,7 @@ EOF
 title rcm-digitalocean-api-manage-domain-record
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -444,7 +433,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --digitalocean-domain-exists-sure
 # )
 # VALUE=(

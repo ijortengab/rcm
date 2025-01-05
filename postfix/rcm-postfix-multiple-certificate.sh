@@ -12,7 +12,6 @@ while [[ $# -gt 0 ]]; do
         --fqdn=*) fqdn="${1#*=}"; shift ;;
         --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
         --non-interactive) non_interactive=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --ssl-cert=*) ssl_cert="${1#*=}"; shift ;;
         --ssl-cert) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ssl_cert="$2"; shift; fi; shift ;;
         --ssl-key=*) ssl_key="${1#*=}"; shift ;;
@@ -83,8 +82,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    POSTFIX_CONFIG_DIR
@@ -107,15 +104,7 @@ EOF
 title rcm-postfix-multiple-certificate
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -441,7 +430,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --non-interactive
 # )
 # VALUE=(

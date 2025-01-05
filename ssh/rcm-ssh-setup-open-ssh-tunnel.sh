@@ -11,7 +11,6 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --pattern=*) pattern="${1#*=}"; shift ;;
         --pattern) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then pattern="$2"; shift; fi; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --timeout-trigger-command=*) timeout_trigger_command="${1#*=}"; shift ;;
         --timeout-trigger-command) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timeout_trigger_command="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -71,8 +70,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
 
 Environment Variables:
    PREFIX_DIRECTORY
@@ -94,15 +91,7 @@ EOF
 title rcm-ssh-setup-open-ssh-tunnel
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -512,7 +501,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # )
 # VALUE=(
 # --pattern

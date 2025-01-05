@@ -21,7 +21,6 @@ while [[ $# -gt 0 ]]; do
         --name-server=*) name_server="${1#*=}"; shift ;;
         --name-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name_server="$2"; shift; fi; shift ;;
         --reverse) reverse=1; shift ;;
-        --root-sure) root_sure=1; shift ;;
         --type=*) type="${1#*=}"; shift ;;
         --type) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then type="$2"; shift; fi; shift ;;
         --value=*) value="${1#*=}"; shift ;;
@@ -108,8 +107,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-   --root-sure
-        Bypass root checking.
    --reverse
         Reverse the result.
    --name-exists-sure
@@ -128,15 +125,7 @@ EOF
 title rcm-dig-is-record-exists
 ____
 
-if [ -z "$root_sure" ];then
-    chapter Mengecek akses root.
-    if [[ "$EUID" -ne 0 ]]; then
-        error This script needs to be run with superuser privileges.; x
-    else
-        __ Privileges.
-    fi
-    ____
-fi
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
@@ -259,7 +248,7 @@ ____
 
 if [ -z "$name_exists_sure" ];then
     INDENT+="    " \
-    rcm-dig-is-name-exists $isfast --root-sure \
+    rcm-dig-is-name-exists $isfast \
         --domain="$domain" \
         $option_name_server \
         ; [ ! $? -eq 0 ] && x
@@ -361,7 +350,6 @@ exit 0
 # --fast
 # --version
 # --help
-# --root-sure
 # --name-exists-sure
 # --reverse
 # )
