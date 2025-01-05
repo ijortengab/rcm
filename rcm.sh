@@ -1,17 +1,11 @@
 #!/bin/bash
 
-# Default value from environments.
-if [ -n "$RCM_FAST" ];then
-    fast="$RCM_FAST"
-fi
+# Define variables and constants.
 if [ -n "$RCM_INTERACTIVE" ];then
     interactive="$RCM_INTERACTIVE"
 fi
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
-fi
-if [ -n "$RCM_TABLE_DOWNLOADS" ];then
-    table_downloads="$RCM_TABLE_DOWNLOADS"
 fi
 if [ -n "$RCM_RESOLVE_DEPENDENCIES" ];then
     resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
@@ -199,8 +193,15 @@ __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
+if [ -n "$RCM_TABLE_DOWNLOADS" ];then
+    table_downloads="$RCM_TABLE_DOWNLOADS"
+fi
+if [ -n "$RCM_FAST" ];then
+    fast="$RCM_FAST"
+fi
+[ -z "$fast" ] && fast=1
+[ -n "$slow" ] && fast=
 delay=.5; [ -n "$fast" ] && unset delay
-[ -n "$slow" ] || fast=1
 loud=; debug=; quiet=
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
