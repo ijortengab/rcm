@@ -48,6 +48,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 
 # Command.
 command="$1"; shift
@@ -106,9 +107,7 @@ Global Options:
 
 Environment Variables:
    PHP_FPM_POOL_DIRECTORY
-        Default to /etc/php/[php-version]/fpm/pool.d
-   PHP_FPM_FILENAME_PATTERN
-        Default to [php-fpm-user]
+        Default to $PHP_FPM_POOL_DIRECTORY
 
 Dependency:
    nginx
@@ -223,7 +222,6 @@ config_file="$project_name"
 config_file+=".conf"
 code 'section_name="'$section_name'"'
 code 'config_file="'$config_file'"'
-PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 find='[php-version]'
 replace="$php_version"
 PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"

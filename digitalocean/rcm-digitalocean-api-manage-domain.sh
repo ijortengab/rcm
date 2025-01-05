@@ -40,6 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+TOKEN=${TOKEN:=[HOME]/.digitalocean-token.txt}
 
 # Command.
 command="$1"; shift
@@ -59,7 +60,7 @@ printHelp() {
     _ 'Variation '; yellow Manage Domain; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-digitalocean-api-manage-domain [command] [options]
 
 Available commands: add, delete.
@@ -82,7 +83,7 @@ Global Options:
 
 Environment Variables:
    TOKEN
-        Default to $HOME/.digitalocean-token.txt
+        Default to $TOKEN
 
 Dependency:
    php
@@ -174,12 +175,15 @@ insertDomain() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
+code 'TOKEN="'$TOKEN'"'
+find='[HOME]'
+replace="$HOME"
+TOKEN="${TOKEN/"$find"/"$replace"}"
+code 'TOKEN="'$TOKEN'"'
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
 code 'domain="'$domain'"'
-TOKEN=${TOKEN:=$HOME/.digitalocean-token.txt}
-code 'TOKEN="'$TOKEN'"'
 if [[ "$command" == delete ]];then
     error Command delete is not support yet.; x
 fi

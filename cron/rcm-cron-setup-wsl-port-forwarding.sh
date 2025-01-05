@@ -40,6 +40,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
 
 # Functions.
 printVersion() {
@@ -50,7 +51,7 @@ printHelp() {
     _ 'Variation '; yellow WSL Port Forwarding; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-cron-setup-wsl-port-forwarding [options]
 
 Options:
@@ -71,7 +72,7 @@ Global Options:
 
 Environment Variables:
    BASENAME
-        Default to host-port-__HOST_PORT__-forward-guest-port-__GUEST_PORT__
+        Default to $BASENAME
 
 Dependency:
    crontab
@@ -129,8 +130,6 @@ fileMustExists() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-BASENAME=${BASENAME:=host-port-__HOST_PORT__-forward-guest-port-__GUEST_PORT__}
-code 'BASENAME="'$BASENAME'"'
 if [ -z "$host_port" ];then
     error "Argument --host-port required."; x
 fi
@@ -139,7 +138,15 @@ if [ -z "$guest_port" ];then
     error "Argument --guest-port required."; x
 fi
 code 'guest_port="'$guest_port'"'
-basename_string=$(sed -e "s,__HOST_PORT__,$host_port," -e "s,__GUEST_PORT__,$guest_port," <<< "$BASENAME" )
+code 'BASENAME="'$BASENAME'"'
+find='[HOST_PORT]'
+replace="$host_port"
+BASENAME="${BASENAME/"$find"/"$replace"}"
+find='[GUEST_PORT]'
+replace="$guest_port"
+BASENAME="${BASENAME/"$find"/"$replace"}"
+code 'BASENAME="'$BASENAME'"'
+basename_string="$BASENAME"
 code 'basename_string="'$basename_string'"'
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;

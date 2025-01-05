@@ -36,6 +36,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+BASENAME=${BASENAME:=host-trigger-wsl-autorun-crond}
 
 # Functions.
 printVersion() {
@@ -46,12 +47,8 @@ printHelp() {
     _ 'Variation '; yellow WSL Autorun CROND; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-cron-setup-wsl-autorun-crond
-
-Environment Variables:
-   BASENAME
-        Default to host-trigger-wsl-autorun-crond
 
 Global Options:
    --fast
@@ -62,6 +59,10 @@ Global Options:
         Show this help.
    --root-sure
         Bypass root checking.
+
+Environment Variables:
+   BASENAME
+        Default to $BASENAME
 
 Dependency:
    crontab
@@ -119,7 +120,6 @@ fileMustExists() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-BASENAME=${BASENAME:=host-trigger-wsl-autorun-crond}
 code 'BASENAME="'$BASENAME'"'
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;

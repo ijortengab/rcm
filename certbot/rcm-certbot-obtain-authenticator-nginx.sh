@@ -38,6 +38,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 
 # Functions.
 printVersion() {
@@ -48,7 +49,7 @@ printHelp() {
     _ 'Variation '; yellow Authenticator Nginx; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-certbot-obtain-authenticator-nginx [options]
 
 Options:
@@ -67,7 +68,7 @@ Global Options:
 
 Environment Variables:
    MAILBOX_HOST
-        Default to hostmaster
+        Default to $MAILBOX_HOST
 
 Dependency:
    certbot
@@ -100,7 +101,6 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
 code 'domain=('"${domain[@]}"')'
 if [[ "${#domain[@]}" -eq 0 ]];then

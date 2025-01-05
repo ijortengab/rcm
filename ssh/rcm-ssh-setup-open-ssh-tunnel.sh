@@ -42,6 +42,7 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 
 # Functions.
 printVersion() {
@@ -52,14 +53,14 @@ printHelp() {
     _ 'Variation '; yellow Open SSH Tunnel; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ssh-setup-open-ssh-tunnel [options]
 
 Options:
    --pattern *
-        Argument that will be pass to `ssh-command-generator.sh` command.
+        Argument that will be pass to ssh-command-generator.sh command.
    --timeout-trigger-command
-        Argument that will be pass to `command-keep-alive.sh` command.
+        Argument that will be pass to command-keep-alive.sh command.
   --autorun
         Available value: cron, systemd.
 
@@ -75,7 +76,7 @@ Global Options:
 
 Environment Variables:
    PREFIX_DIRECTORY
-        Default to /usr/local
+        Default to $PREFIX_DIRECTORY
 
 Dependency:
    ssh-keep-alive-symlink-reference.sh
@@ -287,7 +288,6 @@ vercomp() {
 
 # Requirement, validate, and populate value.
 chapter Dump variable.
-PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 code 'PREFIX_DIRECTORY="'$PREFIX_DIRECTORY'"'
 prefix_directory=${PREFIX_DIRECTORY%/} # remove suffix.
 code 'prefix_directory="'$prefix_directory'"'

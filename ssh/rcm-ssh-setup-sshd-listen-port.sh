@@ -42,6 +42,10 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
+SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
+SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
+RCM_CONF=${RCM_CONF:=rcm.conf}
 
 # Functions.
 printVersion() {
@@ -52,7 +56,7 @@ printHelp() {
     _ 'Variation '; yellow SSHD Listen Port; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-ssh-setup-sshd-listen-port [options]
 
 Options:
@@ -75,13 +79,13 @@ Global Options:
 
 Environment Variables:
    SSH_DIRECTORY
-        Default to /etc/ssh
+        Default to $SSH_DIRECTORY
    SSHD_CONFIG
-        Default to $SSH_DIRECTORY/sshd_config
+        Default to $SSHD_CONFIG
    SSHD_CONFIG_DIRECTORY
-        Default to $SSHD_CONFIG.d
+        Default to $SSHD_CONFIG_DIRECTORY
    RCM_CONF
-        Default to rcm.conf
+        Default to $RCM_CONF
 
 Dependency:
    sshd
@@ -125,19 +129,14 @@ fileMustExists() {
 
 # Require, validate, and populate value.
 chapter Dump variable.
-SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
 code 'SSH_DIRECTORY="'$SSH_DIRECTORY'"'
-SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
 code 'SSHD_CONFIG="'$SSHD_CONFIG'"'
-SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
 code 'SSHD_CONFIG_DIRECTORY="'$SSHD_CONFIG_DIRECTORY'"'
-RCM_CONF=${RCM_CONF:=rcm.conf}
 code 'RCM_CONF="'$RCM_CONF'"'
 [ -z "$config_file" ] && config_file="$SSHD_CONFIG"
 code 'config_file="'$config_file'"'
 code 'enable="'"${enable[@]}"'"'
 code 'disable="'"${disable[@]}"'"'
-
 ____
 
 code 'listen_port="'$listen_port'"'

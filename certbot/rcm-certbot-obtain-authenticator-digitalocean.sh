@@ -39,6 +39,9 @@ ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
 # Define variables and constants.
 delay=.5; [ -n "$fast" ] && unset delay
+MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
+TOKEN=${TOKEN:=[HOME]/.digitalocean-token.txt}
+TOKEN_INI=${TOKEN_INI:=[HOME]/.digitalocean-token.ini}
 
 # Functions.
 printVersion() {
@@ -49,7 +52,7 @@ printHelp() {
     _ 'Variation '; yellow Authenticator DigitalOcean; _.
     _ 'Version '; yellow `printVersion`; _.
     _.
-    cat << 'EOF'
+    cat << EOF
 Usage: rcm-certbot-obtain-authenticator-digitalocean [options]
 
 Options:
@@ -70,11 +73,11 @@ Global Options:
 
 Environment Variables:
    MAILBOX_HOST
-        Default to hostmaster
+        Default to $MAILBOX_HOST
    TOKEN
-        Default to $HOME/.digitalocean-token.txt
+        Default to $TOKEN
    TOKEN_INI
-        Default to $HOME/.digitalocean-token.ini
+        Default to $TOKEN_INI
 
 Dependency:
    snap
@@ -160,16 +163,21 @@ vercomp() {
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 code 'MAILBOX_HOST="'$MAILBOX_HOST'"'
+code 'TOKEN="'$TOKEN'"'
+find='[HOME]'
+replace="$HOME"
+TOKEN="${TOKEN/"$find"/"$replace"}"
+code 'TOKEN="'$TOKEN'"'
+code 'TOKEN_INI="'$TOKEN_INI'"'
+find='[HOME]'
+replace="$HOME"
+TOKEN_INI="${TOKEN_INI/"$find"/"$replace"}"
+code 'TOKEN_INI="'$TOKEN_INI'"'
 code 'domain=('"${domain[@]}"')'
 if [[ "${#domain[@]}" -eq 0 ]];then
     error Argument --domain is required.; x
 fi
-TOKEN=${TOKEN:=$HOME/.digitalocean-token.txt}
-code 'TOKEN="'$TOKEN'"'
-TOKEN_INI=${TOKEN_INI:=$HOME/.digitalocean-token.ini}
-code 'TOKEN_INI="'$TOKEN_INI'"'
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'
