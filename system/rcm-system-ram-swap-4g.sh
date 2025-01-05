@@ -62,6 +62,17 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
+# Title.
+title rcm-system-ram-swap-4g
+____
+
+[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
+
+# Dependency.
+while IFS= read -r line; do
+    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
+done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+
 code fallocate -l 4G /swapfile-rcm-4G
 code chmod 600 /swapfile-rcm-4G
 code mkswap /swapfile-rcm-4G
