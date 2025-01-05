@@ -52,6 +52,14 @@ _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2 || echo -n  >&2; }
 ____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
 
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
 # Functions.
 printVersion() {
     echo '0.16.13'
@@ -361,30 +369,30 @@ nginxGrep(){
     if [ ! -t 0 ]; then
         i=0
         _ Mencari directive: '`'${directive}'`'; _.
-        _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.
+        [ -n "$debug" ] && { _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
         while IFS= read line; do
-            i=$(( i + 1))
+            i=$(( i + 1 ))
             if [ "${#line}" -eq 0 ];then
-                __;
+                [ -n "$debug" ] && { __; }
             else
-            _; _, ' '; yellow "$line"; _, ' # Line:' $i;
+                [ -n "$debug" ] && { _; _, ' '; yellow "$line"; _, ' # Line:' $i; }
             fi
             if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
-                _, ' '; green Baris ditemukan.
+                [ -n "$debug" ] && { _, ' '; green Baris ditemukan.; }
                 lines_directive+=("$line")
             fi
-            _.
+            [ -n "$debug" ] && { _.; }
         done </dev/stdin
     fi
     if [ "${#lines_directive[@]}" -eq 0 ];then
         return 1
     fi
-    _; _.
-    _ Dump variable '`'\$condition'`'.; _.
-    e; magenta $condition; _.
-    _; _.
-    _ Dump variable '`'\$token_list'`'.; _.
-    while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"
+    [ -n "$debug" ] && { _; _.; }
+    [ -n "$debug" ] && { _ Dump variable '`'\$condition'`'.; _.; }
+    [ -n "$debug" ] && { e; magenta $condition; _.; }
+    [ -n "$debug" ] && { _; _.; }
+    [ -n "$debug" ] && { _ Dump variable '`'\$token_list'`'.; _.; }
+    [ -n "$debug" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
     # _; _.
     # Directive bisa berulang.
     # Contoh: directive listen bisa berulang sebanyak dua kali.
@@ -397,9 +405,9 @@ nginxGrep(){
         resolved=$(resolveCondition "$condition" "$token_list" "$directive_reverse")
         # e '"$resolved"' "$resolved" ; _.
         if [ "$resolved" == 1 ];then
-            _; _.
+            [ -n "$debug" ] && { _; _.; }
             _ Condition solved pada baris:' '; yellow  "$line"; _.
-            _; _.
+            [ -n "$debug" ] && { _; _.; }
             return 0
         fi
     done
