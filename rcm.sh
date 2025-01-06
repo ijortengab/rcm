@@ -183,7 +183,7 @@ _() { echo -n "$INDENT" >&2; echo -n "#"' ' >&2; [ -n "$1" ] && echo -n "$@" >&2
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "#" '    ' >&2; [ -n "$1" ] && echo "$@" >&2; }
-____() { echo >&2; [ -n "$delay" ] && sleep "$delay"; }
+____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
@@ -191,7 +191,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ -n "$RCM_FAST" ] && fast="$RCM_FAST"
 [ -z "$fast" ] && fast=1
 [ -n "$slow" ] && fast=
-delay=.5; [ -n "$fast" ] && unset delay
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 loud=; debug=; quiet=
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
