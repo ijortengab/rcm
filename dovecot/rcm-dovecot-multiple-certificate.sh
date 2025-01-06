@@ -132,7 +132,7 @@ findString() {
         tempfile=$(mktemp -p /dev/shm)
         deletetempfile=1
     fi
-    _; _, ' 'Memeriksa baris dengan kalimat: '`'$find'`'.;_.
+    _; _, Memeriksa baris dengan kalimat: '`'$find'`'.;_.
     find_quoted="$find"
     find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
     find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")

@@ -361,13 +361,13 @@ nginxGrep(){
     if [ ! -t 0 ]; then
         i=0
         _ Mencari directive: '`'${directive}'`'; _.
-        [ -n "$debug" ] && { _; _, ' '; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
+        [ -n "$debug" ] && { _; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
         while IFS= read line; do
             i=$(( i + 1 ))
             if [ "${#line}" -eq 0 ];then
                 [ -n "$debug" ] && { __; }
             else
-                [ -n "$debug" ] && { _; _, ' '; yellow "$line"; _, ' # Line:' $i; }
+                [ -n "$debug" ] && { _; yellow "$line"; _, ' # Line:' $i; }
             fi
             if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
                 [ -n "$debug" ] && { _, ' '; green Baris ditemukan.; }
@@ -563,7 +563,7 @@ findString() {
         tempfile=$(mktemp -p /dev/shm)
         deletetempfile=1
     fi
-    _; _, ' 'Memeriksa baris dengan kalimat: '`'$find'`'.;_.
+    _; _, Memeriksa baris dengan kalimat: '`'$find'`'.;_.
     find_quoted="$find"
     find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
     find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")
