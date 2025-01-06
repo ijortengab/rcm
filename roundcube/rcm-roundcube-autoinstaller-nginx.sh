@@ -46,7 +46,7 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
 printVersion() {
-    echo '0.16.14'
+    echo '0.16.15'
 }
 printHelp() {
     title RCM RoundCube Auto-Installer
