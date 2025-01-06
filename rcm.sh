@@ -2629,27 +2629,24 @@ shortoptions=
 } || isverbose=
 [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
 argument_preview+=(--)
-if [ -z "$RCM_FAST" ];then
-    RCM_FAST="$fast"
-    export RCM_FAST="$RCM_FAST"
-fi
-if [ -z "$RCM_INTERACTIVE" ];then
-    RCM_INTERACTIVE="$interactive"
-    export RCM_INTERACTIVE="$RCM_INTERACTIVE"
-fi
-if [ -z "$RCM_VERBOSE" ];then
-    RCM_VERBOSE="$verbose"
-    export RCM_VERBOSE="$RCM_VERBOSE"
-fi
-if [ -z "$RCM_RESOLVE_DEPENDENCIES" ];then
-    RCM_RESOLVE_DEPENDENCIES="$resolve_dependencies"
-    export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
-fi
+
+# Boolean export as 0 or 1.
+[ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
+export RCM_INTERACTIVE="$RCM_INTERACTIVE"
+[ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
+export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
+# Other variable, export as is.
+RCM_VERBOSE="$verbose"
+export RCM_VERBOSE="$RCM_VERBOSE"
+RCM_FAST="$fast"
+export RCM_FAST="$RCM_FAST"
+# Fill last command if empty.
 if [ -z "$RCM_LAST_COMMAND" ];then
     RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
+# Fill always.
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 
 chapter Command has been built.
