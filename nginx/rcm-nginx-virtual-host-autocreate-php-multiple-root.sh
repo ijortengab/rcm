@@ -620,7 +620,7 @@ findString() {
     if [[ ! "${find_quoted:0:1}" == '^' ]];then
         find_quoted="^\s*${find_quoted}"
     fi
-    _; magenta grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'
+    _; magenta grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'; _.
     if grep -E "${find_quoted}" "$path" > "$tempfile";then
         string="$(< "$tempfile")"
         while read -r line; do e "$line"; _.; done <<< "$string"
