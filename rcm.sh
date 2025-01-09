@@ -16,12 +16,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
-        --interactive|-i) interactive=1; shift ;;
-        --non-interactive) interactive=0; shift ;;
+        --interactive) interactive=1; shift ;;
+        --non-interactive|-x) interactive=0; shift ;;
+        --resolved|-r) resolve_dependencies=0; shift ;;
         --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --with-resolve-dependencies) resolve_dependencies=1; shift ;;
-        --without-resolve-dependencies|-x) resolve_dependencies=0; shift ;;
+        --without-resolve-dependencies) resolve_dependencies=0; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -45,14 +46,14 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVisvx" opt; do
+            while getopts ":hVxrsv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
-                    i) interactive=1 ;;
+                    x) interactive=0 ;;
+                    r) resolve_dependencies=0 ;;
                     s) slow=1 ;;
                     v) verbose="$((verbose+1))" ;;
-                    x) resolve_dependencies=0 ;;
                 esac
             done
             _n="$((OPTIND-1))"
@@ -266,18 +267,20 @@ Global Options:
         Show this help.
    --binary-directory-exists-sure
         Bypass binary directory checking.
-   --interactive, -i
+   --interactive
         Show asking for confirmation if needed. Default action.
-   --non-interactive
+   --non-interactive, -x
         Run without ever asking for user input.
    --verbose, -v
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
         The maximum is 3.
-   --without-resolve-dependencies, -x
+   --without-resolve-dependencies
         Skip resolve dependenices.
    --with-resolve-dependencies
         Resolve dependenices. Default action.
+   --resolved, -r
+        Alias of --without-resolve-dependencies.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -2724,10 +2727,11 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--interactive,short:-i,parameter:interactive'
-    # 'long:--non-interactive,parameter:interactive,flag_option:reverse'
+    # 'long:--interactive,parameter:interactive'
+    # 'long:--non-interactive,short:-x,parameter:interactive,flag_option:reverse'
     # 'long:--with-resolve-dependencies,parameter:resolve_dependencies'
-    # 'long:--without-resolve-dependencies,short:-x,parameter:resolve_dependencies,flag_option:reverse'
+    # 'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
+    # 'long:--resolved,short:-r,parameter:resolve_dependencies,flag_option:reverse'
 # )
 # OPERAND=(
 # install
