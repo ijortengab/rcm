@@ -20,8 +20,8 @@ while [[ $# -gt 0 ]]; do
         --non-interactive) interactive=0; shift ;;
         --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
-        --without-resolve-dependencies|-x) resolve_dependencies=0; shift ;;
         --with-resolve-dependencies) resolve_dependencies=1; shift ;;
+        --without-resolve-dependencies|-x) resolve_dependencies=0; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        install|update|get|history)
+        install|update|get|history|list)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        install|update|get|history)
+        install|update|get|history|list)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -172,6 +172,18 @@ case "$command" in
                         esac
                     done
                     ;;
+                --[^-]*) shift ;;
+                *) _new_arguments+=("$1"); shift ;;
+            esac
+        done
+        set -- "${_new_arguments[@]}"
+        unset _new_arguments
+        ;;
+    list)
+        _new_arguments=()
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --raw) raw=1; shift ;;
                 --[^-]*) shift ;;
                 *) _new_arguments+=("$1"); shift ;;
             esac
@@ -1260,85 +1272,52 @@ command-history() {
 }
 command-list() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
-    command_list=$(Rcm_list)
+    if [ -n "$raw" ];then
+        Rcm_list
+        exit 0
+    fi
     history_storage=$HOME'/.cache/rcm/rcm.history'
     save_history=1
     history_value=
-
-    _ Listing the command then execute it.; _.
     if [ -f "$history_storage" ];then
         history_value=$(tail -9 "$history_storage")
         parameter='<command>'
         printHistoryDialog
     fi
-
     if [ -z "$value" ];then
         _; _.
-        _ The contents of list commands will be open.; _.
+        _ Listing the command then execute it.; _.
         _; _.
-        _ Guide to navigate the contents:; _.
-        __; _, Press ; _, ' ['; yellow space; _, '] '; _, key for next page.; _.
-        __; _, Press ; _, ' ['; yellow Page Up; _, '] '; _, for previous page.; _.
-        __; _, Press ; _, ' ['; yellow Page Down; _, '] '; _, for next page.; _.
-        __; _, Press ; _, ' ['; yellow /; _, '] '; _, to find string, then; _, ' ['; yellow n; _, '] '; _, to find next and; _, ' ['; yellow p; _, '] ';_, to find previous.; _.
-        __; _, Press ; _, ' ['; yellow q; _, '] '; _, to quit from contents.; _.
+        sleepExtended 3 30
+        declare -i count
+        is_required=1
+        parameter=command
+        command_list=$(Rcm_list)
+        read -ra source -d '' <<< "$command_list"
+        for ((i = 0 ; i < ${#source[@]} ; i++)); do
+            count+=1
+            __; _, '['$count']' "${source[$i]}"; _.
+        done
         _; _.
-        _ After quit, you should select one command to execute.; _.
-        _; _.
-        _ Please press Ctrl+C to open the contents immediately.; _.
-        trap immediately SIGINT
-        sleepExtended 30
-        trap x SIGINT
-        printf "\r\033[K" >&2
-        echo "$command_list" | less -N -X -K
-    fi
-
-    printDialogSecondary=
-    until [ -n "$value" ];do
-        if [ -n "$printDialogSecondary" ];then
-            printDialogSecondary=
-            _ Press the yellow key to select.; _.
-            _; _.
-            __; _, '['; yellow Esc; _, ']'; _, ' '; yellow Q; _, 'uit.'; _.
-            __; _, '['; yellow Backspace; _, ']'; _, ' Show all commands.'; _.
-            __; _, '['; yellow Enter; _, ']'; _, ' Type the line number of command to select.'; _.
-            _; _.
-            while true; do
-                _ ''; read -rsn 1 -p "Select: " char
-                if [ -z "$char" ];then
-                    printf "\r\033[K" >&2
-                    break
-                fi
-                case $char in
-                    $'\33') echo "q"; exit ;;
-                    q|Q) echo "$char"; exit ;;
-                    $'\177')
-                        printf "\r\033[K" >&2
-                        echo "$command_list" | less -N -X -K
-                        break
-                        ;;
-                    *) echo
-                esac
-            done
-        fi
-        ____
-
-        _; read -p " Type the line number or leave blank to skip:  " number
-        ____
-
-        if [ -z "$number" ];then
-            _ The line number of command is skipped. The command is not define yet.; _.
-        elif [[ "$number" =~ ^[0-9]+$ ]];then
-            value=$(sed -n ${number}p <<< "$command_list")
-            if [ -z "$value" ];then
-                error The number is out of range.; _.
+        until [ -n "$value" ];do
+            __; read -p "Type the number: " value
+            if [[ $value =~ [^0-9] ]];then
+                value=
+                __; red Please type one of available number.;_.
             fi
-        else
-            error Input is not valid.; _.
-        fi
-        printDialogSecondary=1
-    done
-
+            if [[ $value =~ ^0 ]];then
+                value=
+                __; red Please type one of available number.;_.
+            fi
+            if [ -n "$value" ];then
+                value=$((value - 1))
+                value="${source[$value]}"
+                if [ -z "$value" ];then
+                    __; red Please type one of available number.;_.
+                fi
+            fi
+        done
+    fi
     command_raw="${value}"
     command="rcm-${value}"
     _; _.
@@ -2765,6 +2744,7 @@ exit 0
 # update
 # get
 # history
+# list
 # )
 # EOF
 # clear
@@ -2846,6 +2826,20 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+# )
+# EOF
+# clear
+
+# parse-options.sh \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --without-end-options-double-dash \
+# --no-error-require-arguments << EOF | clip
+# FLAG=(
+# --raw
 # )
 # EOF
 # clear
