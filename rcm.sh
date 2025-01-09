@@ -984,7 +984,7 @@ Rcm_list() {
 Rcm_list_internal() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'RCM_LIST_INTERNAL'
-certbot-autoinstaller
+certbot-apt
 certbot-deploy-installer-nginx-authenticator-digitalocean
 certbot-deploy-nginx
 certbot-digitalocean-autoinstaller
@@ -996,7 +996,7 @@ cron-setup-wsl-autorun-sshd
 cron-setup-wsl-port-forwarding
 debian-11-setup-basic
 debian-12-setup-basic
-dig-autoinstaller
+dig-apt
 dig-has-address
 dig-is-name-exists
 dig-is-record-exists
@@ -1004,12 +1004,12 @@ dig-watch-domain-exists
 digitalocean-api-manage-domain-record
 digitalocean-api-manage-domain
 dovecot-multiple-certificate
+mariadb-apt
 mariadb-assign-grant-all
-mariadb-autoinstaller
 mariadb-database-autocreate
 mariadb-setup-project-database
 mariadb-user-autocreate
-nginx-autoinstaller
+nginx-apt
 nginx-reload
 nginx-setup-front-controller-php
 nginx-setup-hello-world-php
@@ -1018,11 +1018,11 @@ nginx-setup-php
 nginx-setup-static
 nginx-virtual-host-autocreate-php-multiple-root
 nginx-virtual-host-autocreate-php
-php-autoinstaller
+php-apt
 php-fpm-setup-project-config
 php-setup-adjust-cli-version
 phpmyadmin-autoinstaller-nginx
-postfix-autoinstaller
+postfix-apt
 postfix-multiple-certificate
 roundcube-autoinstaller-nginx
 ssh-setup-open-ssh-tunnel
