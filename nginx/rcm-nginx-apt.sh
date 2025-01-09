@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-nginx-autoinstaller [options]
+Usage: rcm-nginx-apt [options]
 
 Global Options:
    --fast
@@ -66,7 +66,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-nginx-autoinstaller
+title rcm-nginx-apt
 ____
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }

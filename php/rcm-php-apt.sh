@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-php-autoinstaller [options]
+Usage: rcm-php-apt [options]
 
 Options:
    --php-version
@@ -73,7 +73,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-php-autoinstaller
+title rcm-php-apt
 ____
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }

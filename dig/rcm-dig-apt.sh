@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-dig-autoinstaller [options]
+Usage: rcm-dig-apt [options]
 
 Global Options:
    --fast
@@ -66,7 +66,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-dig-autoinstaller
+title rcm-dig-apt
 ____
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }

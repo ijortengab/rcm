@@ -48,7 +48,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
-Usage: rcm-postfix-autoinstaller [options]
+Usage: rcm-postfix-apt [options]
 
 Options:
    --fqdn *
@@ -72,7 +72,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-postfix-autoinstaller
+title rcm-postfix-apt
 ____
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
