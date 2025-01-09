@@ -2469,8 +2469,7 @@ Rcm_prompt() {
 }
 Rcm_prompt_sigint() {
     local shortoptions
-    [ -z "$resolve_dependencies" ] && resolved=1
-    [ -n "$resolved" ] && shortoptions+='x'
+    [ -z "$resolve_dependencies" ] && shortoptions+='x'
     [ -n "$slow" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
@@ -2494,7 +2493,6 @@ Rcm_prompt_sigint() {
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
 immediately=
-resolved=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
 [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
 [ -z "$interactive" ] && interactive=1
@@ -2555,7 +2553,6 @@ if [ -n "$resolve_dependencies" ];then
     else
         Rcm_resolve_dependencies "${command}${command_version}"
     fi
-    resolved=1
 fi
 rcm_depends=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '^rcm(:[^:]+)*$')
 # Jika rcm dijadikan sebagai dependency, maka command tersebut adalah
@@ -2617,10 +2614,9 @@ fi
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 shortoptions=
-[ -z "$resolve_dependencies" ] && resolved=1
-[ -n "$resolved" ] && shortoptions+='x'
-[ -n "$slow" ] && isfast='' || isfast=' --fast'
+[ -z "$resolve_dependencies" ] && shortoptions+='x'
 [ -n "$slow" ] && shortoptions+='s'
+[ -n "$slow" ] && isfast='' || isfast=' --fast'
 [ -n "$verbose" ] && {
     for ((i = 0 ; i < "$verbose" ; i++)); do
         isverbose+=' --verbose'
