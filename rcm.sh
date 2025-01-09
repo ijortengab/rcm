@@ -455,16 +455,13 @@ printSelectDialog() {
     if [ -z "$is_required" ];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+1))
     fi
-    if [[ -n "$type_mode" ]];then
-        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
-            printf '\e[A\e[K'
-        done
-    fi
     if [[ -n "$select_mode" ]];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1+new_line))
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
             printf '\e[A\e[K'
         done
+        _; _.
+        __ Available values:
         _; _.
         __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
@@ -609,16 +606,13 @@ printSelectOtherDialog() {
     if [ -z "$is_required" ];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+1))
     fi
-    if [[ -n "$type_mode" ]];then
-        for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
-            printf '\e[A\e[K'
-        done
-    fi
     if [[ -n "$select_mode" ]];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1+new_line))
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
             printf '\e[A\e[K'
         done
+        _; _.
+        __ Available values:
         _; _.
         __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
