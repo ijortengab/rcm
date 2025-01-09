@@ -381,12 +381,15 @@ printHistoryDialog() {
     declare -i count
     count=0
     _; _.
-    __ There are values available from history. Press the yellow key to select.
+    __ There are values available from history.
     while read opt; do
         count+=1
         __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
     done <<< "$history_value"
+    _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow S; _, 'kip and continue.'; _.
+    _; _.
+    __ Press the yellow key to select.
     while true; do
         __; read -rsn 1 -p "Select: " char;
         if [ -z "$char" ];then
@@ -421,12 +424,13 @@ printSelectDialog() {
     words_array=("${source[@]}")
     wordWrapList "Available ${what}:"
     _; _.
-    __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
     if [ -z "$is_required" ];then
         __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
     fi
+    _; _.
+    __ Press the yellow key to select.
     select_mode=
     local type_mode=
     local skip=
@@ -463,10 +467,7 @@ printSelectDialog() {
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
             printf '\e[A\e[K'
         done
-        _; _.
         __ Available values:
-        _; _.
-        __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
             count+=1
             if [ $count -lt 10 ];then
@@ -475,10 +476,13 @@ printSelectDialog() {
                 __; _, '['$count']' "${source[$i]}"; _.
             fi
         done
+        _; _.
         __; _, '['; yellow Enter; _, ']'; _, ' '; _, 'Type the '; yellow N; _, 'umber key.'; _.
         if [ -z "$is_required" ];then
             __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
         fi
+        _; _.
+        __ Press the yellow key to select.
         count_max="${#source[@]}"
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -509,6 +513,7 @@ printSelectDialog() {
         done
         if [[ -z "$skip" ]];then
             until [ -n "$value" ];do
+                _; _.
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
@@ -574,12 +579,13 @@ printSelectOtherDialog() {
     words_array+=(other)
     wordWrapList "Available ${what}:"
     _; _.
-    __ Press the yellow key to select.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
     if [ -z "$is_required" ];then
         __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
     fi
+    _; _.
+    __ Press the yellow key to select.
     local select_mode=
     local type_mode=
     local skip=
@@ -614,10 +620,7 @@ printSelectOtherDialog() {
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
             printf '\e[A\e[K'
         done
-        _; _.
         __ Available values:
-        _; _.
-        __ Press the yellow key to select.
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
             count+=1
             if [ $count -lt 10 ];then
@@ -626,11 +629,14 @@ printSelectOtherDialog() {
                 __; _, '['$count']' "${source[$i]}"; _.
             fi
         done
+        _; _.
         __; _, '['; yellow Enter; _, ']'; _, ' '; _, 'Type the '; yellow N; _, 'umber key.'; _.
         __; _, '['; yellow Backspace; _, ']'; _, ' '; _, 'Switch to '; yellow T; _, 'ype other value.'; _.
         if [ -z "$is_required" ];then
             __; _, '['; yellow Esc; _, ']'; _, ' '; yellow L; _, 'eave blank and skip.'; _.
         fi
+        _; _.
+        __ Press the yellow key to select.
         count_max="${#source[@]}"
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -663,6 +669,7 @@ printSelectOtherDialog() {
         done
         if [[ -z "$type_mode" && -z "$skip" ]];then
             until [ -n "$value" ];do
+                _; _.
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
