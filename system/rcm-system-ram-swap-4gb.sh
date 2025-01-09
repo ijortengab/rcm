@@ -46,7 +46,7 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
-Usage: rcm-system-ram-swap-4g [options]
+Usage: rcm-system-ram-swap-4gb [options]
 
 Global Options:
    --fast
@@ -63,7 +63,7 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
-title rcm-system-ram-swap-4g
+title rcm-system-ram-swap-4gb
 ____
 
 [ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
@@ -73,16 +73,25 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
-code fallocate -l 4G /swapfile-rcm-4G
-code chmod 600 /swapfile-rcm-4G
-code mkswap /swapfile-rcm-4G
-code swapon /swapfile-rcm-4G
+path=/swapfile-rcm-4G
 
-if [ ! -f /swapfile-rcm-4G ];then
-    fallocate -l 4G /swapfile-rcm-4G
-    chmod 600 /swapfile-rcm-4G
-    mkswap /swapfile-rcm-4G
-    swapon /swapfile-rcm-4G
+chapter Membuat file swap.
+code fallocate -l 4G "$path"
+code chmod 600 "$path"
+code mkswap "$path"
+____
+
+if [ ! -f "$path" ];then
+    fallocate -l 4G "$path"
+    chmod 600 "$path"
+    mkswap "$path"
+fi
+chapter Mengaktifkan file swap.
+if grep -q "^${path}$" <<< `swapon --show=name --noheadings --raw`;then
+    code swapon "$path"
+else
+    code swapon "$path"
+    swapon "$path"
 fi
 ____
 
