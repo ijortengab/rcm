@@ -514,8 +514,8 @@ printSelectDialog() {
             esac
         done
         if [[ -z "$skip" ]];then
+            _; _.
             until [ -n "$value" ];do
-                _; _.
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
@@ -670,8 +670,8 @@ printSelectOtherDialog() {
             esac
         done
         if [[ -z "$type_mode" && -z "$skip" ]];then
+            _; _.
             until [ -n "$value" ];do
-                _; _.
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
                     value=
@@ -2651,6 +2651,10 @@ if [ -z "$RCM_LAST_COMMAND" ];then
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
+# Simpan ke log, last command.
+if [ -z "$immediately" ];then
+    echo "$RCM_LAST_COMMAND" >> "$log"
+fi
 
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
