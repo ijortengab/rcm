@@ -1739,8 +1739,22 @@ Rcm_resolve_dependencies() {
 wordWrapDescription() {
     local paragraph="$1" words_array
     local current_line first_line last
-    declare -i min; min=80
-    declare -i max; max=100
+    declare -i max
+    declare -i min
+
+    max=$(tput cols)
+    # Angka 6 adalah 4+2.
+    # Angka 4 adalah tambahan indent.
+    # Angka 2 adalah tambahan dari '# '.
+    _max=$((100 + ${#INDENT} + 6))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 6))
+        min="$max"
+    fi
+
     declare -i i; i=0
     words_array=($paragraph)
     local count="${#words_array[@]}"
@@ -1786,8 +1800,20 @@ wordWrapCommand() {
     # global words_array
     local inline_description="$1"
     local current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
+    declare -i max
+    declare -i min
+
+    max=$(tput cols)
+    # Angka 2 adalah tambahan dari ' \'.
+    _max=$((100 + ${#INDENT} + 2))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 2))
+        min="$max"
+    fi
+
     declare -i i; i=0
     local count="${#words_array[@]}"
     current_line=
@@ -1842,8 +1868,23 @@ wordWrapCommandInline() {
     # global words_array
     local inline_description="$1" i
     local current_line first_line
-    declare -i min; min=80
-    declare -i max; max=100
+    declare -i max
+    declare -i min
+
+    max=$(tput cols)
+    # Angka 8 adalah 4+2+2.
+    # Angka 4 adalah tambahan indent.
+    # Angka 2 adalah tambahan dari '# '.
+    # Angka 2 adalah tambahan dari ' \'.
+    _max=$((100 + ${#INDENT} + 8))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 8))
+        min="$max"
+    fi
+
     declare -i i; i=0
     local count="${#words_array[@]}"
     current_line=
@@ -1895,8 +1936,22 @@ wordWrapList() {
     # global words_array
     local inline_description="$1"
     local current_line first_line last
-    declare -i min; min=80
-    declare -i max; max=100
+    declare -i max
+    declare -i min
+
+    max=$(tput cols)
+    # Angka 6 adalah 4+2.
+    # Angka 4 adalah tambahan indent.
+    # Angka 2 adalah tambahan dari '# '.
+    _max=$((100 + ${#INDENT} + 6))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 6))
+        min="$max"
+    fi
+
     declare -i i; i=0
     WRAP_LINE=1
     local count="${#words_array[@]}"
