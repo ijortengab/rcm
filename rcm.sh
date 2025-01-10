@@ -353,25 +353,25 @@ userInputBooleanDefaultNo() {
 }
 printBackupDialog() {
     _; _.
-    __; _, Restore the value:' '; yellow "${backup_value}"; _, '. '; _, Would you like to use that value?; _.
+    wordWrapDescriptionColorize "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
         _; _.
         value="$backup_value";
         if [ -n "$is_flag" ];then
-            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'which is restored.; _.
+            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> which is restored." green
         else
-            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow $value; green ' 'which is restored.; _.
+            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is restored." green
         fi
     fi
 }
 printBackupFlagDialog() {
     _; _.
-    __; _, This argument has been added before. Would you like to restore this argument?; _.
+    wordWrapDescription "This argument has been added before. Would you like to restore this argument?"
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
         _; _.
-        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added which is restored.; _.
+        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added which is restored." green
     fi
 }
 printHistoryDialog() {
@@ -403,7 +403,7 @@ printHistoryDialog() {
                 echo "$char"
                 value=$(sed -n ${char}p <<< "$history_value")
                 _; _.
-                __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list of history.; _.
+                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                 save_history=
                 break ;;
             *) echo
@@ -534,7 +534,7 @@ printSelectDialog() {
                 fi
             done
             _; _.
-            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
         fi
     fi
     if [[ -n "$type_mode" ]];then
@@ -690,7 +690,7 @@ printSelectOtherDialog() {
                 fi
             done
             _; _.
-            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'which is selected from the list.; _.
+            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
         fi
     fi
     if [[ -n "$type_mode" ]];then
@@ -2032,7 +2032,7 @@ Rcm_prompt() {
         chapter Prepare argument for command '`'$command_raw'`'.
         chapter_printed=1
         _; _.
-        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
+        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
         argument_operand_prepopulate=("${_return[@]}")
         unset _return
     else
@@ -2226,9 +2226,9 @@ Rcm_prompt() {
                 elif [[ "$_boolean" == 1 ]];then
                     _; _.
                     if [ -n "$value" ];then
-                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
+                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
                     else
-                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated.; _.
+                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
                     fi
                     backup_flag=
                     argument_boolean=1
@@ -2312,11 +2312,11 @@ Rcm_prompt() {
                         if [ -n "$value" ];then
                             if [ -n "$is_typing" ];then
                                 _; _.
-                                __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added with value' '; yellow $value; green ' 'manually.; _.
+                                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> manually." green
                             fi
                         else
                             _; _.
-                            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green added manually.; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added manually." green
                         fi
                     fi
                 fi
@@ -2362,7 +2362,7 @@ Rcm_prompt() {
                     elif grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
                         _; _.
-                        __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green prepopulated with value' '; yellow "$value"; green .; _.
+                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
                         backup_value=
                         break
                     fi
@@ -2399,7 +2399,7 @@ Rcm_prompt() {
                             _; _.
                             __; _, "Available value: "; yellow "$value";  _, '.'; _.
                             _; _.
-                            __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with the only available value' '; yellow "$value"; green ' 'automatically.; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
                         else
                             printSelectDialog available_values[@]
                         fi
@@ -2448,7 +2448,7 @@ Rcm_prompt() {
                 fi
                 if [[ -n "$value" && "$is_typing" ]];then
                     _; _.
-                    __; green Argument; _, ' '; magenta "$parameter"; _, ' ';  green filled with value' '; yellow "$value"; green ' 'manually.; _.
+                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
                 fi
             fi
             # Backup to text file.
@@ -2549,6 +2549,103 @@ Rcm_prompt_sigint() {
     words_array=($RCM_LAST_COMMAND)
     wordWrapCommand
     exit 0
+}
+wordWrapDescriptionColorize() {
+    local paragraph="$1" words_array default_color="$2"
+    [ -z $default_color ] && default_color=_,
+    color="$default_color"
+    cleaningTag() {
+        # global each
+        # global color
+        local string="$1"
+        opentag=$(echo "$string" | grep -E -o '<[^</>]+>')
+        if [ -n "$opentag" ];then
+            color=$(echo "$opentag" | grep -E -o '[^<>]+')
+            string=${string//"$opentag"/}
+            closetag="</${color}>"
+            if grep -q -F "$closetag" <<< "$string";then
+                color_stop=1
+                string=${string//"$closetag"/}
+            fi
+        fi
+        each="$string"
+    }
+    cleaningCloseTag() {
+        # global each
+        # global color
+        local string="$1"
+        closetag="</${color}>"
+        if grep -q -F "$closetag" <<< "$string";then
+            color_stop=1
+            string=${string//"$closetag"/}
+        fi
+        each="$string"
+    }
+    colorStop() {
+        # global color_stop
+        if [ -n "$color_stop" ];then
+            color=$default_color
+            color_stop=
+        fi
+    }
+    local current_line first_line last
+    declare -i max
+    declare -i min
+    max=$(tput cols)
+    # Angka 6 adalah 4+2.
+    # Angka 4 adalah tambahan indent.
+    # Angka 2 adalah tambahan dari '# '.
+    _max=$((100 + ${#INDENT} + 6))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 6))
+        min="$max"
+    fi
+    declare -i i; i=0
+    words_array=($paragraph)
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        cleaningTag "$each"
+        cleaningCloseTag "$each"
+        i+=1
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -n "$first_line" ];then
+                first_line=
+                current_line="$each"
+                __; $color "$each"
+            else
+                current_line="$each"
+                __; $color "$each"
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=" ${each}"
+                $color " ${each}"
+                if [ -n "$last" ];then
+                    _.
+                fi
+            elif [ "${#_current_line}" -le $max ];then
+                $color " ${each}"; _.
+                current_line=
+            else
+                _.; __; $color "$each"
+                current_line="$each"
+                if [ -n "$last" ];then
+                    _.
+                fi
+            fi
+        fi
+        colorStop
+    done
 }
 
 # Requirement, validate, and populate value.
