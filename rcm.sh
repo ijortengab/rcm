@@ -222,6 +222,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_FAST" ] && fast="$RCM_FAST"
+[ -n "$RCM_LOG" ] && log="$RCM_LOG"
 [ -z "$fast" ] && fast=1
 [ -n "$slow" ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
@@ -230,6 +231,7 @@ loud=; debug=; quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+[ -z "$log" ] && log=rcm.log
 
 # Functions. Help and Version.
 printVersion() {
@@ -2509,6 +2511,7 @@ if [ -n "$louder" ];then
     code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
     code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
     code 'RCM_FAST="'$RCM_FAST'"'
+    code 'RCM_LOG="'$RCM_LOG'"'
     code 'interactive="'$interactive'"'
     code 'verbose="'$verbose'"'
     code 'quiet="'$quiet'"'
@@ -2516,6 +2519,7 @@ if [ -n "$louder" ];then
     code 'louder="'$louder'"'
     code 'debug="'$debug'"'
     code 'resolve_dependencies="'$resolve_dependencies'"'
+    code 'log="'$log'"'
     ____
 fi
 
@@ -2631,23 +2635,22 @@ shortoptions=
 argument_preview+=(--)
 
 # Boolean export as 0 or 1.
+# Must not leave empty string.
 [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
 export RCM_INTERACTIVE="$RCM_INTERACTIVE"
 [ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
 export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
 # Other variable, export as is.
-RCM_VERBOSE="$verbose"
-export RCM_VERBOSE="$RCM_VERBOSE"
-RCM_FAST="$fast"
-export RCM_FAST="$RCM_FAST"
-# Fill last command if empty.
+export RCM_VERBOSE="$verbose"
+export RCM_FAST="$fast"
+export RCM_TABLE_DOWNLOADS="$table_downloads"
+export RCM_LOG="$log"
+# Special for variable RCM_LAST_COMMAND, append value then export it.
 if [ -z "$RCM_LAST_COMMAND" ];then
     RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
-# Fill always.
-export RCM_TABLE_DOWNLOADS="$table_downloads"
 
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
