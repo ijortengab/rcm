@@ -1864,74 +1864,6 @@ wordWrapCommand() {
         fi
     done
 }
-wordWrapCommandInline() {
-    # global words_array
-    local inline_description="$1" i
-    local current_line first_line
-    declare -i max
-    declare -i min
-
-    max=$(tput cols)
-    # Angka 8 adalah 4+2+2.
-    # Angka 4 adalah tambahan indent.
-    # Angka 2 adalah tambahan dari '# '.
-    # Angka 2 adalah tambahan dari ' \'.
-    _max=$((100 + ${#INDENT} + 8))
-    if [ $max -gt $_max ];then
-        max=100
-        min=80
-    else
-        max=$((max - ${#INDENT} - 8))
-        min="$max"
-    fi
-
-    declare -i i; i=0
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        i+=1
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -z "$first_line" ];then
-                current_line="    ${each}"
-                __; magenta "    $each";
-            else
-                first_line=
-                if [ -n "$inline_description" ];then
-                    __; _, "${inline_description} "; magenta "$each"
-                    current_line="${inline_description} ${each}"
-                else
-                    __; magenta "$each"
-                    current_line="$each"
-                fi
-            fi
-            if [ -n "$last" ];then
-                _.
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "$each"; _.
-                else
-                    _, ' '; magenta "$each"
-                fi
-                current_line+=" ${each}"
-            elif [ "${#_current_line}" -le $max ];then
-                if [ -n "$last" ];then
-                    _, ' '; magenta "${each}"''; _.
-                else
-                    _, ' '; magenta "${each}"' \'; _.
-                fi
-                current_line=
-            else
-                magenta ' \'; _.; __; magenta "$each"
-                current_line="    ${each}"
-            fi
-        fi
-    done
-}
 wordWrapList() {
     # global words_array
     local inline_description="$1"
@@ -2380,8 +2312,7 @@ Rcm_prompt() {
                         if command -v "$_command" > /dev/null;then
                             _; _.
                             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                            words_array=(${_command}${_arguments})
-                            wordWrapCommandInline "Value available from command:"
+                            wordWrapDescriptionColorize "Value available from command: <magenta>${_command}${_arguments}</magenta>"
                             mktemp=$(mktemp -p /dev/shm)
                             ${_command}${_arguments} > "$mktemp"
                             exit_code=$?
@@ -2803,13 +2734,14 @@ if [ -z "$RCM_LAST_COMMAND" ];then
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
-# Simpan ke log, last command.
-if [ -z "$immediately" ];then
-    echo "$RCM_LAST_COMMAND" >> "$log"
-fi
 
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
+# Simpan ke log, last command.
+if [ -z "$immediately" ];then
+    echo "$RCM_LAST_COMMAND" >> "$log"
+    _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
+fi
 if [ "${#preview[@]}" -gt 0 ];then
     words_array=($RCM_LAST_COMMAND)
 else
