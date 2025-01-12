@@ -675,6 +675,20 @@ isDirExists() {
         notfound=1
     fi
 }
+validateContentRedirect() {
+    local path="$1"
+    # listen
+    if ! nginxGrep listen contains 80 < "$path";then
+        __; yellow File akan dibuat ulang.; _.
+        return 1
+    fi
+    # server_name
+    if ! nginxGrep server_name contains "$url_host" < "$path";then
+        __; yellow File akan dibuat ulang.; _.
+        return 1
+    fi
+    return 0
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
@@ -718,6 +732,7 @@ code 'url_host="'$url_host'"'
 code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'certbot_certificate_name="'$certbot_certificate_name'"'
+rcm_nginx_reload=
 ____
 
 path="/etc/nginx/sites-available/$filename"
@@ -727,7 +742,6 @@ isFileExists "$path"
 ____
 
 create_new=
-rcm_nginx_reload=
 if [ -n "$found" ];then
     chapter Memeriksa konten.
     validateContent "$path"
@@ -855,6 +869,69 @@ fi
 source="$path"
 target="/etc/nginx/sites-enabled/$filename"
 link_symbolic "$source" "$target"
+
+path="/etc/nginx/sites-available/${filename}-redirect"
+filename="${filename}-redirect"
+chapter Mengecek nginx config file: '`'$filename'`'.
+isFileExists "$path"
+____
+
+if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
+    create_new=
+    if [ -n "$found" ];then
+        chapter Memeriksa konten.
+        validateContentRedirect "$path"
+        [ ! $? -eq 0 ] && create_new=1;
+        ____
+    else
+        create_new=1
+    fi
+    if [ -n "$create_new" ];then
+        path="/etc/nginx/sites-available/${filename}-redirect"
+        filename="${filename}-redirect"
+        chapter Membuat nginx config file: '`'$filename'`'.
+        code 'path="'$path'"'
+        if [ -f "$path" ];then
+            __ Backup file: '`'"$filename"'`'.
+            backupFile move "$path"
+        fi
+        __ Membuat file "$filename".
+        cat <<'EOF' > "$path"
+server {
+    if ($host = __URL_HOST__) {
+        return 301 https://$host$request_uri;
+    }
+    listen [::]:80;
+    listen 80;
+    server_name __URL_HOST__;
+    return 404;
+}
+EOF
+        fileMustExists "$path"
+        sed -i "s|__URL_HOST__|${url_host}|g" "$path"
+        ____
+
+        chapter Memeriksa ulang konten.
+        validateContentRedirect "$path"
+        [ ! $? -eq 0 ] && x
+        ____
+
+        rcm_nginx_reload=1
+    fi
+    path="/etc/nginx/sites-available/${filename}-redirect"
+    source="$path"
+    target="/etc/nginx/sites-enabled/${filename}-redirect"
+    link_symbolic "$source" "$target"
+else
+    # Nginx reload agar symlink di sites-enabled auto hapus.
+    if [ -n "$found" ];then
+        chapter Menonaktifkan file config.
+        __ Backup file: '`'"$filename"'`'.
+        backupFile move "$path"
+        rcm_nginx_reload=1
+        ____
+    fi
+fi
 
 if [ -z "$nginx_reload" ];then
     rcm_nginx_reload=
