@@ -45,7 +45,7 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 
 # Functions.
 printVersion() {
-    echo '0.16.18'
+    echo '0.16.19'
 }
 printHelp() {
     title RCM SSH Setup

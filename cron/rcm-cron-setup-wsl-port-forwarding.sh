@@ -43,7 +43,7 @@ BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
 
 # Functions.
 printVersion() {
-    echo '0.16.18'
+    echo '0.16.19'
 }
 printHelp() {
     title RCM Cron Setup

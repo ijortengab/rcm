@@ -44,7 +44,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 
 # Functions.
 printVersion() {
-    echo '0.16.18'
+    echo '0.16.19'
 }
 printHelp() {
     title RCM Debian 11 Setup Server
