@@ -900,6 +900,8 @@ server {
     # ssl_certificate_key /etc/letsencrypt/live/__MASTER_CERTBOT_CERTIFICATE_NAME__/privkey.pem;
     # include /etc/letsencrypt/options-ssl-nginx.conf;
     # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # error_page 497 301 =307 https://$host:$server_port$request_uri;
 }
 EOF
     fileMustExists "$path"
@@ -1099,6 +1101,21 @@ else
         rcm_nginx_reload=1
         ____
     fi
+fi
+
+# Credit: https://stackoverflow.com/questions/15429043/how-to-redirect-on-the-same-port-from-http-to-https-with-nginx-reverse-proxy
+if [[ "$master_url_scheme" == https && ! "$master_url_port" == 443 ]];then
+    chapter Redirect to https if accessed with http
+    path="/etc/nginx/sites-available/$master_filename"
+    find="    error_page 497"
+    if findString "# ${find}" "$path";then
+        code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
+        sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
+    fi
+    if ! nginxGrep error_page contains 497 < "$path";then
+        error Enable gagal.; x
+    fi
+    ____
 fi
 
 if [ -z "$nginx_reload" ];then
