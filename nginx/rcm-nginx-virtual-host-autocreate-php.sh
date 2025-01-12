@@ -8,13 +8,15 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --certbot-certificate-name=*) certbot_certificate_name="${1#*=}"; shift ;;
         --certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_certificate_name="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
+        --fast) fast=1; shift ;;
         --filename=*) filename="${1#*=}"; shift ;;
         --filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then filename="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
+        --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
+        --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
         --url-host=*) url_host="${1#*=}"; shift ;;
         --url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url_host="$2"; shift; fi; shift ;;
         --url-port=*) url_port="${1#*=}"; shift ;;
@@ -732,6 +734,7 @@ code 'url_host="'$url_host'"'
 code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'certbot_certificate_name="'$certbot_certificate_name'"'
+code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
 rcm_nginx_reload=
 ____
 
@@ -951,6 +954,11 @@ if [[ "$url_scheme" == https && ! "$url_port" == 443 ]];then
 fi
 
 if [ -z "$nginx_reload" ];then
+    if [ -n "$rcm_nginx_reload" ];then
+        if [ -f "$tempfile_trigger_reload" ];then
+            echo 1 > "$tempfile_trigger_reload"
+        fi
+    fi
     rcm_nginx_reload=
 fi
 if [ -n "$rcm_nginx_reload" ];then
@@ -982,6 +990,7 @@ exit 0
 # --url-scheme
 # --url-host
 # --certbot-certificate-name
+# --tempfile-trigger-reload
 # )
 # MULTIVALUE=(
 # )

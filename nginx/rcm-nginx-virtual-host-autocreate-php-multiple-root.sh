@@ -11,10 +11,10 @@ while [[ $# -gt 0 ]]; do
         --master-certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_certbot_certificate_name="$2"; shift; fi; shift ;;
         --master-filename=*) master_filename="${1#*=}"; shift ;;
         --master-filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_filename="$2"; shift; fi; shift ;;
-        --master-include=*) master_include="${1#*=}"; shift ;;
-        --master-include) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_include="$2"; shift; fi; shift ;;
         --master-include-2=*) master_include_2="${1#*=}"; shift ;;
         --master-include-2) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_include_2="$2"; shift; fi; shift ;;
+        --master-include=*) master_include="${1#*=}"; shift ;;
+        --master-include) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_include="$2"; shift; fi; shift ;;
         --master-root=*) master_root="${1#*=}"; shift ;;
         --master-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_root="$2"; shift; fi; shift ;;
         --master-url-host=*) master_url_host="${1#*=}"; shift ;;
@@ -33,6 +33,8 @@ while [[ $# -gt 0 ]]; do
         --slave-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_root="$2"; shift; fi; shift ;;
         --slave-url-path=*) slave_url_path="${1#*=}"; shift ;;
         --slave-url-path) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_url_path="$2"; shift; fi; shift ;;
+        --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
+        --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
         --with-certbot-obtain) certbot_obtain=1; shift ;;
         --without-certbot-obtain) certbot_obtain=0; shift ;;
         --with-nginx-reload) nginx_reload=1; shift ;;
@@ -803,6 +805,7 @@ code 'slave_url_path_clean="'$slave_url_path_clean'"'
 code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'master_certbot_certificate_name="'$master_certbot_certificate_name'"'
+code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
 rcm_nginx_reload=
 ____
 
@@ -1119,6 +1122,11 @@ if [[ "$master_url_scheme" == https && ! "$master_url_port" == 443 ]];then
 fi
 
 if [ -z "$nginx_reload" ];then
+    if [ -n "$rcm_nginx_reload" ];then
+        if [ -f "$tempfile_trigger_reload" ];then
+            echo 1 > "$tempfile_trigger_reload"
+        fi
+    fi
     rcm_nginx_reload=
 fi
 if [ -n "$rcm_nginx_reload" ];then
@@ -1129,7 +1137,7 @@ fi
 
 exit 0
 
-# Aparse-options.sh \
+# parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \
 # --clean \
@@ -1156,6 +1164,7 @@ exit 0
 # --slave-dirname
 # --slave-fastcgi-pass
 # --slave-url-path
+# --tempfile-trigger-reload
 # )
 # MULTIVALUE=(
 # )
