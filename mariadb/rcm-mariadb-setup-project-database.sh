@@ -46,7 +46,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 
 # Functions.
 printVersion() {
-    echo '0.16.17'
+    echo '0.16.18'
 }
 printHelp() {
     title RCM MariaDB Setup Project Database
