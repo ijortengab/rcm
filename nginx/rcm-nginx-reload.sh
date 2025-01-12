@@ -78,6 +78,42 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+sleepExtended() {
+    # Menggunakan global variable countdown agar sleep ini dapat di-interupsi.
+    # Contoh:
+    # ```
+    # immediately() {
+    #     countdown=0
+    # }
+    # trap immediately SIGINT
+    # sleepExtended 30
+    # trap x SIGINT
+    # ```
+    local timer=$1
+    local width=$2
+    if [ -z "$width" ];then
+        width=80
+    fi
+    if [ "$timer" -gt 0 ];then
+        dikali10=$((timer*10))
+        countdown=$dikali10
+        _dotLength=$(( ( width * countdown ) / dikali10 ))
+        printf "\r\033[K" >&2
+        e; printf %"$_dotLength"s | tr " " "." >&2
+        printf "\r"
+        while [ "$countdown" -ge 0 ]; do
+            dotLength=$(( ( width * countdown ) / dikali10 ))
+            if [[ ! "$dotLength" == "$_dotLength" ]];then
+                _dotLength="$dotLength"
+                printf "\r\033[K" >&2
+                e; printf %"$dotLength"s | tr " " "." >&2
+                printf "\r"
+            fi
+            countdown=$((countdown - 1))
+            sleep .1
+        done
+    fi
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
@@ -85,13 +121,16 @@ ____
 
 chapter Reload nginx configuration.
 __ Cleaning broken symbolic link.
-code find /etc/nginx/sites-enabled -xtype l -delete -print
+code find /etc/nginx/sites-enabled -xtype l -print -delete
 find /etc/nginx/sites-enabled -xtype l -print
 find /etc/nginx/sites-enabled -xtype l -delete -print
 
 if nginx -t 2> /dev/null;then
     code nginx -s reload
     nginx -s reload
+    # Setelah reload biasanya parent process akan melakukan request http,
+    # maka kita perlu sleep
+    sleepExtended 3 30
 else
     code nginx -t
     nginx -t
