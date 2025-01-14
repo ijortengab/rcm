@@ -514,7 +514,9 @@ printSelectDialog() {
             esac
         done
         if [[ -z "$skip" ]];then
-            _; _.
+            if [ -z "$value" ];then
+                _; _.
+            fi
             until [ -n "$value" ];do
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
@@ -670,7 +672,9 @@ printSelectOtherDialog() {
             esac
         done
         if [[ -z "$type_mode" && -z "$skip" ]];then
-            _; _.
+            if [ -z "$value" ];then
+                _; _.
+            fi
             until [ -n "$value" ];do
                 __; read -p "Type the number: " value
                 if [[ $value =~ [^0-9] ]];then
@@ -1872,15 +1876,16 @@ wordWrapList() {
     declare -i min
 
     max=$(tput cols)
-    # Angka 6 adalah 4+2.
+    # Angka 11 adalah 4+2+5.
     # Angka 4 adalah tambahan indent.
     # Angka 2 adalah tambahan dari '# '.
-    _max=$((100 + ${#INDENT} + 6))
+    # Angka 5 adalah tambahan dari ', or '.
+    _max=$((100 + ${#INDENT} + 11))
     if [ $max -gt $_max ];then
         max=100
         min=80
     else
-        max=$((max - ${#INDENT} - 6))
+        max=$((max - ${#INDENT} - 11))
         min="$max"
     fi
 
@@ -1936,7 +1941,7 @@ wordWrapList() {
                     _.; __; _, 'or '; yellow "$each"; _, '.'; _.
                     current_line="or ${each}"
                 else
-                    _.; __; yellow "$each"
+                    _, ,; _.; __; yellow "$each"
                     current_line="$each"
                 fi
             fi
