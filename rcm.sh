@@ -2334,8 +2334,17 @@ Rcm_prompt() {
                             value="${available_values[0]}"
                             _; _.
                             __; _, "Available value: "; yellow "$value";  _, '.'; _.
-                            _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                            if [ -n "$interactive" ];then
+                                _; _.
+                                __; _, The one and only available value is selected.; _.
+                                userInputBooleanDefaultYes
+                                if [ -z "$boolean" ];then
+                                    value=
+                                fi
+                            else
+                                _; _.
+                                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                            fi
                         else
                             printSelectDialog available_values[@]
                         fi
