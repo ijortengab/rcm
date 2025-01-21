@@ -46,7 +46,7 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Functions.
 printVersion() {
-    echo '0.16.19'
+    echo '0.16.20'
 }
 printHelp() {
     title RCM PHPMyAdmin Auto-Installer
