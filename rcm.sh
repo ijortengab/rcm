@@ -383,7 +383,8 @@ printHistoryDialog() {
     declare -i count
     count=0
     _; _.
-    __ There are values available from history.
+    wordWrapDescription 'There are values available from history.'
+
     while read opt; do
         count+=1
         __; _, '['; yellow $count; _, ']'; _, ' '; _, "$opt"; _.
@@ -1741,16 +1742,17 @@ Rcm_resolve_dependencies() {
     fi
 }
 wordWrapDescription() {
-    local paragraph="$1" words_array
+    local paragraph="$1" indent_first_line=$2 words_array
     local current_line first_line last
-    declare -i max
-    declare -i min
-
-    max=$(tput cols)
-    # Angka 6 adalah 4+2.
-    # Angka 4 adalah tambahan indent.
+    local max=0
+    local min=0
+    local _indent_first_line
+    [ -z "$indent_first_line" ] && indent_first_line=1
+    indent_first_line=$((indent_first_line*4))
+    _indent_first_line=$((indent_first_line + 2))
     # Angka 2 adalah tambahan dari '# '.
-    _max=$((100 + ${#INDENT} + 6))
+    max=$(tput cols)
+    _max=$((100 + ${#INDENT} + $_indent_first_line))
     if [ $max -gt $_max ];then
         max=100
         min=80
@@ -1759,22 +1761,22 @@ wordWrapDescription() {
         min="$max"
     fi
 
-    declare -i i; i=0
+    local i=0
     words_array=($paragraph)
     local count="${#words_array[@]}"
     current_line=
     first_line=1
     for each in "${words_array[@]}"; do
-        i+=1
+        let i++
         [ "$i" == "$count" ] && last=1 || last=
         if [ -z "$current_line" ]; then
             if [ -n "$first_line" ];then
                 first_line=
                 current_line="$each"
-                __; _, "$each"
+                _; printf %"${indent_first_line}"s >&2; _, "$each"
             else
                 current_line="$each"
-                __; _, "$each"
+                _; printf %"${indent_first_line}"s >&2; _, "$each"
             fi
             if [ -n "$last" ];then
                 _.
@@ -1791,7 +1793,9 @@ wordWrapDescription() {
                 _, " ${each}"; _.
                 current_line=
             else
-                _.; __; _, "$each"
+                _.;
+                _; printf %"${indent_first_line}"s >&2;
+                _, "$each"
                 current_line="$each"
                 if [ -n "$last" ];then
                     _.
@@ -2336,7 +2340,7 @@ Rcm_prompt() {
                             __; _, "Available value: "; yellow "$value";  _, '.'; _.
                             if [ -n "$interactive" ];then
                                 _; _.
-                                __; _, The one and only available value is selected.; _.
+                                wordWrapDescription 'The one and only available value is selected.'
                                 userInputBooleanDefaultYes
                                 if [ -z "$boolean" ];then
                                     value=
@@ -2486,7 +2490,7 @@ Rcm_prompt_sigint() {
     _.;
     _.;
     error Interrupt by User.; _.
-    _ Use command below to return to the last dialog.; _.
+    wordWrapDescription 'Use command below to return to the last dialog.' 0
     if [ -z "$RCM_LAST_COMMAND" ];then
         RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
     fi
@@ -2496,9 +2500,6 @@ Rcm_prompt_sigint() {
     exit 0
 }
 wordWrapDescriptionColorize() {
-    local paragraph="$1" words_array default_color="$2"
-    [ -z $default_color ] && default_color=_,
-    color="$default_color"
     cleaningTag() {
         # global each
         # global color
@@ -2533,9 +2534,12 @@ wordWrapDescriptionColorize() {
             color_stop=
         fi
     }
+    local paragraph="$1" words_array default_color="$2"
+    [ -z $default_color ] && default_color=_,
+    color="$default_color"
     local current_line first_line last
-    declare -i max
-    declare -i min
+    local max=0
+    local min=0
     max=$(tput cols)
     # Angka 6 adalah 4+2.
     # Angka 4 adalah tambahan indent.
@@ -2548,49 +2552,53 @@ wordWrapDescriptionColorize() {
         max=$((max - ${#INDENT} - 6))
         min="$max"
     fi
-    declare -i i; i=0
+    local i=0
     words_array=($paragraph)
     local count="${#words_array[@]}"
     current_line=
     first_line=1
-    for each in "${words_array[@]}"; do
-        cleaningTag "$each"
-        cleaningCloseTag "$each"
-        i+=1
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -n "$first_line" ];then
-                first_line=
-                current_line="$each"
-                __; $color "$each"
-            else
-                current_line="$each"
-                __; $color "$each"
-            fi
-            if [ -n "$last" ];then
-                _.
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                current_line+=" ${each}"
-                $color " ${each}"
+    wordWrapSentence() {
+        for each in "${words_array[@]}"; do
+            cleaningTag "$each"
+            cleaningCloseTag "$each"
+            let i++
+            [ "$i" == "$count" ] && last=1 || last=
+            if [ -z "$current_line" ]; then
+                if [ -n "$first_line" ];then
+                    first_line=
+                    current_line="$each"
+                    __; $color "$each"
+                else
+                    current_line="$each"
+                    __; $color "$each"
+                fi
                 if [ -n "$last" ];then
                     _.
                 fi
-            elif [ "${#_current_line}" -le $max ];then
-                $color " ${each}"; _.
-                current_line=
             else
-                _.; __; $color "$each"
-                current_line="$each"
-                if [ -n "$last" ];then
-                    _.
+                _current_line="${current_line} ${each}"
+                if [ "${#_current_line}" -le $min ];then
+                    current_line+=" ${each}"
+                    $color " ${each}"
+                    if [ -n "$last" ];then
+                        _.
+                    fi
+                elif [ "${#_current_line}" -le $max ];then
+                    $color " ${each}"; _.
+                    current_line=
+                else
+                    _.; __; $color "$each"
+                    current_line="$each"
+                    if [ -n "$last" ];then
+                        _.
+                    fi
                 fi
             fi
-        fi
-        colorStop
-    done
+            colorStop
+        done
+    }
+    temp=$(wordWrapSentence 2>&1)
+    echo "$temp" >&2
 }
 
 # Requirement, validate, and populate value.
