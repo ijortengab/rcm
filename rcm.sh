@@ -92,7 +92,7 @@ unset _n
 operand=
 if [ -n "$1" ];then
     case "$1" in
-        update|history|install|get|list) command="$1"; shift ;;
+        update|history|install|get|list|recent) command="$1"; shift ;;
         *) operand="$1"; shift ;;
     esac
 else
@@ -295,6 +295,170 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions before execute command.
+wordWrapDescription() {
+    local paragraph="$1" indent_first_line=$2 words_array
+    local current_line first_line last
+    local max=0
+    local min=0
+    local _indent_first_line
+    [ -z "$indent_first_line" ] && indent_first_line=1
+    indent_first_line=$((indent_first_line*4))
+    _indent_first_line=$((indent_first_line + 2))
+    # Angka 2 adalah tambahan dari '# '.
+    max=$(tput cols)
+    _max=$((100 + ${#INDENT} + $_indent_first_line))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 6))
+        min="$max"
+    fi
+
+    local i=0
+    words_array=($paragraph)
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    for each in "${words_array[@]}"; do
+        let i++
+        [ "$i" == "$count" ] && last=1 || last=
+        if [ -z "$current_line" ]; then
+            if [ -n "$first_line" ];then
+                first_line=
+                current_line="$each"
+                _; printf %"${indent_first_line}"s >&2; _, "$each"
+            else
+                current_line="$each"
+                _; printf %"${indent_first_line}"s >&2; _, "$each"
+            fi
+            if [ -n "$last" ];then
+                _.
+            fi
+        else
+            _current_line="${current_line} ${each}"
+            if [ "${#_current_line}" -le $min ];then
+                current_line+=" ${each}"
+                _, " ${each}"
+                if [ -n "$last" ];then
+                    _.
+                fi
+            elif [ "${#_current_line}" -le $max ];then
+                _, " ${each}"; _.
+                current_line=
+            else
+                _.;
+                _; printf %"${indent_first_line}"s >&2;
+                _, "$each"
+                current_line="$each"
+                if [ -n "$last" ];then
+                    _.
+                fi
+            fi
+        fi
+    done
+}
+wordWrapDescriptionColorize() {
+    cleaningTag() {
+        # global each
+        # global color
+        local string="$1"
+        opentag=$(echo "$string" | grep -E -o '<[^</>]+>')
+        if [ -n "$opentag" ];then
+            color=$(echo "$opentag" | grep -E -o '[^<>]+')
+            string=${string//"$opentag"/}
+            closetag="</${color}>"
+            if grep -q -F "$closetag" <<< "$string";then
+                color_stop=1
+                string=${string//"$closetag"/}
+            fi
+        fi
+        each="$string"
+    }
+    cleaningCloseTag() {
+        # global each
+        # global color
+        local string="$1"
+        closetag="</${color}>"
+        if grep -q -F "$closetag" <<< "$string";then
+            color_stop=1
+            string=${string//"$closetag"/}
+        fi
+        each="$string"
+    }
+    colorStop() {
+        # global color_stop
+        if [ -n "$color_stop" ];then
+            color=$default_color
+            color_stop=
+        fi
+    }
+    local paragraph="$1" words_array default_color="$2"
+    [ -z $default_color ] && default_color=_,
+    color="$default_color"
+    local current_line first_line last
+    local max=0
+    local min=0
+    max=$(tput cols)
+    # Angka 6 adalah 4+2.
+    # Angka 4 adalah tambahan indent.
+    # Angka 2 adalah tambahan dari '# '.
+    _max=$((100 + ${#INDENT} + 6))
+    if [ $max -gt $_max ];then
+        max=100
+        min=80
+    else
+        max=$((max - ${#INDENT} - 6))
+        min="$max"
+    fi
+    local i=0
+    words_array=($paragraph)
+    local count="${#words_array[@]}"
+    current_line=
+    first_line=1
+    wordWrapSentence() {
+        for each in "${words_array[@]}"; do
+            cleaningTag "$each"
+            cleaningCloseTag "$each"
+            let i++
+            [ "$i" == "$count" ] && last=1 || last=
+            if [ -z "$current_line" ]; then
+                if [ -n "$first_line" ];then
+                    first_line=
+                    current_line="$each"
+                    __; $color "$each"
+                else
+                    current_line="$each"
+                    __; $color "$each"
+                fi
+                if [ -n "$last" ];then
+                    _.
+                fi
+            else
+                _current_line="${current_line} ${each}"
+                if [ "${#_current_line}" -le $min ];then
+                    current_line+=" ${each}"
+                    $color " ${each}"
+                    if [ -n "$last" ];then
+                        _.
+                    fi
+                elif [ "${#_current_line}" -le $max ];then
+                    $color " ${each}"; _.
+                    current_line=
+                else
+                    _.; __; $color "$each"
+                    current_line="$each"
+                    if [ -n "$last" ];then
+                        _.
+                    fi
+                fi
+            fi
+            colorStop
+        done
+    }
+    temp=$(wordWrapSentence 2>&1)
+    echo "$temp" >&2
+}
 resolve_relative_path() {
     if [ -d "$1" ];then
         cd "$1" || return 1
@@ -403,8 +567,6 @@ printHistoryDialog() {
             [1-$count_max])
                 echo "$char"
                 value=$(sed -n ${char}p <<< "$history_value")
-                _; _.
-                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                 save_history=
                 break ;;
             *) echo
@@ -1281,53 +1443,16 @@ command-history() {
         done
     fi
 }
-command-list() {
-    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
-    if [ -n "$raw" ];then
-        Rcm_list
-        exit 0
-    fi
+command-recent() {
     history_storage=$HOME'/.cache/rcm/rcm.history'
-    save_history=1
     history_value=
     if [ -f "$history_storage" ];then
         history_value=$(tail -9 "$history_storage")
-        parameter='<command>'
+        parameter='command'
         printHistoryDialog
     fi
     if [ -z "$value" ];then
-        _; _.
-        _ Listing the command then execute it.; _.
-        _; _.
-        sleepExtended 3 30
-        declare -i count
-        is_required=1
-        parameter=command
-        command_list=$(Rcm_list)
-        read -ra source -d '' <<< "$command_list"
-        for ((i = 0 ; i < ${#source[@]} ; i++)); do
-            count+=1
-            __; _, '['$count']' "${source[$i]}"; _.
-        done
-        _; _.
-        until [ -n "$value" ];do
-            __; read -p "Type the number: " value
-            if [[ $value =~ [^0-9] ]];then
-                value=
-                __; red Please type one of available number.;_.
-            fi
-            if [[ $value =~ ^0 ]];then
-                value=
-                __; red Please type one of available number.;_.
-            fi
-            if [ -n "$value" ];then
-                value=$((value - 1))
-                value="${source[$value]}"
-                if [ -z "$value" ];then
-                    __; red Please type one of available number.;_.
-                fi
-            fi
-        done
+        exit 1
     fi
     command_raw="${value}"
     command="rcm-${value}"
@@ -1335,11 +1460,55 @@ command-list() {
     _ Command' '; magenta $command_raw; _, ' 'selected.; _.
     ____
 
-    if [ -n "$value" ];then
-        if [ -f "$history_storage" ];then
-            if grep -q -- "^${command}$" "$history_storage";then
-                save_history=
+}
+command-list() {
+    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
+    if [ -n "$raw" ];then
+        Rcm_list
+        exit 0
+    fi
+    _; _.
+    _ Listing the command then execute it.; _.
+    _; _.
+    declare -i count
+    is_required=1
+    parameter=command
+    command_list=$(Rcm_list)
+    read -ra source -d '' <<< "$command_list"
+    for ((i = 0 ; i < ${#source[@]} ; i++)); do
+        count+=1
+        __; _, '['$count']' "${source[$i]}"; _.
+    done
+    _; _.
+    until [ -n "$value" ];do
+        __; read -p "Type the number: " value
+        if [[ $value =~ [^0-9] ]];then
+            value=
+            __; red Please type one of available number.;_.
+        fi
+        if [[ $value =~ ^0 ]];then
+            value=
+            __; red Please type one of available number.;_.
+        fi
+        if [ -n "$value" ];then
+            value=$((value - 1))
+            value="${source[$value]}"
+            if [ -z "$value" ];then
+                __; red Please type one of available number.;_.
             fi
+        fi
+    done
+    command_raw="${value}"
+    command="rcm-${value}"
+    _; _.
+    _ Command' '; magenta $command_raw; _, ' 'selected.; _.
+    ____
+
+    history_storage=$HOME'/.cache/rcm/rcm.history'
+    save_history=1
+    if [ -f "$history_storage" ];then
+        if grep -q -- "^${command_raw}$" "$history_storage";then
+            save_history=
         fi
     fi
     if [ -n "$save_history" ];then
@@ -1364,6 +1533,8 @@ BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 # Execute command.
 if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
     if [ "$command" == list ];then
+        command-${command} "$@"
+    elif [ "$command" == recent ];then
         command-${command} "$@"
     else
         command-${command} "$@"
@@ -1741,69 +1912,6 @@ Rcm_resolve_dependencies() {
         fi
     fi
 }
-wordWrapDescription() {
-    local paragraph="$1" indent_first_line=$2 words_array
-    local current_line first_line last
-    local max=0
-    local min=0
-    local _indent_first_line
-    [ -z "$indent_first_line" ] && indent_first_line=1
-    indent_first_line=$((indent_first_line*4))
-    _indent_first_line=$((indent_first_line + 2))
-    # Angka 2 adalah tambahan dari '# '.
-    max=$(tput cols)
-    _max=$((100 + ${#INDENT} + $_indent_first_line))
-    if [ $max -gt $_max ];then
-        max=100
-        min=80
-    else
-        max=$((max - ${#INDENT} - 6))
-        min="$max"
-    fi
-
-    local i=0
-    words_array=($paragraph)
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    for each in "${words_array[@]}"; do
-        let i++
-        [ "$i" == "$count" ] && last=1 || last=
-        if [ -z "$current_line" ]; then
-            if [ -n "$first_line" ];then
-                first_line=
-                current_line="$each"
-                _; printf %"${indent_first_line}"s >&2; _, "$each"
-            else
-                current_line="$each"
-                _; printf %"${indent_first_line}"s >&2; _, "$each"
-            fi
-            if [ -n "$last" ];then
-                _.
-            fi
-        else
-            _current_line="${current_line} ${each}"
-            if [ "${#_current_line}" -le $min ];then
-                current_line+=" ${each}"
-                _, " ${each}"
-                if [ -n "$last" ];then
-                    _.
-                fi
-            elif [ "${#_current_line}" -le $max ];then
-                _, " ${each}"; _.
-                current_line=
-            else
-                _.;
-                _; printf %"${indent_first_line}"s >&2;
-                _, "$each"
-                current_line="$each"
-                if [ -n "$last" ];then
-                    _.
-                fi
-            fi
-        fi
-    done
-}
 wordWrapCommand() {
     # global words_array
     local inline_description="$1"
@@ -1959,7 +2067,7 @@ Rcm_prompt() {
     argument_pass=()
     argument_preview=()
     argument_placeholders=
-    parameter='<command>'
+    parameter='command'
     available_subcommands=()
     _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
     if [ -n "$_available_subcommands" ];then
@@ -2212,6 +2320,10 @@ Rcm_prompt() {
                             if [ -z "$value" ];then
                                 if [ -n "$history_value" ];then
                                     printHistoryDialog
+                                    if [ -n "$value" ];then
+                                        _; _.
+                                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                                    fi
                                 fi
                             fi
                             if [ -z "$value" ];then
@@ -2272,6 +2384,10 @@ Rcm_prompt() {
                 if [ -n "$boolean" ]; then
                     if [ -n "$history_value" ];then
                         printHistoryDialog
+                        if [ -n "$value" ];then
+                            _; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                        fi
                     fi
                     if [ -z "$value" ];then
                         __; read -p "Type the value: " value
@@ -2314,6 +2430,10 @@ Rcm_prompt() {
                 if [ -z "$value" ];then
                     if [ -n "$history_value" ];then
                         printHistoryDialog
+                        if [ -n "$value" ];then
+                            _; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                        fi
                     fi
                 fi
                 if [ -z "$value" ];then
@@ -2438,6 +2558,10 @@ Rcm_prompt() {
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
                                 printHistoryDialog
+                                if [ -n "$value" ];then
+                                    _; _.
+                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                                fi
                             fi
                             if [ -z "$value" ];then
                                 __; read -p "Type the value: " value
@@ -2498,107 +2622,6 @@ Rcm_prompt_sigint() {
     words_array=($RCM_LAST_COMMAND)
     wordWrapCommand
     exit 0
-}
-wordWrapDescriptionColorize() {
-    cleaningTag() {
-        # global each
-        # global color
-        local string="$1"
-        opentag=$(echo "$string" | grep -E -o '<[^</>]+>')
-        if [ -n "$opentag" ];then
-            color=$(echo "$opentag" | grep -E -o '[^<>]+')
-            string=${string//"$opentag"/}
-            closetag="</${color}>"
-            if grep -q -F "$closetag" <<< "$string";then
-                color_stop=1
-                string=${string//"$closetag"/}
-            fi
-        fi
-        each="$string"
-    }
-    cleaningCloseTag() {
-        # global each
-        # global color
-        local string="$1"
-        closetag="</${color}>"
-        if grep -q -F "$closetag" <<< "$string";then
-            color_stop=1
-            string=${string//"$closetag"/}
-        fi
-        each="$string"
-    }
-    colorStop() {
-        # global color_stop
-        if [ -n "$color_stop" ];then
-            color=$default_color
-            color_stop=
-        fi
-    }
-    local paragraph="$1" words_array default_color="$2"
-    [ -z $default_color ] && default_color=_,
-    color="$default_color"
-    local current_line first_line last
-    local max=0
-    local min=0
-    max=$(tput cols)
-    # Angka 6 adalah 4+2.
-    # Angka 4 adalah tambahan indent.
-    # Angka 2 adalah tambahan dari '# '.
-    _max=$((100 + ${#INDENT} + 6))
-    if [ $max -gt $_max ];then
-        max=100
-        min=80
-    else
-        max=$((max - ${#INDENT} - 6))
-        min="$max"
-    fi
-    local i=0
-    words_array=($paragraph)
-    local count="${#words_array[@]}"
-    current_line=
-    first_line=1
-    wordWrapSentence() {
-        for each in "${words_array[@]}"; do
-            cleaningTag "$each"
-            cleaningCloseTag "$each"
-            let i++
-            [ "$i" == "$count" ] && last=1 || last=
-            if [ -z "$current_line" ]; then
-                if [ -n "$first_line" ];then
-                    first_line=
-                    current_line="$each"
-                    __; $color "$each"
-                else
-                    current_line="$each"
-                    __; $color "$each"
-                fi
-                if [ -n "$last" ];then
-                    _.
-                fi
-            else
-                _current_line="${current_line} ${each}"
-                if [ "${#_current_line}" -le $min ];then
-                    current_line+=" ${each}"
-                    $color " ${each}"
-                    if [ -n "$last" ];then
-                        _.
-                    fi
-                elif [ "${#_current_line}" -le $max ];then
-                    $color " ${each}"; _.
-                    current_line=
-                else
-                    _.; __; $color "$each"
-                    current_line="$each"
-                    if [ -n "$last" ];then
-                        _.
-                    fi
-                fi
-            fi
-            colorStop
-        done
-    }
-    temp=$(wordWrapSentence 2>&1)
-    echo "$temp" >&2
 }
 
 # Requirement, validate, and populate value.
