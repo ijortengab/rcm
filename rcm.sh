@@ -360,7 +360,7 @@ wordWrapDescription() {
     local min=0
     local _indent_first_line
     [ -z "$indent_first_line" ] && indent_first_line=1
-    indent_first_line=$((indent_first_line*4))
+    indent_first_line=$((indent_first_line*${#RCM_INDENT}))
     _indent_first_line=$((indent_first_line + 2))
     # Angka 2 adalah tambahan dari '# '.
     max=$(tput cols)
@@ -461,12 +461,12 @@ wordWrapDescriptionColorize() {
     # Angka 6 adalah 4+2.
     # Angka 4 adalah tambahan indent.
     # Angka 2 adalah tambahan dari '# '.
-    _max=$((100 + ${#INDENT} + 6))
+    _max=$((100 + ${#INDENT} + ${#RCM_INDENT} + 2))
     if [ $max -gt $_max ];then
         max=100
         min=80
     else
-        max=$((max - ${#INDENT} - 6))
+        max=$((max - ${#INDENT} - ${#RCM_INDENT} - 2))
         min="$max"
     fi
     local i=0
@@ -474,6 +474,7 @@ wordWrapDescriptionColorize() {
     local count="${#words_array[@]}"
     current_line=
     first_line=1
+
     wordWrapSentence() {
         for each in "${words_array[@]}"; do
             cleaningTag "$each"
@@ -517,6 +518,7 @@ wordWrapDescriptionColorize() {
     temp=$(wordWrapSentence 2>&1)
     echo "$temp" >&2
 }
+
 resolve_relative_path() {
     if [ -d "$1" ];then
         cd "$1" || return 1
@@ -1365,7 +1367,6 @@ Rcm_install() {
     if command -v $shell_script >/dev/null;then
         error "Command has exists: ${shell_script}."; x
     fi
-    # VarDump extension url
     notfound=
     if [ -n "$source" ];then
         local table=$HOME/.config/rcm/rcm.table.extension
@@ -1795,7 +1796,7 @@ Rcm_resolve_dependencies() {
                                 code rcm update $(sed s,^rcm-,, <<< "$command_required")
                             fi
                             OLDINDENT="$INDENT"; INDENT+=''
-                            INDENT+='    '
+                            INDENT+="${RCM_INDENT}"
                             blob_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
                             Rcm_github_release update $command_required $github_owner_repo $github_file_path
                             INDENT="$OLDINDENT"
@@ -1805,7 +1806,7 @@ Rcm_resolve_dependencies() {
                                 code rcm self-update
                             fi
                             OLDINDENT="$INDENT"; INDENT+=''
-                            INDENT+='    '
+                            INDENT+="${RCM_INDENT}"
                             set -- update rcm ijortengab/rcm rcm.sh
                             Rcm_github_release "$@"
                             INDENT="$OLDINDENT"
@@ -1826,7 +1827,7 @@ Rcm_resolve_dependencies() {
                                             code rcm update $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                         fi
                                         OLDINDENT="$INDENT"; INDENT+=''
-                                        INDENT+='    '
+                                        INDENT+="${RCM_INDENT}"
                                         Rcm_github_release update $command_required $github_owner_repo $github_file_path
                                         INDENT="$OLDINDENT"
                                         is_updated=1
@@ -1863,7 +1864,7 @@ Rcm_resolve_dependencies() {
                             code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         fi
                         OLDINDENT="$INDENT"; INDENT+=''
-                        INDENT+='    '
+                        INDENT+="${RCM_INDENT}"
                         Rcm_github_release install "$command_required" "$github_owner_repo" "$github_file_path"
                         INDENT="$OLDINDENT"
                     elif [[ "$command_required" =~ ^rcm- ]];then
@@ -1884,7 +1885,7 @@ Rcm_resolve_dependencies() {
                                         code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                                     fi
                                     OLDINDENT="$INDENT"; INDENT+=''
-                                    INDENT+='    '
+                                    INDENT+="${RCM_INDENT}"
                                     Rcm_github_release install $command_required $github_owner_repo $github_file_path
                                     INDENT="$OLDINDENT"
                                 fi
@@ -1900,13 +1901,13 @@ Rcm_resolve_dependencies() {
                                 if [ -n "$loud" ];then
                                     code rcm get "$url"
                                 fi
-                                INDENT+='    '
+                                INDENT+="${RCM_INDENT}"
                                 Rcm_get "$url"
                             else
                                 if [ -n "$loud" ];then
                                     code rcm get "$url" --save-as='"'"$command_required"'"'
                                 fi
-                                INDENT+='    '
+                                INDENT+="${RCM_INDENT}"
                                 Rcm_get "$url"
                             fi
                             INDENT="$OLDINDENT"
@@ -1997,8 +1998,8 @@ wordWrapCommand() {
         [ "$i" == "$count" ] && last=1 || last=
         if [ -z "$current_line" ]; then
             if [ -z "$first_line" ];then
-                current_line="    ${each}"
-                e; magenta "    $each";
+                current_line="${RCM_INDENT}${each}"
+                e; magenta "${RCM_INDENT}$each";
             else
                 first_line=
                 if [ -n "$inline_description" ];then
@@ -2029,8 +2030,8 @@ wordWrapCommand() {
                 fi
                 current_line=
             else
-                magenta ' \'; _.; e; magenta "    $each"
-                current_line="    ${each}"
+                magenta ' \'; _.; e; magenta "${RCM_INDENT}$each"
+                current_line="${RCM_INDENT}${each}"
                 if [ -n "$last" ];then
                     _.
                 fi
@@ -2891,7 +2892,7 @@ _ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
-INDENT+="    " BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
+INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
 
 chapter Timer Finish.
 _ End: $(date +%Y%m%d-%H%M%S); _.
