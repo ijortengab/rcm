@@ -31,7 +31,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        install|update|get|history|list)
+        install|update|get|history|list|recent)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        install|update|get|history|list)
+        install|update|get|history|list|recent)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -165,7 +165,6 @@ case "$command" in
                 --delete=*) delete+=("${1#*=}"); shift ;;
                 --delete) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then delete+=("$2"); shift; fi; shift ;;
                 --delete-all) delete_all=1; shift ;;
-                --fast) fast=1; shift ;;
                 --) shift
                     while [[ $# -gt 0 ]]; do
                         case "$1" in
@@ -243,46 +242,104 @@ printHelp() {
     _ 'URL '; yellow git.io/rcm; _.
     _.
 cat << EOF
-Usage: rcm
-       rcm [command]
-       rcm history --delete-all
-       rcm history --delete rcm-wsl-setup-lemp-stack --delete rcm-composer-autoinstaller
-       rcm install drupal --url https://github.com/ijortengab/drupal-autoinstaller --path rcm/rcm-drupal.sh
-       rcm install ispconfig --url https://github.com/ijortengab/ispconfig-autoinstaller --path rcm/rcm-ispconfig.sh
-       rcm install
-       rcm install <commmand>
-       rcm update
-       rcm update <commmand>
-       rcm get <script>
-       rcm list
+Usage: rcm [options]
+       rcm <command> [options]
+       rcm [options] <script> [options]
 
-Available commands: history, update, install, get, list.
+Example:
+        rcm history --delete-all
+        rcm install drupal --url https://github.com/ijortengab/drupal-autoinstaller --path rcm/rcm-drupal.sh
+        rcm install ispconfig --url https://github.com/ijortengab/ispconfig-autoinstaller --path rcm/rcm-ispconfig.sh
+        rcm list --raw
+        rcm recent
 
-Options:
+Available commands: history, update, install, get, list, recent.
 
 Global Options:
-   --slow, -s
-        Add delay every subtask.
    --version
         Print version of this script.
    --help
         Show this help.
-   --binary-directory-exists-sure
-        Bypass binary directory checking.
-   --interactive
-        Show asking for confirmation if needed. Default action.
-   --non-interactive, -x
-        Run without ever asking for user input.
-   --verbose, -v
-        Verbose mode. Causes rcm to print debugging messages about its progress.
-        Multiple -v options increase the verbosity.
-        The maximum is 3.
-   --without-resolve-dependencies
-        Skip resolve dependenices.
-   --with-resolve-dependencies
-        Resolve dependenices. Default action.
-   --resolved, -r
-        Alias of --without-resolve-dependencies.
+
+HISTORY COMMAND.
+    List the input prompt of script.
+
+    Usage:
+        rcm history [options]
+
+    Options for history command:
+        --delete-all
+            Delete all of history.
+        --delete <script> [--delete <script>]...
+            Delete history spesific for the script. Multiple.
+
+LIST COMMAND.
+    List the available script to be executed.
+
+    Usage:
+        rcm list [options]
+
+    Options for list command:
+        --raw
+            List the script without interactive.
+
+GET COMMAND.
+    Get the script by URL.
+
+    Usage:
+        rcm get <url> [options]
+
+    Options for get command:
+        --save-as
+            Filename to saved.
+
+INSTALL COMMAND.
+    Install the external script from Remote Repository.
+
+    Usage:
+        rcm install <script> [options]
+
+    Options for install command:
+        --url
+            The URL of Repository.
+        --path
+            Path to the script from root of repository
+        --source
+            Use the existing script as source of URL.
+
+UPDATE COMMAND.
+    Update version of script to the latest.
+
+    Usage:
+        rcm update
+        rcm update <script> [options]
+
+    Options for update command:
+        --url
+            The URL of Repository.
+        --path
+            Path to the script from root of repository
+        --rollback
+            Undo to previous version of script.
+
+SCRIPT COMMAND.
+    Execute the script.
+
+    Options for <script>:
+       --slow, -s
+            Add delay every subtask.
+       --interactive
+            Show asking for confirmation if needed. Default action.
+       --non-interactive, -x
+            Run without ever asking for user input.
+       --verbose, -v
+            Verbose mode. Causes rcm to print debugging messages about its progress.
+            Multiple -v options increase the verbosity.
+            The maximum is 3.
+       --without-resolve-dependencies, --resolved, -r
+            Skip resolve dependenices.
+       --with-resolve-dependencies
+            Resolve dependenices. Default action.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -2913,7 +2970,6 @@ exit 0
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
 # --delete-all
-# --fast
 # )
 # MULTIVALUE=(
 # --delete
