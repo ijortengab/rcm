@@ -53,7 +53,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.16.20'
+    echo '0.16.21'
 }
 printHelp() {
     title RCM DigitalOcean API

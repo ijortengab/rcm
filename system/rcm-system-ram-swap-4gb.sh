@@ -39,7 +39,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions. Help and Version.
 printVersion() {
-    echo '0.16.20'
+    echo '0.16.21'
 }
 printHelp() {
     title RCM System RAM Swap

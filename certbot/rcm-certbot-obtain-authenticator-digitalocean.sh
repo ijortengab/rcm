@@ -45,7 +45,7 @@ TOKEN_INI=${TOKEN_INI:=[HOME]/.digitalocean-token.ini}
 
 # Functions.
 printVersion() {
-    echo '0.16.20'
+    echo '0.16.21'
 }
 printHelp() {
     title RCM Certbot Obtain
