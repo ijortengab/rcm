@@ -877,8 +877,8 @@ target="/etc/nginx/sites-enabled/$filename"
 link_symbolic "$source" "$target"
 
 path="/etc/nginx/sites-available/${filename}-redirect"
-filename="${filename}-redirect"
-chapter Mengecek nginx config file: '`'$filename'`'.
+filename_redirect="${filename}-redirect"
+chapter Mengecek nginx config file: '`'$filename_redirect'`'.
 isFileExists "$path"
 ____
 
@@ -894,14 +894,14 @@ if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
     fi
     if [ -n "$create_new" ];then
         path="/etc/nginx/sites-available/${filename}-redirect"
-        filename="${filename}-redirect"
-        chapter Membuat nginx config file: '`'$filename'`'.
+        filename_redirect="${filename}-redirect"
+        chapter Membuat nginx config file: '`'$filename_redirect'`'.
         code 'path="'$path'"'
         if [ -f "$path" ];then
-            __ Backup file: '`'"$filename"'`'.
+            __ Backup file: '`'"$filename_redirect"'`'.
             backupFile move "$path"
         fi
-        __ Membuat file "$filename".
+        __ Membuat file "$filename_redirect".
         cat <<'EOF' > "$path"
 server {
     if ($host = __URL_HOST__) {
@@ -932,7 +932,7 @@ else
     # Nginx reload agar symlink di sites-enabled auto hapus.
     if [ -n "$found" ];then
         chapter Menonaktifkan file config.
-        __ Backup file: '`'"$filename"'`'.
+        __ Backup file: '`'"$filename_redirect"'`'.
         backupFile move "$path"
         rcm_nginx_reload=1
         ____
