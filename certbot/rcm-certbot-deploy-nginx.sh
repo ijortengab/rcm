@@ -96,6 +96,10 @@ code 'domain=('"${domain[@]}"')'
 if [[ "${#domain[@]}" -eq 0 ]];then
     error Argument --domain is required.; x
 fi
+# domain pertama adalah Certificate Name.
+certificate_name=${domain[0]}
+code 'certificate_name="'$certificate_name'"'
+tempfile=
 ____
 
 chapter Populate variable email.
@@ -114,13 +118,40 @@ for each in "${domain[@]}"; do
     arguments+=(--domain "$each")
 done
 set -- "${arguments[@]}"
+if [ -z "$tempfile" ];then
+    tempfile=$(mktemp -p /dev/shm -t rcm-certbot-deploy-nginx.XXXXXX)
+    deletetempfile=1
+fi
 # https://eff-certbot.readthedocs.io/en/latest/using.html#combination
-code certbot -v --non-interactive --nginx --agree-tos --email="$email" \
-    "$@"
-certbot -v --non-interactive --nginx --agree-tos --email="$email" \
-    "$@" \
-    ; [ ! $? -eq 0 ] && x
+msg='Another instance of Certbot is already running.'
+while true; do
+    code certbot -v --non-interactive --nginx --agree-tos --email="$email" \
+        "$@"
+    certbot -v --non-interactive --nginx --agree-tos --email="$email" \
+        "$@" 2>&1 | tee "$tempfile"
+    if [[ $(head -1 "$tempfile") == "$msg" ]];then
+        e Retrying...; _.
+        code sleep 3
+        sleep 3
+    else
+        break
+    fi
+done
 ____
+
+chapter Review Certificate.
+code certbot certificates --cert-name='"'"$certificate_name"
+# Verifikasi terutama jika exit code tidak 0.
+if certbot certificates --cert-name="$certificate_name" 2>/dev/null | tee "$tempfile" | grep -q -F 'Certificate Name: ';then
+    while IFS= read -r line; do e "$line"; _.; done < $tempfile
+else
+    error Error has been occurred. The certificate has not found.
+    [ -n "$deletetempfile" ] && rm "$tempfile"
+    x
+fi
+____
+
+[ -n "$deletetempfile" ] && rm "$tempfile"
 
 exit 0
 
