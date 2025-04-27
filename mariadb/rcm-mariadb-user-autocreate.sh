@@ -108,8 +108,8 @@ code 'db_user_host="'$db_user_host'"'
 ____
 
 chapter Mengecek database user '`'$db_user'`'.
-code mysql --silent --skip-column-names -e '"''select COUNT(*) FROM mysql.user WHERE user = '"'""$db_user""'"';''"'
-msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
+code mysql --silent --skip-column-names -e '"''select COUNT(*) FROM mysql.user WHERE user = '"'""$db_user""'"' and host = '"'""$db_user_host""'"';''"'
+msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user' and host = '$db_user_host';")
 notfound=
 if [ $msg -gt 0 ];then
     __ Database user ditemukan.
@@ -123,14 +123,14 @@ if [ -n "$notfound" ];then
     chapter Membuat database user.
     code 'mysql -e ''"''create user '"'""${db_user}""'"'@'"'""${db_user_host}""'"' identified by '"'""${db_user_password}""'"';''"'
     mysql -e "create user '${db_user}'@'${db_user_host}' identified by '${db_user_password}';"
-    msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user';")
+    msg=$(mysql --silent --skip-column-names -e "select COUNT(*) FROM mysql.user WHERE user = '$db_user' and host = '$db_user_host';")
     if [ $msg -gt 0 ];then
         __; green Database user ditemukan.; _.
     else
         __; red Database user tidak ditemukan; x
     fi
     ____
-else
+elif [ "$db_user_host" == localhost ];then
     chapter Mengecek password database user.
     u="$db_user"
     p="$db_user_password"
