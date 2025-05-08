@@ -2123,6 +2123,9 @@ Rcm_prompt() {
     local value
     local command="$1"
     local chapter_printed=
+    local load_other_options=
+    local immediately_other_options=
+    local argument_preview_bypass=
     argument_pass=()
     argument_preview=()
     argument_placeholders=
@@ -2341,6 +2344,16 @@ Rcm_prompt() {
                     backup_flag=
                     argument_boolean=1
                 fi
+
+                # Jika $parameter merupakan other option, maka skip semua dialog.
+                # jika tidak ada prepopulate value.
+                if [ -n "$immediately_other_options" ];then
+                    if [ -z "$_boolean" ];then
+                        backup_flag=
+                        argument_boolean=' '
+                    fi
+                fi
+
                 if [ -n "$backup_flag" ];then
                     printBackupFlagDialog
                     argument_boolean="$boolean"
@@ -2417,7 +2430,9 @@ Rcm_prompt() {
                 else
                     # Populate placeholders.
                     argument_placeholders+='['"$parameter"']: '"0"
-                    argument_preview+=("${parameter}-")
+                    if [ -z "$argument_preview_bypass" ];then
+                        argument_preview+=("${parameter}-")
+                    fi
                 fi
                 if [ -n "$argument_boolean" ];then
                     if [ -n "$is_press" ];then
@@ -2483,6 +2498,17 @@ Rcm_prompt() {
                         break
                     fi
                 done
+
+                # Jika $parameter merupakan other option, maka skip semua dialog.
+                # jika tidak ada prepopulate value.
+                if [ -n "$immediately_other_options" ];then
+                    if [ -z "$value" ];then
+                        backup_value=
+                        # history_value=
+                        value=' '
+                    fi
+                fi
+
                 if [ -n "$backup_value" ];then
                     printBackupDialog
                 fi
@@ -2572,7 +2598,9 @@ Rcm_prompt() {
                     argument_placeholders+='['"$parameter"']: '"$value"
                 else
                     argument_placeholders+='['"$parameter"']: -'
-                    argument_preview+=("${parameter}-")
+                    if [ -z "$argument_preview_bypass" ];then
+                        argument_preview+=("${parameter}-")
+                    fi
                 fi
                 if [[ -n "$value" && "$is_typing" ]];then
                     _; _.
@@ -2655,6 +2683,28 @@ Rcm_prompt() {
                         again=
                     fi
                 done
+            fi
+            # Other options.
+            if [[ -z "$options" && -z "$load_other_options" ]];then
+                other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
+                if [ -n "$other_options" ];then
+                    options="$other_options"
+                    load_other_options=1
+                    if [ -z "$immediately" ];then
+                        _; _.
+                        _; _, 'There are '; yellow other ;_, ' arguments available and optional.'; _.
+                        _; _.
+                        __; _, Prompt other arguments?; _.
+                        userInputBooleanDefaultNo
+                        if [ -z "$boolean" ]; then
+                            immediately_other_options=1
+                            argument_preview_bypass=1
+                        fi
+                    else
+                        argument_preview_bypass=1
+                        immediately_other_options=1
+                    fi
+                fi
             fi
         done
         ____
