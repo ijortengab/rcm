@@ -6,6 +6,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --extension=*) extension+=("${1#*=}"); shift ;;
+        --extension) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then extension+=("$2"); shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
@@ -194,11 +196,18 @@ addRepositoryPpaOndrejPhpUbuntu() {
 # Requirement, validate, and populate value.
 chapter Dump variable.
 code 'php_version="'$php_version'"'
+code 'extension=('"${extension[@]}"')'
+php_extension=
+for each in "${extension[@]}"; do
+    php_extension+=" php${php_version}-${each}"
+done
+
+
 ____
 
 if [ -z "$php_version" ];then
-    downloadApplication php
-    validateApplication php
+    downloadApplication php $php_extension
+    validateApplication php $php_extension
 else
     if [ -f /etc/os-release ];then
         . /etc/os-release
@@ -260,8 +269,8 @@ else
         *) error OS "$ID" not supported; x;
     esac
     [ -n "$eligible" ] && {
-        downloadApplication php"$php_version"
-        validateApplication php"$php_version"
+        downloadApplication php"$php_version" $php_extension
+        validateApplication php"$php_version" $php_extension
     } || { error Package php"$php_version" not found.; x; }
 fi
 ____
@@ -285,6 +294,9 @@ exit 0
 # --php-version
 # )
 # FLAG_VALUE=(
+# )
+# MULTIVALUE=(
+# --extension
 # )
 # EOF
 # clear
