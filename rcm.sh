@@ -2544,11 +2544,16 @@ Rcm_prompt() {
                             _; _.
                             __; _, "Available value: "; yellow "$value";  _, '.'; _.
                             if [ -n "$interactive" ];then
-                                _; _.
-                                wordWrapDescription 'The one and only available value is selected.'
-                                userInputBooleanDefaultYes
-                                if [ -z "$boolean" ];then
-                                    value=
+                                if [ -n "$is_required" ];then
+                                    _; _.
+                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                                else
+                                    _; _.
+                                    wordWrapDescription 'The one and only available value is selected.'
+                                    userInputBooleanDefaultYes
+                                    if [ -z "$boolean" ];then
+                                        value=' '
+                                    fi
                                 fi
                             else
                                 _; _.
