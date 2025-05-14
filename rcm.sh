@@ -543,9 +543,12 @@ fileMustExists() {
     fi
 }
 userInputBooleanDefaultYes() {
+    _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
     __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
     boolean=
+    _; _.
+    __ Press the yellow key to select.
     while true; do
         __; read -rsn 1 -p "Select: " char
         if [ -z "$char" ];then
@@ -560,9 +563,12 @@ userInputBooleanDefaultYes() {
     done
 }
 userInputBooleanDefaultNo() {
+    _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
     __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
     boolean=
+    _; _.
+    __ Press the yellow key to select.
     while true; do
         __; read -rsn 1 -p "Select: " char
         if [ -z "$char" ];then
@@ -1611,6 +1617,7 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
+# https://github.com/ijortengab/bash/tree/master/functions
 ArraySearch() {
     local index match="$1"
     local source=("${!2}")
@@ -1703,6 +1710,26 @@ ArrayShift() {
     _return=()
     for (( index=1; index < ${#source[@]} ; index++ )); do
         _return+=("${source[$index]}")
+    done
+}
+ArrayRemove() {
+    local index match="$1"
+    _return=("${!2}")
+    for index in "${!_return[@]}"; do
+       if [[ "${_return[$index]}" == "${match}" ]]; then
+            _return=("${_return[@]:0:$index}" "${_return[@]:$(($index + 1))}")
+           break
+       fi
+    done
+}
+ArrayRemoveAll() {
+    local index match="$1"
+    local source=("${!2}")
+    _return=()
+    for index in "${!source[@]}"; do
+       if [[ ! "${source[$index]}" == "${match}" ]]; then
+           _return+=("${source[$index]}")
+       fi
     done
 }
 vercomp() {
@@ -2128,6 +2155,7 @@ Rcm_prompt() {
     local argument_preview_bypass=
     argument_pass=()
     argument_preview=()
+    argument_preview_real=()
     argument_placeholders=
     parameter='command'
     available_subcommands=()
@@ -2161,6 +2189,7 @@ Rcm_prompt() {
     if [ -n "$value" ];then
         argument_pass+=("${value}")
         argument_preview+=("${value}")
+        argument_preview_real+=("${value}")
         subcommand="$value"
         options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
     else
@@ -2180,6 +2209,7 @@ Rcm_prompt() {
             save_history=1
             is_typing=
             is_press=
+            is_flagged=
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
@@ -2195,12 +2225,6 @@ Rcm_prompt() {
                 value_addon=multivalue
             fi
             description=`sed -n 2p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
-                value_addon=multivalue
-            fi
-            if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$description";then
-                value_addon=canhavevalue
-            fi
             unset count
             declare -i count
             count=3
@@ -2222,11 +2246,18 @@ Rcm_prompt() {
                     description+=$'\n'
                     description+="$below"
                 fi
-
                 count+=1
             done
+            if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
+                value_addon=multivalue
+            fi
+            if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$description";then
+                value_addon=canhavevalue
+            fi
             options=`sed -n ${count}',$p' <<< "$options"`
             value=
+            values=()
+            flags=1
             backup_value=
             backup_flag=
             if [ -f "$backup_storage" ];then
@@ -2315,6 +2346,11 @@ Rcm_prompt() {
                         if [[ "$value_addon" == 'canhavevalue' ]];then
                             value_addon=
                         fi
+                        if [[ "$value_addon" == 'multivalue' ]];then
+                            ArrayRemove "$parameter" argument_prepopulate[@]
+                            argument_prepopulate=("${_return[@]}")
+                            unset _return
+                        fi
                         break
                     elif grep -q -- "^${parameter}=" <<< "$each";then
                         if [[ "$value_addon" == 'canhavevalue' ]];then
@@ -2328,21 +2364,37 @@ Rcm_prompt() {
                 boolean=
                 # Variable $boolean digunakan dimana-mana, jadi kita gunakan
                 # variable terpisah.
-                argument_boolean=
+                master_boolean=
                 if [[ "$_boolean" == 0 ]];then
                     _; _.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                     backup_flag=
-                    argument_boolean=' '
+                    master_boolean=' '
                 elif [[ "$_boolean" == 1 ]];then
                     _; _.
                     if [ -n "$value" ];then
                         wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
                     else
                         wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
+                        if [[ "$value_addon" == 'multivalue' ]];then
+                            found=
+                            for each in "${argument_prepopulate[@]}";do
+                                if grep -q -- "^${parameter}\$" <<< "$each";then
+                                    found=1
+                                    let flags++
+                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
+                                fi
+                            done
+                            # Biar tidak membingunkan kedepannya, hapus saja semua dari array.
+                            if [ -n "$found" ];then
+                                ArrayRemoveAll "$parameter" argument_prepopulate[@]
+                                argument_prepopulate=("${_return[@]}")
+                                unset _return
+                            fi
+                        fi
                     fi
                     backup_flag=
-                    argument_boolean=1
+                    master_boolean=1
                 fi
 
                 # Jika $parameter merupakan other option, maka skip semua dialog.
@@ -2350,29 +2402,30 @@ Rcm_prompt() {
                 if [ -n "$immediately_other_options" ];then
                     if [ -z "$_boolean" ];then
                         backup_flag=
-                        argument_boolean=' '
+                        master_boolean=' '
                     fi
                 fi
 
                 if [ -n "$backup_flag" ];then
                     printBackupFlagDialog
-                    argument_boolean="$boolean"
+                    master_boolean="$boolean"
                 fi
-                if [ -z "$argument_boolean" ];then
+                if [ -z "$master_boolean" ];then
                     _; _.
                     __; _, Add this argument?; _.
                     userInputBooleanDefaultNo
-                    argument_boolean="$boolean"
+                    master_boolean="$boolean"
                     is_press=1
                 fi
-                if [[ "$argument_boolean" == ' ' ]];then
-                    argument_boolean=
+                if [[ "$master_boolean" == ' ' ]];then
+                    master_boolean=
                 fi
                 # Populate placeholders.
                 if [ -n "$argument_placeholders" ];then
                     argument_placeholders+=$'\n'
                 fi
-                if [ -n "$argument_boolean" ]; then
+                if [ -n "$master_boolean" ]; then
+                    is_flagged=1
                     if [[ "$value_addon" == 'canhavevalue' ]];then
                         if [ -z "$value" ];then
                             _; _.
@@ -2412,14 +2465,22 @@ Rcm_prompt() {
                             # Credit: https://stackoverflow.com/a/47918586
                             value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                             argument_pass+=("${parameter}=${value}")
-                            argument_preview+=("${parameter}=${value}")
+                            [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
+                            argument_preview+=("${parameter}=${_value}")
+                            argument_preview_real+=("${parameter}=${_value}")
                         else
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
                         fi
                     else
-                        argument_pass+=("${parameter}")
-                        argument_preview+=("${parameter}")
+                        i=1
+                        until [[ $i -gt $flags ]];do
+                            argument_pass+=("${parameter}")
+                            argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
+                            let i++
+                        done
                     fi
                     # Populate placeholders.
                     if [ -n "$value" ];then
@@ -2434,7 +2495,7 @@ Rcm_prompt() {
                         argument_preview+=("${parameter}-")
                     fi
                 fi
-                if [ -n "$argument_boolean" ];then
+                if [ -n "$master_boolean" ];then
                     if [ -n "$is_press" ];then
                         if [ -n "$value" ];then
                             if [ -n "$is_typing" ];then
@@ -2469,6 +2530,7 @@ Rcm_prompt() {
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
                         argument_preview+=("${parameter} ${value}")
+                        argument_preview_real+=("${parameter} ${value}")
                     fi
                 fi
             else
@@ -2490,12 +2552,19 @@ Rcm_prompt() {
                         is_required=
                         value=' '
                         break
-                    elif grep -q -- "^${parameter}=" <<< "$each";then
+                    fi
+                done
+                # Jika tidak multivalue, tapi di prepopulate berkali-kali, maka
+                # kita menggunakan last value.
+                for each in "${argument_prepopulate[@]}";do
+                    if grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
+                        if [[ "$value_addon" == 'multivalue' ]];then
+                            values+=("$value")
+                        fi
                         _; _.
                         wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
                         backup_value=
-                        break
                     fi
                 done
 
@@ -2504,15 +2573,15 @@ Rcm_prompt() {
                 if [ -n "$immediately_other_options" ];then
                     if [ -z "$value" ];then
                         backup_value=
-                        # history_value=
                         value=' '
                     fi
                 fi
-
+                # Backup dialog belum mendukung multivalue.
                 if [ -n "$backup_value" ];then
                     printBackupDialog
                 fi
                 if [ -z "$value" ];then
+                    # History dialog belum mendukung multivalue.
                     if [ -n "$history_value" ];then
                         printHistoryDialog
                         if [ -n "$value" ];then
@@ -2521,64 +2590,9 @@ Rcm_prompt() {
                         fi
                     fi
                 fi
+                # Available value dialog juga belum mendukung multivalue.
                 if [ -z "$value" ];then
-                    if [ -n "$_available_values_from_command" ];then
-                        if command -v "$_command" > /dev/null;then
-                            _; _.
-                            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                            wordWrapDescriptionColorize "Value available from command: <magenta>${_command}${_arguments}</magenta>"
-                            mktemp=$(mktemp -p /dev/shm)
-                            ${_command}${_arguments} > "$mktemp"
-                            exit_code=$?
-                            while read line;do
-                                [ -n "$line" ] && available_values+=("$line")
-                            done < "$mktemp"
-                            rm "$mktemp"
-                        fi
-                    fi
-                    if [ "${#available_values[@]}" -gt 0 ];then
-                        if [ -n "$or_other" ];then
-                            printSelectOtherDialog available_values[@]
-                        elif [[ "${#available_values[@]}" -eq 1 && -n "$is_required" ]];then
-                            value="${available_values[0]}"
-                            _; _.
-                            __; _, "Available value: "; yellow "$value";  _, '.'; _.
-                            if [ -n "$interactive" ];then
-                                if [ -n "$is_required" ];then
-                                    _; _.
-                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
-                                else
-                                    _; _.
-                                    wordWrapDescription 'The one and only available value is selected.'
-                                    userInputBooleanDefaultYes
-                                    if [ -z "$boolean" ];then
-                                        value=' '
-                                    fi
-                                fi
-                            else
-                                _; _.
-                                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
-                            fi
-                        else
-                            printSelectDialog available_values[@]
-                        fi
-                    else
-                        _; _.
-                        if [[ -n "$_available_values_from_command" && ! $exit_code -eq 0 ]];then
-                            is_required=
-                            __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
-                        elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
-                            is_required=
-                            __; _, No value available,' '; _, pass; _, .; _.
-                        else
-                            if [ -n "$is_required" ];then
-                                __; read -p "Type the value: " value
-                            else
-                                __; read -p "Type the value or leave blank to skip: " value
-                            fi
-                            is_typing=1
-                        fi
-                    fi
+                    Rcm_get_list_values
                 fi
                 if [ -n "$is_required" ];then
                     until [[ -n "$value" ]];do
@@ -2597,9 +2611,23 @@ Rcm_prompt() {
                     # Sanitize user input
                     # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
                     # Credit: https://stackoverflow.com/a/47918586
-                    value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    argument_pass+=("${parameter}=${value}")
-                    argument_preview+=("${parameter}=${value}")
+                    if [ "${#values[@]}" -eq 0 ];then
+                        values=("$value")
+                    fi
+                    for value in "${values[@]}";do
+                        value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        argument_pass+=("${parameter}=${value}")
+                        [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
+                        argument_preview+=("${parameter}=${_value}")
+                        argument_preview_real+=("${parameter}=${_value}")
+                        if [ "${#available_values[@]}" -gt 0 ];then
+                            ArrayRemove "$value" available_values[@]
+                            available_values=("${_return[@]}")
+                            unset _return
+                        fi
+                    done
+                    # Placeholder tidak berlaku untuk multivalue. @todo, masukkan ke dokumentasi.
+                    # Hanya berlaku nilai terakhir.
                     argument_placeholders+='['"$parameter"']: '"$value"
                 else
                     argument_placeholders+='['"$parameter"']: -'
@@ -2614,11 +2642,17 @@ Rcm_prompt() {
             fi
             # Backup to text file.
             if [ -n "$value" ];then
+                # Belum support history untuk kasus multivalue.
                 mkdir -p $(dirname "$backup_storage")
                 echo "${parameter}=${value}" >> "$backup_storage"
                 if [ -f "$history_storage" ];then
                     if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
                         save_history=
+                    fi
+                    if [[ "$value" =~ []\[] ]];then
+                        if grep -q -F -- "${parameter}=${value}" "$history_storage";then
+                            save_history=
+                        fi
                     fi
                 fi
                 if [ -n "$save_history" ];then
@@ -2627,26 +2661,41 @@ Rcm_prompt() {
                 fi
             fi
             # Backup to text file for flag.
-            if [ -n "$argument_boolean" ];then
+            if [ -n "$master_boolean" ];then
                 mkdir -p $(dirname "$backup_storage")
                 echo "${parameter}" >> "$backup_storage"
             fi
             if [[ "$value_addon" == 'multivalue' ]];then
                 again=1
                 until [ -z "$again" ]; do
+                    is_press=
+                    boolean=
                     if [ -n "$is_flag" ];then
-                        _; _.
-                        __ Add this argument again?
-                        userInputBooleanDefaultNo
+                        if [[ -n "$is_flagged" && -z "$immediately" ]];then
+                            # Reset condition before multivalue.
+                            is_flagged=
+                            _; _.
+                            __ Add this argument again?
+                            userInputBooleanDefaultNo
+                            is_press=1
+                        fi
                     else
-                        _; _.
-                        __ Add other value?
-                        userInputBooleanDefaultNo
+                        if [[ -n "$value" && -z "$immediately" ]];then
+                            # Reset condition before multivalue.
+                            value_before="$value"
+                            value=
+                            _; _.
+                            __ Add another value?
+                            userInputBooleanDefaultNo
+                            is_press=1
+                        fi
                     fi
                     if [ -n "$boolean" ];then
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
+                            is_flagged=1
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
                                 printHistoryDialog
@@ -2656,21 +2705,29 @@ Rcm_prompt() {
                                 fi
                             fi
                             if [ -z "$value" ];then
-                                __; read -p "Type the value: " value
+                                _; _.
+                                __; read -p "Type the value or leave blank to skip: " value
+                                is_typing=1
                             fi
                             if [ -n "$value" ];then
                                 argument_pass+=("${value}")
                                 argument_preview+=("${value}")
+                                argument_preview_real+=("${value}")
                             fi
                         else
-                            __; read -p "Type the value: " value
+                            Rcm_get_list_values "$value_before"
                             if [ -n "$value" ];then
+                                # Sanitize user input
+                                # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
+                                # Credit: https://stackoverflow.com/a/47918586
+                                value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                                 argument_pass+=("${parameter}=${value}")
-                                argument_preview+=("${parameter}=${value}")
+                                [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
+                                argument_preview+=("${parameter}=${_value}")
+                                argument_preview_real+=("${parameter}=${_value}")
                             fi
                         fi
                         # Backup to text file.
-                        value=$(echo "$value" | sed -E 's/[^/a-z0-9A-Z_.,-]//g' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         if [ -n "$value" ];then
                             mkdir -p $(dirname "$backup_storage");
                             echo "${parameter}=${value}" >> "$backup_storage"
@@ -2683,6 +2740,14 @@ Rcm_prompt() {
                                 mkdir -p $(dirname "$history_storage");
                                 echo "${parameter}=${value}" >> "$history_storage"
                             fi
+                        fi
+                        if [[ -n "$value" && "$is_typing" ]];then
+                            _; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
+                        fi
+                        if [[ -n "$is_flagged" && "$is_press" ]];then
+                            _; _.
+                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added again manually." green
                         fi
                     else
                         again=
@@ -2737,7 +2802,74 @@ Rcm_prompt_sigint() {
     wordWrapCommand
     exit 0
 }
-
+Rcm_get_list_values() {
+    if [ -n "$_available_values_from_command" ];then
+        if command -v "$_command" > /dev/null;then
+            _; _.
+            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            wordWrapDescriptionColorize "Value available from command: <magenta>${_command}${_arguments}</magenta>"
+            mktemp=$(mktemp -p /dev/shm)
+            ${_command}${_arguments} > "$mktemp"
+            exit_code=$?
+            while read line;do
+                [ -n "$line" ] && available_values+=("$line")
+            done < "$mktemp"
+            rm "$mktemp"
+        fi
+    fi
+    if [ -z "$available_values_backup" ];then
+        available_values_backup=("${available_values[@]}")
+    fi
+    while [[ $# -gt 0 ]]; do
+        ArrayRemove "$1" available_values[@]
+        available_values=("${_return[@]}")
+        unset _return
+        shift
+    done
+    if [ "${#available_values[@]}" -gt 0 ];then
+        if [ -n "$or_other" ];then
+            printSelectOtherDialog available_values[@]
+        elif [[ "${#available_values[@]}" -eq 1 && -n "$is_required" ]];then
+            value="${available_values[0]}"
+            _; _.
+            __; _, "Available value: "; yellow "$value";  _, '.'; _.
+            if [ -n "$interactive" ];then
+                if [ -n "$is_required" ];then
+                    _; _.
+                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                else
+                    _; _.
+                    wordWrapDescription 'The one and only available value is selected.'
+                    userInputBooleanDefaultYes
+                    if [ -z "$boolean" ];then
+                        value=' '
+                    fi
+                fi
+            else
+                _; _.
+                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+            fi
+        else
+            printSelectDialog available_values[@]
+        fi
+    else
+        _; _.
+        if [[ -n "$_available_values_from_command" && ! $exit_code -eq 0 ]];then
+            is_required=
+            __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
+        elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
+            is_required=
+            __; _, No value available,' '; _, pass; _, .; _.
+        else
+            if [ -n "$is_required" ];then
+                __; read -p "Type the value: " value
+            else
+                __; read -p "Type the value or leave blank to skip: " value
+            fi
+            is_typing=1
+        fi
+    fi
+}
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
 immediately=
@@ -2797,7 +2929,6 @@ if [ -n "$resolve_dependencies" ];then
           printf "\r" >&2; __; _, "Waiting...${spin:$i:1}"
           sleep .1
         done
-        # e '"$display_waiting"' "$display_waiting"
         __ Resolved.
         ____
     else
@@ -2810,7 +2941,7 @@ rcm_depends=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' |
 if [ -n "$rcm_depends" ];then
     immediately=1
 fi
-_new_arguments=()
+
 argument_prepopulate=()
 argument_operand_prepopulate=()
 argument_after_doubledash=()
@@ -2822,7 +2953,7 @@ if [ $# -gt 0 ];then
                 immediately=1
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
-                        *) _new_arguments+=("$1"); argument_after_doubledash+=("$1"); shift ;;
+                        *) argument_after_doubledash+=("$1"); shift ;;
                     esac
                 done
                 ;;
@@ -2852,13 +2983,7 @@ history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
 trap x SIGINT
-if [[ "${#argument_pass[@]}" -gt 0 ]];then
-    set -- "${argument_pass[@]}" "${_new_arguments[@]}"
-    unset argument_pass _new_arguments
-else
-    set -- "${_new_arguments[@]}"
-    unset _new_arguments
-fi
+
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
@@ -2901,23 +3026,57 @@ if [ -z "$immediately" ];then
     echo "$RCM_LAST_COMMAND" >> "$log"
     _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
 fi
-if [ "${#preview[@]}" -gt 0 ];then
+if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
     words_array=($RCM_LAST_COMMAND)
 else
     _rcm_last_command="$RCM_LAST_COMMAND"
-    ArrayShift argument_after_doubledash[@]
-    argument_after_doubledash=("${_return[@]}")
+    _argument_after_doubledash=("${argument_after_doubledash[@]}")
+    ArrayShift _argument_after_doubledash[@]
+    _argument_after_doubledash=("${_return[@]}")
     unset _return
-    for each in "${argument_after_doubledash[@]}"; do _rcm_last_command+=" ${each}"; done
+    for each in "${_argument_after_doubledash[@]}"; do
+        # Credit: https://devhints.io/bash
+        _argument="${each%%=*}"
+        _value="${each#$_argument=}"
+        [[ "$_argument" == "$_value" ]] && is_flag=1 || is_flag=
+        if [ -n "$is_flag" ];then
+            _rcm_last_command+=" ${each}"
+        else
+            [[ "$_value" =~ ' ' ]] && _value="'$_value'"
+            _rcm_last_command+=" ${_argument}=${_value}"
+        fi
+    done
     words_array=($_rcm_last_command)
 fi
+
 wordWrapCommand
 ____
 
 chapter The real command has been built.
+_argument_after_doubledash=()
+if [ "${#argument_after_doubledash[@]}" -gt 0 ];then
+    for each in "${argument_after_doubledash[@]}"; do
+        # Credit: https://devhints.io/bash
+        _argument="${each%%=*}"
+        _value="${each#$_argument=}"
+        [[ "$_argument" == "$_value" ]] && is_flag=1 ||  is_flag=
+        if [ -n "$is_flag" ];then
+            _argument_after_doubledash+=" ${each}"
+        else
+            [[ "$_value" =~ ' ' ]] && _value="'$_value'"
+            _argument_after_doubledash+=" ${_argument}=${_value}"
+        fi
+    done
+fi
+
+if [[ "${#argument_preview_real[@]}" -gt 0 ]];then
+    set -- "${argument_preview_real[@]}" "${_argument_after_doubledash[@]}"
+else
+    set -- "${_argument_after_doubledash[@]}"
+fi
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Option yang tidak dikirim adalah --interactive, dan --with(out)-resolve-dependencies
-words_array=(${command} ${isfast} ${isverbose} "$@")
+words_array=(${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
@@ -2934,7 +3093,6 @@ elif [ -z "$interactive" ];then
     sleepExtended 3 30
 else
     chapter Execute:
-    _; _.
     userInputBooleanDefaultYes
     if [ -z "$boolean" ];then
         exit 0
@@ -2947,6 +3105,11 @@ _ Begin: $(date +%Y%m%d-%H%M%S); _.
 Rcm_BEGIN=$SECONDS
 ____
 
+if [[ "${#argument_pass[@]}" -gt 0 ]];then
+    set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
+else
+    set -- "${argument_after_doubledash[@]}"
+fi
 INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
 
 chapter Timer Finish.
