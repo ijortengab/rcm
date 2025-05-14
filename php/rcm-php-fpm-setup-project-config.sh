@@ -6,6 +6,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --config-line=*) config_line+=("${1#*=}"); shift ;;
+        --config-line) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_line+=("$2"); shift; fi; shift ;;
         --config-suffix-name=*) config_suffix_name="${1#*=}"; shift ;;
         --config-suffix-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_suffix_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
@@ -218,53 +220,170 @@ PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
 code 'PHP_FPM_POOL_DIRECTORY="'$PHP_FPM_POOL_DIRECTORY'"'
 [ -z "$autocreate_user" ] && autocreate_user=1
 [ "$autocreate_user" == 0 ] && autocreate_user=
+code 'config_line=('"${config_line[@]}"')'
+e; magenta 'config_line=('
+first=1
+for each in "${config_line[@]}";do
+    if [ -n "$first" ];then
+        magenta "'""$each""'";
+        first=
+    else
+        magenta " '""$each""'";
+    fi
+done
+magenta ')'; _.
 ____
 
 php=$(cat <<'EOF'
 // https://stackoverflow.com/questions/17316873/convert-array-to-an-ini-file
 // https://stackoverflow.com/a/17317168
-function arr2ini(array $a, array $parent = array())
-{
+function clean($array, &$array_cleaned) {
+    $array_cleaned = $array;
+    unset($array_cleaned['user']);
+    unset($array_cleaned['group']);
+    unset($array_cleaned['listen']);
+    unset($array_cleaned['listen.owner']);
+    unset($array_cleaned['listen.group']);
+}
+function build_ini_string(array $a) {
     $out = '';
-    foreach ($a as $k => $v)
-    {
-        if (is_array($v))
-        {
-            //subsection case
-            //merge all the sections into one array...
-            $sec = array_merge((array) $parent, (array) $k);
-            //add section information to the output
-            $out .= '[' . join('.', $sec) . ']' . PHP_EOL;
-            //recursively traverse deeper
-            $out .= arr2ini($v, $sec);
-        }
-        else
-        {
-            //plain key->value case
-            $out .= "$k=$v" . PHP_EOL;
+    $sectionless = '';
+    foreach($a as $rootkey => $rootvalue){
+        if(is_array($rootvalue)){
+            // find out if the root-level item is an indexed or associative array
+            $indexed_root = array_keys($rootvalue) == range(0, count($rootvalue) - 1);
+            // associative arrays at the root level have a section heading
+            if(!$indexed_root) $out .= PHP_EOL."[$rootkey]".PHP_EOL;
+            // loop through items under a section heading
+            foreach($rootvalue as $key => $value){
+                if(is_array($value)){
+                    // indexed arrays under a section heading will have their key omitted
+                    $indexed_item = array_keys($value) == range(0, count($value) - 1);
+                    foreach($value as $subkey=>$subvalue){
+                        // omit subkey for indexed arrays
+                        if($indexed_item) $subkey = "";
+                        // add this line under the section heading
+                        $out .= "{$key}[$subkey] = $subvalue" . PHP_EOL;
+                    }
+                }else{
+                    if($indexed_root){
+                        // root level indexed array becomes sectionless
+                        $sectionless .= "{$rootkey}[] = $value" . PHP_EOL;
+                    }else{
+                        // plain values within root level sections
+                        $out .= "$key = $value" . PHP_EOL;
+                    }
+                }
+            }
+
+        }else{
+            // root level sectionless values
+            $sectionless .= "$rootkey = $rootvalue" . PHP_EOL;
         }
     }
-    return $out;
+    return $sectionless.$out;
 }
-$mode = $_SERVER['argv'][1];
-$file = $_SERVER['argv'][2];
-switch ($mode) {
-    case 'is_exists':
-        $section_name = $_SERVER['argv'][3];
-        if (file_exists($file)) {
-            $array = parse_ini_file($file, true);
-            if (array_key_exists($section_name, $array)) {
-                exit(0);
+function array_diff_assoc_recursive($array_master, $array_compare, &$array_diff = array()) {
+    $array_diff = (array) $array_diff;
+
+    // Pisah dulu yang array.
+    $array_master_keys_is_array = array();
+    $array_master_keys_is_non_array = array();
+    foreach ($array_master as $key => $value) {
+        if (is_array($array_master[$key])) {
+            $array_master_keys_is_array[$key] = $value;
+        }
+        else {
+            $array_master_keys_is_non_array[$key] = $value;
+        }
+    }
+    $array_compare_keys_is_array = array();
+    $array_compare_keys_is_non_array = array();
+    foreach ($array_compare as $key => $value) {
+        if (is_array($array_compare[$key])) {
+            $array_compare_keys_is_array[$key] = $value;
+        }
+        else {
+            $array_compare_keys_is_non_array[$key] = $value;
+        }
+    }
+    $array_diff += array_diff_assoc($array_master_keys_is_non_array, $array_compare_keys_is_non_array);
+    foreach ($array_master_keys_is_array as $key => $value) {
+        if (array_key_exists($key, $array_compare_keys_is_array)) {
+            $result = array();
+            array_diff_assoc_recursive($value, $array_compare_keys_is_array[$key], $result);
+            if (!empty($array)) {
+                $array_diff[$key] = $result;
             }
         }
-        exit(1);
+        else {
+            $array_diff[$key] = $value;
+        }
+    }
+}
+
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'is_different':
+    case 'save':
+        # Populate variable $is_different.
+        $file = $_SERVER['argv'][2];
+        $config_raw = parse_ini_file($file);
+        clean($config_raw, $config_cleaned);
+        $array_master_raw = unserialize($_SERVER['argv'][3]);
+        clean($array_master_raw, $array_master_cleaned);
+        // Tidak seperti rcm-roundcube-autoinstaller-nginx karena array master
+        // hanya tambahan terhadap config utama.
+        # $is_different = !empty(array_diff_assoc(array_map('serialize',$array_master_cleaned), array_map('serialize',$config_cleaned)));
+        array_diff_assoc_recursive($array_master_cleaned, $config_cleaned, $result);
+        $is_different = !empty($result);
         break;
     case 'create':
-        $array = unserialize($_SERVER['argv'][3]);
-        $content = arr2ini($array);
+        $file = $_SERVER['argv'][2];
+        $default_config = $_SERVER['argv'][3];
+        $additional_config = $_SERVER['argv'][4];
+        break;
+}
+switch ($mode) {
+    case 'serialized_ini_string':
+        // $sites_subdir = $_SERVER['argv'][2];
+        $stdin = '';
+        while (FALSE !== ($line = fgets(STDIN))) {
+           $stdin .= $line;
+        }
+        $array = parse_ini_string($stdin);
+        echo serialize($array);
+        break;
+    case 'is_different':
+        $is_different ? exit(0) : exit(1);
+        break;
+    case 'save':
+        if (!$is_different) {
+            exit(0);
+        }
+        $section_name = $_SERVER['argv'][4];
+        $config_new = array_replace_recursive($config_raw, $result);
+        $config_new = array( $section_name => $config_new);
+        $contents = build_ini_string($config_new);
+        file_put_contents($file, $contents);
+        break;
+    case 'create':
+        $file = $_SERVER['argv'][2];
+        $section_name = $_SERVER['argv'][3];
+        $default_config = $_SERVER['argv'][4];
+        $additional_config = $_SERVER['argv'][5];
+        $config = unserialize($default_config);
+        if (!empty($additional_config)) {
+            $additional_config_raw = unserialize($additional_config);
+            clean($additional_config_raw, $additional_config);
+            $config = array_replace_recursive($config, $additional_config);
+        }
+        $config = array( $section_name => $config);
+        $content = build_ini_string($config);
         file_put_contents($file, $content);
         break;
     case 'get':
+        $file = $_SERVER['argv'][2];
         $section_name = $_SERVER['argv'][3];
         $what = $_SERVER['argv'][4];
         if (file_exists($file)) {
@@ -278,8 +397,18 @@ switch ($mode) {
         }
         exit(1);
         break;
+    case 'is_exists':
+        $file = $_SERVER['argv'][2];
+        $section_name = $_SERVER['argv'][3];
+        if (file_exists($file)) {
+            $array = parse_ini_file($file, true);
+            if (array_key_exists($section_name, $array)) {
+                exit(0);
+            }
+        }
+        exit(1);
+        break;
 }
-
 EOF
 )
 
@@ -287,6 +416,7 @@ chapter Mengecek file '*.conf' yang mengandung section '`'$section_name'`'
 found=
 found_file=
 while read file; do
+    # Ternyata lebih cepat menggunakan grep.
     # if php -r "$php" is_exists "$file" "$section_name";then
         # found=1
         # found_file="$file"
@@ -307,21 +437,64 @@ fi
 ____
 
 restart=
-if [ -z "$found" ];then
-    reference="$(php -r "echo serialize([
-        '$section_name' => [
-            'user' => '$php_fpm_user',
-            'group' => '$php_fpm_user',
-            'listen' => '/run/php/php${php_version}-fpm-${section_name}.sock',
-            'listen.owner' => '$nginx_user',
-            'listen.group' => '$nginx_user',
-            'pm' => 'dynamic',
-            'pm.max_children' => '5',
-            'pm.start_servers' => '2',
-            'pm.min_spare_servers' => '1',
-            'pm.max_spare_servers' => '3',
-        ]
+if [ -n "$found" ];then
+    if [ "${#config_line[@]}" -gt 0 ];then
+        config_lines=
+        for each in "${config_line[@]}";do
+            config_lines+="$each"$'\n'
+        done
+
+        chapter Mengecek informasi file config.
+        path="$found_file"
+        code path='"'$path'"'
+        filename="$(basename "$found_file")"
+        reference="$(php -r "$php" serialized_ini_string <<< "$config_lines")"
+        is_different=
+        if php -r "$php" is_different "$path" "$reference";then
+            is_different=1
+            __ Diperlukan modifikasi file '`'$filename'`'.
+        else
+            __ File '`'$filename'`' tidak ada perubahan.
+        fi
+        ____
+
+        if [ -n "$is_different" ];then
+            chapter Memodifikasi file '`'$filename'`'.
+            __ Backup file "$filename"
+            backupFile copy "$path"
+            php -r "$php" save "$path" "$reference" "$section_name"
+            if php -r "$php" is_different "$path" "$reference";then
+                __; red Modifikasi file '`'$filename'`' gagal.; x
+            else
+                __; green Modifikasi file '`'$filename'`' berhasil.; _.
+                restart=1
+            fi
+            ____
+        fi
+    fi
+else
+    default_config="$(php -r "echo serialize([
+        'user' => '$php_fpm_user',
+        'group' => '$php_fpm_user',
+        'listen' => '/run/php/php${php_version}-fpm-${section_name}.sock',
+        'listen.owner' => '$nginx_user',
+        'listen.group' => '$nginx_user',
+        'pm' => 'dynamic',
+        'pm.max_children' => '5',
+        'pm.start_servers' => '2',
+        'pm.min_spare_servers' => '1',
+        'pm.max_spare_servers' => '3',
     ]);")"
+
+    additional_config=
+    if [ "${#config_line[@]}" -gt 0 ];then
+        config_lines=
+        for each in "${config_line[@]}";do
+            config_lines+="$each"$'\n'
+        done
+        additional_config="$(php -r "$php" serialized_ini_string <<< "$config_lines")"
+    fi
+
     chapter Membuat file PHP-FPM config.
     config_file="${PHP_FPM_POOL_DIRECTORY}/${config_file}"
     code 'config_file="'$config_file'"'
@@ -330,7 +503,7 @@ if [ -z "$found" ];then
         backupFile move "$config_file"
     fi
     __ Membuat file '`'"$config_file"'`'.
-    php -r "$php" create "$config_file" "$reference"
+    php -r "$php" create "$config_file" "$section_name" "$default_config" "$additional_config"
     fileMustExists "$config_file"
     found_file="$config_file"
     restart=1
@@ -360,7 +533,6 @@ if [ -z "$found" ];then
     fi
     ____
 fi
-
 if [ -n "$restart" ];then
     chapter Restart PHP-FPM configuration.
     code /etc/init.d/php${php_version}-fpm restart
@@ -396,6 +568,7 @@ exit 0
 # --config-suffix-name
 # )
 # MULTIVALUE=(
+# --config-line
 # )
 # FLAG_VALUE=(
 # )
