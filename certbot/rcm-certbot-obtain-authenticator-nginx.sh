@@ -42,7 +42,7 @@ MAILBOX_HOST=${MAILBOX_HOST:=hostmaster}
 
 # Functions.
 printVersion() {
-    echo '0.16.24'
+    echo '0.16.25'
 }
 printHelp() {
     title RCM Certbot Obtain
