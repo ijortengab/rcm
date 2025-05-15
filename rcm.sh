@@ -1837,7 +1837,27 @@ Rcm_resolve_dependencies() {
                             set -- update rcm ijortengab/rcm rcm.sh
                             Rcm_github_release "$@"
                             INDENT="$OLDINDENT"
-                            is_updated=1
+                            # Melakukan rcm self-udpate, maka bash interpreter
+                            # bisa gagal, karena script rcm berubah.
+                            # Kita perlu paksa user agar melakukan eksekusi
+                            # ulang.
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K"
+                            fi
+                            if [ -n "$loud" ];then
+                                ____
+
+                                chapter Attention
+                            fi
+                            __ The command requires rcm to be updated.
+                            __ The rcm has been updated.
+                            __ Please execute the command again.
+                            if [ -n "$loud" ];then
+                                x
+                            fi
+                            [ -n "$quiet" ] && kill -SIGTERM $$
+                            # Pastikan exit.
+                            x
                         else
                             url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                             if [ -n "$url" ];then
