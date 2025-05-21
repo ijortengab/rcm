@@ -380,7 +380,7 @@ switch ($mode) {
         }
         $config = array( $section_name => $config);
         $content = build_ini_string($config);
-        file_put_contents($file, $content);
+        file_put_contents($file, trim($content)."\n");
         break;
     case 'get':
         $file = $_SERVER['argv'][2];
