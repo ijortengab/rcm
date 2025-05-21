@@ -6,6 +6,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --certificate-name=*) certificate_name="${1#*=}"; shift ;;
+        --certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certificate_name="$2"; shift; fi; shift ;;
         --domain=*) domain+=("${1#*=}"); shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain+=("$2"); shift; fi; shift ;;
         --fast) fast=1; shift ;;
@@ -88,6 +90,70 @@ while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
+# Functions.
+Rcm_certbot() {
+    # Global, untuk debug.
+    local certbot_request line cache_file_basename
+    local start end runtime line_number
+    certbot_request=
+    local expired="$1"
+    local url="$2"
+    local table=$HOME/.cache/rcm/rcm.table.cache
+    local cache_file=
+    if [ -f "$table" ];then
+        line=$(grep -n -F "$url"' ' "$table")
+        if [ -z "$line" ];then
+            certbot_request=1
+        else
+            cache_file_basename=$(cut -d' ' -f2 <<< "$line")
+            cache_file=$HOME/.cache/rcm/"$cache_file_basename"
+        fi
+    else
+        certbot_request=1
+    fi
+    local do_delete_record_cache_file=
+    if [ -n "$cache_file" ];then
+        if [ -f "$cache_file" ];then
+            start=`date -r "$cache_file" +'%s'`
+            end=`date +%s`
+            runtime=$((end-start))
+            if [ $runtime -gt $expired ];then
+                do_delete_record_cache_file=1
+            fi
+        else
+            do_delete_record_cache_file=1
+        fi
+    fi
+    if [ -n "$do_delete_record_cache_file" ];then
+        line_number=$(cut -d':' -f1 <<< "$line")
+        sed -i $line_number'd' "$table"
+        certbot_request=1
+        if [ -f "$cache_file" ];then
+            rm "$cache_file"
+        fi
+        cache_file=
+    fi
+    exit_code=0
+    if [ -n "$certbot_request" ];then
+        mkdir -p $HOME/.cache/rcm
+        cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm rcm.certbot.XXXXXXXXXXXX.cache)
+        cache_file_basename=$(basename "$cache_file")
+        certificate_name=$(sed 's|certbot://||' <<< "$url")
+        certbot certificates --cert-name="$certificate_name" 2>/dev/null > "$cache_file"
+        exit_code=$?
+        touch "$cache_file" # wajib karena wget mengubah modified sesuai http header response.
+        mkdir -p $(dirname "$table")
+        echo "$url" "$cache_file_basename" >> "$table"
+    fi
+    if [ ! -f "$cache_file" ];then
+        exit $exit_code
+    fi
+    if [ ! $exit_code -eq 0 ];then
+        exit $exit_code
+    fi
+    cat "$cache_file"
+}
+
 # Require, validate, and populate value.
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
@@ -96,8 +162,12 @@ code 'domain=('"${domain[@]}"')'
 if [[ "${#domain[@]}" -eq 0 ]];then
     error Argument --domain is required.; x
 fi
+# Agar konsisten dengan verifikasi, maka request certbot juga perlu diberi
+# tambahan argument --cert-name.
 # domain pertama adalah Certificate Name.
-certificate_name=${domain[0]}
+if [ -z "$certificate_name" ];then
+    certificate_name=${domain[0]}
+fi
 code 'certificate_name="'$certificate_name'"'
 tempfile=
 ____
@@ -126,8 +196,10 @@ fi
 msg='Another instance of Certbot is already running.'
 while true; do
     code certbot -v certonly --non-interactive --authenticator=nginx --agree-tos --email="$email" \
+        --cert-name="$certificate_name" \
         "$@"
     certbot -v certonly --non-interactive --authenticator=nginx --agree-tos --email="$email" \
+        --cert-name="$certificate_name" \
         "$@" 2>&1 | tee "$tempfile"
     if [[ $(head -1 "$tempfile") == "$msg" ]];then
         e Retrying...; _.
@@ -139,10 +211,10 @@ while true; do
 done
 ____
 
-chapter Review Certificate.
+chapter Verifikasi Certificate.
 code certbot certificates --cert-name='"'"$certificate_name"
 # Verifikasi terutama jika exit code tidak 0.
-if certbot certificates --cert-name="$certificate_name" 2>/dev/null | tee "$tempfile" | grep -q -F 'Certificate Name: ';then
+if Rcm_certbot 600 "certbot://${certificate_name}" 2>/dev/null | tee "$tempfile" | grep -q -F 'Certificate Name: ';then
     while IFS= read -r line; do e "$line"; _.; done < $tempfile
 else
     error Error has been occurred. The certificate has not found.
@@ -169,6 +241,7 @@ exit 0
 # --help
 # )
 # VALUE=(
+# --certificate-name
 # )
 # MULTIVALUE=(
 # --domain
