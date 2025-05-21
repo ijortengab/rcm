@@ -43,7 +43,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.16.25'
+    echo '0.16.26'
 }
 printHelp() {
     title RCM PHP Auto-Installer

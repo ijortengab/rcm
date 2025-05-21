@@ -50,7 +50,7 @@ POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.
 
 # Functions.
 printVersion() {
-    echo '0.16.25'
+    echo '0.16.26'
 }
 printHelp() {
     title RCM Postfix Multiple Certificate

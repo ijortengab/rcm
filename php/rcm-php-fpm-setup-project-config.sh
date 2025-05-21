@@ -63,7 +63,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.16.25'
+    echo '0.16.26'
 }
 printHelp() {
     title RCM PHP-FPM Setup Project Config
