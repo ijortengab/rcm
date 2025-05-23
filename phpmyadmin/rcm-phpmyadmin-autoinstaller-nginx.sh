@@ -444,7 +444,25 @@ code 'url_host="'$url_host'"'
 code 'url_port="'$url_port'"'
 ____
 
+chapter Mengecek '$PATH'.
+code PATH="$PATH"
+if grep -q '/snap/bin' <<< "$PATH";then
+    __ '$PATH' sudah lengkap.
+else
+    __ '$PATH' belum lengkap.
+    __ Memperbaiki '$PATH'
+    PATH=/snap/bin:$PATH
+    if grep -q '/snap/bin' <<< "$PATH";then
+        __; green '$PATH' sudah lengkap.; _.
+        __; magenta PATH="$PATH"; _.
+    else
+        __; red '$PATH' belum lengkap.; x
+    fi
+fi
+____
+
 INDENT+="    " \
+PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
     --root="$root" \
     --filename="$filename" \
