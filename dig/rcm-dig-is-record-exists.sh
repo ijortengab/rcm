@@ -150,7 +150,7 @@ isRecordExist() {
     name_dot="${name}."
     name_dot_escape=${name_dot//\./\\.}
     stdout=$(<"$tempfile")
-    [ -n "$debug" ] && { while read line; do e "$line"; _.; done < "$tempfile" ; }
+    [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
     case "$type" in
         TXT)
             if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" <<< "$stdout";then
