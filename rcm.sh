@@ -2294,6 +2294,7 @@ Rcm_prompt() {
                 description=`echo "$description" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
             fi
             _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+            _available_values_from_command_executed=
             if [ -n "$_available_values_from_command" ];then
                 description=`echo "$description" | sed -E 's/ *Values? available from command: ([^\.]+)\.//i'`
             fi
@@ -2823,7 +2824,8 @@ Rcm_prompt_sigint() {
     exit 0
 }
 Rcm_get_list_values() {
-    if [ -n "$_available_values_from_command" ];then
+    if [[ -n "$_available_values_from_command" && -z "$_available_values_from_command_executed" ]];then
+        _available_values_from_command_executed=1
         if command -v "$_command" > /dev/null;then
             _; _.
             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
