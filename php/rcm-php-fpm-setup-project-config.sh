@@ -8,17 +8,15 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --config-line=*) config_line+=("${1#*=}"); shift ;;
         --config-line) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_line+=("$2"); shift; fi; shift ;;
-        --config-suffix-name=*) config_suffix_name="${1#*=}"; shift ;;
-        --config-suffix-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_suffix_name="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --file=*) file="${1#*=}"; shift ;;
+        --file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then file="$2"; shift; fi; shift ;;
         --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_fpm_user="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
-        --project-name=*) project_name="${1#*=}"; shift ;;
-        --project-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_name="$2"; shift; fi; shift ;;
-        --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
-        --project-parent-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_parent_name="$2"; shift; fi; shift ;;
+        --section=*) section="${1#*=}"; shift ;;
+        --section) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then section="$2"; shift; fi; shift ;;
         --with-autocreate-user) autocreate_user=1; shift ;;
         --without-autocreate-user) autocreate_user=0; shift ;;
         --[^-]*) shift ;;
@@ -51,6 +49,14 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
+
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Command.
 command="$1"; shift
@@ -88,12 +94,12 @@ Options:
         [b]: 8.3
    --php-fpm-user
         Set the Unix user that used by PHP FPM. Default value is the user that used by web server. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other. If the user does not exists, it will be autocreate as reguler user.
-   --project-name *
-        Set the project name. This should be in machine name format.
-   --project-parent-name
-        Set the project parent name. The parent is not have to exists before.
-   --config-suffix-name
-        The config suffix name.
+   --section *
+        Set the section name.
+   --file
+        Set the name of file config. The filename should has the .conf extension
+        to enable by daemon but you free to ignore it.
+        If omit, it will use the section name with .conf extension.
    --without-autocreate-user ^
         Skip autocreate Unix user while config is created. Default to --with-autocreate-user.
 
@@ -117,6 +123,56 @@ EOF
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
+
+php=$(cat <<'EOF'
+$mode = $_SERVER['argv'][1];
+switch ($mode) {
+    case 'get':
+        $file = $_SERVER['argv'][2];
+        $section_name = $_SERVER['argv'][3];
+        $what = $_SERVER['argv'][4];
+        if (file_exists($file)) {
+            $array = parse_ini_file($file, true);
+            if (array_key_exists($section_name, $array)) {
+                if (array_key_exists($what, $array[$section_name])) {
+                    echo $array[$section_name][$what];
+                    exit(0);
+                }
+            }
+        }
+        exit(1);
+        break;
+}
+EOF
+)
+
+command-get() {
+    php_version="$1"; shift
+    section_name="$1"; shift
+    what="$1"; shift
+    find='[php-version]'
+    replace="$php_version"
+    PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
+    found=
+    found_file=
+    while read file; do
+        if grep -q -F "[$section_name]" "$file";then
+            found=1
+            found_file="$file"
+            break;
+        fi
+    done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
+    if [ -z "$found_file" ];then
+        exit 1
+    fi
+    php -r "$php" get "$found_file" "$section_name" "$what"
+}
+
+# Execute command.
+if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
+    command-${command} "$@"
+    exit 0
+fi
 
 # Title.
 title rcm-php-fpm-setup-project-config
@@ -194,25 +250,20 @@ if [ -z "$php_fpm_user" ];then
     error "Argument --php-fpm-user required."; x
 fi
 code 'php_fpm_user="'$php_fpm_user'"'
-if [ -z "$project_name" ];then
-    error "Argument --project-name required."; x
+if [ -z "$section" ];then
+    error "Argument --section required."; x
 fi
-code 'project_name="'$project_name'"'
-code 'project_parent_name="'$project_parent_name'"'
-section_name="$project_name"
-[ -n "$project_parent_name" ] && {
-    section_name="${project_parent_name}__${project_name}"
-}
-config_file="$project_name"
-[ -n "$project_parent_name" ] && {
-    config_file="${project_parent_name}__${project_name}"
-}
-[ -n "$config_suffix_name" ] && {
-    section_name="${section_name}__${config_suffix_name}"
-    config_file="${config_file}__${config_suffix_name}"
-}
-config_file+=".conf"
+code 'section="'$section'"'
+# Rename variable.
+section_name="$section"
 code 'section_name="'$section_name'"'
+if [ -z "$file" ];then
+    file="$section_name"
+    file+=".conf"
+fi
+code 'file="'$file'"'
+# Rename variable.
+config_file="$file"
 code 'config_file="'$config_file'"'
 find='[php-version]'
 replace="$php_version"
@@ -382,21 +433,6 @@ switch ($mode) {
         $content = build_ini_string($config);
         file_put_contents($file, trim($content)."\n");
         break;
-    case 'get':
-        $file = $_SERVER['argv'][2];
-        $section_name = $_SERVER['argv'][3];
-        $what = $_SERVER['argv'][4];
-        if (file_exists($file)) {
-            $array = parse_ini_file($file, true);
-            if (array_key_exists($section_name, $array)) {
-                if (array_key_exists($what, $array[$section_name])) {
-                    echo $array[$section_name][$what];
-                    exit(0);
-                }
-            }
-        }
-        exit(1);
-        break;
     case 'is_exists':
         $file = $_SERVER['argv'][2];
         $section_name = $_SERVER['argv'][3];
@@ -472,6 +508,7 @@ if [ -n "$found" ];then
             ____
         fi
     fi
+    [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$found_file" ; _. ; }
 else
     default_config="$(php -r "echo serialize([
         'user' => '$php_fpm_user',
@@ -540,11 +577,6 @@ if [ -n "$restart" ];then
     ____
 fi
 
-if [[ "$command" == get ]];then
-    what="$1"; shift
-    php -r "$php" get "$found_file" "$section_name" "$what"
-fi
-
 exit 0
 
 # parse-options.sh \
@@ -563,9 +595,8 @@ exit 0
 # VALUE=(
 # --php-version
 # --php-fpm-user
-# --project-name
-# --project-parent-name
-# --config-suffix-name
+# --section
+# --file
 # )
 # MULTIVALUE=(
 # --config-line
