@@ -43,7 +43,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.16.26'
+    echo '0.17.0'
 }
 printHelp() {
     title RCM Dig Watch
