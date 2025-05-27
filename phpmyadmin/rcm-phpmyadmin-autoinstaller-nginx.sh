@@ -410,6 +410,8 @@ root="$prefix/${project_container}/web"
 code 'root="'$root'"'
 root_source="$prefix/${project_container}/${phpmyadmin_version}"
 code 'root_source="'$root_source'"'
+php_fpm_section="$php_project_name"
+code 'php_fpm_section="'$php_fpm_section'"'
 ____
 
 target_project_container="${prefix}/${project_container}"
@@ -428,7 +430,7 @@ if [ -n "$notfound" ];then
 fi
 
 chapter Prepare arguments.
-____; socket_filename=$(INDENT+="    " rcm-php-fpm-setup-project-config $isfast --php-version="$php_version" --php-fpm-user="$php_fpm_user" --project-name="$php_project_name" get listen)
+socket_filename=$(rcm-php-fpm-setup-project-config get --php-version="$php_version" --section="$php_fpm_section" --key=listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
