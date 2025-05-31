@@ -135,7 +135,6 @@ Global Options.
 Dependency:
    rcm-certbot-obtain-authenticator-nginx
    rcm-nginx-reload
-   certbot
 EOF
 }
 
@@ -901,12 +900,18 @@ tempfile=
 certificate_path=
 private_key_path=
 validate_existing_certificate=
-if [ -n "$master_certbot_certificate_name" ];then
-    certificate_name="$master_certbot_certificate_name"
-    validate_existing_certificate=1
-else
-    certificate_name="$master_url_host"
+if [[ "$master_url_scheme" == https ]];then
+    if [ -n "$master_certbot_certificate_name" ];then
+        certificate_name="$master_certbot_certificate_name"
+        if [ -z "$certbot_obtain" ];then
+            validate_existing_certificate=1
+        fi
+    else
+        certificate_name="$master_url_host"
+    fi
 fi
+code 'certificate_name="'$certificate_name'"'
+code 'validate_existing_certificate="'$validate_existing_certificate'"'
 ____
 
 path="/etc/nginx/sites-available/$master_filename"
@@ -917,13 +922,14 @@ isFileExists "$path"
 ____
 
 chapter Populate variable.
-if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
+if [[ "$master_url_scheme" == https ]];then
+    if [ -z "$tempfile" ];then
+        tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
+    fi
+    Rcm_certbot 600 "certbot://${certificate_name}" > "$tempfile"
+    certificate_path=$(cat "$tempfile" | grep -i -E 'Certificate Path:\s+' | sed -E 's/Certificate Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    private_key_path=$(cat "$tempfile" | grep -i -E 'Private Key Path:\s+' | sed -E 's/Private Key Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 fi
-
-Rcm_certbot 600 "certbot://${certificate_name}" > "$tempfile"
-certificate_path=$(cat "$tempfile" | grep -i -E 'Certificate Path:\s+' | sed -E 's/Certificate Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-private_key_path=$(cat "$tempfile" | grep -i -E 'Private Key Path:\s+' | sed -E 's/Private Key Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 code 'certificate_path="'$certificate_path'"'
 code 'private_key_path="'$private_key_path'"'
 ____
