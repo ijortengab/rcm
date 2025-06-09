@@ -1247,9 +1247,8 @@ mariadb-user-autocreate
 nginx-apt
 nginx-reload
 nginx-setup-front-controller-php
-nginx-setup-hello-world-php
 nginx-setup-hello-world-static
-nginx-setup-php
+nginx-setup-php-project
 nginx-setup-static
 nginx-virtual-host-autocreate-php-multiple-root
 nginx-virtual-host-autocreate-php
