@@ -2430,6 +2430,11 @@ Rcm_prompt() {
                 if [ -n "$backup_flag" ];then
                     printBackupFlagDialog
                     master_boolean="$boolean"
+                    if [[ "$value_addon" == 'canhavevalue' ]];then
+                        if [ -n "$backup_value" ];then
+                            printBackupDialog
+                        fi
+                    fi
                 fi
                 if [ -z "$master_boolean" ];then
                     _; _.
@@ -2458,11 +2463,6 @@ Rcm_prompt() {
                             boolean=1
                         fi
                         if [ -n "$boolean" ]; then
-                            if [ -z "$value" ];then
-                                if [ -n "$backup_value" ];then
-                                    printBackupDialog
-                                fi
-                            fi
                             if [ -z "$value" ];then
                                 if [ -n "$history_value" ];then
                                     printHistoryDialog
