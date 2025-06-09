@@ -33,7 +33,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-
 # Command.
 command="$1"; shift
 if [ -n "$command" ];then
@@ -51,6 +50,8 @@ case "$command" in
             case "$1" in
                 --key=*) key="${1#*=}"; shift ;;
                 --key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then key="$2"; shift; fi; shift ;;
+                --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
+                --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_fpm_user="$2"; shift; fi; shift ;;
                 --php-version=*) php_version="${1#*=}"; shift ;;
                 --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
                 --section=*) section="${1#*=}"; shift ;;
@@ -95,8 +96,6 @@ fi
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
-
-
 
 # Functions.
 printVersion() {
@@ -155,7 +154,6 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-
 command-get() {
     local php section_name find replace found found_file
     php=$(cat <<'EOF'
@@ -209,6 +207,11 @@ EOF
     done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
     if [ -z "$found_file" ];then
         error File config that contains section is not found.; x
+    elif [ -n "$php_fpm_user" ];then
+        user=$(php -r "$php" get "$found_file" "$section_name" "user")
+        if [ ! "$php_fpm_user" == "$user" ];then
+            error File config that contains section is not belong to user '`'"$php_fpm_user"'`'.; x
+        fi
     fi
     php -r "$php" get "$found_file" "$section_name" "$key"
 }
@@ -659,7 +662,6 @@ exit 0
 # EOF
 # clear
 
-
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --compact \
@@ -670,6 +672,7 @@ exit 0
 # --no-error-require-arguments << EOF | clip
 # VALUE=(
 # --php-version
+# --php-fpm-user
 # --section
 # --key
 # )
