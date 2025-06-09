@@ -79,7 +79,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.17.1'
+    echo '0.17.2'
 }
 printHelp() {
     title RCM Nginx Virtual Host Autocreate

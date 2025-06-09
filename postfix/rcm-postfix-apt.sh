@@ -41,7 +41,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.17.1'
+    echo '0.17.2'
 }
 printHelp() {
     title RCM Postfix Auto-Installer
