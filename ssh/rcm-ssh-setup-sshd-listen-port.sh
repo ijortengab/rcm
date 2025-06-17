@@ -49,7 +49,7 @@ RCM_CONF=${RCM_CONF:=rcm.conf}
 
 # Functions.
 printVersion() {
-    echo '0.17.2'
+    echo '0.17.3'
 }
 printHelp() {
     title RCM SSH Setup

@@ -66,7 +66,7 @@ PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool
 
 # Functions.
 printVersion() {
-    echo '0.17.2'
+    echo '0.17.3'
 }
 printHelp() {
     title RCM Nginx Setup
