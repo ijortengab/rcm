@@ -893,7 +893,9 @@ if [[ -n "$create_new" && "$url_scheme" == https ]];then
         # Certificate ditemukan, maka berikutnya kita perlu verifikasi lagi.
         chapter Verifikasi Domain
         _list_domain=$(cat "$tempfile" | grep -i -E 'Domains:\s+' | sed -E 's/Domains:(.*)/\1/')
-        list_domain=($_list_domain)
+        # Jika variable $_list_domain terdapat karakter wildcard, maka:
+        # list_domain=($_list_domain)
+        read -ra list_domain -d '' <<< "$_list_domain"
         # Dump array dengan single quote.
         e; magenta 'list_domain=('
         first=1
