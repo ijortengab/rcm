@@ -6,39 +6,27 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --certbot-certificate-name=*) certbot_certificate_name="${1#*=}"; shift ;;
+        --certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_certificate_name="$2"; shift; fi; shift ;;
+        --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
+        --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
-        --master-certbot-certificate-name=*) master_certbot_certificate_name="${1#*=}"; shift ;;
-        --master-certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_certbot_certificate_name="$2"; shift; fi; shift ;;
-        --master-filename=*) master_filename="${1#*=}"; shift ;;
-        --master-filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_filename="$2"; shift; fi; shift ;;
-        --master-include-2=*) master_include_2="${1#*=}"; shift ;;
-        --master-include-2) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_include_2="$2"; shift; fi; shift ;;
-        --master-include=*) master_include="${1#*=}"; shift ;;
-        --master-include) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_include="$2"; shift; fi; shift ;;
-        --master-root=*) master_root="${1#*=}"; shift ;;
-        --master-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_root="$2"; shift; fi; shift ;;
-        --master-url-host=*) master_url_host="${1#*=}"; shift ;;
-        --master-url-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_url_host="$2"; shift; fi; shift ;;
-        --master-url-port=*) master_url_port="${1#*=}"; shift ;;
-        --master-url-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_url_port="$2"; shift; fi; shift ;;
-        --master-url-scheme=*) master_url_scheme="${1#*=}"; shift ;;
-        --master-url-scheme) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then master_url_scheme="$2"; shift; fi; shift ;;
-        --slave-dirname=*) slave_dirname="${1#*=}"; shift ;;
-        --slave-dirname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_dirname="$2"; shift; fi; shift ;;
-        --slave-fastcgi-pass=*) slave_fastcgi_pass="${1#*=}"; shift ;;
-        --slave-fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_fastcgi_pass="$2"; shift; fi; shift ;;
-        --slave-filename=*) slave_filename="${1#*=}"; shift ;;
-        --slave-filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_filename="$2"; shift; fi; shift ;;
-        --slave-root=*) slave_root="${1#*=}"; shift ;;
-        --slave-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_root="$2"; shift; fi; shift ;;
-        --slave-url-path=*) slave_url_path="${1#*=}"; shift ;;
-        --slave-url-path) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then slave_url_path="$2"; shift; fi; shift ;;
+        --nginx-config-dir=*) nginx_config_dir="${1#*=}"; shift ;;
+        --nginx-config-dir) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_dir="$2"; shift; fi; shift ;;
+        --nginx-config-file=*) nginx_config_file="${1#*=}"; shift ;;
+        --nginx-config-file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_file="$2"; shift; fi; shift ;;
+        --nginx-config-root=*) nginx_config_root="${1#*=}"; shift ;;
+        --nginx-config-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_root="$2"; shift; fi; shift ;;
         --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
         --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
+        --url=*) url="${1#*=}"; shift ;;
+        --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
         --with-certbot-obtain) certbot_obtain=1; shift ;;
         --without-certbot-obtain) certbot_obtain=0; shift ;;
         --with-nginx-reload) nginx_reload=1; shift ;;
         --without-nginx-reload) nginx_reload=0; shift ;;
+        --web-root=*) web_root="${1#*=}"; shift ;;
+        --web-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then web_root="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -68,6 +56,7 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 # Define variables and constants.
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
@@ -89,40 +78,27 @@ printHelp() {
 Usage: rcm-nginx-virtual-host-autocreate-php-multiple-root [options]
 
 Options:
-   --master-filename *
-        Set the filename to created inside /etc/nginx/sites-available directory.
-   --master-root *
-        Set the value of root directive.
-   --slave-fastcgi-pass *
+   --url *
+        Set the URL.
+   --nginx-config-root *
+        Set the NGINX config Root.
+   --web-root
+        Required if --url is empty of path component.
+   --fastcgi-pass *
         Set the value of fastcgi_pass directive.
-   --master-url-scheme *
-        The URL Scheme. Available value: http, https.
-   --master-url-port *
-        The URL Port. Set the value of listen directive.
-   --master-url-host *
-        The URL Host. Set the value of server_name directive.
-        Only support one value even the directive may have multivalue.
-   --master-include *
+   --nginx-config-dir *
         The value to include directive. Include file that contains location directive.
-   --master-include-2 *
+   --nginx-config-file *
         Additional value to include directive. Include file that contains location directive.
-   --slave-url-path
-        The URL Path.
-   --slave-url-root
-        Set the value of root directive.
-   --slave-dirname *
-        Set the directory to store additional config.
-   --slave-filename *
-        Set filename of additional config.
    --without-certbot-obtain ^
         Prevent auto obtain certificate if not exists.
         Default value is --with-certbot-obtain.
    --without-nginx-reload ^
         Prevent auto reload nginx after add/edit file config.
         Default value is --with-nginx-reload.
-   --master-certbot-certificate-name
+   --certbot-certificate-name
         The name of certificate. Leave blank to use default value.
-        Default value is --master-url-host.
+        Default value is component host of --url.
 
 Global Options.
    --fast
@@ -639,24 +615,24 @@ findString() {
 validateContentMaster() {
     local path="$1"
     # listen
-    if [ "$master_url_scheme" == https ];then
-        if ! nginxGrep listen '(a&b)|(a&b&c)' a contains "$master_url_port" b contains ssl c contains ipv6only=on < "$path";then
+    if [ "$url_scheme" == https ];then
+        if ! nginxGrep listen '(a&b)|(a&b&c)' a contains "$url_port" b contains ssl c contains ipv6only=on < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     else
-        if ! nginxGrep listen contains "$master_url_port" < "$path";then
+        if ! nginxGrep listen contains "$url_port" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     fi
     # server_name
-    if ! nginxGrep server_name contains "$master_url_host" < "$path";then
+    if ! nginxGrep server_name contains "$url_host" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
 
-    if [ "$master_url_scheme" == https ];then
+    if [ "$url_scheme" == https ];then
         # ssl_certificate
         if ! nginxGrep ssl_certificate is "$certificate_path" < "$path";then
             __; yellow File akan dibuat ulang.; _.
@@ -678,7 +654,7 @@ validateContentMaster() {
             return 1
         fi
     fi
-    if [ "$master_url_scheme" == http ];then
+    if [ "$url_scheme" == http ];then
         # ssl_certificate
         if nginxGrep ssl_certificate is "$certificate_path" < "$path";then
             __; yellow File akan dibuat ulang.; _.
@@ -705,13 +681,13 @@ validateContentMaster() {
 validateContentSlave() {
     local path="$1"
     # fastcgi_pass
-    if ! nginxGrep fastcgi_pass is "$slave_fastcgi_pass" < "$path";then
+    if ! nginxGrep fastcgi_pass is "$fastcgi_pass" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
-    if [ -z "$slave_url_path" ];then
+    if [ -z "$url_path" ];then
         # root
-        if ! nginxGrep root is "$slave_root" < "$path";then
+        if ! nginxGrep root is "$web_root" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -726,7 +702,7 @@ validateContentRedirect() {
         return 1
     fi
     # server_name
-    if ! nginxGrep server_name contains "$master_url_host" < "$path";then
+    if ! nginxGrep server_name contains "$url_host" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
@@ -823,91 +799,193 @@ Rcm_certbot() {
     fi
     cat "$cache_file"
 }
+Rcm_parse_url() {
+    # Reset
+    PHP_URL_SCHEME=
+    PHP_URL_HOST=
+    PHP_URL_PORT=
+    PHP_URL_USER=
+    PHP_URL_PASS=
+    PHP_URL_PATH=
+    PHP_URL_QUERY=
+    PHP_URL_FRAGMENT=
+    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
+    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
+    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
+    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
+    fi
+    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
+    fi
+    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
+    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
+    if [ -n "$PHP_URL_PASS" ]; then
+        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
+    else
+        PHP_URL_USER=$_PHP_URL_USER_PASS
+    fi
+    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
+    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
+    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
+        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+    fi
+    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
+    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
+    if [ -n "$_PHP_URL_USER_PASS" ];then
+        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
+        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
+    fi
+    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
+
+    # Debug
+    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"; _.
+    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"; _.
+    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"; _.
+    # e '"$PHP_URL_USER"' "$PHP_URL_USER"; _.
+    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"; _.
+    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"; _.
+    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"; _.
+    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"; _.
+}
+urlCompleteComponent() {
+    local tld_special _url_port _tld _url_path_correct
+    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
+    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
+    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
+    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
+    Rcm_parse_url "$url"
+    if [ -z "$PHP_URL_HOST" ];then
+        error Argument --url is not valid: '`'"$url"'`'.; x
+    fi
+    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
+    if [ -z "$PHP_URL_PORT" ];then
+        case "$url_scheme" in
+            http) url_port=80;;
+            https) url_port=443;;
+        esac
+    else
+        url_port="$PHP_URL_PORT"
+    fi
+    url_host="$PHP_URL_HOST"
+    url_path="$PHP_URL_PATH"
+    url_path_clean=
+    url_path_clean_trailing=
+    if [[ "$url_path" == '/' ]];then
+        url_path=
+    fi
+    if [ -n "$url_path" ];then
+        # Trim leading and trailing slash.
+        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
+        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
+        # Must leading with slash.
+        # Karena akan digunakan pada nginx configuration.
+        _url_path_correct="/${url_path_clean}"
+        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
+            error "Argument --url-path not valid."; x
+        fi
+    fi
+    _tld="${url_host##*.}"
+    # Explode by space.
+    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
+    is_tld_special=
+    if ArraySearch "$_tld" tld_special[@];then
+        # Paksa menjadi http.
+        url_scheme=http
+        if [ -z "$PHP_URL_PORT" ];then
+            url_port=80
+        fi
+        is_tld_special=1
+    fi
+    _url_port=
+    if [ -n "$url_port" ];then
+        if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
+            _url_port=
+        elif [[ "$url_scheme" == http && "$url_port" == 80 ]];then
+            _url_port=
+        else
+            _url_port=":${url_port}"
+        fi
+    fi
+    # Modify variable url, auto add scheme.
+    # Modify variable url, auto trim trailing slash, auto add port.
+    url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
+}
 
 # Require, validate, and populate value.
 chapter Dump variable.
-if [ -z "$master_filename" ];then
-    error "Argument --master-filename required."; x
+if [ -z "$url" ];then
+    error "Argument --url required."; x
 fi
-if [ -z "$master_root" ];then
-    error "Argument --master-root required."; x
+code 'url="'$url'"'
+urlCompleteComponent
+code 'url="'$url'"'
+code 'url_scheme="'$url_scheme'"'
+code 'url_host="'$url_host'"'
+code 'url_port="'$url_port'"'
+code 'url_path="'$url_path'"'
+code 'url_path_clean="'$url_path_clean'"'
+code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+if [ -z "$nginx_config_root" ];then
+    error "Argument --nginx-config-root required."; x
 fi
-if [ -z "$master_url_scheme" ];then
-    error "Argument --master-url-scheme required."; x
+code 'nginx_config_root="'$nginx_config_root'"'
+if [ -z "$nginx_config_file" ];then
+    error "Argument --nginx-config-file required."; x
 fi
-if [ -z "$master_url_port" ];then
-    error "Argument --master-url-port required."; x
+code 'nginx_config_file="'$nginx_config_file'"'
+if [ -z "$nginx_config_dir" ];then
+    error "Argument --nginx-config-dir required."; x
 fi
-if [[ "$master_url_port" =~ [^0-9] ]];then
-    error "Argument --master-url-port is not valid."; x
+code 'nginx_config_dir="'$nginx_config_dir'"'
+if [ -z "$fastcgi_pass" ];then
+    error "Argument --fastcgi-pass required."; x
 fi
-if [ -z "$master_url_host" ];then
-    error "Argument --master-url-host required."; x
-fi
-if [ -z "$master_include" ];then
-    error "Argument --master-include required."; x
-fi
-if [ -z "$master_include_2" ];then
-    error "Argument --master-include-2 required."; x
-fi
-if [ -z "$slave_fastcgi_pass" ];then
-    error "Argument --slave-fastcgi-pass required."; x
-fi
-if [ -z "$slave_url_path" ];then
-    if [ -z "$slave_root" ];then
-        error "Argument --slave-root required."; x
+if [ -z "$url_path" ];then
+    if [ -z "$web_root" ];then
+        error "Argument --web-root required."; x
     fi
-fi
-if [ -z "$slave_dirname" ];then
-    error "Argument --slave-dirname required."; x
+    slave_dirname="$(dirname "$nginx_config_file")"
+    slave_filename="$(basename "$nginx_config_file")"
+else
+    slave_dirname="$nginx_config_dir"
+    slave_filename="${url_path_clean//\//.}"
 fi
 [ -d "$slave_dirname" ] || dirMustExists "$slave_dirname"
-if [ -z "$slave_filename" ];then
-    error "Argument --slave-filename required."; x
-fi
 [ "$certbot_obtain" == 0 ] && certbot_obtain=
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
-code 'master_root="'$master_root'"'
+master_include="${nginx_config_dir}/*"
 code 'master_include="'$master_include'"'
-code 'master_include_2="'$master_include_2'"'
+if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
+    master_filename="$url_host"
+else
+    master_filename="${url_host}.${url_port}"
+fi
 code 'master_filename="'$master_filename'"'
-code 'master_url_scheme="'$master_url_scheme'"'
-code 'master_url_port="'$master_url_port'"'
-code 'master_url_host="'$master_url_host'"'
-code 'slave_root="'$slave_root'"'
+code 'web_root="'$web_root'"'
 code 'slave_filename="'$slave_filename'"'
 code 'slave_dirname="'$slave_dirname'"'
-code 'slave_fastcgi_pass="'$slave_fastcgi_pass'"'
-code 'slave_url_path="'$slave_url_path'"'
-if [ -n "$slave_url_path" ];then
-    # Trim leading and trailing slash.
-    slave_url_path_clean=$(echo "$slave_url_path" | sed -E 's|(^/\|/$)+||g')
-    # Must leading with slash and no trailing slash.
-    # Karena akan digunakan pada nginx configuration.
-    _slave_url_path_correct="/${slave_url_path_clean}"
-    if [ ! "$slave_url_path" == "$_slave_url_path_correct" ];then
-        error "Argument --slave-url-path not valid."; x
-    fi
-fi
-code 'slave_url_path_clean="'$slave_url_path_clean'"'
+code 'fastcgi_pass="'$fastcgi_pass'"'
 code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
-code 'master_certbot_certificate_name="'$master_certbot_certificate_name'"'
+code 'certbot_certificate_name="'$certbot_certificate_name'"'
 code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
 rcm_nginx_reload=
 tempfile=
 certificate_path=
 private_key_path=
 validate_existing_certificate=
-if [[ "$master_url_scheme" == https ]];then
-    if [ -n "$master_certbot_certificate_name" ];then
-        certificate_name="$master_certbot_certificate_name"
+if [[ "$url_scheme" == https ]];then
+    if [ -n "$certbot_certificate_name" ];then
+        certificate_name="$certbot_certificate_name"
         if [ -z "$certbot_obtain" ];then
             validate_existing_certificate=1
         fi
     else
-        certificate_name="$master_url_host"
+        certificate_name="$url_host"
     fi
 fi
 code 'certificate_name="'$certificate_name'"'
@@ -922,7 +1000,7 @@ isFileExists "$path"
 ____
 
 chapter Populate variable.
-if [[ "$master_url_scheme" == https ]];then
+if [[ "$url_scheme" == https ]];then
     if [ -z "$tempfile" ];then
         tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
     fi
@@ -944,7 +1022,7 @@ else
     create_new=1
 fi
 
-if [[ -n "$create_new" && "$master_url_scheme" == https ]];then
+if [[ -n "$create_new" && "$url_scheme" == https ]];then
     if [ -n "$validate_existing_certificate" ];then
         chapter Verifikasi Certificate.
         if [ -z "$tempfile" ];then
@@ -979,17 +1057,17 @@ if [[ -n "$create_new" && "$master_url_scheme" == https ]];then
             fi
         done
         magenta ')'; _.
-        __ Mengecek domain '`'"$master_url_host"'`'
+        __ Mengecek domain '`'"$url_host"'`'
         found=
-        if ArraySearch "$master_url_host" list_domain[@];then
+        if ArraySearch "$url_host" list_domain[@];then
             found=1
             __ Domain ditemukan.
         else
             __ Domain tidak ditemukan.
         fi
         if [ -z "$found" ];then
-            __ Mengecek versi wildcard dari domain '`'"$master_url_host"'`'
-            IFS='.' read -ra array <<< "$master_url_host"
+            __ Mengecek versi wildcard dari domain '`'"$url_host"'`'
+            IFS='.' read -ra array <<< "$url_host"
             if [ "${#array[@]}" -gt 2 ];then
                 domain_wildcard=
                 first=1
@@ -1046,7 +1124,7 @@ if [[ -n "$create_new" && "$master_url_scheme" == https ]];then
             PATH=$PATH \
             rcm-certbot-obtain-authenticator-nginx \
                 --certificate-name "$certificate_name" \
-                --domain "$master_url_host" \
+                --domain "$url_host" \
                 ; [ ! $? -eq 0 ] && x
             nginx_reload=1
         fi
@@ -1078,10 +1156,10 @@ if [ -n "$create_new" ];then
     __ Membuat file "$filename".
     cat <<'EOF' > "$path"
 server {
-    listen [::]:__MASTER_URL_PORT____SSL__;
-    listen __MASTER_URL_PORT____SSL____IPV6ONLY__;
+    listen [::]:__URL_PORT____SSL__;
+    listen __URL_PORT____SSL____IPV6ONLY__;
     index index.php;
-    server_name __MASTER_URL_HOST__;
+    server_name __URL_HOST__;
     location = /favicon.ico {
         log_not_found off;
         access_log off;
@@ -1093,7 +1171,7 @@ server {
     }
 
     # include __MASTER_INCLUDE__;
-    # include __MASTER_INCLUDE_2__;
+    # include __NGINX_CONFIG_FILE__;
 
     # ssl_certificate __CERTIFICATE_PATH__;
     # ssl_certificate_key __PRIVATE_KEY_PATH__;
@@ -1104,13 +1182,13 @@ server {
 }
 EOF
     fileMustExists "$path"
-    sed -i "s|__MASTER_URL_HOST__|${master_url_host}|g" "$path"
+    sed -i "s|__URL_HOST__|${url_host}|g" "$path"
     sed -i "s|__CERTIFICATE_PATH__|${certificate_path}|g" "$path"
     sed -i "s|__PRIVATE_KEY_PATH__|${private_key_path}|g" "$path"
     sed -i "s|__MASTER_INCLUDE__|${master_include}|g" "$path"
-    sed -i "s|__MASTER_INCLUDE_2__|${master_include_2}|g" "$path"
-    sed -i "s|__MASTER_URL_PORT__|${master_url_port}|g" "$path"
-    if [ "$master_url_scheme" == https ];then
+    sed -i "s|__NGINX_CONFIG_FILE__|${nginx_config_file}|g" "$path"
+    sed -i "s|__URL_PORT__|${url_port}|g" "$path"
+    if [ "$url_scheme" == https ];then
         sed -i "s|__SSL__| ssl|g" "$path"
         # Hanya satu ipv6only=on yang boleh exist pada setiap virtual host.
         if grep -R -q ipv6only=on /etc/nginx/sites-enabled/;then
@@ -1126,8 +1204,8 @@ EOF
         sed -i "s|__SSL__||g" "$path"
         sed -i "s|__IPV6ONLY__||g" "$path"
     fi
-    if [ -z "$slave_url_path" ];then
-        sed -i 's|# include '"${master_include_2}"';|include '"${master_include_2}"';|g' "$path"
+    if [ -z "$url_path" ];then
+        sed -i 's|# include '"${nginx_config_file}"';|include '"${nginx_config_file}"';|g' "$path"
     else
         sed -i 's|# include '"${master_include}"';|include '"${master_include}"';|g' "$path"
     fi
@@ -1147,14 +1225,14 @@ target="/etc/nginx/sites-enabled/$master_filename"
 link_symbolic "$source" "$target"
 
 chapter Enable the line to include sub nginx config file: '`'$filename'`'.
-if [ -z "$slave_url_path" ];then
-    template="    include __MASTER_INCLUDE_2__;"
-    find=$(echo "$template" | sed "s|__MASTER_INCLUDE_2__|${master_include_2}|g")
+if [ -z "$url_path" ];then
+    template="    include __NGINX_CONFIG_FILE__;"
+    find=$(echo "$template" | sed "s|__NGINX_CONFIG_FILE__|${nginx_config_file}|g")
     if findString "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
         sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
     fi
-    if ! nginxGrep include is "$master_include_2" < "$path";then
+    if ! nginxGrep include is "$nginx_config_file" < "$path";then
         error Enable gagal.; x
     fi
 else
@@ -1197,37 +1275,37 @@ if [ -n "$create_new" ];then
         backupFile move "$path" parent
     fi
     __ Membuat file "$filename".
-    if [ -z "$slave_url_path" ];then
+    if [ -z "$url_path" ];then
         cat <<'EOF' > "$path"
 location / {
-    root __SLAVE_ROOT__;
+    root __WEB_ROOT__;
     try_files $uri $uri/ /index.php$is_args$args;
     location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass __SLAVE_FASTCGI_PASS__;
+        fastcgi_pass __FASTCGI_PASS__;
         fastcgi_read_timeout 3600;
     }
 }
 EOF
-        sed -i "s|__SLAVE_ROOT__|${slave_root}|g" "$path"
-        sed -i "s|__SLAVE_FASTCGI_PASS__|${slave_fastcgi_pass}|g" "$path"
+        sed -i "s|__WEB_ROOT__|${web_root}|g" "$path"
+        sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
     else
         cat <<'EOF' > "$path"
-location = __SLAVE_URL_PATH__ {
-    return 302 __SLAVE_URL_PATH__/;
+location = __URL_PATH_CLEAN_TRAILING__ {
+    return 302 __URL_PATH_CLEAN_TRAILING__/;
 }
-location __SLAVE_URL_PATH__/ {
-    root __MASTER_ROOT__;
-    try_files $uri $uri/ __SLAVE_URL_PATH__/index.php$is_args$args;
+location __URL_PATH_CLEAN_TRAILING__/ {
+    root __NGINX_CONFIG_ROOT__;
+    try_files $uri $uri/ __URL_PATH_CLEAN_TRAILING__/index.php$is_args$args;
     location ~ ^(.+\.php)(.*)$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass __SLAVE_FASTCGI_PASS__;
+        fastcgi_pass __FASTCGI_PASS__;
     }
 }
 EOF
-        sed -i "s|__SLAVE_URL_PATH__|${slave_url_path}|g" "$path"
-        sed -i "s|__SLAVE_FASTCGI_PASS__|${slave_fastcgi_pass}|g" "$path"
-        sed -i "s|__MASTER_ROOT__|${master_root}|g" "$path"
+        sed -i "s|__URL_PATH_CLEAN_TRAILING__|${url_path_clean_trailing}|g" "$path"
+        sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
+        sed -i "s|__NGINX_CONFIG_ROOT__|${nginx_config_root}|g" "$path"
     fi
     fileMustExists "$path"
     ____
@@ -1246,7 +1324,7 @@ chapter Mengecek nginx config file: '`'$filename'`'.
 isFileExists "$path"
 ____
 
-if [[ "$master_url_scheme" == https && "$master_url_port" == 443 ]];then
+if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
     create_new=
     if [ -n "$found" ];then
         chapter Memeriksa konten.
@@ -1268,17 +1346,17 @@ if [[ "$master_url_scheme" == https && "$master_url_port" == 443 ]];then
         __ Membuat file "$filename".
         cat <<'EOF' > "$path"
 server {
-    if ($host = __MASTER_URL_HOST__) {
+    if ($host = __URL_HOST__) {
         return 301 https://$host$request_uri;
     }
     listen [::]:80;
     listen 80;
-    server_name __MASTER_URL_HOST__;
+    server_name __URL_HOST__;
     return 404;
 }
 EOF
         fileMustExists "$path"
-        sed -i "s|__MASTER_URL_HOST__|${master_url_host}|g" "$path"
+        sed -i "s|__URL_HOST__|${url_host}|g" "$path"
         ____
 
         chapter Memeriksa ulang konten.
@@ -1304,7 +1382,7 @@ else
 fi
 
 # Credit: https://stackoverflow.com/questions/15429043/how-to-redirect-on-the-same-port-from-http-to-https-with-nginx-reverse-proxy
-if [[ "$master_url_scheme" == https && ! "$master_url_port" == 443 ]];then
+if [[ "$url_scheme" == https && ! "$url_port" == 443 ]];then
     chapter Redirect to https if accessed with http
     path="/etc/nginx/sites-available/$master_filename"
     find="    error_page 497"
@@ -1350,19 +1428,13 @@ exit 0
 # --help
 # )
 # VALUE=(
-# --master-root
-# --master-include
-# --master-include-2
-# --master-filename
-# --master-url-port
-# --master-url-scheme
-# --master-url-host
-# --master-certbot-certificate-name
-# --slave-root
-# --slave-filename
-# --slave-dirname
-# --slave-fastcgi-pass
-# --slave-url-path
+# --url
+# --nginx-config-root
+# --nginx-config-file
+# --nginx-config-dir
+# --web-root
+# --certbot-certificate-name
+# --fastcgi-pass
 # --tempfile-trigger-reload
 # )
 # MULTIVALUE=(
