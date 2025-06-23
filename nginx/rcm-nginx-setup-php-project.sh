@@ -63,6 +63,7 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
+RCM_TLD_SPECIAL='example test onion invalid local localhost alt'
 
 # Functions.
 printVersion() {
@@ -556,30 +557,12 @@ fileMustExists() {
         __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
     fi
 }
-
-# Require, validate, and populate value.
-chapter Dump variable.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-code no_auto_add_group="$no_auto_add_group"
-is_wsl=
-if [ -f /proc/sys/kernel/osrelease ];then
-    read osrelease </proc/sys/kernel/osrelease
-    if [[ "$osrelease" =~ microsoft || "$osrelease" =~ Microsoft ]];then
-        is_wsl=1
-    fi
-fi
-code 'is_wsl="'$is_wsl'"'
-if [ -z "$url" ];then
-    error "Argument --url required."; x
-fi
-code 'url="'$url'"'
-if [ -z "$php_version" ];then
-    error "Argument --php-version required."; x
-fi
-code php_version="$php_version"
-tld_special=(example test onion invalid local localhost alt)
-is_tld_special=
-if [ -n "$url" ];then
+urlCompleteComponent() {
+    local tld_special _url_port _tld _url_path_correct
+    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
+    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
+    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
+    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
     Rcm_parse_url "$url"
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url is not valid: '`'"$url"'`'.; x
@@ -595,11 +578,31 @@ if [ -n "$url" ];then
     fi
     url_host="$PHP_URL_HOST"
     url_path="$PHP_URL_PATH"
+    url_path_clean=
+    url_path_clean_trailing=
+    if [[ "$url_path" == '/' ]];then
+        url_path=
+    fi
+    if [ -n "$url_path" ];then
+        # Trim leading and trailing slash.
+        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
+        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
+        # Must leading with slash.
+        # Karena akan digunakan pada nginx configuration.
+        _url_path_correct="/${url_path_clean}"
+        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
+            error "Argument --url-path not valid."; x
+        fi
+    fi
     # Modify variable url, auto add scheme.
     url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
     # Modify variable url, auto trim trailing slash, auto add port.
-    tld="${url_host##*.}"
-    if ArraySearch "$tld" tld_special[@];then
+    _tld="${url_host##*.}"
+    # Explode by space.
+    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
+    is_tld_special=
+    if ArraySearch "$_tld" tld_special[@];then
+        # Paksa menjadi http.
         url_scheme=http
         if [ -z "$PHP_URL_PORT" ];then
             url_port=80
@@ -617,8 +620,36 @@ if [ -n "$url" ];then
         fi
     fi
     url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
+}
+
+# Require, validate, and populate value.
+chapter Dump variable.
+[ -n "$fast" ] && isfast=' --fast' || isfast=''
+code no_auto_add_group="$no_auto_add_group"
+is_wsl=
+if [ -f /proc/sys/kernel/osrelease ];then
+    read osrelease </proc/sys/kernel/osrelease
+    if [[ "$osrelease" =~ microsoft || "$osrelease" =~ Microsoft ]];then
+        is_wsl=1
+    fi
+fi
+code 'is_wsl="'$is_wsl'"'
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
+code php_version="$php_version"
+if [ -z "$url" ];then
+    error "Argument --url required."; x
 fi
 code 'url="'$url'"'
+urlCompleteComponent
+code 'url="'$url'"'
+code 'url_scheme="'$url_scheme'"'
+code 'url_host="'$url_host'"'
+code 'url_port="'$url_port'"'
+code 'url_path="'$url_path'"'
+code 'url_path_clean="'$url_path_clean'"'
+code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
 if [ -n "$is_wsl" ];then
     # Jika mesin menggunakan WSL2, maka tambahkan max_execution_time (waktu proses)
     php_fpm_config=(pm=ondemand php_value[max_execution_time]=60 "${php_fpm_config[@]}")
@@ -651,6 +682,7 @@ if [ -n "$is_tld_special" ];then
 fi
 code 'certbot_obtain="'$certbot_obtain'"'
 [ -n "$certbot_obtain" ] && is_certbot_obtain=' --with-certbot-obtain' || is_certbot_obtain=' --without-certbot-obtain'
+code 'is_certbot_obtain="'$is_certbot_obtain'"'
 code 'root="'$root'"'
 code 'prefix="'$prefix'"'
 code 'container="'$container'"'
@@ -680,6 +712,7 @@ else
 fi
 code 'prefix="'$prefix'"'
 code 'index_php="'$index_php'"'
+rcm_nginx_reload=
 ____
 
 INDENT+="    " \
@@ -689,45 +722,6 @@ rcm-php-setup-adjust-cli-version $isfast \
 
 # Code below from
 # rcm-drupal-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh
-chapter Dump variable.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-if [ -z "$url_scheme" ];then
-    error "Argument --url-scheme required."; x
-fi
-if [ -z "$url_host" ];then
-    error "Argument --url-host required."; x
-fi
-if [ -z "$url_port" ];then
-    error "Argument --url-port required."; x
-fi
-if [[ "$url_path" == '/' ]];then
-    url_path=
-fi
-if [ -n "$url_path" ];then
-    # Trim leading and trailing slash.
-    url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
-    url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
-    # Must leading with slash.
-    # Karena akan digunakan pada nginx configuration.
-    _url_path_correct="/${url_path_clean}"
-    if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
-        error "Argument --url-path not valid."; x
-    fi
-fi
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
-code 'url_path="'$url_path'"'
-code 'url_path_clean="'$url_path_clean'"'
-if [ -z "$php_version" ];then
-    error "Argument --php-version required."; x
-fi
-code 'php_version="'$php_version'"'
-rcm_nginx_reload=
-code 'certificate_name="'$certificate_name'"'
-code 'is_certbot_obtain="'$is_certbot_obtain'"'
-____
-
 chapter Populate variables.
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
@@ -1025,8 +1019,8 @@ if [ -z "$tempfile" ];then
     tempfile=$(mktemp -p /dev/shm -t rcm-drupal-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
 fi
 until [ $i -eq 10 ];do
-    __; magenta curl"$_k" -o /dev/null -s -w '"'%{http_code}\\n'"' '"'"${url_scheme}://127.0.0.1:${url_port}${url_path}/${filename}"'"' -H '"'Host: $url_host'"'; _.
-    curl$_k -o /dev/null -s -w "%{http_code}\n" "${url_scheme}://127.0.0.1:${url_port}${url_path}/${filename}" -H "Host: ${url_host}" > $tempfile
+    __; magenta curl"$_k" -o /dev/null -s -w '"'%{http_code}\\n'"' '"'"${url_scheme}://127.0.0.1:${url_port}${url_path_clean_trailing}/${filename}"'"' -H '"'Host: $url_host'"'; _.
+    curl$_k -o /dev/null -s -w "%{http_code}\n" "${url_scheme}://127.0.0.1:${url_port}${url_path_clean_trailing}/${filename}" -H "Host: ${url_host}" > $tempfile
     while read line; do e "$line"; _.; done < $tempfile
     code=$(head -1 $tempfile)
     if [[ "$code" =~ ^[2,3] ]];then
