@@ -63,7 +63,7 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
-RCM_TLD_SPECIAL='example test onion invalid local localhost alt'
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 # Functions.
 printVersion() {
@@ -594,9 +594,6 @@ urlCompleteComponent() {
             error "Argument --url-path not valid."; x
         fi
     fi
-    # Modify variable url, auto add scheme.
-    url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
-    # Modify variable url, auto trim trailing slash, auto add port.
     _tld="${url_host##*.}"
     # Explode by space.
     read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
@@ -619,6 +616,8 @@ urlCompleteComponent() {
             _url_port=":${url_port}"
         fi
     fi
+    # Modify variable url, auto add scheme.
+    # Modify variable url, auto trim trailing slash, auto add port.
     url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
 }
 
@@ -767,16 +766,13 @@ fastcgi_pass="unix:${socket_filename}"
 code 'fastcgi_pass="'$fastcgi_pass'"'
 
 if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
-    filename="$url_host"
     additional_path_custom_port=
 else
-    filename="${url_host}.${url_port}"
     additional_path_custom_port="/${url_port}"
 fi
 
-root="${prefix}/${container}/${url_host}${additional_path_custom_port}/web/${url_path_clean}"
+root="${prefix}/${container}/${url_host}${additional_path_custom_port}/web${url_path_clean_trailing}"
 code 'root="'$root'"'
-code filename="$filename"
 server_name="$url_host"
 code server_name="$server_name"
 root_parent=$(dirname "$root")
@@ -823,8 +819,8 @@ chapter Populate variable.
 nginx_config_root="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx"
 code 'nginx_config_root="'$nginx_config_root'"'
 nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf.d"
-nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
 code 'nginx_config_dir="'$nginx_config_dir'"'
+nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
 code 'nginx_config_file="'$nginx_config_file'"'
 adjustNginxConfigRoot "$url_path"
 code 'nginx_config_root="'$nginx_config_root'"'
@@ -881,37 +877,16 @@ if [ -n "$url_path" ];then
 fi
 
 chapter Prepare Arguments.
-master_root="$nginx_config_root"
-master_include="${nginx_config_dir}/*"
-master_include_2="$nginx_config_file"
-master_filename="$filename"
-master_url_host="$url_host"
-master_url_scheme="$url_scheme"
-master_url_port="$url_port"
-slave_root=
-slave_filename="${url_path_clean//\//.}"
-slave_dirname="$nginx_config_dir"
-slave_fastcgi_pass="$fastcgi_pass"
-slave_url_path="$url_path_clean_trailing"
-slave_url_path_clean="$url_path_clean"
+web_root=
 if [ -z "$url_path" ];then
-    slave_filename="$(basename "$nginx_config_file")"
-    slave_dirname="$(dirname "$nginx_config_file")"
-    slave_url_path=
-    slave_root="$root"
+    web_root="$root"
 fi
-code 'master_root="'$master_root'"'
-code 'master_include="'$master_include'"'
-code 'master_include_2="'$master_include_2'"'
-code 'master_filename="'$master_filename'"'
-code 'master_url_host="'$master_url_host'"'
-code 'master_url_scheme="'$master_url_scheme'"'
-code 'master_url_port="'$master_url_port'"'
-code 'slave_root="'$slave_root'"'
-code 'slave_filename="'$slave_filename'"'
-code 'slave_dirname="'$slave_dirname'"'
-code 'slave_fastcgi_pass="'$slave_fastcgi_pass'"'
-code 'slave_url_path="'$slave_url_path'"'
+code 'nginx_config_root="'$nginx_config_root'"'
+code 'nginx_config_dir="'$nginx_config_dir'"'
+code 'nginx_config_file="'$nginx_config_file'"'
+code 'url="'$url'"'
+code 'web_root="'$web_root'"'
+code 'fastcgi_pass="'$fastcgi_pass'"'
 ____
 
 if [ -z "$tempfile" ];then
@@ -937,23 +912,18 @@ ____
 
 INDENT+="    " \
 PATH=$PATH \
+RCM_TLD_SPECIAL="$RCM_TLD_SPECIAL" \
 rcm-nginx-virtual-host-autocreate-php-multiple-root $isfast \
     $is_certbot_obtain \
     --without-nginx-reload \
     --tempfile-trigger-reload="$tempfile" \
-    --master-root="$master_root" \
-    --master-include="$master_include" \
-    --master-include-2="$master_include_2" \
-    --master-filename="$master_filename" \
-    --master-url-host="$master_url_host" \
-    --master-url-scheme="$master_url_scheme" \
-    --master-url-port="$master_url_port" \
-    --slave-root="$slave_root" \
-    --slave-filename="$slave_filename" \
-    --slave-dirname="$slave_dirname" \
-    --slave-fastcgi-pass="$slave_fastcgi_pass" \
-    --slave-url-path="$slave_url_path" \
-    --master-certbot-certificate-name="$certificate_name" \
+    --url="$url" \
+    --nginx-config-root="$nginx_config_root" \
+    --nginx-config-file="$nginx_config_file" \
+    --nginx-config-dir="$nginx_config_dir" \
+    --web-root="$web_root" \
+    --fastcgi-pass="$fastcgi_pass" \
+    --certbot-certificate-name="$certificate_name" \
     ; [ ! $? -eq 0 ] && x
 
 if [ -s "$tempfile" ];then
