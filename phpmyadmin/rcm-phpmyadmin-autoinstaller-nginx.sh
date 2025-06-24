@@ -41,7 +41,6 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 PHPMYADMIN_FQDN_LOCALHOST=${PHPMYADMIN_FQDN_LOCALHOST:=phpmyadmin.localhost}
-PHPMYADMIN_NGINX_CONFIG_FILE=${PHPMYADMIN_NGINX_CONFIG_FILE:=phpmyadmin}
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
@@ -74,8 +73,6 @@ Global Options:
 Environment Variables:
    PHPMYADMIN_FQDN_LOCALHOST
         Default to $PHPMYADMIN_FQDN_LOCALHOST
-   PHPMYADMIN_NGINX_CONFIG_FILE
-        Default to $PHPMYADMIN_NGINX_CONFIG_FILE
    MARIADB_PREFIX_MASTER
         Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
@@ -376,7 +373,6 @@ link_symbolic_dir() {
 chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
-code 'PHPMYADMIN_NGINX_CONFIG_FILE="'$PHPMYADMIN_NGINX_CONFIG_FILE'"'
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
 code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
 if [ -z "$phpmyadmin_version" ];then
@@ -436,14 +432,8 @@ if [ -z "$socket_filename" ];then
 fi
 code socket_filename="$socket_filename"
 code root="$root"
-filename="$PHPMYADMIN_NGINX_CONFIG_FILE"
-code filename="$filename"
-url_scheme=http
-url_port=80
-url_host="$PHPMYADMIN_FQDN_LOCALHOST"
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
+url="http://${PHPMYADMIN_FQDN_LOCALHOST}"
+code 'url="'$url'"'
 ____
 
 chapter Mengecek '$PATH'.
@@ -467,11 +457,8 @@ INDENT+="    " \
 PATH=$PATH \
 rcm-nginx-virtual-host-autocreate-php $isfast \
     --root="$root" \
-    --filename="$filename" \
+    --url="$url" \
     --fastcgi-pass="unix:${socket_filename}" \
-    --url-host="$url_host" \
-    --url-scheme="$url_scheme" \
-    --url-port="$url_port" \
     ; [ ! $? -eq 0 ] && x
 
 chapter Mengecek address host local '`'$PHPMYADMIN_FQDN_LOCALHOST'`'.
