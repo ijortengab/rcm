@@ -1535,7 +1535,6 @@ command-list() {
     _ Listing the command then execute it.; _.
     _; _.
     declare -i count
-    is_required=1
     parameter=command
     command_list=$(Rcm_list)
     read -ra source -d '' <<< "$command_list"
