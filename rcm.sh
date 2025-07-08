@@ -218,12 +218,14 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 [ -z "$resolve_dependencies" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
+[ -z "$slow" ] && fast="$RCM_FAST"
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_FAST" ] && fast="$RCM_FAST"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-[ -z "$fast" ] && fast=1
 [ -n "$slow" ] && fast=
+[ -z "$fast" ] && fast=1
+[ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 loud=; debug=; quiet=
@@ -2806,8 +2808,9 @@ Rcm_prompt() {
 }
 Rcm_prompt_sigint() {
     local shortoptions
-    [ -z "$resolve_dependencies" ] && shortoptions+='x'
-    [ -n "$slow" ] && shortoptions+='s'
+    [ -n "$resolve_dependencies" ] && shortoptions+='r'
+    [ -z "$interactive" ] && shortoptions+='x'
+    [ -z "$fast" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
             shortoptions+='v'
@@ -2819,7 +2822,7 @@ Rcm_prompt_sigint() {
     error Interrupt by User.; _.
     wordWrapDescription 'Use command below to return to the last dialog.' 0
     if [ -z "$RCM_LAST_COMMAND" ];then
-        RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
+        RCM_LAST_COMMAND="rcm${shortoptions} ${command_raw} --"
     fi
     for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
     words_array=($RCM_LAST_COMMAND)
@@ -3015,9 +3018,10 @@ trap x SIGINT
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 shortoptions=
-[ -z "$resolve_dependencies" ] && shortoptions+='x'
-[ -n "$slow" ] && shortoptions+='s'
-[ -n "$slow" ] && isfast='' || isfast=' --fast'
+[ -n "$resolve_dependencies" ] && shortoptions+='r'
+[ -z "$interactive" ] && shortoptions+='x'
+[ -z "$fast" ] && shortoptions+='s'
+[ -z "$fast" ] && isfast='' || isfast=' --fast'
 [ -n "$verbose" ] && {
     for ((i = 0 ; i < "$verbose" ; i++)); do
         isverbose+=' --verbose'
@@ -3029,18 +3033,19 @@ argument_preview+=(--)
 
 # Boolean export as 0 or 1.
 # Must not leave empty string.
+[ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
 [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
-export RCM_INTERACTIVE="$RCM_INTERACTIVE"
 [ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
+export RCM_INTERACTIVE="$RCM_INTERACTIVE"
 export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
+export RCM_FAST="$fast"
 # Other variable, export as is.
 export RCM_VERBOSE="$verbose"
-export RCM_FAST="$fast"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 export RCM_LOG="$log"
 # Special for variable RCM_LAST_COMMAND, append value then export it.
 if [ -z "$RCM_LAST_COMMAND" ];then
-    RCM_LAST_COMMAND="rcm${shortoptions}${isnoninteractive} ${command_raw} --"
+    RCM_LAST_COMMAND="rcm${shortoptions} ${command_raw} --"
 fi
 for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
 export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
@@ -3101,7 +3106,7 @@ else
     set -- "${_argument_after_doubledash[@]}"
 fi
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
-# Option yang tidak dikirim adalah --interactive, dan --with(out)-resolve-dependencies
+# Selebihnya dioper sebagai export VARIABLES.
 words_array=(${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
@@ -3133,7 +3138,7 @@ if [[ "${#argument_pass[@]}" -gt 0 ]];then
 else
     set -- "${argument_after_doubledash[@]}"
 fi
-INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
+INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isverbose "$@"
 
 if [ -z "$rcm_config_no_timer" ];then
     chapter Timer Finish.
