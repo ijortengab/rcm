@@ -555,10 +555,10 @@ userInputBooleanDefaultYes() {
             char=y
         fi
         case $char in
-            y|Y) echo "$char"; boolean=1; break;;
-            n|N) echo "$char"; break ;;
-            $'\33') echo "n"; break ;;
-            *) echo
+            y|Y) echo "$char" >&2; boolean=1; break;;
+            n|N) echo "$char" >&2; break ;;
+            $'\33') echo "n" >&2; break ;;
+            *) echo >&2
         esac
     done
 }
@@ -575,9 +575,9 @@ userInputBooleanDefaultNo() {
             char=n
         fi
         case $char in
-            y|Y) echo "$char"; boolean=1; break;;
-            n|N) echo "$char"; break ;;
-            *) echo
+            y|Y) echo "$char" >&2; boolean=1; break;;
+            n|N) echo "$char" >&2; break ;;
+            *) echo >&2
         esac
     done
 }
@@ -629,13 +629,13 @@ printHistoryDialog() {
             char=s
         fi
         case $char in
-            s|S) echo "$char"; break ;;
+            s|S) echo "$char" >&2; break ;;
             [1-$count_max])
-                echo "$char"
+                echo "$char" >&2
                 value=$(sed -n ${char}p <<< "$history_value")
                 save_history=
                 break ;;
-            *) echo
+            *) echo >&2
         esac
     done
 }
@@ -672,19 +672,19 @@ printSelectDialog() {
         fi
         if [ -n "$is_required" ];then
             case $char in
-                t|T) type_mode=1; echo "$char"; break ;;
-                s|S) select_mode=1; echo "$char"; break ;;
-                $'\177') select_mode=1; echo "s"; break ;;
-                *) echo; new_line+=1
+                t|T) type_mode=1; echo "$char" >&2; break ;;
+                s|S) select_mode=1; echo "$char" >&2; break ;;
+                $'\177') select_mode=1; echo "s" >&2; break ;;
+                *) echo >&2; new_line+=1
             esac
         else
             case $char in
-                t|T) type_mode=1; echo "$char"; break ;;
-                s|S) select_mode=1; echo "$char"; break ;;
-                $'\177') select_mode=1; echo "s"; break ;;
-                $'\33') skip=1; echo "l"; break ;;
-                l|L) skip=1; echo "$char"; break ;;
-                *) echo; new_line+=1
+                t|T) type_mode=1; echo "$char" >&2; break ;;
+                s|S) select_mode=1; echo "$char" >&2; break ;;
+                $'\177') select_mode=1; echo "s" >&2; break ;;
+                $'\33') skip=1; echo "l" >&2; break ;;
+                l|L) skip=1; echo "$char" >&2; break ;;
+                *) echo >&2; new_line+=1
             esac
         fi
     done
@@ -724,20 +724,20 @@ printSelectDialog() {
                 char=n
             fi
             case $char in
-                n|N) echo "$char"; break ;;
+                n|N) echo "$char" >&2; break ;;
                 [1-$count_max])
-                    echo "$char"
+                    echo "$char" >&2
                     i=$((char - 1))
                     value="${source[$i]}"
                     break ;;
                 *)
                     if [ -n "$is_required" ];then
-                        echo
+                        echo >&2
                     else
                         case $char in
-                            $'\33') skip=1; echo "l"; break ;;
-                            l|L) skip=1; echo "$char"; break ;;
-                            *) echo
+                            $'\33') skip=1; echo "l" >&2; break ;;
+                            l|L) skip=1; echo "$char" >&2; break ;;
+                            *) echo >&2
                         esac
                     fi
             esac
@@ -828,17 +828,17 @@ printSelectOtherDialog() {
             char=t
         fi
         case $char in
-            t|T) type_mode=1; echo "$char"; break ;;
-            s|S) select_mode=1; echo "$char"; break ;;
-            $'\177') select_mode=1; echo "s"; break ;;
+            t|T) type_mode=1; echo "$char" >&2; break ;;
+            s|S) select_mode=1; echo "$char" >&2; break ;;
+            $'\177') select_mode=1; echo "s" >&2; break ;;
             *)
                 if [ -n "$is_required" ];then
-                    echo; new_line+=1
+                    echo >&2; new_line+=1
                 else
                     case $char in
-                        $'\33') skip=1; echo "l"; break ;;
-                        l|L) skip=1; echo "$char"; break ;;
-                        *) echo; new_line+=1
+                        $'\33') skip=1; echo "l" >&2; break ;;
+                        l|L) skip=1; echo "$char" >&2; break ;;
+                        *) echo >&2; new_line+=1
                     esac
                 fi
         esac
@@ -880,22 +880,22 @@ printSelectOtherDialog() {
                 char=n
             fi
             case $char in
-                t|T) type_mode=1; echo "$char"; break ;;
-                $'\177') type_mode=1; echo "s"; break ;;
-                n|N) echo "$char"; break ;;
+                t|T) type_mode=1; echo "$char" >&2; break ;;
+                $'\177') type_mode=1; echo "s" >&2; break ;;
+                n|N) echo "$char" >&2; break ;;
                 [1-$count_max])
-                    echo "$char"
+                    echo "$char" >&2
                     i=$((char - 1))
                     value="${source[$i]}"
                     break ;;
                 *)
                     if [ -n "$is_required" ];then
-                        echo
+                        echo >&2
                     else
                         case $char in
-                            $'\33') skip=1; echo "l"; break ;;
-                            l|L) skip=1; echo "$char"; break ;;
-                            *) echo
+                            $'\33') skip=1; echo "l" >&2; break ;;
+                            l|L) skip=1; echo "$char" >&2; break ;;
+                            *) echo >&2
                         esac
                     fi
             esac
