@@ -3120,10 +3120,13 @@ else
     ____
 fi
 
-chapter Timer Start.
-_ Begin: $(date +%Y%m%d-%H%M%S); _.
-Rcm_BEGIN=$SECONDS
-____
+rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^no-timer')
+if [ -z "$rcm_config_no_timer" ];then
+    chapter Timer Start.
+    _ Begin: $(date +%Y%m%d-%H%M%S); _.
+    Rcm_BEGIN=$SECONDS
+    ____
+fi
 
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
     set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
@@ -3132,14 +3135,16 @@ else
 fi
 INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isnoninteractive $isverbose "$@"
 
-chapter Timer Finish.
-_ End: $(date +%Y%m%d-%H%M%S); _.
-Rcm_END=$SECONDS
-duration=$(( Rcm_END - Rcm_BEGIN ))
-hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
-runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
-_ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
-____
+if [ -z "$rcm_config_no_timer" ];then
+    chapter Timer Finish.
+    _ End: $(date +%Y%m%d-%H%M%S); _.
+    Rcm_END=$SECONDS
+    duration=$(( Rcm_END - Rcm_BEGIN ))
+    hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
+    runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
+    _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
+    ____
+fi
 
 exit 0
 
