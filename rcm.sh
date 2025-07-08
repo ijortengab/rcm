@@ -1977,8 +1977,8 @@ Rcm_resolve_dependencies() {
             fi
             _help=$("$command_required" --help 2>/dev/null)
             # Hanya mendownload dependency dengan akhiran .sh (shell script) atau prefix rcm.
-            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
-            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+            _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
+            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
             if [ -n "$_download" ];then
                 [ -n "$table_downloads" ] && table_downloads+=$'\n'
                 table_downloads+="$_download"
@@ -2203,15 +2203,16 @@ Rcm_prompt() {
             printSelectDialog available_subcommands[@] "$what"
         fi
     fi
-    local subcommand=
+    # global subcommand
+    subcommand=
     if [ -n "$value" ];then
         argument_pass+=("${value}")
         argument_preview+=("${value}")
         argument_preview_real+=("${value}")
         subcommand="$value"
-        options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
+        options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     else
-        options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
+        options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     fi
 
     if [ -n "$options" ];then
@@ -2775,7 +2776,11 @@ Rcm_prompt() {
             fi
             # Other options.
             if [[ -z "$options" && -z "$load_other_options" ]];then
-                other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '2,/^\s*$/p'`
+                if [ -n "$subcommand" ];then
+                    other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions for command '$subcommand'.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+                else
+                    other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+                fi
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1
@@ -2931,7 +2936,7 @@ PATH="${BINARY_DIRECTORY}:${PATH}"
 _help=$("$command" --help 2>/dev/null)
 if [ -n "$resolve_dependencies" ];then
     # Simpan informasi download.
-    _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+    _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
     if [ -n "$_download" ];then
         [ -n "$table_downloads" ] && table_downloads+=$'\n'
         table_downloads+="$_download"
