@@ -2691,7 +2691,7 @@ Rcm_prompt() {
                     is_press=
                     boolean=
                     if [ -n "$is_flag" ];then
-                        if [[ -n "$is_flagged" && -z "$immediately" ]];then
+                        if [[ -n "$is_flagged" && -z "$autoexecute" ]];then
                             # Reset condition before multivalue.
                             is_flagged=
                             _; _.
@@ -2700,7 +2700,7 @@ Rcm_prompt() {
                             is_press=1
                         fi
                     else
-                        if [[ -n "$value" && -z "$immediately" ]];then
+                        if [[ -n "$value" && -z "$autoexecute" ]];then
                             # Reset condition before multivalue.
                             value_before="$value"
                             value=
@@ -2784,7 +2784,7 @@ Rcm_prompt() {
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1
-                    if [ -z "$immediately" ];then
+                    if [ -z "$autoexecute" ];then
                         _; _.
                         _; _, 'There are '; yellow other ;_, ' arguments available and optional.'; _.
                         _; _.
@@ -2897,7 +2897,7 @@ Rcm_get_list_values() {
 }
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
-immediately=
+autoexecute=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
 [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
 [ -z "$interactive" ] && interactive=1
@@ -2960,11 +2960,12 @@ if [ -n "$resolve_dependencies" ];then
         Rcm_resolve_dependencies "${command}${command_version}"
     fi
 fi
-rcm_depends=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '^rcm(:[^:]+)*$')
-# Jika rcm dijadikan sebagai dependency, maka command tersebut adalah
-# wrapper yang akan kembali mengeksekusi rcm sehingga muncul prompt lagi.
-if [ -n "$rcm_depends" ];then
-    immediately=1
+rcm_config_autoexecute=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^autoexecute')
+if [ -n "$rcm_config_autoexecute" ];then
+    autoexecute=1
+fi
+if [ -z "$interactive" ];then
+    autoexecute=1
 fi
 
 argument_prepopulate=()
@@ -2975,7 +2976,7 @@ if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --)
-                immediately=1
+                autoexecute=1
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
                         *) argument_after_doubledash+=("$1"); shift ;;
@@ -3047,7 +3048,7 @@ export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
 # Simpan ke log, last command.
-if [ -z "$immediately" ];then
+if [ -z "$autoexecute" ];then
     echo "$RCM_LAST_COMMAND" >> "$log"
     _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
 fi
@@ -3105,17 +3106,11 @@ words_array=(${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
-if [ -n "$immediately" ];then
+if [ -n "$autoexecute" ];then
     chapter The real command is execute.
     _ Direct to '`'${command}'`' command.; _.
     ____
 
-elif [ -z "$interactive" ];then
-    chapter The real command is being executed.
-    _ Direct to '`'${command}'`' command.; _.
-    ____
-
-    sleepExtended 3 30
 else
     chapter Execute:
     userInputBooleanDefaultYes
