@@ -19,6 +19,7 @@ while [[ $# -gt 0 ]]; do
         --interactive) interactive=1; shift ;;
         --no-confirmation) confirmation=0; shift ;;
         --non-interactive|-x) interactive=0; shift ;;
+        --no-timer) timer=0; shift ;;
         --resolved|-r) resolve_dependencies=0; shift ;;
         --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
@@ -227,6 +228,8 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # Set from argument.
 [ -z "$confirmation" ] && confirmation=1
 [ "$confirmation" == 0 ] && confirmation=
+[ -z "$timer" ] && timer=1
+[ "$timer" == 0 ] && timer=
 [ -n "$slow" ] && fast=
 [ -z "$fast" ] && fast=1
 [ "$fast" == 0 ] && fast=
@@ -3128,8 +3131,11 @@ else
     ____
 fi
 
-rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^no-timer')
-if [ -z "$rcm_config_no_timer" ];then
+rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-timer')
+if [ -n "$rcm_config_no_timer" ];then
+    timer=
+fi
+if [ -n "$timer" ];then
     chapter Timer Start.
     _ Begin: $(date +%Y%m%d-%H%M%S); _.
     Rcm_BEGIN=$SECONDS
@@ -3143,7 +3149,7 @@ else
 fi
 INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isverbose "$@"
 
-if [ -z "$rcm_config_no_timer" ];then
+if [ -n "$timer" ];then
     chapter Timer Finish.
     _ End: $(date +%Y%m%d-%H%M%S); _.
     Rcm_END=$SECONDS
@@ -3186,6 +3192,7 @@ exit 0
     # 'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
     # 'long:--resolved,short:-r,parameter:resolve_dependencies,flag_option:reverse'
     # 'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
+    # 'long:--no-timer,parameter:timer,flag_option:reverse'
 # )
 # OPERAND=(
 # install
