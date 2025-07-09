@@ -17,12 +17,13 @@ while [[ $# -gt 0 ]]; do
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
         --interactive) interactive=1; shift ;;
+        --no-confirmation) confirmation=0; shift ;;
         --non-interactive|-x) interactive=0; shift ;;
         --resolved|-r) resolve_dependencies=0; shift ;;
         --slow|-s) slow=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
-        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
         --without-resolve-dependencies) resolve_dependencies=0; shift ;;
+        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -223,6 +224,9 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_FAST" ] && fast="$RCM_FAST"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
+# Set from argument.
+[ -z "$confirmation" ] && confirmation=1
+[ "$confirmation" == 0 ] && confirmation=
 [ -n "$slow" ] && fast=
 [ -z "$fast" ] && fast=1
 [ "$fast" == 0 ] && fast=
@@ -2693,7 +2697,7 @@ Rcm_prompt() {
                     is_press=
                     boolean=
                     if [ -n "$is_flag" ];then
-                        if [[ -n "$is_flagged" && -z "$autoexecute" ]];then
+                        if [[ -n "$is_flagged" && -n "$confirmation" ]];then
                             # Reset condition before multivalue.
                             is_flagged=
                             _; _.
@@ -2702,7 +2706,7 @@ Rcm_prompt() {
                             is_press=1
                         fi
                     else
-                        if [[ -n "$value" && -z "$autoexecute" ]];then
+                        if [[ -n "$value" && -n "$confirmation" ]];then
                             # Reset condition before multivalue.
                             value_before="$value"
                             value=
@@ -2786,7 +2790,7 @@ Rcm_prompt() {
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1
-                    if [ -z "$autoexecute" ];then
+                    if [ -n "$confirmation" ];then
                         _; _.
                         _; _, 'There are '; yellow other ;_, ' arguments available and optional.'; _.
                         _; _.
@@ -2963,12 +2967,12 @@ if [ -n "$resolve_dependencies" ];then
         Rcm_resolve_dependencies "${command}${command_version}"
     fi
 fi
-rcm_config_autoexecute=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^autoexecute')
-if [ -n "$rcm_config_autoexecute" ];then
-    autoexecute=1
+rcm_config_no_confirmation=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-confirmation')
+if [ -n "$rcm_config_no_confirmation" ];then
+    confirmation=
 fi
 if [ -z "$interactive" ];then
-    autoexecute=1
+    confirmation=
 fi
 
 argument_prepopulate=()
@@ -2979,7 +2983,7 @@ if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --)
-                autoexecute=1
+                confirmation=
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
                         *) argument_after_doubledash+=("$1"); shift ;;
@@ -3053,7 +3057,7 @@ export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
 # Simpan ke log, last command.
-if [ -z "$autoexecute" ];then
+if [ -n "$confirmation" ];then
     echo "$RCM_LAST_COMMAND" >> "$log"
     _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
 fi
@@ -3111,17 +3115,16 @@ words_array=(${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
-if [ -n "$autoexecute" ];then
-    chapter The real command is execute.
-    _ Direct to '`'${command}'`' command.; _.
-    ____
-
-else
+if [ -n "$confirmation" ];then
     chapter Execute:
     userInputBooleanDefaultYes
     if [ -z "$boolean" ];then
         exit 0
     fi
+    ____
+else
+    chapter The real command is execute.
+    _ Direct to '`'${command}'`' command.; _.
     ____
 fi
 
@@ -3182,6 +3185,7 @@ exit 0
     # 'long:--with-resolve-dependencies,parameter:resolve_dependencies'
     # 'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
     # 'long:--resolved,short:-r,parameter:resolve_dependencies,flag_option:reverse'
+    # 'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
 # )
 # OPERAND=(
 # install
@@ -3189,6 +3193,7 @@ exit 0
 # get
 # history
 # list
+# recent
 # )
 # EOF
 # clear
