@@ -230,7 +230,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1
 [ "$timer" == 0 ] && timer=
-[ -n "$slow" ] && fast=
+[ -n "$slow" ] && fast=0
 [ -z "$fast" ] && fast=1
 [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
@@ -2435,6 +2435,14 @@ Rcm_prompt() {
                     fi
                 fi
 
+                # Jika non interactive, maka skip.
+                if [ -z "$interactive" ];then
+                    if [ -z "$_boolean" ];then
+                        backup_flag=
+                        master_boolean=' '
+                    fi
+                fi
+
                 if [ -n "$backup_flag" ];then
                     printBackupFlagDialog
                     master_boolean="$boolean"
@@ -2605,6 +2613,15 @@ Rcm_prompt() {
                         value=' '
                     fi
                 fi
+
+                # Jika non interactive, maka skip.
+                if [ -z "$interactive" ];then
+                    if [ -z "$value" ];then
+                        backup_value=
+                        value=' '
+                    fi
+                fi
+
                 # Backup dialog belum mendukung multivalue.
                 if [ -n "$backup_value" ];then
                     printBackupDialog
@@ -2907,7 +2924,6 @@ Rcm_get_list_values() {
 }
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
-autoexecute=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
 [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
 [ -z "$interactive" ] && interactive=1
