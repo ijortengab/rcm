@@ -2845,11 +2845,11 @@ Rcm_prompt_sigint() {
     _.;
     error Interrupt by User.; _.
     wordWrapDescription 'Use command below to return to the last dialog.' 0
-    if [ -z "$RCM_LAST_COMMAND" ];then
-        RCM_LAST_COMMAND="rcm${shortoptions} ${command_raw} --"
+    if [ -z "$RCM_PROMPT_CHAIN" ];then
+        RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
     fi
-    for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
-    words_array=($RCM_LAST_COMMAND)
+    for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+    words_array=($RCM_PROMPT_CHAIN)
     wordWrapCommand
     exit 0
 }
@@ -3066,24 +3066,24 @@ export RCM_FAST="$fast"
 export RCM_VERBOSE="$verbose"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 export RCM_LOG="$log"
-# Special for variable RCM_LAST_COMMAND, append value then export it.
-if [ -z "$RCM_LAST_COMMAND" ];then
-    RCM_LAST_COMMAND="rcm${shortoptions} ${command_raw} --"
+# Special for variable RCM_PROMPT_CHAIN, append value then export it.
+if [ -z "$RCM_PROMPT_CHAIN" ];then
+    RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
 fi
-for each in "${argument_preview[@]}"; do RCM_LAST_COMMAND+=" ${each}"; done
-export RCM_LAST_COMMAND="$RCM_LAST_COMMAND"
+for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
 
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
 # Simpan ke log, last command.
 if [ -n "$confirmation" ];then
-    echo "$RCM_LAST_COMMAND" >> "$log"
+    echo "$RCM_PROMPT_CHAIN" >> "$log"
     _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
 fi
 if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
-    words_array=($RCM_LAST_COMMAND)
+    words_array=($RCM_PROMPT_CHAIN)
 else
-    _rcm_last_command="$RCM_LAST_COMMAND"
+    _rcm_prompt_chain="$RCM_PROMPT_CHAIN"
     _argument_after_doubledash=("${argument_after_doubledash[@]}")
     ArrayShift _argument_after_doubledash[@]
     _argument_after_doubledash=("${_return[@]}")
@@ -3094,13 +3094,13 @@ else
         _value="${each#$_argument=}"
         [[ "$_argument" == "$_value" ]] && is_flag=1 || is_flag=
         if [ -n "$is_flag" ];then
-            _rcm_last_command+=" ${each}"
+            _rcm_prompt_chain+=" ${each}"
         else
             [[ "$_value" =~ ' ' ]] && _value="'$_value'"
-            _rcm_last_command+=" ${_argument}=${_value}"
+            _rcm_prompt_chain+=" ${_argument}=${_value}"
         fi
     done
-    words_array=($_rcm_last_command)
+    words_array=($_rcm_prompt_chain)
 fi
 
 wordWrapCommand
