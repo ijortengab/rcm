@@ -2200,6 +2200,8 @@ Rcm_prompt() {
         _; _.
         wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
         argument_operand_prepopulate=("${_return[@]}")
+        ____
+
         unset _return
     else
         if [ "${#available_subcommands[@]}" -gt 0 ];then
@@ -2212,7 +2214,6 @@ Rcm_prompt() {
             printSelectDialog available_subcommands[@] "$what"
         fi
     fi
-    # global subcommand
     subcommand=
     if [ -n "$value" ];then
         argument_pass+=("${value}")
@@ -2238,6 +2239,7 @@ Rcm_prompt() {
             is_typing=
             is_press=
             is_flagged=
+            default_value=
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
@@ -2317,6 +2319,11 @@ Rcm_prompt() {
                 if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
                     or_other=1
                 fi
+            fi
+            _default_value=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
+            if [ -n "$_default_value" ];then
+                description=`echo "$description" | sed -E 's/ *Default value from variable:? ([^\.]+)\.//i'`
+                default_value="${!_default_value}"
             fi
             if [ -n "$placeholders" ];then
                 while read line; do
@@ -2580,6 +2587,9 @@ Rcm_prompt() {
                 while read line; do
                     wordWrapDescription "$line"
                 done <<< "$description"
+                if [ -n "$default_value" ];then
+                    wordWrapDescriptionColorize "Default value: <yellow>${default_value}</yellow>."
+                fi
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _; _.
@@ -2649,6 +2659,9 @@ Rcm_prompt() {
                 if [[ "$value" == ' ' ]];then
                     value=
                 fi
+                if [[ -z "$value" && -n "$default_value" ]];then
+                    value="$default_value"
+                fi
                 # Populate placeholders.
                 if [ -n "$argument_placeholders" ];then
                     argument_placeholders+=$'\n'
@@ -2681,9 +2694,10 @@ Rcm_prompt() {
                         argument_preview+=("${parameter}-")
                     fi
                 fi
-                if [[ -n "$value" && "$is_typing" ]];then
+                if [[ -n "$value" && -n "$is_typing" ]];then
                     _; _.
-                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+                    [ -z "$default_value" ] && suffix=' manually' || suffix=' automatically'
+                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow>${suffix}." green
                 fi
             fi
             # Backup to text file.
@@ -2913,7 +2927,12 @@ Rcm_get_list_values() {
             is_required=
             __; _, No value available,' '; _, pass; _, .; _.
         else
-            if [ -n "$is_required" ];then
+            if [ -n "$default_value" ];then
+                __; _, Leave blank will use default value.; _.
+                label=$(_, 'Type the value [' 2>&1; yellow "$default_value" 2>&1; _, ']: ' 2>&1)
+                __; read -p "$label" value
+                [ -z "$value" ] && value=' '
+            elif [ -n "$is_required" ];then
                 __; read -p "Type the value: " value
             else
                 __; read -p "Type the value or leave blank to skip: " value
