@@ -705,7 +705,7 @@ printSelectDialog() {
     if [[ -n "$select_mode" ]];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1+new_line))
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
-            printf '\e[A\e[K'
+            printf '\e[A\e[K' >&2
         done
         __ Available values:
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
@@ -860,7 +860,7 @@ printSelectOtherDialog() {
     if [[ -n "$select_mode" ]];then
         PREVIOUS_LINE=$((PREVIOUS_LINE+WRAP_LINE+1+new_line))
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
-            printf '\e[A\e[K'
+            printf '\e[A\e[K' >&2
         done
         __ Available values:
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
@@ -1051,7 +1051,7 @@ Rcm_github_release() {
     local filename="${cache_directory}/${blob_path}"
     if [ ! -f "$filename" ];then
         if [ -n "$display_waiting" ];then
-            printf "\r\033[K"
+            printf "\r\033[K" >&2
         fi
         error File is not found: "$filename".;
         [ -n "$quiet" ] && kill -SIGTERM $$
@@ -1112,14 +1112,14 @@ sleepExtended() {
         _dotLength=$(( ( width * countdown ) / dikali10 ))
         printf "\r\033[K" >&2
         e; printf %"$_dotLength"s | tr " " "." >&2
-        printf "\r"
+        printf "\r" >&2
         while [ "$countdown" -ge 0 ]; do
             dotLength=$(( ( width * countdown ) / dikali10 ))
             if [[ ! "$dotLength" == "$_dotLength" ]];then
                 _dotLength="$dotLength"
                 printf "\r\033[K" >&2
                 e; printf %"$dotLength"s | tr " " "." >&2
-                printf "\r"
+                printf "\r" >&2
             fi
             countdown=$((countdown - 1))
             sleep .1
@@ -1849,7 +1849,7 @@ Rcm_resolve_dependencies() {
                             # Kita perlu paksa user agar melakukan eksekusi
                             # ulang.
                             if [ -n "$display_waiting" ];then
-                                printf "\r\033[K"
+                                printf "\r\033[K" >&2
                             fi
                             if [ -n "$loud" ];then
                                 ____
@@ -1891,7 +1891,7 @@ Rcm_resolve_dependencies() {
                         fi
                         if [[ -z "$is_updated" ]];then
                             if [ -n "$display_waiting" ];then
-                                printf "\r\033[K"
+                                printf "\r\033[K" >&2
                             fi
                             error Gagal Update;
                             [ -n "$quiet" ] && kill -SIGTERM $$
@@ -1969,7 +1969,7 @@ Rcm_resolve_dependencies() {
                     fi
                     if ! command -v "$command_required" > /dev/null;then
                         if [ -n "$display_waiting" ];then
-                            printf "\r\033[K"
+                            printf "\r\033[K" >&2
                         fi
                         error Command '`'$command_required'`' not found, unable to auto download.;
                         [ -n "$quiet" ] && kill -SIGTERM $$
@@ -2021,7 +2021,7 @@ Rcm_resolve_dependencies() {
     done
     if [ -n "$quiet" ];then
         if [ -n "$display_waiting" ];then
-            printf "\r\033[K"
+            printf "\r\033[K" >&2
         fi
     fi
 }
