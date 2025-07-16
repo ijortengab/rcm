@@ -2241,11 +2241,11 @@ Rcm_prompt() {
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
-                parameter=`xargs <<< "$parameter"`
+                parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             elif [[ "${parameter:(-1):1}" == '^' ]];then
                 is_flag=1
                 parameter="${parameter::-1}"
-                parameter=`xargs <<< "$parameter"`
+                parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             fi
             if [[ "$parameter" == '--' ]];then
                 is_required=
