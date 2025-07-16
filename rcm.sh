@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
         --non-interactive|-x) interactive=0; shift ;;
         --no-timer) timer=0; shift ;;
         --resolved|-r) resolve_dependencies=0; shift ;;
-        --slow|-s) slow=1; shift ;;
+        --slow|-s) fast=0; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --without-resolve-dependencies) resolve_dependencies=0; shift ;;
         --with-resolve-dependencies) resolve_dependencies=1; shift ;;
@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
                     V) version=1 ;;
                     x) interactive=0 ;;
                     r) resolve_dependencies=0 ;;
-                    s) slow=1 ;;
+                    s) fast=0 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
             done
@@ -217,20 +217,18 @@ esac
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # If not set in argument, try load from environment.
+[ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 [ -z "$resolve_dependencies" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
-[ -z "$slow" ] && fast="$RCM_FAST"
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-[ -n "$RCM_FAST" ] && fast="$RCM_FAST"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-# Set from argument.
+# Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1
 [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1
 [ "$timer" == 0 ] && timer=
-[ -n "$slow" ] && fast=0
 [ -z "$fast" ] && fast=1
 [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
@@ -3210,7 +3208,6 @@ exit 0
     # '--verbose|-v'
 # )
 # FLAG=(
-# '--slow|-s'
 # '--version|-V'
 # '--help|-h'
 # )
@@ -3228,6 +3225,7 @@ exit 0
     # 'long:--resolved,short:-r,parameter:resolve_dependencies,flag_option:reverse'
     # 'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
     # 'long:--no-timer,parameter:timer,flag_option:reverse'
+    # 'long:--slow,short:-s,parameter:fast,flag_option:reverse'
 # )
 # OPERAND=(
 # install
