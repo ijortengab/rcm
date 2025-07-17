@@ -2325,8 +2325,8 @@ Rcm_prompt() {
             fi
             if [ -n "$placeholders" ];then
                 while read line; do
-                    find=$(echo ${line} | cut -d: -f1 | xargs)
-                    replace=$(echo ${line} | cut -d: -f2 | xargs)
+                    find=$(echo ${line} | cut -d: -f1 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | cut -d: -f2 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                     if [ -n "$_available_values" ];then
                         _available_values="${_available_values/"$find"/"$replace"}"
                     fi
@@ -2349,8 +2349,8 @@ Rcm_prompt() {
                 if command -v "$_command" > /dev/null;then
                     if [ -n "$argument_placeholders" ];then
                         while read line; do
-                            find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | xargs)
-                            replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | xargs)
+                            find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                            replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                             description="${description/"$find"/"$replace"}"
                             if [ -n "$_arguments" ];then
                                 _arguments="${_arguments/"$find"/"$replace"}"
