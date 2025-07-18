@@ -217,7 +217,7 @@ esac
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # If not set in argument, try load from environment.
-[ -z "$fast" ] && fast="$RCM_FAST"
+[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 [ -z "$resolve_dependencies" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
