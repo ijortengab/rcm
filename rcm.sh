@@ -2227,6 +2227,7 @@ Rcm_prompt() {
             is_press=
             is_flagged=
             default_value=
+            prepopulate_value=
             if [[ "${parameter:(-1):1}" == '*' ]];then
                 is_required=1
                 parameter="${parameter::-1}"
@@ -2311,6 +2312,18 @@ Rcm_prompt() {
             if [ -n "$_default_value" ];then
                 description=`echo "$description" | sed -E 's/ *Default value from variable:? ([^\.]+)\.//i'`
                 default_value="${!_default_value}"
+            fi
+            _prepopulate_value=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
+            if [ -n "$_prepopulate_value" ];then
+                description=`echo "$description" | sed -E 's/ *Prepopulate value from variable:? ([^\.]+)\.//i'`
+                if [ -n "$argument_placeholders" ];then
+                    while read line; do
+                        find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        _prepopulate_value="${_prepopulate_value/"$find"/"$replace"}"
+                    done <<< "$argument_placeholders"
+                fi
+                prepopulate_value="${!_prepopulate_value}"
             fi
             if [ -n "$placeholders" ];then
                 while read line; do
@@ -2586,6 +2599,10 @@ Rcm_prompt() {
                 if [ -n "$default_value" ];then
                     wordWrapDescriptionColorize "Default value: <yellow>${default_value}</yellow>."
                 fi
+                if [ -n "$prepopulate_value" ];then
+                    backup_value=
+                    history_value=
+                fi
                 for each in "${argument_prepopulate[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _; _.
@@ -2641,6 +2658,13 @@ Rcm_prompt() {
                             wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                         fi
                     fi
+                fi
+                if [[ -z "$value" && -n "$prepopulate_value" ]];then
+                    # Value from prepopulate argument tetap diutamakan
+                    # daripada variable.
+                    value="$prepopulate_value"
+                    _; _.
+                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> from environment variable." green
                 fi
                 # Available value dialog juga belum mendukung multivalue.
                 if [ -z "$value" ];then
