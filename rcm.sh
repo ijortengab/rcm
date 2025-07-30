@@ -1237,8 +1237,6 @@ dig-has-address
 dig-is-name-exists
 dig-is-record-exists
 dig-watch-domain-exists
-digitalocean-api-manage-domain-record
-digitalocean-api-manage-domain
 dovecot-multiple-certificate
 mariadb-apt
 mariadb-assign-grant-all
