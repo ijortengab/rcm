@@ -217,7 +217,7 @@ esac
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # If not set in argument, try load from environment.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
+[ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 [ -z "$resolve_dependencies" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
@@ -225,15 +225,12 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
 # Boolean default to TRUE.
-[ -z "$confirmation" ] && confirmation=1
-[ "$confirmation" == 0 ] && confirmation=
-[ -z "$timer" ] && timer=1
-[ "$timer" == 0 ] && timer=
-[ -z "$fast" ] && fast=1
-[ "$fast" == 0 ] && fast=
+[ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
+[ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
+[ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-loud=; debug=; quiet=
+quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
@@ -2351,6 +2348,13 @@ Rcm_prompt() {
                     fi
                 fi
             fi
+            if [ -n "$argument_placeholders" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$argument_placeholders"
+            fi
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 _; _.
@@ -2519,6 +2523,8 @@ Rcm_prompt() {
                     # Populate placeholders.
                     if [ -n "$value" ];then
                         argument_placeholders+='['"$parameter"']: '"$value"
+                        argument_placeholders+=$'\n'
+                        argument_placeholders+='['"$parameter"'^^]: '"${value^^}"
                     else
                         argument_placeholders+='['"$parameter"']: '"1"
                     fi
@@ -2678,6 +2684,8 @@ Rcm_prompt() {
                     # Placeholder tidak berlaku untuk multivalue. @todo, masukkan ke dokumentasi.
                     # Hanya berlaku nilai terakhir.
                     argument_placeholders+='['"$parameter"']: '"$value"
+                    argument_placeholders+=$'\n'
+                    argument_placeholders+='['"$parameter"'^^]: '"${value^^}"
                 else
                     argument_placeholders+='['"$parameter"']: -'
                     if [ -z "$argument_preview_bypass" ];then
@@ -3080,6 +3088,8 @@ if [ -z "$RCM_PROMPT_CHAIN" ];then
     RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
 fi
 for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+[ -n "$command_prepend" ] && command_prepend+=' '
+RCM_PROMPT_CHAIN="${command_prepend}${RCM_PROMPT_CHAIN}"
 export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
 
 chapter Command has been built.
@@ -3139,7 +3149,7 @@ else
 fi
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Selebihnya dioper sebagai export VARIABLES.
-words_array=(${command} ${isfast} ${isverbose} $@)
+words_array=(${command_prepend} ${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
