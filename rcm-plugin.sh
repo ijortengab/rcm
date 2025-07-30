@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fast) fast=1; shift ;;
         --[^-]*) shift ;;
-        add|list|execute|helper)
+        add|list|execute|helper|init)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -48,6 +48,7 @@ if [ -n "$1" ];then
         list) command="$1"; shift ;;
         execute) command="$1"; shift ;;
         helper) command="$1"; shift ;;
+        init) command="$1"; shift ;;
     esac
     if [ -z "$command" ];then
         error Command unknown: '`'"$1"'`'.; x
@@ -62,9 +63,9 @@ case "$command" in
                 --help) help=1; shift ;;
                 --command=*) add_command="${1#*=}"; shift ;;
                 --command) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then add_command="$2"; shift; fi; shift ;;
-                --category=*) category="${1#*=}"; shift ;;
-                --category) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then category="$2"; shift; fi; shift ;;
                 --fast) fast=1; shift ;;
+                --interface=*) interface="${1#*=}"; shift ;;
+                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
                 --name=*) name="${1#*=}"; shift ;;
                 --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
                 --table=*) table="${1#*=}"; shift ;;
@@ -86,9 +87,9 @@ case "$command" in
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --help) help=1; shift ;;
-                --category=*) category="${1#*=}"; shift ;;
-                --category) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then category="$2"; shift; fi; shift ;;
                 --fast) fast=1; shift ;;
+                --interface=*) interface="${1#*=}"; shift ;;
+                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
                 --table=*) table="${1#*=}"; shift ;;
                 --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
                 --table-temporary=*) table_temporary="${1#*=}"; shift ;;
@@ -105,11 +106,11 @@ case "$command" in
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --help) help=1; shift ;;
-                --category=*) category="${1#*=}"; shift ;;
-                --category) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then category="$2"; shift; fi; shift ;;
                 --fast) fast=1; shift ;;
                 --interface=*) interface="${1#*=}"; shift ;;
                 --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
+                --method=*) method="${1#*=}"; shift ;;
+                --method) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then method="$2"; shift; fi; shift ;;
                 --name=*) name="${1#*=}"; shift ;;
                 --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
                 --output-file=*) output_file="${1#*=}"; shift ;;
@@ -118,6 +119,23 @@ case "$command" in
                 --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
                 --table-temporary=*) table_temporary="${1#*=}"; shift ;;
                 --table-temporary) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table_temporary="$2"; shift; fi; shift ;;
+                --[^-]*) shift ;;
+                *) _new_arguments+=("$1"); shift ;;
+            esac
+        done
+        set -- "${_new_arguments[@]}"
+        unset _new_arguments
+        ;;
+    init)
+        _new_arguments=()
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --help) help=1; shift ;;
+                --fast) fast=1; shift ;;
+                --interface=*) interface="${1#*=}"; shift ;;
+                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
+                --table=*) table="${1#*=}"; shift ;;
+                --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
                 --[^-]*) shift ;;
                 *) _new_arguments+=("$1"); shift ;;
             esac
@@ -141,12 +159,12 @@ printHelp() {
     _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
-Usage: rcm-plugin [command] [options]
+Usage: rcm-plugin <command> [options]
 
 Available commands: add, list, execute.
 
 Options for command add:
-   --category *
+   --interface *
         Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
    --name *
         Set the plugin name.
@@ -156,41 +174,41 @@ Options for command add:
         Command version.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugins.[--category]
-        Prepopulate value from variable RCM_PLUGIN_[--category^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
    --temporary ^
         Set as temporary additional.
    --table-temporary
         File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion [--temporary] [--category]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--category^^]_TEMPORARY.
+        Value available from command: rcm-plugin(helper temporary-suggestion [--temporary] [--interface]), or others.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
 
 Options for command list:
-   --category *
+   --interface *
         Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugins.[--category]"
-        Prepopulate value from variable RCM_PLUGIN_[--category^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]"
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
    --table-temporary
         File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--category]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--category^^]_TEMPORARY.
+        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
 
 Options for command execute:
-   --category *
+   --interface *
         Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugins.[--category]"
-        Prepopulate value from variable RCM_PLUGIN_[--category^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]"
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
    --table-temporary
         File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--category]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--category^^]_TEMPORARY.
+        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
    --name *
         Set the plugin name.
-        Value available from command: rcm-plugin(helper list [--category] [--table] [--table-temporary]), or others.
+        Value available from command: rcm-plugin(helper list [--interface] [--table] [--table-temporary]), or others.
    --interface *
         Set the interface.
 
@@ -205,6 +223,10 @@ Global Options:
 Environment Variables:
    BINARY_DIRECTORY
         Default to $BINARY_DIRECTORY
+
+RCM Config:
+   --no-timer
+   --no-confirmation
 EOF
 }
 
@@ -215,14 +237,17 @@ EOF
 command-add() {
     local command version
 
-    title rcm-plugin
+    title rcm-plugin -- add
     ____
 
     chapter Dump variable
-    if [ -z "$category" ];then
-        error "Argument --category required."; x
+    if [ -z "$interface" ];then
+        error "Argument --interface required."; x
     fi
-    code 'category="'$category'"'
+    code 'interface="'$interface'"'
+    if [[ "$interface" =~ [^a-z_] ]];then
+        error "Argument --interface is not valid."; x
+    fi
     if [ -z "$name" ];then
         error "Argument --name required."; x
     fi
@@ -241,10 +266,12 @@ command-add() {
     code 'table="'$table'"'
     code 'table_temporary="'$table_temporary'"'
     # If not set in argument, try load from environment.
-    local category_uppercase=${category^^}
-    local parameter_table="RCM_PLUGIN_${category_uppercase}"
+    local interface_uppercase=${interface^^}
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${category_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
@@ -252,12 +279,12 @@ command-add() {
     code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugins.${category}"
+        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
     fi
     if [ -n "$temporary" ];then
         if [ -z "$table_temporary" ];then
             mkdir -p "${HOME}/.cache/rcm"
-            table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugins.${category}.XXXXXX)
+            table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugins.${interface}.XXXXXX)
         fi
     fi
     code 'table="'$table'"'
@@ -285,26 +312,33 @@ command-add() {
     fi
     ____
 
-    local category_uppercase=${category^^}
-    echo "RCM_PLUGIN_${category_uppercase}=${table}"
-    echo "RCM_PLUGIN_${category_uppercase}_TEMPORARY=${table_temporary}"
+    if [ -n "$temporary" ];then
+        echo "RCM_PLUGIN_${interface_uppercase}_TEMPORARY=${table_temporary}"
+    else
+        echo "RCM_PLUGIN_${interface_uppercase}=${table}"
+    fi
 }
 command-list() {
-    if [ -z "$category" ];then
-        error "Argument --category required."; x
+    if [ -z "$interface" ];then
+        error "Argument --interface required."; x
+    fi
+    if [[ "$interface" =~ [^a-z_] ]];then
+        error "Argument --interface is not valid."; x
     fi
 
     # If not set in argument, try load from environment.
-    local category_uppercase=${category^^}
-    local parameter_table="RCM_PLUGIN_${category_uppercase}"
+    local interface_uppercase=${interface^^}
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${category_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugins.${category}"
+        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
     fi
     local contents=
     if [ -f "$table_temporary" ] ;then
@@ -319,36 +353,57 @@ command-list() {
     echo "$contents" | sed '/^[[:space:]]*$/d'
 }
 command-execute() {
+    title rcm-plugin -- execute
+    ____
+
     local find replace contents command
-    if [ -z "$category" ];then
-        error "Argument --category required."; x
+
+    chapter Dump variable
+    if [ -z "$interface" ];then
+        error "Argument --interface required."; x
+    fi
+    code 'interface="'$interface'"'
+    if [[ "$interface" =~ [^a-z_] ]];then
+        error "Argument --interface is not valid."; x
     fi
     if [ -z "$name" ];then
         error "Argument --name required."; x
     fi
-    if [ -z "$interface" ];then
-        error "Argument --interface required."; x
+    code 'name="'$name'"'
+    if [ -z "$method" ];then
+        error "Argument --method required."; x
     fi
+    code 'method="'$method'"'
     # If not set in argument, try load from environment.
-    local category_uppercase=${category^^}
-    local parameter_table="RCM_PLUGIN_${category_uppercase}"
+    local interface_uppercase=${interface^^}
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${category_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
+    code 'table="'$table'"'
+    code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugins.${category}"
+        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
     fi
+    code 'table="'$table'"'
+    code 'table_temporary="'$table_temporary'"'
     # Translate variable.
     find='$HOME'; replace="$HOME"
     [ -n "$table" ] && table="${table/"$find"/"$replace"}"
     [ -n "$table_temporary" ] && table_temporary="${table_temporary/"$find"/"$replace"}"
+    code 'table="'$table'"'
+    code 'table_temporary="'$table_temporary'"'
     if [ -f "$table_temporary" ] ;then
+        contents+=$'\n'
         contents+=$(<"$table_temporary")
     fi
     if [ -f "$table" ] ;then
+        contents+=$'\n'
         contents+=$(<"$table")
     fi
     if [ -n "$contents" ];then
@@ -358,40 +413,77 @@ command-execute() {
     if [ -z "$command" ];then
         error "The command of plugin \`$name\` is not defined."; x
     fi
-    interface_command=
-    local _interface_info_block=`${command} --help 2>/dev/null | sed -n '/^Interface[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+    method_command=
+    local _interface_info_block=`${command} --help 2>/dev/null | sed -E -n '/^Methods?\s+'"$interface"'\s+interface[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
     if [ -n "$_interface_info_block" ];then
-        local _interface_info_execute=`echo "$_interface_info_block" | grep -E "^$interface\s*:\s+" | tail -1 | sed -E "s/^$interface\s*:\s+(.*)/\1/"`
-        interface_command=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-        interface_arguments=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+        local _interface_info_execute=`echo "$_interface_info_block" | grep -E "^$method\s*:\s+" | tail -1 | sed -E "s/^$method\s*:\s+(.*)/\1/"`
+        method_command=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+        method_arguments=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
     fi
-    if [ -z "$interface_command" ];then
-        error "The \`Interface\` information of command \`$command\` is not defined."; x
+    if [ -z "$method_command" ];then
+        error "The method \`$method\` of interface \`$interface\` in command \`$command\` is not defined."; x
     fi
-    if ! command -v "$interface_command" > /dev/null;then
-        error Command not found: '`'"$interface_command"'`'.; x
+    if ! command -v "$method_command" > /dev/null;then
+        error Command not found: '`'"$method_command"'`'.; x
     fi
-    [ -n "$interface_arguments" ] && interface_arguments=' '"$interface_arguments"
-    chapter "$interface" command.
-    code ${interface_command}${interface_arguments}
+    [ -n "$method_arguments" ] && method_arguments=' '"$method_arguments"
     ____
 
+    chapter Execute the plugin method.
+    code ${method_command}${method_arguments}
+    ____
+
+    [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
+    export RCM_FAST="$RCM_FAST"
     if [ -z "$output_file" ];then
-        RCM_PROMPT_CHAIN= INDENT+="    " ${interface_command}${interface_arguments} \
+        RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
             ; [ ! $? -eq 0 ] && x
     else
-        RCM_PROMPT_CHAIN= INDENT+="    " ${interface_command}${interface_arguments} \
+        RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
             > "$output_file" \
             ; [ ! $? -eq 0 ] && { rm "$output_file"; x; }
     fi
 }
+command-init() {
+
+    title rcm-plugin -- init
+    ____
+
+    chapter Dump variable
+    if [ -z "$interface" ];then
+        error "Argument --interface required."; x
+    fi
+    code 'interface="'$interface'"'
+    if [[ "$interface" =~ [^a-z_] ]];then
+        error "Argument --interface is not valid."; x
+    fi
+    local interface_uppercase=${interface^^}
+
+    # If not set in argument, try load from environment.
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
+    parameter_table="${!parameter_table}"
+    [ -z "$table" ] && table="$parameter_table"
+    # Use default value.
+    if [ -z "$table" ];then
+        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
+    fi
+    ____
+
+    echo "RCM_PLUGIN_${interface_uppercase}=${table}"
+}
 command-helper() {
     local which=$1; shift
-    if [[ $(type -t "helper-${which}") == function ]];then
-        helper-${which} "$@"
-        exit 0
-    else
-        error Helper unknown: '`'"$which"'`'.; x
+    if [ "$which" == do-nothing ];then
+        return
+    fi
+    if [ -n "$which" ];then
+        if [[ $(type -t "helper-${which}") == function ]];then
+            helper-${which} "$@"
+            exit 0
+        else
+            error Helper unknown: '`'"$command"'`'.; x
+        fi
     fi
 }
 helper-category-available() {
@@ -455,6 +547,7 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # list
 # execute
 # helper
+# init
 # )
 # EOF
 # clear
@@ -473,7 +566,7 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --temporary
 # )
 # VALUE=(
-# --category
+# --interface
 # --name
 # --table
 # --table-temporary
@@ -502,7 +595,7 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --help
 # )
 # VALUE=(
-# --category
+# --interface
 # --table
 # --table-temporary
 # )
@@ -528,12 +621,37 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --help
 # )
 # VALUE=(
-# --category
+# --interface
 # --name
 # --table
 # --table-temporary
-# --interface
+# --method
 # --output-file
+# )
+# MULTIVALUE=(
+# )
+# FLAG_VALUE=(
+# )
+# CSV=(
+# )
+# EOF
+# clear
+
+# parse-options.sh \
+# --without-end-options-double-dash \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --no-error-require-arguments << EOF | clip
+# FLAG=(
+# --fast
+# --help
+# )
+# VALUE=(
+# --interface
+# --table
 # )
 # MULTIVALUE=(
 # )
