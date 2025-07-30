@@ -25,19 +25,19 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --certbot-certificate-name=*) certbot_certificate_name="${1#*=}"; shift ;;
-        --certbot-certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certbot_certificate_name="$2"; shift; fi; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
+        --nginx-ssl-certificate-key=*) nginx_ssl_certificate_key="${1#*=}"; shift ;;
+        --nginx-ssl-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate_key="$2"; shift; fi; shift ;;
+        --nginx-ssl-certificate=*) nginx_ssl_certificate="${1#*=}"; shift ;;
+        --nginx-ssl-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
         --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
         --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
-        --with-certbot-obtain) certbot_obtain=1; shift ;;
-        --without-certbot-obtain) certbot_obtain=0; shift ;;
         --with-nginx-reload) nginx_reload=1; shift ;;
         --without-nginx-reload) nginx_reload=0; shift ;;
         --[^-]*) shift ;;
@@ -79,15 +79,9 @@ Options:
         Set the value of root directive.
    --fastcgi-pass *
         Set the value of fastcgi_pass directive.
-   --without-certbot-obtain ^
-        Prevent auto obtain certificate if not exists.
-        Default value is --with-certbot-obtain.
    --without-nginx-reload ^
         Prevent auto reload nginx after add/edit file config.
         Default value is --with-nginx-reload.
-   --certbot-certificate-name
-        The name of certificate. Leave blank to use default value.
-        Default value is --url-host.
 
 Global Options.
    --fast
@@ -98,7 +92,6 @@ Global Options.
         Show this help.
 
 Dependency:
-   rcm-certbot-obtain-authenticator-nginx
    rcm-nginx-reload
 EOF
 }
@@ -609,12 +602,12 @@ validateContent() {
     fi
     if [ "$url_scheme" == https ];then
         # ssl_certificate
-        if ! nginxGrep ssl_certificate is "$certificate_path" < "$path";then
+        if ! nginxGrep ssl_certificate is "$ssl_certificate" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        if ! nginxGrep ssl_certificate_key is "$private_key_path" < "$path";then
+        if ! nginxGrep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -631,12 +624,12 @@ validateContent() {
     fi
     if [ "$url_scheme" == http ];then
         # ssl_certificate
-        if nginxGrep ssl_certificate is "$certificate_path" < "$path";then
+        if nginxGrep ssl_certificate is "$ssl_certificate" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        if nginxGrep ssl_certificate_key is "$private_key_path" < "$path";then
+        if nginxGrep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -680,97 +673,6 @@ validateContentRedirect() {
         return 1
     fi
     return 0
-}
-Rcm_certbot() {
-    # Global, untuk debug.
-    local certbot_request line cache_file_basename
-    local start end runtime line_number
-    local expired="$1"
-    local url="$2"
-    local table=$HOME/.cache/rcm/rcm.table.cache
-    local table_lock=$HOME/.cache/rcm/rcm.table.cache.lock
-    local cache_file=
-    local do_delete_record_cache_file=
-    _Rcm_certbot() {
-        if [ -f "$table" ];then
-            # todo, cek jika multiline.
-            line=$(grep -n -F "$url"' ' "$table")
-            if [ -z "$line" ];then
-                certbot_request=1
-            else
-                cache_file_basename=$(cut -d' ' -f2 <<< "$line")
-                cache_file=$HOME/.cache/rcm/"$cache_file_basename"
-            fi
-        else
-            certbot_request=1
-        fi
-        if [ -n "$cache_file" ];then
-            if [ -f "$cache_file" ];then
-                if [ -s "$cache_file" ];then
-                    start=`date -r "$cache_file" +'%s'`
-                    end=`date +%s`
-                    runtime=$((end-start))
-                    if [ $runtime -gt $expired ];then
-                        do_delete_record_cache_file=1
-                    fi
-                else
-                    do_delete_record_cache_file=1
-                fi
-            else
-                do_delete_record_cache_file=1
-            fi
-        fi
-        if [ -n "$do_delete_record_cache_file" ];then
-            line_number=$(cut -d':' -f1 <<< "$line")
-            sed -i $line_number'd' "$table"
-            certbot_request=1
-            if [ -f "$cache_file" ];then
-                rm "$cache_file"
-            fi
-            cache_file=
-        fi
-        exit_code=0
-        if [ -n "$certbot_request" ];then
-            mkdir -p $HOME/.cache/rcm
-            cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm rcm.certbot.XXXXXXXXXXXX.cache)
-            cache_file_basename=$(basename "$cache_file")
-            certificate_name=$(sed 's|certbot://||' <<< "$url")
-            msg='Another instance of Certbot is already running.'
-            while true; do
-                certbot certificates --cert-name="$certificate_name" 2>/dev/null > "$cache_file"
-                exit_code=$?
-                if [[ $(head -1 "$cache_file") == "$msg" ]];then
-                    e Retrying...; _.
-                    code sleep 3
-                    sleep 3
-                else
-                    break
-                fi
-            done
-            mkdir -p $(dirname "$table")
-            echo "$url" "$cache_file_basename" >> "$table"
-        fi
-    }
-    until [[ ! -e "$table_lock" ]];do
-        sleep .1
-        # Jika lebih dari 1 menit, maka hapus saja.
-        start=`date -r "$table_lock" +'%s'`
-        end=`date +%s`
-        runtime=$((end-start))
-        if [ $runtime -gt 60 ];then
-            rm "$table_lock"
-        fi
-    done
-    touch "$table_lock"
-    _Rcm_certbot
-    rm "$table_lock"
-    if [ ! -f "$cache_file" ];then
-        exit $exit_code
-    fi
-    if [ ! $exit_code -eq 0 ];then
-        exit $exit_code
-    fi
-    cat "$cache_file"
 }
 Rcm_parse_url() {
     # Reset
@@ -912,33 +814,31 @@ fi
 if [ -z "$fastcgi_pass" ];then
     error "Argument --fastcgi-pass required."; x
 fi
-[ "$certbot_obtain" == 0 ] && certbot_obtain=
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
 code 'filename="'$filename'"'
 code 'root="'$root'"'
 code 'fastcgi_pass="'$fastcgi_pass'"'
-code 'certbot_obtain="'$certbot_obtain'"'
 code 'nginx_reload="'$nginx_reload'"'
-code 'certbot_certificate_name="'$certbot_certificate_name'"'
 code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
+code 'nginx_ssl_certificate="'$nginx_ssl_certificate'"'
+code 'nginx_ssl_certificate_key="'$nginx_ssl_certificate_key'"'
+# If not set in argument, try load from environment.
+[ -z "$nginx_ssl_certificate" ] && nginx_ssl_certificate="$NGINX_SSL_CERTIFICATE"
+[ -z "$nginx_ssl_certificate_key" ] && nginx_ssl_certificate_key="$NGINX_SSL_CERTIFICATE_KEY"
+code 'nginx_ssl_certificate="'$nginx_ssl_certificate'"'
+code 'nginx_ssl_certificate_key="'$nginx_ssl_certificate_key'"'
 rcm_nginx_reload=
 tempfile=
-certificate_path=
-private_key_path=
 validate_existing_certificate=
 if [[ "$url_scheme" == https ]];then
-    if [ -n "$certbot_certificate_name" ];then
-        certificate_name="$certbot_certificate_name"
-        if [ -z "$certbot_obtain" ];then
-            validate_existing_certificate=1
-        fi
-    else
-        certificate_name="$url_host"
+    if [ -z "$nginx_ssl_certificate" ];then
+        error "Argument --nginx-ssl-certificate required."; x
+    fi
+    if [ -z "$nginx_ssl_certificate_key" ];then
+        error "Argument --nginx-ssl-certificate-key required."; x
     fi
 fi
-code 'certificate_name="'$certificate_name'"'
-code 'validate_existing_certificate="'$validate_existing_certificate'"'
 ____
 
 path="/etc/nginx/sites-available/$filename"
@@ -949,15 +849,11 @@ ____
 
 chapter Populate variable.
 if [[ "$url_scheme" == https ]];then
-    if [ -z "$tempfile" ];then
-        tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php.XXXXXX)
-    fi
-    Rcm_certbot 600 "certbot://${certificate_name}" > "$tempfile"
-    certificate_path=$(cat "$tempfile" | grep -i -E 'Certificate Path:\s+' | sed -E 's/Certificate Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    private_key_path=$(cat "$tempfile" | grep -i -E 'Private Key Path:\s+' | sed -E 's/Private Key Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    ssl_certificate="$nginx_ssl_certificate"
+    ssl_certificate_key="$nginx_ssl_certificate_key"
 fi
-code 'certificate_path="'$certificate_path'"'
-code 'private_key_path="'$private_key_path'"'
+code 'ssl_certificate="'$ssl_certificate'"'
+code 'ssl_certificate_key="'$ssl_certificate_key'"'
 ____
 
 create_new=
@@ -971,124 +867,9 @@ else
 fi
 
 if [[ -n "$create_new" && "$url_scheme" == https ]];then
-    if [ -n "$validate_existing_certificate" ];then
-        chapter Verifikasi Certificate.
-        if [ -z "$tempfile" ];then
-            tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php.XXXXXX)
-        fi
-        code certbot certificates --cert-name='"'"$certificate_name"'"'
-        # Cache 10 menit.
-        if Rcm_certbot 600 "certbot://${certificate_name}" 2>/dev/null | tee "$tempfile" | grep -q -F 'Certificate Name: ';then
-            __ Certificate ditemukan.
-            while IFS= read -r line; do e "$line"; _.; done < $tempfile
-        else
-            error Error has been occurred. The certificate has not found.
-            rm "$tempfile"
-            x
-        fi
-        ____
-
-        # Certificate ditemukan, maka berikutnya kita perlu verifikasi lagi.
-        chapter Verifikasi Domain
-        _list_domain=$(cat "$tempfile" | grep -i -E 'Domains:\s+' | sed -E 's/Domains:(.*)/\1/')
-        # Jika variable $_list_domain terdapat karakter wildcard, maka:
-        # list_domain=($_list_domain)
-        read -ra list_domain -d '' <<< "$_list_domain"
-        # Dump array dengan single quote.
-        e; magenta 'list_domain=('
-        first=1
-        for each in "${list_domain[@]}";do
-            if [ -n "$first" ];then
-                magenta "'""$each""'"; first=
-            else
-                magenta " '""$each""'";
-            fi
-        done
-        magenta ')'; _.
-        __ Mengecek domain '`'"$url_host"'`'
-        found=
-        if ArraySearch "$url_host" list_domain[@];then
-            found=1
-            __ Domain ditemukan.
-        else
-            __ Domain tidak ditemukan.
-        fi
-        if [ -z "$found" ];then
-            __ Mengecek versi wildcard dari domain '`'"$url_host"'`'
-            IFS='.' read -ra array <<< "$url_host"
-            if [ "${#array[@]}" -gt 2 ];then
-                domain_wildcard=
-                first=1
-                for each in "${array[@]}"; do
-                    if [ -n "$first" ];then
-                        domain_wildcard='*'
-                        first=
-                    else
-                        domain_wildcard+=".${each}"
-                    fi
-                done
-                code 'domain_wildcard="'$domain_wildcard'"'
-                if ArraySearch "$domain_wildcard" list_domain[@];then
-                    found=1
-                    __ Wildcard domain ditemukan.
-                else
-                    __ Wildcard domain tidak ditemukan.
-                fi
-
-            else
-                __ Domain bukan merupakan subdomain.
-            fi
-        fi
-        if [ -z "$found" ];then
-            error Domain tidak terdaftar pada certificate.; x
-        else
-            __ Domain terdaftar pada certificate.
-            certificate_path=$(cat "$tempfile" | grep -i -E 'Certificate Path:\s+' | sed -E 's/Certificate Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            private_key_path=$(cat "$tempfile" | grep -i -E 'Private Key Path:\s+' | sed -E 's/Private Key Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-        fi
-    fi
-    ____
-
-    if [ -z "$certificate_path" ];then
-        if [ -n "$certbot_obtain" ];then
-            chapter Mengecek '$PATH'.
-            code PATH="$PATH"
-            if grep -q '/snap/bin' <<< "$PATH";then
-                __ '$PATH' sudah lengkap.
-            else
-                __ '$PATH' belum lengkap.
-                __ Memperbaiki '$PATH'
-                PATH=/snap/bin:$PATH
-                if grep -q '/snap/bin' <<< "$PATH";then
-                    __; green '$PATH' sudah lengkap.; _.
-                    __; magenta PATH="$PATH"; _.
-                else
-                    __; red '$PATH' belum lengkap.; x
-                fi
-            fi
-            ____
-
-            INDENT+="    " \
-            PATH=$PATH \
-            rcm-certbot-obtain-authenticator-nginx \
-                --certificate-name "$certificate_name" \
-                --domain "$url_host" \
-                ; [ ! $? -eq 0 ] && x
-            nginx_reload=1
-        fi
-        if [ -z "$tempfile" ];then
-            tempfile=$(mktemp -p /dev/shm -t rcm-nginx-virtual-host-autocreate-php.XXXXXX)
-        fi
-        Rcm_certbot 600 "certbot://${certificate_name}" > "$tempfile"
-        certificate_path=$(cat "$tempfile" | grep -i -E 'Certificate Path:\s+' | sed -E 's/Certificate Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-        private_key_path=$(cat "$tempfile" | grep -i -E 'Private Key Path:\s+' | sed -E 's/Private Key Path:\s+(.*)/\1/' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    fi
-
     chapter Memeriksa certificate SSL.
-    code 'certificate_path="'$certificate_path'"'
-    [ -f "$certificate_path" ] || fileMustExists "$certificate_path"
-    code 'private_key_path="'$private_key_path'"'
-    [ -f "$private_key_path" ] || fileMustExists "$private_key_path"
+    [ -f "$ssl_certificate" ] || fileMustExists "$ssl_certificate"
+    [ -f "$ssl_certificate_key" ] || fileMustExists "$ssl_certificate_key"
     ____
 fi
 
@@ -1125,8 +906,8 @@ server {
         fastcgi_pass __FASTCGI_PASS__;
         fastcgi_read_timeout 3600;
     }
-    # ssl_certificate __CERTIFICATE_PATH__;
-    # ssl_certificate_key __PRIVATE_KEY_PATH__;
+    # ssl_certificate __SSL_CERTIFICATE__;
+    # ssl_certificate_key __SSL_CERTIFICATE_KEY__;
     # include /etc/letsencrypt/options-ssl-nginx.conf;
     # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -1136,8 +917,8 @@ EOF
     fileMustExists "$path"
     sed -i "s|__ROOT__|${root}|g" "$path"
     sed -i "s|__URL_HOST__|${url_host}|g" "$path"
-    sed -i "s|__CERTIFICATE_PATH__|${certificate_path}|g" "$path"
-    sed -i "s|__PRIVATE_KEY_PATH__|${private_key_path}|g" "$path"
+    sed -i "s|__SSL_CERTIFICATE__|${ssl_certificate}|g" "$path"
+    sed -i "s|__SSL_CERTIFICATE_KEY__|${ssl_certificate_key}|g" "$path"
     sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
     sed -i "s|__URL_PORT__|${url_port}|g" "$path"
     if [ "$url_scheme" == https ];then
@@ -1256,6 +1037,7 @@ if [ -z "$nginx_reload" ];then
     fi
     rcm_nginx_reload=
 fi
+
 if [ -n "$rcm_nginx_reload" ];then
     INDENT+="    " \
     rcm-nginx-reload \
@@ -1283,16 +1065,15 @@ exit 0
 # --url
 # --root
 # --fastcgi-pass
-# --certbot-certificate-name
 # --tempfile-trigger-reload
+# --nginx-ssl-certificate
+# --nginx-ssl-certificate-key
 # )
 # MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--with-certbot-obtain,parameter:certbot_obtain'
-    # 'long:--without-certbot-obtain,parameter:certbot_obtain,flag_option:reverse'
     # 'long:--with-nginx-reload,parameter:nginx_reload'
     # 'long:--without-nginx-reload,parameter:nginx_reload,flag_option:reverse'
 # )
