@@ -1226,12 +1226,6 @@ Rcm_list() {
 Rcm_list_internal() {
     # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
     cat << 'RCM_LIST_INTERNAL'
-certbot-apt
-certbot-deploy-installer-nginx-authenticator-digitalocean
-certbot-deploy-nginx
-certbot-digitalocean-autoinstaller
-certbot-obtain-authenticator-digitalocean
-certbot-obtain-authenticator-nginx
 composer-autoinstaller
 cron-setup-wsl-autorun-crond
 cron-setup-wsl-autorun-sshd
