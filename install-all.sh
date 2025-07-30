@@ -33,7 +33,7 @@ done <<< `find * -mindepth 1 -type f -name '*.sh'`
 
 while read line; do
     case "$line" in
-        rcm\.sh)
+        rcm\.sh|rcm-*\.sh)
             chmod a+x "$line"
             echo ln -sf '"''$__DIR__'/"$line"'"' '"'$(basename "$line" | sed s,\.sh$,,)'"'
             ln -sf "$PWD/$line" /usr/local/bin/$(basename "$line" | sed s,\.sh$,,)
