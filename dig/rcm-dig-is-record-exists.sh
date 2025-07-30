@@ -25,15 +25,17 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --alias-of=*) alias_of="${1#*=}"; shift ;;
+        --alias-of) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then alias_of="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --fast) fast=1; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
-        --hostname-origin=*) hostname_origin="${1#*=}"; shift ;;
-        --hostname-origin) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname_origin="$2"; shift; fi; shift ;;
         --ip-address=*) ip_address="${1#*=}"; shift ;;
         --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
+        --label=*) label="${1#*=}"; shift ;;
+        --label) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then label="$2"; shift; fi; shift ;;
         --mail-provider=*) mail_provider="${1#*=}"; shift ;;
         --mail-provider) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then mail_provider="$2"; shift; fi; shift ;;
         --name-exists-sure) name_exists_sure=1; shift ;;
@@ -44,8 +46,6 @@ while [[ $# -gt 0 ]]; do
         --type) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then type="$2"; shift; fi; shift ;;
         --value=*) value="${1#*=}"; shift ;;
         --value) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then value="$2"; shift; fi; shift ;;
-        --value-summarize=*) value_summarize="${1#*=}"; shift ;;
-        --value-summarize) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then value_summarize="$2"; shift; fi; shift ;;
         --with-color) colorize=1; shift ;;
         --without-color) colorize=0; shift ;;
         --[^-]*) shift ;;
@@ -59,7 +59,6 @@ unset _new_arguments
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
 fi
@@ -89,13 +88,14 @@ Options:
         Set the IP Address of A record.
    --hostname
         Set the hostname.
-   --hostname-origin
-        Set the source alias of CNAME record.
+   --alias-of
+        Set the target hostname of alias.
+        If omit, it will set to domain.
    --mail-provider
         Set the Mail Provider of MX record.
    --value
         Set the value of TXT record.
-   --value-summarize
+   --label
         Set the summarize value of TXT record. Just for notification.
    --name-server
         Set the Name server. Default value is - (dash). Available values: [1], [2], or other.
@@ -201,15 +201,13 @@ fi
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
 if [ -z "$type" ];then
     error "Argument --type required."; x
-fi
-case "$type" in
-    a|cname|txt|mx) ;;
-    *) type=
-esac
-if [ -z "$type" ];then
-    error "Argument --type is not valid.";
-    _ Available value:' '; yellow a; _, ', '; yellow cname; _, ', '; yellow mx; _, ', '; yellow txt; _, .; _.
-    x
+else
+    case "$type" in
+        a|cname|txt|mx) ;;
+        *) error "Argument --type is not valid.";
+           _ 'Available value: '; yellow a; _, ', '; yellow cname; _, ', '; yellow mx; _, ', '; yellow txt; _, '.'; _.
+           x
+    esac
 fi
 code 'type="'$type'"'
 type_uppercase=${type^^}
@@ -243,7 +241,7 @@ code 'ip_address="'$ip_address'"'
 code 'hostname="'$hostname'"'
 code 'mail_provider="'$mail_provider'"'
 code 'value="'$value'"'
-code 'value_summarize="'$value_summarize'"'
+code 'label="'$label'"'
 [ -z "$colorize" ] && colorize=1
 [ "$colorize" == 0 ] && colorize=
 ____
@@ -273,11 +271,11 @@ fi
 if [[ "$type" == cname ]];then
     data='@'
     datadot='@'
-    [ -n "$hostname_origin" ] && {
-        data="$hostname_origin"
+    [ -n "$alias_of" ] && {
+        data="$alias_of"
         datadot="$data".
     }
-    [ -n "$hostname_origin" ] && alias_to="$hostname_origin" || alias_to="$domain"
+    [ -n "$alias_of" ] && alias_to="$alias_of" || alias_to="$domain"
     [[ "$hostname" == @ ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
     chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
     if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
@@ -308,9 +306,9 @@ if [[ "$type" == txt ]];then
     chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
     if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
         record_found=1
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${value_summarize}"'`'" FOUND${label_name_server}."
+        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${label}"'`'" FOUND${label_name_server}."
     else
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${value_summarize}"'`'" NOT FOUND${label_name_server}."
+        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${label}"'`'" NOT FOUND${label_name_server}."
     fi
     ____
 fi
@@ -360,10 +358,10 @@ exit 0
 # --ip-address
 # --type
 # --hostname
-# --hostname-origin
+# --alias-of
 # --mail-provider
 # --value
-# --value-summarize
+# --label
 # --name-server
 # )
 # FLAG_VALUE=(
