@@ -236,6 +236,7 @@ quiet=; loud=; louder=; debug=;
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 [ -z "$log" ] && log=rcm.log
+tempfile=
 
 # Functions. Help and Version.
 printVersion() {
@@ -2963,6 +2964,61 @@ Rcm_get_list_values() {
         fi
     fi
 }
+Rcm_event_dispatcher() {
+    # global command argument_placeholders command_prepend
+    local key value
+    local label="$1"; shift
+    local to_execute command_raw _command_arguments _command _arguments
+    local line  find replace
+    to_execute=`${command} --help 2>/dev/null | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$to_execute" ];then
+        until [[ -z "$to_execute" ]];do
+            command_raw=`sed -n 1p <<< "$to_execute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            to_execute=`sed -n '2,$p' <<< "$to_execute"`
+            _command_arguments=$(echo "$command_raw" | sed -n -E 's/\s*([^\)]+\))/\1/p')
+            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+            if command -v "$_command" > /dev/null;then
+                if [ -n "$argument_placeholders" ];then
+                    while read line; do
+                        find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        # description="${description/"$find"/"$replace"}"
+                        if [ -n "$_arguments" ];then
+                            _arguments="${_arguments/"$find"/"$replace"}"
+                        fi
+                    done <<< "$argument_placeholders"
+                fi
+            fi
+            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            chapter "$label" command.
+            code ${_command}${_arguments}
+            ____
+
+            if [ -z "$tempfile" ];then
+                tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
+            fi
+            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${_command}${_arguments} \
+                > "$tempfile" \
+                ; [ ! $? -eq 0 ] && { rm "$tempfile"; x; }
+
+            while IFS= read -r to_export; do
+                key=$(cut -d= -f1 <<< "$to_export")
+                value=$(cut -d= -f2- <<< "$to_export")
+                [ -z "$value" ] && value=-
+                code export "$key"="$value"
+                export "$key"="$value"
+                [ -n "$command_prepend" ] && command_prepend+=" "
+                command_prepend+="${key}=${value}"
+            done < "$tempfile"
+            if [ -s "$tempfile" ];then
+                ____
+            fi
+
+        done
+    fi
+}
+
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1
@@ -3069,6 +3125,14 @@ if [ $# -gt 0 ];then
         esac
     done
 fi
+
+# Mulai eksekusi event pre prompt.
+if [ -n "$subcommand" ];then
+    Rcm_event_dispatcher 'Pre Prompt for command '$subcommand
+else
+    Rcm_event_dispatcher 'Pre Prompt'
+fi
+
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
@@ -3113,6 +3177,7 @@ for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
 [ -n "$command_prepend" ] && command_prepend+=' '
 RCM_PROMPT_CHAIN="${command_prepend}${RCM_PROMPT_CHAIN}"
 export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
+[ -n "$tempfile" ] && rm "$tempfile"
 
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
