@@ -2989,8 +2989,6 @@ if [ -n "$louder" ];then
     ____
 fi
 
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
-
 if [ ! -d "$BINARY_DIRECTORY" ];then
     mkdir -p "$BINARY_DIRECTORY"
     if [ ! -d "$BINARY_DIRECTORY" ];then
