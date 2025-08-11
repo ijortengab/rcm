@@ -108,7 +108,7 @@ printHelp() {
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     [ -n "$users" ] && users=" Available values:${nginx_user}${users}."
     cat << EOF
-Usage: rcm-nginx-setup-php-project.sh [options]
+Usage: rcm-nginx-setup-php-project [options]
 
 Options:
    --url *
@@ -182,6 +182,9 @@ Global Options:
 Dependency:
    curl
    rcm-php-fpm-setup-project-config
+   rcm-php-setup-adjust-cli-version
+   rcm-nginx-virtual-host-autocreate-php-multiple-root
+   rcm-nginx-reload
 EOF
 }
 
@@ -891,7 +894,7 @@ code 'fastcgi_pass="'$fastcgi_pass'"'
 ____
 
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-drupal-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-php-project.XXXXXX)
 fi
 
 chapter Mengecek '$PATH'.
@@ -987,7 +990,7 @@ fi
 i=0
 code=
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-drupal-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-php-project.XXXXXX)
 fi
 until [ $i -eq 10 ];do
     __; magenta curl"$_k" -o /dev/null -s -w '"'%{http_code}\\n'"' '"'"${url_scheme}://127.0.0.1:${url_port}${url_path_clean_trailing}/${filename}"'"' -H '"'Host: $url_host'"'; _.
