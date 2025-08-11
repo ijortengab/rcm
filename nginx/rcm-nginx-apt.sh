@@ -39,7 +39,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.17.3'
+    echo '0.17.4'
 }
 printHelp() {
     title RCM Nginx Auto-Installer
