@@ -2172,6 +2172,34 @@ Rcm_prompt() {
     argument_preview=()
     argument_preview_real=()
     argument_placeholders=
+
+    mapping_operand=`$command --help 2>/dev/null | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$mapping_operand" ];then
+        chapter Mapping operand as value of options.
+        unset count
+        declare -i count
+        count=1
+        while true; do
+            below=`sed -n ${count}p <<< "$mapping_operand" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            if [ -z "$below" ];then
+                break
+            fi
+            for _value in "${argument_operand_prepopulate[@]}";do
+                ArrayShift argument_operand_prepopulate[@]
+                break
+            done
+            argument_operand_prepopulate=("${_return[@]}")
+            if [ -n "$_value" ];then
+                argument_prepopulate+=("${below}=${_value}")
+                code "${below}=${_value}"
+            fi
+            unset _return
+            unset _value
+            count+=1
+        done
+        ____
+    fi
+
     parameter='command'
     available_subcommands=()
     _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
