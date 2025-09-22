@@ -1262,6 +1262,10 @@ RCM_LIST_INTERNAL
 Rcm_is_internal() {
     local command="$1"
     if [[ "$command" =~ ^rcm- ]];then
+        case "$command" in
+            rcm-plugin) return 0 ;;
+            rcm-paragraph) return 0 ;;
+        esac
         command_list=$(Rcm_list_internal)
         command_without_prefix=$(sed s,^rcm-,, <<< "$command")
         if grep -q ^"$command_without_prefix"$ <<< "$command_list";then
@@ -1896,7 +1900,11 @@ Rcm_resolve_dependencies() {
                         PHP_URL_SCHEME='https://'
                         PHP_URL_HOST='github.com'
                         github_owner_repo=ijortengab/rcm
-                        github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                        case "$command_required" in
+                            rcm-plugin) github_file_path="$command_required".sh ;;
+                            rcm-paragraph) github_file_path="$command_required".sh ;;
+                            *) github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
+                        esac
                         if [ -n "$loud" ];then
                             code rcm install $(sed s,^rcm-,, <<< "$command_required") --url='"'"${PHP_URL_SCHEME}${PHP_URL_HOST}/${github_owner_repo}"'"' --path='"'"$github_file_path"'"'
                         fi
