@@ -2,7 +2,7 @@
 
 # Rapid Construct Massive
 #
-# (c) IjorTengab <ijortengab@systemix.id>
+# (c) IjorTengab <ijortengab@systemix.id> <ijortengab@gmail.com>
 #
 # https://github.com/ijortengab/rcm
 #
@@ -266,6 +266,20 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
+   --slow, -s
+        Add delay every subtask.
+   --interactive
+        Show asking for confirmation if needed. Default action.
+   --non-interactive, -x
+        Run without ever asking for user input.
+   --verbose, -v
+        Verbose mode. Causes rcm to print debugging messages about its progress.
+        Multiple -v options increase the verbosity.
+        The maximum is 3.
+   --without-resolve-dependencies, --resolved, -r
+        Skip resolve dependenices.
+   --with-resolve-dependencies
+        Resolve dependenices. Default action.
 
 HISTORY COMMAND.
     List the input prompt of script.
@@ -327,25 +341,6 @@ UPDATE COMMAND.
             Path to the script from root of repository
         --rollback
             Undo to previous version of script.
-
-SCRIPT COMMAND.
-    Execute the script.
-
-    Options for <script>:
-       --slow, -s
-            Add delay every subtask.
-       --interactive
-            Show asking for confirmation if needed. Default action.
-       --non-interactive, -x
-            Run without ever asking for user input.
-       --verbose, -v
-            Verbose mode. Causes rcm to print debugging messages about its progress.
-            Multiple -v options increase the verbosity.
-            The maximum is 3.
-       --without-resolve-dependencies, --resolved, -r
-            Skip resolve dependenices.
-       --with-resolve-dependencies
-            Resolve dependenices. Default action.
 
 Environment Variables:
    BINARY_DIRECTORY
