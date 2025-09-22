@@ -88,7 +88,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.17.4'
+    echo '0.18.0'
 }
 printHelp() {
     title ISPConfig Setup

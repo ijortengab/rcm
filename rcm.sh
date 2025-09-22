@@ -240,7 +240,7 @@ tempfile=
 
 # Functions. Help and Version.
 printVersion() {
-    echo '0.17.3'
+    echo '0.18.0'
 }
 printHelp() {
     title Rapid Construct Massive
