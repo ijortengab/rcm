@@ -112,6 +112,8 @@ quiet=; loud=; louder=; debug=;
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+# If set in environment, set to variable.
+[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Functions. Help and Version.
 printVersion() {
@@ -609,7 +611,11 @@ if [ "$boolean" == 11 ];then
 fi
 code 'source="'$source'"'
 if [ -n "$source" ];then
-    _help=$("rcm-${source}" --help 2>/dev/null)
+    if [ "$source" == rcm ];then
+        _help=$(rcm --help 2>/dev/null)
+    else
+        _help=$("rcm-${source}" --help 2>/dev/null)
+    fi
     _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
     if [ -n "$_download" ];then
         [ -n "$table_downloads" ] && table_downloads+=$'\n'
