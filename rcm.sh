@@ -1214,10 +1214,27 @@ Rcm_is_internal() {
     return 1
 }
 Rcm_parse_url() {
-    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*://\).*,\1,g')"
-    _PHP_URL_SCHEME_REVERSE="$(echo ${1/$PHP_URL_SCHEME/})"
+    # Reset
+    PHP_URL_SCHEME=
+    PHP_URL_HOST=
+    PHP_URL_PORT=
+    PHP_URL_USER=
+    PHP_URL_PASS=
+    PHP_URL_PATH=
+    PHP_URL_QUERY=
+    PHP_URL_FRAGMENT=
+    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
+    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
+    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
+    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
+    fi
+    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
+        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
+        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
+    fi
     _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
-    # extract the user and password (if any)
     PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
     if [ -n "$PHP_URL_PASS" ]; then
         PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
@@ -1225,12 +1242,27 @@ Rcm_parse_url() {
         PHP_URL_USER=$_PHP_URL_USER_PASS
     fi
     _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
-    # by request host without port
     PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
-    # by request - try to extract the port
-    PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-    # extract the path (if any)
-    PHP_URL_PATH="$(echo $_PHP_URL_SCHEME_REVERSE | grep / | cut -d/ -f2-)"
+    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
+        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
+    fi
+    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
+    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
+    if [ -n "$_PHP_URL_USER_PASS" ];then
+        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
+        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
+    fi
+    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
+
+    # Debug
+    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"
+    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"
+    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"
+    # e '"$PHP_URL_USER"' "$PHP_URL_USER"
+    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"
+    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
+    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
+    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
 }
 Rcm_get() {
     local url="$1"
