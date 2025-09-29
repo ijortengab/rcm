@@ -2867,6 +2867,90 @@ Rcm_event_dispatcher() {
         done
     fi
 }
+Rcm_init() {
+    local owner repository tag_name rcm_extension
+    owner=ijortengab
+    repository=rcm
+    tag_name=`printVersion`
+    rcm_extension=$1
+    local cache_directory="${HOME}/.cache/rcm/${owner}/${repository}/${tag_name}"
+    Rcm_github_download "$owner" "$repository" "$tag_name" "$cache_directory"
+    local source="${cache_directory}/${rcm_extension}.sh"
+    if [ ! -f "$source" ];then
+        error File is not found: "$source".; x
+    fi
+    local target="${BINARY_DIRECTORY}/${rcm_extension}"
+    if [ -f "$target" ];then
+        backupFile move "$target"
+    fi
+    if [ -n "$loud" ];then
+        code cp "$source" "$target"
+    fi
+    cp "$source" "$target"
+    if [ -n "$loud" ];then
+        _ 'Success install '; magenta "$rcm_extension"; _, ' version: '; yellow "$tag_name"; _.
+    fi
+}
+Rcm_github_download() {
+    local owner=$1 repository=$2 tag_name=$3 output_dir=$4
+    if [ -z "$owner" ];then
+        error "Operand <owner> required."; x
+    fi
+    if [ -z "$repository" ];then
+        error "Operand <repository> required."; x
+    fi
+    if [ -z "$tag_name" ];then
+        error "Operand <tag_name> required."; x
+    fi
+    if [ -z "$output_dir" ];then
+        error "Operand <output_dir> required."; x
+    fi
+    local url="https://api.github.com/repos/${owner}/${repository}/releases/tags/${tag_name}"
+    local tag_name_validate=$(Rcm_wget 3600 "$url" | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
+    if [ -z "$tag_name_validate" ];then
+        error "The repository does not have that release tag: ${tag_name}."; x
+    fi
+    if [ -n "$loud" ];then
+        _ "Download Github repository ${owner}/${repository}."; _.
+    fi
+    local tempdir found_directory_extracted cache_directory url_tarball output_dir_parent
+    url_tarball="https://api.github.com/repos/${owner}/${repository}/tarball/${tag_name}"
+    if [ ! -d "$output_dir" ];then
+        if [ -n "$loud" ];then
+            _ 'Downloading version: '; yellow "$tag_name"; _.
+        fi
+        tempdir=$(mktemp -d)
+        cd "$tempdir"
+        wget -q -O "${tag_name}.tar.gz" "$url_tarball"
+        if [ ! -f "${tag_name}.tar.gz" ];then
+            error Failed to download file: "${tag_name}.tar.gz".
+            cd - >/dev/null
+            rm -rf "$tempdir"
+            x
+        fi
+        tar xfz "${tag_name}.tar.gz"
+        found_directory_extracted=$(find -maxdepth 1 -mindepth 1 -type d)
+        if [ ! -d "$found_directory_extracted" ];then
+            error Failed to extract archieve: "${tag_name}.tar.gz".;
+            cd - >/dev/null
+            rm -rf "$tempdir"
+            x
+        fi
+        output_dir_parent="$(dirname "$output_dir")"
+        mkdir -p "$output_dir_parent"
+        if [ ! -d "$output_dir_parent" ];then
+            error Failed to create output directory parent: "$output_dir_parent".;
+        fi
+        mv $(realpath "$found_directory_extracted") "$output_dir"
+        # Cleaning.
+        cd - >/dev/null
+        rm -rf "$tempdir"
+    else
+        if [ -n "$loud" ];then
+            _ 'Using downloaded version: '; yellow "$tag_name"; _.
+        fi
+    fi
+}
 
 # Requirement, validate, and populate value.
 rcm_version=`printVersion`
