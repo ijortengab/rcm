@@ -148,6 +148,13 @@ esac
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+# If not set in argument, try load from environment.
+[ -z "$verbose" ] && verbose="$RCM_VERBOSE"
+quiet=; loud=; louder=; debug=;
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Functions. Help and Version.
 printVersion() {
@@ -237,34 +244,34 @@ EOF
 command-add() {
     local command version
 
-    title rcm-plugin -- add
+    title rcm-plugin::add
     ____
 
-    chapter Dump variable
+    [ -n "$louder" ] && chapter Dump variable
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi
-    code 'interface="'$interface'"'
+    [ -n "$louder" ] && code 'interface="'$interface'"'
     if [[ "$interface" =~ [^a-z_] ]];then
         error "Argument --interface is not valid."; x
     fi
     if [ -z "$name" ];then
         error "Argument --name required."; x
     fi
-    code 'name="'$name'"'
+    [ -n "$louder" ] && code 'name="'$name'"'
     if [ -z "$add_command" ];then
         error "Argument --command required."; x
     fi
     command="$add_command"
-    code 'command="'$command'"'
+    [ -n "$louder" ] && code 'command="'$command'"'
     if [ -z "$add_version" ];then
         error "Argument --version required."; x
     fi
     version="$add_version"
-    code 'version="'$version'"'
-    code 'temporary="'$temporary'"'
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && code 'version="'$version'"'
+    [ -n "$louder" ] && code 'temporary="'$temporary'"'
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
     local parameter_table="RCM_PLUGIN_${interface_uppercase}"
@@ -275,8 +282,8 @@ command-add() {
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
         table="${HOME}/.config/rcm/rcm.plugin.${interface}"
@@ -287,9 +294,9 @@ command-add() {
             table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugins.${interface}.XXXXXX)
         fi
     fi
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
-    ____
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && ____
 
     chapter Add to table.
     local table_lookup=
@@ -353,27 +360,28 @@ command-list() {
     echo "$contents" | sed '/^[[:space:]]*$/d'
 }
 command-execute() {
-    title rcm-plugin -- execute
+    title rcm-plugin::execute
     ____
 
     local find replace contents command
 
-    chapter Dump variable
+    [ -n "$louder" ] && chapter Dump variable
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi
-    code 'interface="'$interface'"'
+    [ -n "$louder" ] && code 'interface="'$interface'"'
     if [[ "$interface" =~ [^a-z_] ]];then
         error "Argument --interface is not valid."; x
     fi
     if [ -z "$name" ];then
         error "Argument --name required."; x
     fi
-    code 'name="'$name'"'
+    [ -n "$louder" ] && code 'name="'$name'"'
     if [ -z "$method" ];then
         error "Argument --method required."; x
     fi
-    code 'method="'$method'"'
+    [ -n "$louder" ] && code 'method="'$method'"'
+    [ -n "$louder" ] && code 'output_file="'$output_file'"'
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
     local parameter_table="RCM_PLUGIN_${interface_uppercase}"
@@ -384,20 +392,20 @@ command-execute() {
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
         table="${HOME}/.config/rcm/rcm.plugin.${interface}"
     fi
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # Translate variable.
     find='$HOME'; replace="$HOME"
     [ -n "$table" ] && table="${table/"$find"/"$replace"}"
     [ -n "$table_temporary" ] && table_temporary="${table_temporary/"$find"/"$replace"}"
-    code 'table="'$table'"'
-    code 'table_temporary="'$table_temporary'"'
+    [ -n "$louder" ] && code 'table="'$table'"'
+    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     if [ -f "$table_temporary" ] ;then
         contents+=$'\n'
         contents+=$(<"$table_temporary")
@@ -427,7 +435,7 @@ command-execute() {
         error Command not found: '`'"$method_command"'`'.; x
     fi
     [ -n "$method_arguments" ] && method_arguments=' '"$method_arguments"
-    ____
+    [ -n "$louder" ] && ____
 
     chapter Execute the plugin method.
     code ${method_command}${method_arguments}
@@ -446,14 +454,14 @@ command-execute() {
 }
 command-init() {
 
-    title rcm-plugin -- init
+    title rcm-plugin::init
     ____
 
-    chapter Dump variable
+    [ -n "$louder" ] && chapter Dump variable
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi
-    code 'interface="'$interface'"'
+    [ -n "$louder" ] && code 'interface="'$interface'"'
     if [[ "$interface" =~ [^a-z_] ]];then
         error "Argument --interface is not valid."; x
     fi
@@ -468,7 +476,7 @@ command-init() {
     if [ -z "$table" ];then
         table="${HOME}/.config/rcm/rcm.plugin.${interface}"
     fi
-    ____
+    [ -n "$louder" ] && ____
 
     echo "RCM_PLUGIN_${interface_uppercase}=${table}"
 }
