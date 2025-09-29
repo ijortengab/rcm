@@ -1602,7 +1602,7 @@ Rcm_resolve_dependencies() {
             fi
             if command -v "$command_required" > /dev/null;then
                 if [ -n "$loud" ];then
-                    _, ' [FOUND].';
+                    green ' [FOUND]'; _, .
                 fi
                 if [ -z "$command_required_version" ];then
                     if [ -n "$loud" ];then
@@ -1610,9 +1610,6 @@ Rcm_resolve_dependencies() {
                     fi
                 else
                     command_current_version=$("$command_required" --version)
-                    if [[ "$command_current_version" =~ [^0-9\.]+ ]];then
-                        command_current_version=0
-                    fi
                     if [[ ! "$command_required_version" == "$command_current_version" ]];then
                         if [ -n "$loud" ];then
                             _, ' Version required: '$command_required_version'.'
@@ -1662,8 +1659,8 @@ Rcm_resolve_dependencies() {
 
                                 chapter Attention
                             fi
-                            __ The command requires rcm to be updated.
-                            __ The rcm has been updated.
+                            __ The subcommand or extension requires rcm to be updated.
+                            __ The rcm has been updated to the latest version.
                             __ Please execute the command again.
                             if [ -n "$loud" ];then
                                 x
@@ -1671,7 +1668,7 @@ Rcm_resolve_dependencies() {
                             [ -n "$quiet" ] && kill -SIGTERM $$
                             # Pastikan exit.
                             x
-                        else
+                        elif [[ "$command_required" =~ ^rcm- ]];then
                             url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
                             if [ -n "$url" ];then
                                 Rcm_parse_url "$url"
@@ -1707,7 +1704,7 @@ Rcm_resolve_dependencies() {
                 fi
             else
                 if [ -n "$loud" ];then
-                    _, ' [NOTFOUND].'; _.
+                    red ' [NOTFOUND]'; _, .; _.
                 fi
                 if [[ -f "$BINARY_DIRECTORY/$command_required" && ! -s "$BINARY_DIRECTORY/$command_required" ]];then
                     __ Empty file detected.
