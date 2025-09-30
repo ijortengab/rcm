@@ -2996,7 +2996,7 @@ fi
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 shortoptions=
-[ -n "$resolve_dependencies" ] && shortoptions+='r'
+[ -z "$resolve_dependencies" ] && shortoptions+='r'
 [ -z "$interactive" ] && shortoptions+='x'
 [ -z "$fast" ] && shortoptions+='s'
 [ -z "$fast" ] && isfast='' || isfast=' --fast'
