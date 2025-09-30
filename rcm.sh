@@ -1708,6 +1708,9 @@ Rcm_resolve_dependencies() {
             commands_required_raw=("${_return[@]}")
             unset _return
             unset _command_required_raw
+            ArrayUnique commands_required_raw[@]
+            commands_required_raw=("${_return[@]}")
+            unset _return
         done
     done
     if [ -z "$display_waiting" ];then
