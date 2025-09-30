@@ -2866,6 +2866,7 @@ Rcm_event_dispatcher() {
     fi
 }
 Rcm_init() {
+    # global display_waiting
     local owner repository tag_name rcm_extension
     owner=ijortengab
     repository=rcm
@@ -2881,15 +2882,16 @@ Rcm_init() {
     if [ -f "$target" ];then
         backupFile move "$target"
     fi
-    if [ -n "$loud" ];then
+    if [ -z "$display_waiting" ];then
         code cp "$source" "$target"
     fi
     cp "$source" "$target"
-    if [ -n "$loud" ];then
+    if [ -z "$display_waiting" ];then
         _ 'Success install '; magenta "$rcm_extension"; _, ' version: '; yellow "$tag_name"; _.
     fi
 }
 Rcm_github_download() {
+    # global display_waiting
     local owner=$1 repository=$2 tag_name=$3 output_dir=$4
     if [ -z "$owner" ];then
         error "Operand <owner> required."; x
@@ -2906,15 +2908,23 @@ Rcm_github_download() {
     local url="https://api.github.com/repos/${owner}/${repository}/releases/tags/${tag_name}"
     local tag_name_validate=$(Rcm_wget 3600 "$url" | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
     if [ -z "$tag_name_validate" ];then
-        error "The repository does not have that release tag: ${tag_name}."; x
+        if [ -n "$display_waiting" ];then
+            printf "\r\033[K" >&2
+        fi
+        error "The repository does not have that release tag: ${tag_name}."
+        if [ -n "$display_waiting" ];then
+            kill -SIGTERM $$
+        fi
+        # Pastikan exit.
+        x
     fi
-    if [ -n "$loud" ];then
+    if [ -z "$display_waiting" ];then
         _ "Download Github repository ${owner}/${repository}."; _.
     fi
     local tempdir found_directory_extracted cache_directory url_tarball output_dir_parent
     url_tarball="https://api.github.com/repos/${owner}/${repository}/tarball/${tag_name}"
     if [ ! -d "$output_dir" ];then
-        if [ -n "$loud" ];then
+        if [ -z "$display_waiting" ];then
             _ 'Downloading version: '; yellow "$tag_name"; _.
         fi
         tempdir=$(mktemp -d)
@@ -2944,7 +2954,7 @@ Rcm_github_download() {
         cd - >/dev/null
         rm -rf "$tempdir"
     else
-        if [ -n "$loud" ];then
+        if [ -z "$display_waiting" ];then
             _ 'Using downloaded version: '; yellow "$tag_name"; _.
         fi
     fi
