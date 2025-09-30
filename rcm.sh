@@ -2891,7 +2891,9 @@ if [ -n "$resolve_dependencies" ];then
             fi
         done <<< "$_download"
     fi
+    display_waiting=
     if [ -n "$quiet" ];then
+        display_waiting=1
         chapter Resolve dependencies.
         trap x SIGTERM
         Rcm_resolve_dependencies "${command}${command_version}" &
