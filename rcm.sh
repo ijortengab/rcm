@@ -3056,6 +3056,21 @@ if [ $# -gt 0 ];then
     done
 fi
 
+# Mulai eksekusi event.
+# Export variables part 1.
+# Boolean export as 0 or 1.
+# Must not leave empty string.
+[ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
+[ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
+[ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
+export RCM_INTERACTIVE="$RCM_INTERACTIVE"
+export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
+export RCM_FAST="$fast"
+# Other variable, export as is.
+export RCM_VERBOSE="$verbose"
+export RCM_TABLE_DOWNLOADS="$table_downloads"
+export RCM_LOG="$log"
+
 # Mulai eksekusi event pre prompt.
 if [ -n "$subcommand" ];then
     Rcm_event_dispatcher 'Pre Prompt for command '$subcommand
@@ -3092,18 +3107,7 @@ shortoptions=
 [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
 argument_preview+=(--)
 
-# Boolean export as 0 or 1.
-# Must not leave empty string.
-[ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
-[ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
-[ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
-export RCM_INTERACTIVE="$RCM_INTERACTIVE"
-export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
-export RCM_FAST="$fast"
-# Other variable, export as is.
-export RCM_VERBOSE="$verbose"
-export RCM_TABLE_DOWNLOADS="$table_downloads"
-export RCM_LOG="$log"
+# Export variables part 2.
 # Special for variable RCM_PROMPT_CHAIN, append value then export it.
 if [ -z "$RCM_PROMPT_CHAIN" ];then
     RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
