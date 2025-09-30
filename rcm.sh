@@ -3069,6 +3069,11 @@ trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
 trap x SIGINT
 
+if [ -n "$subcommand" ];then
+    Rcm_event_dispatcher 'Post Prompt for command '$subcommand
+else
+    Rcm_event_dispatcher 'Post Prompt'
+fi
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
