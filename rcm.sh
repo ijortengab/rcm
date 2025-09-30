@@ -191,6 +191,7 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
+[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
@@ -2962,6 +2963,7 @@ if [ -n "$louder" ];then
     code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
     code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
     code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
+    code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
     code 'RCM_FAST="'$RCM_FAST'"'
     code 'RCM_LOG="'$RCM_LOG'"'
     code 'interactive="'$interactive'"'
@@ -3070,6 +3072,7 @@ export RCM_FAST="$fast"
 export RCM_VERBOSE="$verbose"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 export RCM_LOG="$log"
+export RCM_TABLE_DEPENDENCIES="$table_dependencies"
 
 # Mulai eksekusi event pre prompt.
 if [ -n "$subcommand" ];then
