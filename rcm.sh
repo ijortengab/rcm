@@ -2885,8 +2885,11 @@ if [ -n "$resolve_dependencies" ];then
     # Simpan informasi download.
     _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
     if [ -n "$_download" ];then
-        [ -n "$table_downloads" ] && table_downloads+=$'\n'
-        table_downloads+="$_download"
+        while IFS= read -r _line; do
+            if ! grep -q -F -- "$_line" <<< "$table_downloads";then
+                [ -n "$_line" ] && table_downloads+="$_line"$'\n'
+            fi
+        done <<< "$_download"
     fi
     if [ -n "$quiet" ];then
         chapter Resolve dependencies.
