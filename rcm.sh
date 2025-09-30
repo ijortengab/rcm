@@ -3021,6 +3021,8 @@ if [ -z "$interactive" ];then
     confirmation=
 fi
 
+command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
+
 argument_prepopulate=()
 argument_operand_prepopulate=()
 argument_after_doubledash=()
@@ -3093,8 +3095,6 @@ else
     Rcm_event_dispatcher 'Post Prompt'
 fi
 [ -f "$backup_storage" ] && rm "$backup_storage"
-
-command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 shortoptions=
 [ -n "$resolve_dependencies" ] && shortoptions+='r'
