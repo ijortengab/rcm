@@ -2978,11 +2978,8 @@ export RCM_LOG="$log"
 export RCM_TABLE_DEPENDENCIES="$table_dependencies"
 
 # Mulai eksekusi event pre prompt.
-if [ -n "$subcommand" ];then
-    Rcm_event_dispatcher 'Pre Prompt for command '$subcommand
-else
-    Rcm_event_dispatcher 'Pre Prompt'
-fi
+# Variable $subcommand baru auto populate setelah function Rcm_prompt executed.
+Rcm_event_dispatcher 'Pre Prompt'
 
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
