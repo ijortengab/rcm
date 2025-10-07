@@ -2699,7 +2699,7 @@ Rcm_get_list_values() {
     fi
 }
 Rcm_event_dispatcher() {
-    # global command argument_placeholders command_prepend tempfile
+    # global command argument_placeholders RCM_ENVIRONMENT_VARIABLES tempfile
     local key value
     local label="$1"; shift
     local to_execute command_raw _command_arguments _command _arguments
@@ -2742,8 +2742,8 @@ Rcm_event_dispatcher() {
                 [ -z "$value" ] && value=-
                 code export "$key"="$value"
                 export "$key"="$value"
-                [ -n "$command_prepend" ] && command_prepend+=" "
-                command_prepend+="${key}=${value}"
+                [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=" "
+                RCM_ENVIRONMENT_VARIABLES+="${key}=${value}"
             done < "$tempfile"
             if [ -s "$tempfile" ];then
                 ____
@@ -3018,9 +3018,10 @@ if [ -z "$RCM_PROMPT_CHAIN" ];then
     RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
 fi
 for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
-[ -n "$command_prepend" ] && command_prepend+=' '
-RCM_PROMPT_CHAIN="${command_prepend}${RCM_PROMPT_CHAIN}"
+[ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
+RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
 export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
+export RCM_ENVIRONMENT_VARIABLES="$RCM_ENVIRONMENT_VARIABLES"
 [ -n "$tempfile" ] && rm "$tempfile"
 
 chapter Command has been built.
@@ -3080,7 +3081,7 @@ else
 fi
 # Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
 # Selebihnya dioper sebagai export VARIABLES.
-words_array=(${command_prepend} ${command} ${isfast} ${isverbose} $@)
+words_array=(${RCM_ENVIRONMENT_VARIABLES} ${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
