@@ -2681,8 +2681,7 @@ Rcm_get_list_values() {
             is_required=
             __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
         elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
-            is_required=
-            __; _, No value available,' '; _, pass; _, .; _.
+            __; _, No value available,' '; red Process Terminated; _, .; x
         else
             if [ -n "$default_value" ];then
                 __; _, Leave blank will use default value.; _.
