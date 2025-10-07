@@ -181,38 +181,38 @@ Options for command add:
         Command version.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
    --temporary ^
         Set as temporary additional.
    --table-temporary
         File table to temporary store plugin information.
         Value available from command: rcm-plugin(helper temporary-suggestion [--temporary] [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
 
 Options for command list:
    --interface *
         Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]"
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
    --table-temporary
         File table to temporary store plugin information.
         Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
 
 Options for command execute:
    --interface *
         Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
    --table
         File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.[--interface]"
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^].
+        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
    --table-temporary
         File table to temporary store plugin information.
         Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TEMPORARY.
+        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
    --name *
         Set the plugin name.
         Value available from command: rcm-plugin(helper list [--interface] [--table] [--table-temporary]), or others.
@@ -274,10 +274,10 @@ command-add() {
     [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
     parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
     parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
@@ -286,12 +286,12 @@ command-add() {
     [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
+        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
     fi
     if [ -n "$temporary" ];then
         if [ -z "$table_temporary" ];then
             mkdir -p "${HOME}/.cache/rcm"
-            table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugins.${interface}.XXXXXX)
+            table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugin.table.${interface}.XXXXXX)
         fi
     fi
     [ -n "$louder" ] && code 'table="'$table'"'
@@ -320,9 +320,9 @@ command-add() {
     ____
 
     if [ -n "$temporary" ];then
-        echo "RCM_PLUGIN_${interface_uppercase}_TEMPORARY=${table_temporary}"
+        echo "RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY=${table_temporary}"
     else
-        echo "RCM_PLUGIN_${interface_uppercase}=${table}"
+        echo "RCM_PLUGIN_${interface_uppercase}_TABLE=${table}"
     fi
 }
 command-list() {
@@ -335,17 +335,17 @@ command-list() {
 
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
     parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
     parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
     [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
+        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
     fi
     local contents=
     if [ -f "$table_temporary" ] ;then
@@ -384,10 +384,10 @@ command-execute() {
     [ -n "$louder" ] && code 'output_file="'$output_file'"'
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
     parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TEMPORARY"
+    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
     parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table_temporary="${!parameter_table_temporary}"
     [ -z "$table" ] && table="$parameter_table"
@@ -396,7 +396,7 @@ command-execute() {
     [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
+        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
     fi
     [ -n "$louder" ] && code 'table="'$table'"'
     [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
@@ -444,10 +444,10 @@ command-execute() {
     [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
     export RCM_FAST="$RCM_FAST"
     if [ -z "$output_file" ];then
-        RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
+        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
             ; [ ! $? -eq 0 ] && x
     else
-        RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
+        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
             > "$output_file" \
             ; [ ! $? -eq 0 ] && { rm "$output_file"; x; }
     fi
@@ -468,17 +468,17 @@ command-init() {
     local interface_uppercase=${interface^^}
 
     # If not set in argument, try load from environment.
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}"
+    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
     parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
     parameter_table="${!parameter_table}"
     [ -z "$table" ] && table="$parameter_table"
     # Use default value.
     if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.${interface}"
+        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
     fi
     [ -n "$louder" ] && ____
 
-    echo "RCM_PLUGIN_${interface_uppercase}=${table}"
+    echo "RCM_PLUGIN_${interface_uppercase}_TABLE=${table}"
 }
 command-helper() {
     local which=$1; shift
@@ -497,7 +497,7 @@ command-helper() {
 helper-category-available() {
     if [ -d "${HOME}/.config/rcm" ];then
         cd "${HOME}/.config/rcm"
-        ls -1 rcm.plugins.* | grep -o -P 'rcm\.plugins\.\K(\S+)'
+        ls -1 rcm.plugin.table.* | grep -o -P 'rcm\.plugins\.\K(\S+)'
     fi
 }
 helper-temporary-suggestion() {
@@ -506,7 +506,7 @@ helper-temporary-suggestion() {
         exit 1
     fi
     local category=$2
-    echo "\$HOME/.cache/rcm/rcm.plugin.$category.${RANDOM}${RANDOM}"
+    echo "\$HOME/.cache/rcm/rcm.plugin.table.$category.${RANDOM}${RANDOM}"
 }
 helper-list() {
     local category=$1
