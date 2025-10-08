@@ -172,7 +172,7 @@ Available commands: add, list, execute.
 
 Options for command add:
    --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
+        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
    --name *
         Set the plugin name.
    --command *
@@ -192,7 +192,7 @@ Options for command add:
 
 Options for command list:
    --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
+        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
    --table
         File table to store plugin information.
         Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
@@ -204,7 +204,7 @@ Options for command list:
 
 Options for command execute:
    --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper category-available), or other.
+        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
    --table
         File table to store plugin information.
         Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
@@ -494,10 +494,10 @@ command-helper() {
         fi
     fi
 }
-helper-category-available() {
+helper-interface-available() {
     if [ -d "${HOME}/.config/rcm" ];then
         cd "${HOME}/.config/rcm"
-        ls -1 rcm.plugin.table.* | grep -o -P 'rcm\.plugins\.\K(\S+)'
+        ls -1 rcm.plugin.table.* | grep -o -P 'rcm\.plugin\.table\.\K(\S+)'
     fi
 }
 helper-temporary-suggestion() {
