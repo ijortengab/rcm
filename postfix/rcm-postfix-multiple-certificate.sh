@@ -199,7 +199,7 @@ verifyKey() {
             if [ -n "$value" ];then
                 IFS=',' read -ra _array <<< "$value"
                 array=(); for each in "${_array[@]}"; do array+=($each); done # Trim whitespace.
-                references=(/etc/postfix/smtpd.key /etc/postfix/smtpd.cert)
+                references=("${POSTFIX_CONFIG_DIR}/smtpd.key" "${POSTFIX_CONFIG_DIR}/smtpd.cert")
                 ArrayDiff references[@] array[@]
                 if [ "${#_return[@]}" -eq 0 ];then
                     return 0
