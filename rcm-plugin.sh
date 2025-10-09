@@ -419,35 +419,26 @@ command-execute() {
         command=$(echo "$contents" | grep ^"$name" | cut -d' ' -f2 | tail -1)
     fi
     if [ -z "$command" ];then
-        error "The command of plugin \`$name\` is not defined."; x
+        error "The Command of \`plugin::${interface}('${name}')\` is not defined in table."; x
     fi
-    method_command=
-    local _interface_info_block=`${command} --help 2>/dev/null | sed -E -n '/^Methods?\s+'"$interface"'\s+interface[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
-    if [ -n "$_interface_info_block" ];then
-        local _interface_info_execute=`echo "$_interface_info_block" | grep -E "^$method\s*:\s+" | tail -1 | sed -E "s/^$method\s*:\s+(.*)/\1/"`
-        method_command=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-        method_arguments=$(echo "$_interface_info_execute" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+    if ! command -v "$command" > /dev/null;then
+        error Command not found: '`'"$command"'`'.; x
     fi
-    if [ -z "$method_command" ];then
-        error "The method \`$method\` of interface \`$interface\` in command \`$command\` is not defined."; x
-    fi
-    if ! command -v "$method_command" > /dev/null;then
-        error Command not found: '`'"$method_command"'`'.; x
-    fi
-    [ -n "$method_arguments" ] && method_arguments=' '"$method_arguments"
+
+    # red '"$command"' "$command"; _.
     [ -n "$louder" ] && ____
 
-    chapter Execute the plugin method.
-    code ${method_command}${method_arguments}
+    chapter Execute "plugin::${interface}('${name}')->${method}()"
+    code "${command} plugin ${interface} ${name} ${method}"
     ____
 
     [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
     export RCM_FAST="$RCM_FAST"
     if [ -z "$output_file" ];then
-        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
+        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${command} plugin ${interface} ${name} ${method} \
             ; [ ! $? -eq 0 ] && x
     else
-        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${method_command}${method_arguments} \
+        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${command} plugin ${interface} ${name} ${method} \
             > "$output_file" \
             ; [ ! $? -eq 0 ] && { rm "$output_file"; x; }
     fi
