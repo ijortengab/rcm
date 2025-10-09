@@ -1586,7 +1586,6 @@ Rcm_resolve_dependencies() {
                         fi
                     fi
                 else
-                    # e 1513 hai; _.
                     commands_required_raw+=("$_command_required_raw")
                 fi
             done <<< "$_dependency"
@@ -1720,9 +1719,10 @@ Rcm_resolve_dependencies() {
     fi
 }
 wordWrapCommand() {
-    # global words_array
+    # global words_array RCM_INDENT
     local inline_description="$1"
     local current_line first_line
+    local each
     declare -i max
     declare -i min
 
@@ -2600,6 +2600,28 @@ Rcm_prompt() {
         done
         ____
     fi
+}
+Rcm_prompt_build_command() {
+    local _RCM_PROMPT_CHAIN
+    wordWrapDescription 'Use command below to return to the last dialog.' 0
+    local shortoptions
+    [ -n "$resolve_dependencies" ] && shortoptions+='r'
+    [ -z "$interactive" ] && shortoptions+='x'
+    [ -z "$fast" ] && shortoptions+='s'
+    if [ -n "$verbose" ];then
+        for ((i = 0 ; i < "$verbose" ; i++)); do
+            shortoptions+='v'
+        done
+    fi
+    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
+    if [ -z "$RCM_PROMPT_CHAIN" ];then
+        _RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
+    else
+        _RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
+    fi
+    for each in "${argument_preview[@]}"; do _RCM_PROMPT_CHAIN+=" ${each}"; done
+    words_array=($_RCM_PROMPT_CHAIN)
+    wordWrapCommand
 }
 Rcm_prompt_sigint() {
     local shortoptions
