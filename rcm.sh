@@ -284,6 +284,10 @@ GET COMMAND.
 Environment Variables:
    BINARY_DIRECTORY
         Default to $BINARY_DIRECTORY
+
+Download:
+   [rcm-plugin](https://github.com/ijortengab/rcm/raw/master/rcm-plugin.sh)
+
 EOF
 }
 
@@ -2624,26 +2628,11 @@ Rcm_prompt_build_command() {
     wordWrapCommand
 }
 Rcm_prompt_sigint() {
-    local shortoptions
-    [ -n "$resolve_dependencies" ] && shortoptions+='r'
-    [ -z "$interactive" ] && shortoptions+='x'
-    [ -z "$fast" ] && shortoptions+='s'
-    if [ -n "$verbose" ];then
-        for ((i = 0 ; i < "$verbose" ; i++)); do
-            shortoptions+='v'
-        done
-    fi
-    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
     _.;
     _.;
-    error Interrupt by User.; _.
-    wordWrapDescription 'Use command below to return to the last dialog.' 0
-    if [ -z "$RCM_PROMPT_CHAIN" ];then
-        RCM_PROMPT_CHAIN="rcm${shortoptions} ${command_raw} --"
-    fi
-    for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
-    words_array=($RCM_PROMPT_CHAIN)
-    wordWrapCommand
+    error Interrupt by User.
+    _.;
+    Rcm_prompt_build_command
     exit 0
 }
 Rcm_get_list_values() {
@@ -2727,6 +2716,8 @@ Rcm_event_dispatcher() {
     local line  find replace
     to_execute=`${command} --help 2>/dev/null | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$to_execute" ];then
+        Rcm_prompt_build_command
+        _.;
         until [[ -z "$to_execute" ]];do
             command_raw=`sed -n 1p <<< "$to_execute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             to_execute=`sed -n '2,$p' <<< "$to_execute"`
