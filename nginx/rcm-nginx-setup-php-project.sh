@@ -68,7 +68,7 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.1'
+    echo '0.18.0-alpha.2'
 }
 printHelp() {
     title RCM Nginx Setup

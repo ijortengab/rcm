@@ -51,7 +51,7 @@ DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovec
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.1'
+    echo '0.18.0-alpha.2'
 }
 printHelp() {
     title RCM Dovecot Multiple Certificate
