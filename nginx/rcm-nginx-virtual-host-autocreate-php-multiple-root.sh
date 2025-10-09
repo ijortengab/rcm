@@ -34,12 +34,12 @@ while [[ $# -gt 0 ]]; do
         --nginx-config-file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_file="$2"; shift; fi; shift ;;
         --nginx-config-root=*) nginx_config_root="${1#*=}"; shift ;;
         --nginx-config-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_root="$2"; shift; fi; shift ;;
-        --nginx-ssl-certificate-key=*) nginx_ssl_certificate_key="${1#*=}"; shift ;;
-        --nginx-ssl-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate_key="$2"; shift; fi; shift ;;
-        --nginx-ssl-certificate=*) nginx_ssl_certificate="${1#*=}"; shift ;;
-        --nginx-ssl-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate="$2"; shift; fi; shift ;;
         --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
         --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
+        --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+        --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+        --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+        --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
         --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
         --with-nginx-reload) nginx_reload=1; shift ;;
@@ -93,6 +93,12 @@ Options:
    --without-nginx-reload ^
         Prevent auto reload nginx after add/edit file config.
         Default value is --with-nginx-reload.
+   --tls-certificate
+        Directive tls_certificate in nginx config.
+        Populate value from variable TLS_CERTIFICATE.
+   --tls-certificate-key
+        Directive tls_certificate_key in nginx config.
+        Populate value from variable TLS_CERTIFICATE_KEY.
 
 Global Options.
    --fast
@@ -872,22 +878,22 @@ code 'slave_dirname="'$slave_dirname'"'
 code 'fastcgi_pass="'$fastcgi_pass'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
-code 'nginx_ssl_certificate="'$nginx_ssl_certificate'"'
-code 'nginx_ssl_certificate_key="'$nginx_ssl_certificate_key'"'
+code 'tls_certificate="'$tls_certificate'"'
+code 'tls_certificate_key="'$tls_certificate_key'"'
 # If not set in argument, try load from environment.
-[ -z "$nginx_ssl_certificate" ] && nginx_ssl_certificate="$NGINX_SSL_CERTIFICATE"
-[ -z "$nginx_ssl_certificate_key" ] && nginx_ssl_certificate_key="$NGINX_SSL_CERTIFICATE_KEY"
-code 'nginx_ssl_certificate="'$nginx_ssl_certificate'"'
-code 'nginx_ssl_certificate_key="'$nginx_ssl_certificate_key'"'
+[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+code 'tls_certificate="'$tls_certificate'"'
+code 'tls_certificate_key="'$tls_certificate_key'"'
 rcm_nginx_reload=
 tempfile=
 validate_existing_certificate=
 if [[ "$url_scheme" == https ]];then
-    if [ -z "$nginx_ssl_certificate" ];then
-        error "Argument --nginx-ssl-certificate required."; x
+    if [ -z "$tls_certificate" ];then
+        error "Argument --tls-certificate required."; x
     fi
-    if [ -z "$nginx_ssl_certificate_key" ];then
-        error "Argument --nginx-ssl-certificate-key required."; x
+    if [ -z "$tls_certificate_key" ];then
+        error "Argument --tls-certificate-key required."; x
     fi
 fi
 ____
@@ -901,8 +907,8 @@ ____
 
 chapter Populate variable.
 if [[ "$url_scheme" == https ]];then
-    ssl_certificate="$nginx_ssl_certificate"
-    ssl_certificate_key="$nginx_ssl_certificate_key"
+    ssl_certificate="$tls_certificate"
+    ssl_certificate_key="$tls_certificate_key"
 fi
 code 'ssl_certificate="'$ssl_certificate'"'
 code 'ssl_certificate_key="'$ssl_certificate_key'"'
@@ -1217,16 +1223,16 @@ exit 0
 # --web-root
 # --fastcgi-pass
 # --tempfile-trigger-reload
-# --nginx-ssl-certificate
-# --nginx-ssl-certificate-key
+# --tls-certificate
+# --tls-certificate-key
 # )
 # MULTIVALUE=(
 # )
 # FLAG_VALUE=(
 # )
 # CSV=(
-    # 'long:--with-nginx-reload,parameter:nginx_reload'
-    # 'long:--without-nginx-reload,parameter:nginx_reload,flag_option:reverse'
+#     'long:--with-nginx-reload,parameter:nginx_reload'
+#     'long:--without-nginx-reload,parameter:nginx_reload,flag_option:reverse'
 # )
 # EOF
 # clear
