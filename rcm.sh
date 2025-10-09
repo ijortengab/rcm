@@ -1561,18 +1561,18 @@ Rcm_resolve_dependencies() {
         if ! grep -q -F -- "${command_required} ${command_required_version}" <<< "$table_dependencies";then
             table_dependencies+="${command_required} ${command_required_version}"$'\n'
         fi
-        # blue 1489 table_dependencies "$table_dependencies"; _.
         _help=$("$command_required" --help 2>/dev/null)
         _dependency=$(echo "$_help" | sed -n '/^Dependency:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep -E '(^rcm|^rcm-[^:]+|[^:]+\.sh)(:[^:]+)*$')
         if [ -n "$_dependency" ];then
             while IFS= read -r _command_required_raw; do
-                # red 1494 _command_required_raw "$_command_required_raw"; _.
                 if grep -q -F : <<< "$_command_required_raw";then
                     _command_required=$(cut -d':' -f1 <<< "$_command_required_raw")
                     _command_required_version=$(cut -d':' -f2 <<< "$_command_required_raw")
                 else
                     _command_required="$_command_required_raw"
-                    _command_required="$_command_required_raw"
+                    if Rcm_is_internal "$_command_required_raw";then
+                        _command_required_version="$rcm_version"
+                    fi
                 fi
                 _found=$(grep -F "$_command_required"' ' <<< "$table_dependencies")
                 if [ -n "$_found" ];then
