@@ -164,6 +164,52 @@ RCM Config:
 Mapping Operand:
    --extension
    --extension-version
+
+Download:
+   [rcm-composer-autoinstaller](https://github.com/ijortengab/rcm/raw/master/composer/rcm-composer-autoinstaller.sh)
+   [rcm-cron-setup-wsl-autorun-crond](https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-autorun-crond.sh)
+   [rcm-cron-setup-wsl-autorun-sshd](https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-autorun-sshd.sh)
+   [rcm-cron-setup-wsl-port-forwarding](https://github.com/ijortengab/rcm/raw/master/cron/rcm-cron-setup-wsl-port-forwarding.sh)
+   [rcm-debian-11-setup-basic](https://github.com/ijortengab/rcm/raw/master/debian/rcm-debian-11-setup-basic.sh)
+   [rcm-debian-12-setup-basic](https://github.com/ijortengab/rcm/raw/master/debian/rcm-debian-12-setup-basic.sh)
+   [rcm-dig-apt](https://github.com/ijortengab/rcm/raw/master/dig/rcm-dig-apt.sh)
+   [rcm-dig-has-address](https://github.com/ijortengab/rcm/raw/master/dig/rcm-dig-has-address.sh)
+   [rcm-dig-is-name-exists](https://github.com/ijortengab/rcm/raw/master/dig/rcm-dig-is-name-exists.sh)
+   [rcm-dig-is-record-exists](https://github.com/ijortengab/rcm/raw/master/dig/rcm-dig-is-record-exists.sh)
+   [rcm-dig-watch-domain-exists](https://github.com/ijortengab/rcm/raw/master/dig/rcm-dig-watch-domain-exists.sh)
+   [rcm-dovecot-multiple-certificate.sh)](https://github.com/ijortengab/rcm/raw/master/dovecot/rcm-dovecot-multiple-certificate.sh)
+   [rcm-mariadb-apt](https://github.com/ijortengab/rcm/raw/master/mariadb/rcm-mariadb-apt.sh)
+   [rcm-mariadb-assign-grant-all](https://github.com/ijortengab/rcm/raw/master/mariadb/rcm-mariadb-assign-grant-all.sh)
+   [rcm-mariadb-database-autocreate](https://github.com/ijortengab/rcm/raw/master/mariadb/rcm-mariadb-database-autocreate.sh)
+   [rcm-mariadb-setup-project-database](https://github.com/ijortengab/rcm/raw/master/mariadb/rcm-mariadb-setup-project-database.sh)
+   [rcm-mariadb-user-autocreate](https://github.com/ijortengab/rcm/raw/master/mariadb/rcm-mariadb-user-autocreate.sh)
+   [rcm-nginx-apt](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-apt.sh)
+   [rcm-nginx-reload](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-reload.sh)
+   [rcm-nginx-setup-front-controller-php](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-setup-front-controller-php.sh)
+   [rcm-nginx-setup-hello-world-static](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-setup-hello-world-static.sh)
+   [rcm-nginx-setup-php-project](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-setup-php-project.sh)
+   [rcm-nginx-setup-static](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-setup-static.sh)
+   [rcm-nginx-variables-export](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-variables-export.sh)
+   [rcm-nginx-virtual-host-autocreate-php-multiple-root](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-virtual-host-autocreate-php-multiple-root.sh)
+   [rcm-nginx-virtual-host-autocreate-php](https://github.com/ijortengab/rcm/raw/master/nginx/rcm-nginx-virtual-host-autocreate-php.sh)
+   [rcm-php-apt](https://github.com/ijortengab/rcm/raw/master/php/rcm-php-apt.sh)
+   [rcm-php-fpm-setup-project-config](https://github.com/ijortengab/rcm/raw/master/php/rcm-php-fpm-setup-project-config.sh)
+   [rcm-php-setup-adjust-cli-version](https://github.com/ijortengab/rcm/raw/master/php/rcm-php-setup-adjust-cli-version.sh)
+   [rcm-phpmyadmin-autoinstaller-nginx](https://github.com/ijortengab/rcm/raw/master/phpmyadmin/rcm-phpmyadmin-autoinstaller-nginx.sh)
+   [rcm-postfix-apt](https://github.com/ijortengab/rcm/raw/master/postfix/rcm-postfix-apt.sh)
+   [rcm-postfix-multiple-certificate.sh)](https://github.com/ijortengab/rcm/raw/master/postfix/rcm-postfix-multiple-certificate.sh)
+   [rcm-install](https://github.com/ijortengab/rcm/raw/master/rcm-install.sh)
+   [rcm-paragraph](https://github.com/ijortengab/rcm/raw/master/rcm-paragraph.sh)
+   [rcm-plugin](https://github.com/ijortengab/rcm/raw/master/rcm-plugin.sh)
+   [rcm-update](https://github.com/ijortengab/rcm/raw/master/rcm-update.sh)
+   [rcm-get](https://github.com/ijortengab/rcm/raw/master/rcm-get.sh)
+   [rcm-roundcube-autoinstaller-nginx](https://github.com/ijortengab/rcm/raw/master/roundcube/rcm-roundcube-autoinstaller-nginx.sh)
+   [rcm-ssh-setup-open-ssh-tunnel](https://github.com/ijortengab/rcm/raw/master/ssh/rcm-ssh-setup-open-ssh-tunnel.sh)
+   [rcm-ssh-setup-sshd-listen-port](https://github.com/ijortengab/rcm/raw/master/ssh/rcm-ssh-setup-sshd-listen-port.sh)
+   [rcm-system-ram-swap-4gb](https://github.com/ijortengab/rcm/raw/master/system/rcm-system-ram-swap-4gb.sh)
+   [rcm-ubuntu-22.04-setup-basic](https://github.com/ijortengab/rcm/raw/master/ubuntu/rcm-ubuntu-22.04-setup-basic.sh)
+   [rcm-ubuntu-24.04-setup-basic.sh)(https://github.com/ijortengab/rcm/raw/master/ubuntu/rcm-ubuntu-24.04-setup-basic.sh)
+   [rcm-wsl-setup-lemp-stack](https://github.com/ijortengab/rcm/raw/master/wsl/rcm-wsl-setup-lemp-stack.sh)
 EOF
 }
 
@@ -611,17 +657,30 @@ if [ "$boolean" == 11 ];then
 fi
 code 'source="'$source'"'
 if [ -n "$source" ];then
-    if [ "$source" == rcm ];then
-        _help=$(rcm --help 2>/dev/null)
+    _url=
+    if [ "$source" == install ];then
+        _help=`printHelp 2>/dev/null`
+        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+        _url=$(grep -F '['$rcm_extension']' <<< "$_download" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+        if [ -n "$_url" ];then
+            # Ini berarti rcm extension internal. Maka gunakan version yang sama dengan rcm.
+            extension_version=`printVersion`
+        fi
     else
         _help=$("rcm-${source}" --help 2>/dev/null)
+        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
     fi
-    _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+    # Insert table. Rcm_resolve_dependencies_insert_table().
     if [ -n "$_download" ];then
-        [ -n "$table_downloads" ] && table_downloads+=$'\n'
-        table_downloads+="$_download"
+        while IFS= read -r _line; do
+            if ! grep -q -F -- "$_line" <<< "$table_downloads";then
+                [ -n "$_line" ] && table_downloads+="$_line"$'\n'
+            fi
+        done <<< "$_download"
     fi
-    _url=$(grep -F '['$rcm_extension']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+    if [ -z "$_url" ];then
+        _url=$(grep -F '['$rcm_extension']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
+    fi
     if [ -n "$_url" ];then
         Rcm_parse_url "$_url"
         if [[ "$PHP_URL_HOST" == github.com ]];then
@@ -635,6 +694,7 @@ if [ -n "$source" ];then
         fi
     fi
 fi
+code 'extension_version="'$extension_version'"'
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
