@@ -42,6 +42,8 @@ while [[ $# -gt 0 ]]; do
         --fast) fast=1; shift ;;
         --quiet|-q) quiet=1; shift ;;
         --rollback) rollback=1; shift ;;
+        --source=*) source="${1#*=}"; shift ;;
+        --source) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then source="$2"; shift; fi; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --)
             while [[ $# -gt 0 ]]; do
@@ -128,6 +130,10 @@ Options:
         The name of extenstion to install.
     --extension-version
         The version of extenstion. Default value is \`latest\`.
+
+Other options (For expert only):
+    --source
+        The extension as a source to read the value of URL.
 
 Global Options:
    --version
@@ -576,7 +582,10 @@ if [ -z "$extension_version" ];then
     extension_version=latest
 fi
 code 'extension_version="'$extension_version'"'
-source="$extension"
+code 'source="'$source'"'
+if [ -z "$source" ];then
+    source="$extension"
+fi
 code 'source="'$source'"'
 code 'rollback="'$rollback'"'
 if [ -n "$source" ];then
@@ -604,7 +613,6 @@ if [ -z "$url" ];then
     error "URL Information is not found in the command rcm-${source} with argument --help."; x
 fi
 code 'url="'$url'"'
-
 if [ -z "$path" ];then
     path="rcm/rcm-${extension}.sh"
 fi
@@ -775,7 +783,7 @@ exit 0
 # --with-end-options-double-dash \
 # --no-error-require-arguments << EOF | clip
 # INCREMENT=(
-    # '--verbose|-v'
+#     '--verbose|-v'
 # )
 # FLAG=(
 # --fast
@@ -787,6 +795,7 @@ exit 0
 # VALUE=(
 # --extension
 # --extension-version
+# --source
 # )
 # MULTIVALUE=(
 # )
