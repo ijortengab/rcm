@@ -222,8 +222,6 @@ Usage: rcm [options]
 
 Example:
         rcm history --delete-all
-        rcm install drupal --url https://github.com/ijortengab/drupal-autoinstaller --path rcm/rcm-drupal.sh
-        rcm install ispconfig --url https://github.com/ijortengab/ispconfig-autoinstaller --path rcm/rcm-ispconfig.sh
         rcm list --raw
         rcm recent
 
@@ -284,10 +282,6 @@ GET COMMAND.
 Environment Variables:
    BINARY_DIRECTORY
         Default to $BINARY_DIRECTORY
-
-Download:
-   [rcm-plugin](https://github.com/ijortengab/rcm/raw/master/rcm-plugin.sh)
-
 EOF
 }
 
@@ -1058,23 +1052,6 @@ ubuntu-24.04-setup-basic
 wsl-setup-lemp-stack
 RCM_LIST_INTERNAL
 }
-Rcm_is_internal() {
-    local command="$1"
-    if [[ "$command" =~ ^rcm- ]];then
-        case "$command" in
-            rcm-plugin) return 0 ;;
-            rcm-paragraph) return 0 ;;
-            rcm-install) return 0 ;;
-            rcm-update) return 0 ;;
-        esac
-        command_list=$(Rcm_list_internal)
-        command_without_prefix=$(sed s,^rcm-,, <<< "$command")
-        if grep -q ^"$command_without_prefix"$ <<< "$command_list";then
-            return 0
-        fi
-    fi
-    return 1
-}
 Rcm_parse_url() {
     # Reset
     PHP_URL_SCHEME=
@@ -1416,29 +1393,15 @@ Rcm_resolve_dependencies() {
             rm "$BINARY_DIRECTORY/$command_required"
         fi
         if [ ! -f "$BINARY_DIRECTORY/$command_required" ];then
-            if Rcm_is_internal "$command_required";then
-                github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-                _download="[${command_required}](https://github.com/ijortengab/rcm/raw/master/${github_file_path})"
-                [ -n "$table_downloads" ] && table_downloads+=$'\n'
-                table_downloads+="$_download"
+            if [[ "$command_required" =~ ^rcm- ]];then
                 [ -z "$fast" ] && isfast='' || isfast=' --fast'
                 [ -z "$quiet" ] && isquiet='' || isquiet=' --quiet'
                 export RCM_TABLE_DOWNLOADS="$table_downloads"
                 extension="${command_required:4}"
                 if [ -n "$display_waiting" ];then
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=rcm 2>/dev/null
+                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
                 else
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=rcm
-                fi
-            elif [[ "$command_required" =~ ^rcm- ]];then
-                [ -z "$fast" ] && isfast='' || isfast=' --fast'
-                [ -z "$quiet" ] && isquiet='' || isquiet=' --quiet'
-                export RCM_TABLE_DOWNLOADS="$table_downloads"
-                extension="${command_required:4}"
-                if [ -n "$display_waiting" ];then
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=rcm 2>/dev/null
-                else
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=rcm
+                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install
                 fi
             elif [[ "$command_required" =~ \.sh$ ]];then
                 url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
@@ -1479,23 +1442,7 @@ Rcm_resolve_dependencies() {
     }
     Rcm_resolve_dependencies_update() {
         local is_updated=
-        if Rcm_is_internal "$command_required";then
-            github_file_path=$(cut -d- -f2 <<< "$command_required")/"$command_required".sh
-            _download="[${command_required}](https://github.com/ijortengab/rcm/raw/master/${github_file_path})"
-            [ -n "$table_downloads" ] && table_downloads+=$'\n'
-            table_downloads+="$_download"
-            [ -z "$fast" ] && isfast='' || isfast=' --fast'
-            [ -z "$quiet" ] && isquiet='' || isquiet=' --quiet'
-            export RCM_TABLE_DOWNLOADS="$table_downloads"
-            extension="${command_required:4}"
-            if [ -n "$display_waiting" ];then
-                INDENT+="${RCM_INDENT}" rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=rcm 2>/dev/null
-            else
-                INDENT+="${RCM_INDENT}" rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=rcm
-            fi
-            [ ! $? -eq 0 ] && x
-            is_updated=1
-        elif [[ "$command_required" == rcm ]];then
+        if [[ "$command_required" == rcm ]];then
             owner=ijortengab
             repository=rcm
             tag_name="$command_required_version"
@@ -1542,7 +1489,7 @@ Rcm_resolve_dependencies() {
             [ -z "$fast" ] && isfast='' || isfast=' --fast'
             export RCM_TABLE_DOWNLOADS="$table_downloads"
             extension="${command_required:4}"
-            INDENT+="${RCM_INDENT}" rcm-update $isfast "$extension" "$command_required_version" --source=rcm
+            INDENT+="${RCM_INDENT}" rcm-update $isfast "$extension" "$command_required_version" --source=install
             [ ! $? -eq 0 ] && x
             is_updated=1
         fi
@@ -1574,9 +1521,7 @@ Rcm_resolve_dependencies() {
                     _command_required_version=$(cut -d':' -f2 <<< "$_command_required_raw")
                 else
                     _command_required="$_command_required_raw"
-                    if Rcm_is_internal "$_command_required_raw";then
-                        _command_required_version="$rcm_version"
-                    fi
+                    _command_required_version=
                 fi
                 _found=$(grep -F "$_command_required"' ' <<< "$table_dependencies")
                 if [ -n "$_found" ];then
@@ -1605,16 +1550,14 @@ Rcm_resolve_dependencies() {
     }
     Rcm_resolve_dependencies_execute() {
         # global command_required_raw
-        local command_required command_required_version=
+        local command_required command_required_version
         local command_required_exists command_existing_version command_required_exists_updated
         if grep -q -F : <<< "$command_required_raw";then
             command_required=$(cut -d: -f1 <<< "$command_required_raw")
             command_required_version=$(cut -d: -f2 <<< "$command_required_raw")
         else
             command_required="$command_required_raw"
-            if Rcm_is_internal "$command_required_raw";then
-                command_required_version="$rcm_version"
-            fi
+            command_required_version=
         fi
         case "$command_required" in
             rcm-install)
@@ -1659,6 +1602,9 @@ Rcm_resolve_dependencies() {
                 else
                     if ! command -v rcm-install > /dev/null;then
                         Rcm_init rcm-install
+                    fi
+                    if [ -z "$command_required_version" ];then
+                        command_required_version=`printVersion`
                     fi
                     command_required_exists=
                 fi
