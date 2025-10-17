@@ -2571,16 +2571,11 @@ Rcm_get_list_values() {
             _; _.
             __; _, "Available value: "; yellow "$value";  _, '.'; _.
             if [ -n "$interactive" ];then
-                if [ -n "$is_required" ];then
-                    _; _.
-                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
-                else
-                    _; _.
-                    wordWrapDescription 'The one and only available value is selected.'
-                    userInputBooleanDefaultYes
-                    if [ -z "$boolean" ];then
-                        value=' '
-                    fi
+                _; _.
+                wordWrapDescription 'The one and only available value is selected.'
+                userInputBooleanDefaultYes
+                if [ -z "$boolean" ];then
+                    value=' '
                 fi
             else
                 _; _.
