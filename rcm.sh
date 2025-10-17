@@ -52,14 +52,13 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         --[^-]*) shift ;;
-        history|list|recent)
+        *)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
                 esac
             done
             ;;
-        *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
@@ -95,19 +94,19 @@ while [[ $# -gt 0 ]]; do
                 esac
             done
             ;;
-        history|list|recent)
+        *)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
                 esac
             done
             ;;
-        *) _new_arguments+=("$1"); shift ;;
     esac
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 unset _n
+
 
 if [ -n "$1" ];then
     command=
@@ -3045,7 +3044,7 @@ _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
 # --no-hash-bang \
 # --no-original-arguments \
 # --no-error-invalid-options \
-# --with-end-options-specific-operand \
+# --with-end-options-first-operand \
 # --with-end-options-double-dash \
 # --no-error-require-arguments << EOF | clip
 # INCREMENT=(
@@ -3072,9 +3071,6 @@ _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
 # )
 # OPERAND=(
-# history
-# list
-# recent
 # )
 # EOF
 # clear
