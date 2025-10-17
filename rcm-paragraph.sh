@@ -694,7 +694,7 @@ if [ -n "$command" ];then
         command-${command} "$@"
         exit 0
     else
-        error Command unknown: '`'"$command"'`'.; x
+        error The function of command '`'"$command"'`' has not yet defined.; x
     fi
 fi
 
