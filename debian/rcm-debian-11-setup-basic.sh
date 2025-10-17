@@ -46,7 +46,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.2'
+    echo '0.18.0-alpha.3'
 }
 printHelp() {
     title RCM Debian 11 Setup Server

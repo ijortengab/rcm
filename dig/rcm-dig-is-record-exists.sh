@@ -69,7 +69,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.2'
+    echo '0.18.0-alpha.3'
 }
 printHelp() {
     title RCM Dig Is Record Exists
