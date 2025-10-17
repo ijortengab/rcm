@@ -107,6 +107,7 @@ case "$command" in
             case "$1" in
                 --help) help=1; shift ;;
                 --fast) fast=1; shift ;;
+                --ignore-fail-on-empty-name) ignore_fail_on_empty_name=1; shift ;;
                 --interface=*) interface="${1#*=}"; shift ;;
                 --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
                 --method=*) method="${1#*=}"; shift ;;
@@ -379,7 +380,11 @@ command-execute() {
     if [[ "$interface" =~ [^a-z_] ]];then
         error "Argument --interface is not valid."; x
     fi
+    [ "$name" == - ] && name=
     if [ -z "$name" ];then
+        if [ -n "$ignore_fail_on_empty_name" ];then
+            return 0
+        fi
         error "Argument --name required."; x
     fi
     [ -n "$louder" ] && code 'name="'$name'"'
@@ -629,6 +634,7 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # FLAG=(
 # --fast
 # --help
+# --ignore-fail-on-empty-name
 # )
 # VALUE=(
 # --interface
