@@ -252,6 +252,9 @@ command-add() {
         error "Argument --interface required."; x
     fi
     [ -n "$louder" ] && code 'interface="'$interface'"'
+    # Interface, Name, dan Method digabung menjadi function
+    # dengan string dash.
+    # Oleh karena itu jangan ada dash pada ketiga entity tersebut.
     if [[ "$interface" =~ [^a-z_] ]];then
         error "Argument --interface is not valid."; x
     fi
@@ -259,6 +262,9 @@ command-add() {
         error "Argument --name required."; x
     fi
     [ -n "$louder" ] && code 'name="'$name'"'
+    if [[ "$name" =~ [^a-z_] ]];then
+        error "Argument --name is not valid."; x
+    fi
     if [ -z "$add_command" ];then
         error "Argument --command required."; x
     fi
@@ -377,10 +383,16 @@ command-execute() {
         error "Argument --name required."; x
     fi
     [ -n "$louder" ] && code 'name="'$name'"'
+    if [[ "$name" =~ [^a-z_] ]];then
+        error "Argument --name is not valid."; x
+    fi
     if [ -z "$method" ];then
         error "Argument --method required."; x
     fi
     [ -n "$louder" ] && code 'method="'$method'"'
+    if [[ "$method" =~ [^a-z_] ]];then
+        error "Argument --method is not valid."; x
+    fi
     [ -n "$louder" ] && code 'output_file="'$output_file'"'
     # If not set in argument, try load from environment.
     local interface_uppercase=${interface^^}
@@ -419,16 +431,15 @@ command-execute() {
         command=$(echo "$contents" | grep ^"$name" | cut -d' ' -f2 | tail -1)
     fi
     if [ -z "$command" ];then
-        error "The Command of \`plugin::${interface}('${name}')\` is not defined in table."; x
+        error "The Command of \`plugin::${interface}-${name}\` is not defined in table."; x
     fi
     if ! command -v "$command" > /dev/null;then
         error Command not found: '`'"$command"'`'.; x
     fi
 
-    # red '"$command"' "$command"; _.
     [ -n "$louder" ] && ____
 
-    chapter Execute "plugin::${interface}('${name}')->${method}()"
+    chapter Execute "${command}::plugin-${interface}-${name}-${method}()"
     code "${command} plugin ${interface} ${name} ${method}"
     ____
 
