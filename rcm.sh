@@ -107,7 +107,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 unset _n
 
-
 if [ -n "$1" ];then
     command=
     case "$1" in
@@ -1767,6 +1766,7 @@ Rcm_prompt() {
     local load_other_options=
     local immediately_other_options=
     local argument_preview_bypass=
+    local available_subcommands
     argument_pass=()
     argument_preview=()
     argument_preview_real=()
@@ -1799,12 +1799,32 @@ Rcm_prompt() {
         ____
     fi
 
-    parameter='command'
+    parameter='subcommand' # todo, hanya jika di define sebagai subcommand.
+    # jika tidak, maka set sebagai operand.
+
     available_subcommands=()
-    _available_subcommands=`$rcm_extension --help 2>/dev/null | sed -n -E 's/^Available commands?: ([^\.]+)\.$/\1/p' | head -1`
+    _available_subcommands=`$rcm_extension --help 2>/dev/null | sed -n -E 's/^Available subcommands?: ([^\.]+)\.$/\1/p' | head -1`
     if [ -n "$_available_subcommands" ];then
         available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
     fi
+    _available_subcommands_from_command=`$rcm_extension --help 2>/dev/null | grep -i -o -E 'Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
+    if [ -n "$_available_subcommands_from_command" ];then
+        _command_arguments=$(echo "$_available_subcommands_from_command" | sed -n -E 's/^Available subcommands? from command:\s*([^\)]+\))\.$/\1/p')
+        _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+        _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+        if command -v "$_command" > /dev/null;then
+            _; _.
+            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            wordWrapDescriptionColorize "Subcommand available from command: <magenta>${_command}${_arguments}</magenta>"
+            mktemp=$(mktemp -p /dev/shm)
+            ${_command}${_arguments} > "$mktemp"
+            while read line;do
+                [ -n "$line" ] && available_subcommands+=("$line")
+            done < "$mktemp"
+            rm "$mktemp"
+        fi
+    fi
+
     for value in "${argument_operand_prepopulate[@]}";do
         ArrayShift argument_operand_prepopulate[@]
         break
