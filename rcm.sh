@@ -110,7 +110,6 @@ unset _n
 if [ -n "$1" ];then
     command=
     case "$1" in
-        history) command="$1"; shift ;;
         list) command="$1"; shift ;;
         recent) command="$1"; shift ;;
         *) command=execute-extension; extension="$1"; shift ;;
@@ -129,27 +128,6 @@ case "$command" in
             extension_version=
         fi
         rcm_extension="rcm-${extension}"
-        ;;
-    history)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --delete=*) delete+=("${1#*=}"); shift ;;
-                --delete) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then delete+=("$2"); shift; fi; shift ;;
-                --delete-all) delete_all=1; shift ;;
-                --) shift
-                    while [[ $# -gt 0 ]]; do
-                        case "$1" in
-                            *) _new_arguments+=("$1"); shift ;;
-                        esac
-                    done
-                    ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
         ;;
     list)
         _new_arguments=()
@@ -205,11 +183,10 @@ Usage: rcm [options]
        rcm [options] <script> [options]
 
 Example:
-        rcm history --delete-all
         rcm list --raw
         rcm recent
 
-Available commands: history, list, recent.
+Available commands: list, recent.
 
 Global Options:
    --version
@@ -230,18 +207,6 @@ Global Options:
         Skip resolve dependenices.
    --with-resolve-dependencies
         Resolve dependenices. Default action.
-
-HISTORY COMMAND.
-    List the input prompt of script.
-
-    Usage:
-        rcm history [options]
-
-    Options for history command:
-        --delete-all
-            Delete all of history.
-        --delete <script> [--delete <script>]...
-            Delete history spesific for the script. Multiple.
 
 LIST COMMAND.
     List the available script to be executed.
@@ -1076,41 +1041,6 @@ Rcm_parse_url() {
     # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
     # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
     # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
-}
-command-history() {
-    directory=$HOME/.cache/rcm
-    if [ ! -d "$directory" ];then
-        exit 0
-    fi
-    cd "$directory"
-    if [ -n "$delete_all" ];then
-        rm *.bak 2>/dev/null
-        rm *.history 2>/dev/null
-        _ All history deleted.; _.
-    elif [ "${#delete[@]}" -gt 0 ];then
-        for each in "${delete[@]}";do
-            if [ -f rcm."$each".history ];then
-                rm rcm."$each".history
-            fi
-            if [ -f rcm."$each".bak ];then
-                rm rcm."$each".bak
-            fi
-            _ History "$each" deleted.; _.
-        done
-    else
-        ls *.history 2>/dev/null | sed -E 's,^rcm\.(.*)\.history$,\1,' | while read line; do
-            yellow $line; _.
-            if [ -f $line ];then
-                contents="$(cat $line)"
-                code "$contents"
-                ____
-            elif [ -f rcm.$line.history ];then
-                contents="$(cat rcm.${line}.history)"
-                code "$contents"
-                ____
-            fi
-        done
-    fi
 }
 command-recent() {
     history_storage=$HOME'/.cache/rcm/rcm.history'
@@ -3091,22 +3021,6 @@ _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
 # )
 # OPERAND=(
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --delete-all
-# )
-# MULTIVALUE=(
-# --delete
 # )
 # EOF
 # clear
