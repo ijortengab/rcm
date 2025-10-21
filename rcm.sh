@@ -1114,12 +1114,6 @@ command-list() {
         echo "$value" >> "$history_storage"
     fi
 }
-command-usage() {
-    title Rapid Construct Massive
-    _ Version; yellow ' '`printVersion`; _.
-    _ URL; yellow ' 'git.io/rcm; _.
-    _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
-}
 
 # Define variables and constants.
 __FILE__=$(resolve_relative_path "$0")
