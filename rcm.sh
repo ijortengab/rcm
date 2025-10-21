@@ -110,7 +110,6 @@ unset _n
 if [ -n "$1" ];then
     command=
     case "$1" in
-        recent) command="$1"; shift ;;
         *) command=execute-extension; extension="$1"; shift ;;
     esac
 fi
@@ -166,14 +165,8 @@ printHelp() {
     _.
 cat << EOF
 Usage: rcm [options]
-       rcm <command> [options]
-       rcm [options] <script> [options]
-
-Example:
-        rcm list --raw
-        rcm recent
-
-Available commands: list, recent.
+       rcm <extension> [options]
+       rcm [options] <extension> [options]
 
 Global Options:
    --version
@@ -969,24 +962,6 @@ Rcm_parse_url() {
     # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
     # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
     # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
-}
-command-recent() {
-    history_storage=$HOME'/.cache/rcm/rcm.history'
-    history_value=
-    if [ -f "$history_storage" ];then
-        history_value=$(tail -9 "$history_storage")
-        parameter='command'
-        printHistoryDialog
-    fi
-    if [ -z "$value" ];then
-        exit 1
-    fi
-    command_raw="${value}"
-    command="rcm-${value}"
-    _; _.
-    _ Command' '; magenta $command_raw; _, ' 'selected.; _.
-    ____
-
 }
 
 # Define variables and constants.
