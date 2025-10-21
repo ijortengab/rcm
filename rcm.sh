@@ -110,7 +110,6 @@ unset _n
 if [ -n "$1" ];then
     command=
     case "$1" in
-        list) command="$1"; shift ;;
         recent) command="$1"; shift ;;
         *) command=execute-extension; extension="$1"; shift ;;
     esac
@@ -128,18 +127,6 @@ case "$command" in
             extension_version=
         fi
         rcm_extension="rcm-${extension}"
-        ;;
-    list)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --raw) raw=1; shift ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
         ;;
 esac
 
@@ -207,16 +194,6 @@ Global Options:
         Skip resolve dependenices.
    --with-resolve-dependencies
         Resolve dependenices. Default action.
-
-LIST COMMAND.
-    List the available script to be executed.
-
-    Usage:
-        rcm list [options]
-
-    Options for list command:
-        --raw
-            List the script without interactive.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -942,55 +919,6 @@ Rcm_wget() {
     fi
     cat "$cache_file"
 }
-Rcm_list() {
-    if [ -f $HOME/.config/rcm/rcm.table.extension ] ;then
-        cat $HOME/.config/rcm/rcm.table.extension | cut -d' ' -f1
-    fi
-    Rcm_list_internal
-}
-Rcm_list_internal() {
-    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e 's,^rcm-,,' -e 's,\.sh$,,'
-    cat << 'RCM_LIST_INTERNAL'
-composer-autoinstaller
-cron-setup-wsl-autorun-crond
-cron-setup-wsl-autorun-sshd
-cron-setup-wsl-port-forwarding
-debian-11-setup-basic
-debian-12-setup-basic
-dig-apt
-dig-has-address
-dig-is-name-exists
-dig-is-record-exists
-dig-watch-domain-exists
-dovecot-multiple-certificate
-mariadb-apt
-mariadb-assign-grant-all
-mariadb-database-autocreate
-mariadb-setup-project-database
-mariadb-user-autocreate
-nginx-apt
-nginx-reload
-nginx-setup-front-controller-php
-nginx-setup-hello-world-static
-nginx-setup-php-project
-nginx-setup-static
-nginx-virtual-host-autocreate-php-multiple-root
-nginx-virtual-host-autocreate-php
-php-apt
-php-fpm-setup-project-config
-php-setup-adjust-cli-version
-phpmyadmin-autoinstaller-nginx
-postfix-apt
-postfix-multiple-certificate
-roundcube-autoinstaller-nginx
-ssh-setup-open-ssh-tunnel
-ssh-setup-sshd-listen-port
-system-ram-swap-4gb
-ubuntu-22.04-setup-basic
-ubuntu-24.04-setup-basic
-wsl-setup-lemp-stack
-RCM_LIST_INTERNAL
-}
 Rcm_parse_url() {
     # Reset
     PHP_URL_SCHEME=
@@ -1059,60 +987,6 @@ command-recent() {
     _ Command' '; magenta $command_raw; _, ' 'selected.; _.
     ____
 
-}
-command-list() {
-    # git ls-files | grep -E '^.+/rcm.+\.sh$' | cut -d/ -f2 | sed -e s,^rcm-,, -e s,\.sh$,,
-    if [ -n "$raw" ];then
-        Rcm_list
-        exit 0
-    fi
-    _; _.
-    _ Listing the command then execute it.; _.
-    _; _.
-    declare -i count
-    parameter=command
-    command_list=$(Rcm_list)
-    read -ra source -d '' <<< "$command_list"
-    for ((i = 0 ; i < ${#source[@]} ; i++)); do
-        count+=1
-        __; _, '['$count']' "${source[$i]}"; _.
-    done
-    _; _.
-    until [ -n "$value" ];do
-        __; read -p "Type the number: " value
-        if [[ $value =~ [^0-9] ]];then
-            value=
-            __; red Please type one of available number.;_.
-        fi
-        if [[ $value =~ ^0 ]];then
-            value=
-            __; red Please type one of available number.;_.
-        fi
-        if [ -n "$value" ];then
-            value=$((value - 1))
-            value="${source[$value]}"
-            if [ -z "$value" ];then
-                __; red Please type one of available number.;_.
-            fi
-        fi
-    done
-    command_raw="${value}"
-    command="rcm-${value}"
-    _; _.
-    _ Command' '; magenta $command_raw; _, ' 'selected.; _.
-    ____
-
-    history_storage=$HOME'/.cache/rcm/rcm.history'
-    save_history=1
-    if [ -f "$history_storage" ];then
-        if grep -q -- "^${command_raw}$" "$history_storage";then
-            save_history=
-        fi
-    fi
-    if [ -n "$save_history" ];then
-        mkdir -p $(dirname "$history_storage")
-        echo "$value" >> "$history_storage"
-    fi
 }
 
 # Define variables and constants.
