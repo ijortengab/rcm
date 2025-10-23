@@ -1282,22 +1282,7 @@ Rcm_prompt() {
         available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
     fi
     _available_subcommands_from_command=`$command --help 2>/dev/null | grep -i -o -E 'Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
-    if [ -n "$_available_subcommands_from_command" ];then
-        _command_arguments=$(echo "$_available_subcommands_from_command" | sed -n -E 's/^Available subcommands? from command:\s*([^\)]+\))\.$/\1/p')
-        _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-        _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-        if command -v "$_command" > /dev/null;then
-            _; _.
-            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-            wordWrapDescriptionColorize "Subcommand available from command: <magenta>${_command}${_arguments}</magenta>"
-            mktemp=$(mktemp -p /dev/shm)
-            ${_command}${_arguments} > "$mktemp"
-            while read line;do
-                [ -n "$line" ] && available_subcommands+=("$line")
-            done < "$mktemp"
-            rm "$mktemp"
-        fi
-    fi
+
     for value in "${argument_operand_prepopulate[@]}";do
         ArrayShift argument_operand_prepopulate[@]
         break
@@ -1313,14 +1298,37 @@ Rcm_prompt() {
 
         unset _return
     else
-        if [ "${#available_subcommands[@]}" -gt 0 ];then
+        if [ -n "$_available_subcommands_from_command" ];then
+            chapter Prepare argument for command '`'$command'`'.
+            _; _.
+            chapter_printed=1
+            _command_arguments=$(echo "$_available_subcommands_from_command" | sed -n -E 's/^Available subcommands? from command:\s*([^\)]+\))\.$/\1/p')
+            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            wordWrapDescriptionColorize "Subcommand available from command: <magenta>${_command}${_arguments}</magenta>"
+            if command -v "$_command" > /dev/null;then
+                mktemp=$(mktemp -p /dev/shm)
+                ${_command}${_arguments} > "$mktemp"
+                while read line;do
+                    [ -n "$line" ] && available_subcommands+=("$line")
+                done < "$mktemp"
+                rm "$mktemp"
+            fi
+        fi
+        if [ -z "$chapter_printed" ];then
             chapter Prepare argument for command '`'$command'`'.
             chapter_printed=1
+        fi
+        if [ "${#available_subcommands[@]}" -gt 0 ];then
             what=subcommand
             if [ "${#available_subcommands[@]}" -gt 1 ];then
                 what=subcommands
             fi
             printSelectDialog available_subcommands[@] "$what"
+        fi
+        if [ -n "$chapter_printed" ];then
+        ____
         fi
     fi
     subcommand=
