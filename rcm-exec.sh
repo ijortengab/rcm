@@ -1281,7 +1281,7 @@ Rcm_prompt() {
     if [ -n "$_available_subcommands" ];then
         available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
     fi
-    _available_subcommands_from_command=`$command --help 2>/dev/null | grep -i -o -E 'Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
+    _available_subcommands_from_command=`$command --help 2>/dev/null | grep -i -o -E '^Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
 
     for value in "${argument_operand_prepopulate[@]}";do
         ArrayShift argument_operand_prepopulate[@]
