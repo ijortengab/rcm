@@ -1336,7 +1336,7 @@ Rcm_prompt() {
 
     if [ -n "$options" ];then
         if [ -z "$chapter_printed" ];then
-            chapter Prepare argument for command '`'$extension'`'.
+            chapter Prepare argument for extension '`'$extension'`'.
         fi
         until [[ -z "$options" ]];do
             parameter=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
@@ -2256,7 +2256,7 @@ argument_preview+=(--)
 # Export variables part 2.
 # Special for variable RCM_PROMPT_CHAIN, append value then export it.
 if [ -z "$RCM_PROMPT_CHAIN" ];then
-    RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension} --"
+    RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
 fi
 for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
 [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
