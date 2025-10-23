@@ -566,7 +566,7 @@ printSelectDialog() {
         for ((i = 0 ; i < $PREVIOUS_LINE ; i++)); do
             printf '\e[A\e[K' >&2
         done
-        __ Available values:
+        __ "Available ${what}:"
         for ((i = 0 ; i < ${#source[@]} ; i++)); do
             count+=1
             if [ $count -lt 10 ];then
