@@ -48,19 +48,31 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
-# If set in environment, set to variable.
-[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
+
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+
 # If not set in argument, try load from environment.
+[ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
+
+# If set in environment, set to variable.
+[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
+[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
+[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION" || { error Environment Variable RCM_VERSION required.; x; }
+
+# Boolean default to TRUE.
+[ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
+
+# Verbosity.
 quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
+# Define variables and constants.
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
+RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions. Help and Version.
 printVersion() {
@@ -228,27 +240,6 @@ Rcm_resolve_dependencies() {
     Rcm_resolve_dependencies_update() {
         local is_updated=
         if [[ "$command_required" == rcm ]];then
-            owner=ijortengab
-            repository=rcm
-            tag_name="$command_required_version"
-            cache_directory="${HOME}/.cache/rcm/${owner}/${repository}/${tag_name}"
-            Rcm_github_download "$owner" "$repository" "$tag_name" "$cache_directory"
-            [ ! $? -eq 0 ] && x
-            source="${cache_directory}/rcm.sh"
-            if [ ! -f "$source" ];then
-                error File is not found: "$source".; x
-            fi
-            target="${BINARY_DIRECTORY}/rcm"
-            if [ -f "$target" ];then
-                backupFile move "$target"
-            fi
-            if [ -z "$display_waiting" ];then
-                code cp "$source" "$target"
-            fi
-            cp "$source" "$target"
-            if [ -z "$display_waiting" ];then
-                _ 'Success install '; magenta "$rcm_extension"; _, ' version: '; yellow "$tag_name"; _.
-            fi
             # Melakukan rcm self-udpate, maka bash interpreter
             # bisa gagal, karena script rcm berubah.
             # Kita perlu paksa user agar melakukan eksekusi
@@ -262,8 +253,6 @@ Rcm_resolve_dependencies() {
                 chapter Attention
             fi
             __ The subcommand or extension requires rcm to be updated.
-            __ The rcm has been updated to the version: "$tag_name".
-            __ Please execute the command again.
             if [ -z "$display_waiting" ];then
                 x
             fi
@@ -290,6 +279,7 @@ Rcm_resolve_dependencies() {
     Rcm_resolve_dependencies_insert_table() {
         # global table_dependencies
         # global command_required command_required_version
+        # global display_waiting
         local _help _dependency _download
         local _command_required_raw _command_required _command_required_version
         local _found _found_command _found_command_version
@@ -314,8 +304,15 @@ Rcm_resolve_dependencies() {
                     _found_command_version=$(cut -d' ' -f2 <<< "$_found")
                     if [ -n "$_command_required_version" ];then
                         if [ ! "$_found_command_version" == "$_command_required_version" ];then
+                            if [ -n "$display_waiting" ];then
+                                printf "\r\033[K" >&2
+                            fi
                             error Conflict found.;
                             _ The command; magenta ' '"$command_required"; _, ':'"$command_required_version" is require; magenta ' '"$_command_required"; _, ':'"$_command_required_version" conflict with requirement of ; magenta ' '"$_found_command"; _, ':'"$_found_command_version".
+                            if [ -n "$display_waiting" ];then
+                                kill -SIGTERM $$
+                            fi
+                            # Pastikan exit.
                             x
                         fi
                     fi
@@ -344,65 +341,34 @@ Rcm_resolve_dependencies() {
             command_required="$command_required_raw"
             command_required_version=
         fi
-        case "$command_required" in
-            rcm-install)
-                if ! command -v rcm-install > /dev/null;then
-                    Rcm_init rcm-install
-                fi
-                if [ -z "$display_waiting" ];then
-                    _.
+        if command -v "$command_required" > /dev/null;then
+            _help=$("$command_required" --help 2>/dev/null)
+            _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+            if [ -n "$_download" ];then
+                while IFS= read -r _line; do
+                    if ! grep -q -F -- "$_line" <<< "$table_downloads";then
+                        [ -n "$_line" ] && table_downloads+="$_line"$'\n'
+                    fi
+                done <<< "$_download"
+            fi
+            command_required_exists=1
+            command_existing_version=$("$command_required" --version)
+            if [ -z "$command_required_version" ];then
+                command_required_version="$command_existing_version"
+                command_required_exists_updated=1
+            else
+                if [[ "$command_required_version" == "$command_existing_version" ]];then
+                    command_required_exists_updated=1
                 else
-                    printf "\r\033[K" >&2
+                    command_required_exists_updated=
                 fi
-                return 0
-                ;;
-            rcm-update)
-                if ! command -v rcm-update > /dev/null;then
-                    Rcm_init rcm-update
-                fi
-                if [ -z "$display_waiting" ];then
-                    _.
-                else
-                    printf "\r\033[K" >&2
-                fi
-                return 0
-                ;;
-            *)
-                if command -v "$command_required" > /dev/null;then
-                    if ! command -v rcm-update > /dev/null;then
-                        Rcm_init rcm-update
-                    fi                    
-                    _help=$("$command_required" --help 2>/dev/null)
-                    _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
-                    if [ -n "$_download" ];then
-                        while IFS= read -r _line; do
-                            if ! grep -q -F -- "$_line" <<< "$table_downloads";then
-                                [ -n "$_line" ] && table_downloads+="$_line"$'\n'
-                            fi
-                        done <<< "$_download"
-                    fi
-                    command_required_exists=1
-                    command_existing_version=$("$command_required" --version)
-                    if [ -z "$command_required_version" ];then
-                        command_required_version="$command_existing_version"
-                        command_required_exists_updated=1
-                    else
-                        if [[ "$command_required_version" == "$command_existing_version" ]];then
-                            command_required_exists_updated=1
-                        else
-                            command_required_exists_updated=
-                        fi
-                    fi
-                else
-                    if ! command -v rcm-install > /dev/null;then
-                        Rcm_init rcm-install
-                    fi
-                    if [ -z "$command_required_version" ];then
-                        command_required_version=`printVersion`
-                    fi
-                    command_required_exists=
-                fi
-        esac
+            fi
+        else
+            if [ -z "$command_required_version" ];then
+                command_required_version=`printVersion`
+            fi
+            command_required_exists=
+        fi
         if [ -z "$display_waiting" ];then
             _ Requires command:' '; magenta "$command_required"
             if [ -n "$command_required_exists" ];then
@@ -466,28 +432,24 @@ Rcm_resolve_dependencies() {
 title rcm-resolve
 ____
 
-chapter Dump variable.
-command="$1"
-code 'command="'$command'"'
-code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
-code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
-code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
-code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
-code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
-code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
-code 'RCM_FAST="'$RCM_FAST'"'
-code 'RCM_LOG="'$RCM_LOG'"'
-code 'RCM_VERSION="'$RCM_VERSION'"'
-code 'interactive="'$interactive'"'
-code 'verbose="'$verbose'"'
-code 'quiet="'$quiet'"'
-code 'loud="'$loud'"'
-code 'louder="'$louder'"'
-code 'debug="'$debug'"'
-code 'resolve_dependencies="'$resolve_dependencies'"'
-code 'log="'$log'"'
-code 'command="'$command'"'
-____
+command="$1"; shift
+if [ -z "$command" ];then
+    error "Operand <command> required."; x
+fi
+[ -n "$debug" ] && chapter Dump variable.
+[ -n "$debug" ] && code 'command="'$command'"'
+[ -n "$debug" ] && code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
+[ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
+[ -n "$debug" ] && code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
+[ -n "$debug" ] && code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
+[ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
+[ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
+[ -n "$debug" ] && code 'verbose="'$verbose'"'
+[ -n "$debug" ] && code 'quiet="'$quiet'"'
+[ -n "$debug" ] && code 'loud="'$loud'"'
+[ -n "$debug" ] && code 'louder="'$louder'"'
+[ -n "$debug" ] && code 'debug="'$debug'"'
+[ -n "$debug" ] && ____
 
 # Simpan informasi download.
 _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
@@ -502,7 +464,7 @@ display_waiting=
 
 if [ -n "$quiet" ];then
     display_waiting=1
-    
+
     chapter Resolve dependencies.
     trap x SIGTERM
     Rcm_resolve_dependencies "${command}" &
@@ -517,7 +479,7 @@ if [ -n "$quiet" ];then
     done
     __ Resolved.
     ____
-    
+
 else
     Rcm_resolve_dependencies "${command}"
 fi
