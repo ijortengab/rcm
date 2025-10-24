@@ -60,8 +60,6 @@ printHelp() {
 cat << EOF
 Usage: rcm-history <command> [options]
 
-Available commands: add, list, execute.
-
 Options:
    --delete-all ^
         Delete all of history.
