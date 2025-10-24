@@ -1235,6 +1235,9 @@ wordWrapList() {
     done
 }
 Rcm_prompt() {
+    # global subcommand
+    # global subcommand_substitute
+    local first_operand
     local value
     local command="$1"
     local chapter_printed=
@@ -1274,9 +1277,7 @@ Rcm_prompt() {
         ____
     fi
 
-    parameter='subcommand' # todo, hanya jika di define sebagai subcommand.
-    # jika tidak, maka set sebagai operand.
-
+    parameter='subcommand'
     available_subcommands=()
     _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available subcommands?: ([^\.]+)\.$/\1/p' | head -1`
     if [ -n "$_available_subcommands" ];then
@@ -1284,20 +1285,19 @@ Rcm_prompt() {
     fi
     _available_subcommands_from_command=`$command --help 2>/dev/null | grep -i -o -E '^Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
 
-    for value in "${argument_operand_prepopulate[@]}";do
+    # Memulai subcommand.
+    for first_operand in "${argument_operand_prepopulate[@]}";do
         ArrayShift argument_operand_prepopulate[@]
         break
     done
-    if [ -n "$value" ];then
-        blue '"$value"' "$value"; _.
+    if [ -n "$first_operand" ];then
         chapter Prepare argument for command '`'$command'`'.
         chapter_printed=1
         _; _.
-        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
+        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$first_operand</yellow>." green
         argument_operand_prepopulate=("${_return[@]}")
-        ____
-
         unset _return
+        subcommand="$first_operand"
     else
         if [ -n "$_available_subcommands_from_command" ];then
             chapter Prepare argument for command '`'$command'`'.
@@ -1348,25 +1348,52 @@ Rcm_prompt() {
                 value=
             fi
         fi
-        if [ -n "$chapter_printed" ];then
-            ____
+        if [ -n "$value" ];then
+            subcommand="$value"
         fi
     fi
-    subcommand=
-    if [ -n "$value" ];then
-        argument_pass+=("${value}")
-        argument_preview+=("${value}")
-        argument_preview_real+=("${value}")
-        subcommand="$value"
+    subcommand_substitute=
+    if [ -n "$subcommand" ];then
+        subcommand_substitute=`$command --help 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+        if [ -n "$subcommand_substitute" ];then
+            # Trim.
+            subcommand_substitute=`echo "$subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            if grep -E -q "^${subcommand}:\s+" <<< "$subcommand_substitute";then
+                subcommand_substitute=`grep -o -P "^${subcommand}:\s+\K(.*)" <<< "$subcommand_substitute" | tail -1`
+            fi
+        fi
+    fi
+
+    if [ -n "$subcommand" ];then
+        argument_pass+=("${subcommand}")
+        argument_preview+=("${subcommand}")
+        argument_preview_real+=("${subcommand}")
+    fi
+
+    if [ -n "$subcommand_substitute" ];then
+        _; _.
+        wordWrapDescriptionColorize "Subcommand <magenta>${subcommand}</magenta> makes command shift to <yellow>$subcommand_substitute</yellow> automatically." green
+        command="$subcommand_substitute"
+        subcommand=
+        if [ -n "$chapter_printed" ];then
+            ____
+
+            chapter Prepare argument for command '`'$command'`'.
+        fi
+    # else
+        # argument_pass+=("${subcommand}")
+        # argument_preview+=("${subcommand}")
+        # argument_preview_real+=("${subcommand}")
+    fi
+
+    # Populate options.
+    if [ -n "$subcommand" ];then
         options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     else
         options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     fi
 
     if [ -n "$options" ];then
-        if [ -z "$chapter_printed" ];then
-            chapter Prepare argument for extension '`'$extension'`'.
-        fi
         until [[ -z "$options" ]];do
             parameter=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             is_required=
@@ -2015,6 +2042,11 @@ Rcm_prompt() {
             fi
         done
         ____
+
+        chapter_printed=
+    fi
+    if [ -n "$chapter_printed" ];then
+        ____
     fi
 }
 Rcm_prompt_build_command() {
@@ -2257,6 +2289,9 @@ backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
+if [ -n "$subcommand_substitute" ];then
+    command="$subcommand_substitute"
+fi
 trap x SIGINT
 
 if [ -n "$subcommand" ];then
@@ -2344,6 +2379,12 @@ if [ "${#argument_after_doubledash[@]}" -gt 0 ];then
 fi
 
 if [[ "${#argument_preview_real[@]}" -gt 0 ]];then
+    if [ -n "$subcommand_substitute" ];then
+        # Revoke first array.
+        ArrayShift argument_preview_real[@]
+        argument_preview_real=("${_return[@]}")
+        unset _return
+    fi
     set -- "${argument_preview_real[@]}" "${_argument_after_doubledash[@]}"
 else
     set -- "${_argument_after_doubledash[@]}"
@@ -2381,6 +2422,12 @@ if [ -n "$timer" ];then
 fi
 
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
+    if [ -n "$subcommand_substitute" ];then
+        # Revoke first array.
+        ArrayShift argument_pass[@]
+        argument_pass=("${_return[@]}")
+        unset _return
+    fi
     set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
 else
     set -- "${argument_after_doubledash[@]}"
