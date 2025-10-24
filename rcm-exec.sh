@@ -105,6 +105,7 @@ unset _n
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
 [ -z "$resolve_dependencies" ] && resolve_dependencies=1; [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
+[ -z "$interactive" ] && interactive=1; [ "$interactive" == 0 ] && interactive=
 
 # Verbosity.
 quiet=; loud=; louder=; debug=;
@@ -1325,10 +1326,30 @@ Rcm_prompt() {
             if [ "${#available_subcommands[@]}" -gt 1 ];then
                 what=subcommands
             fi
-            printSelectDialog available_subcommands[@] "$what"
+            if [[ "${#available_subcommands[@]}" -eq 1 ]];then
+                value="${available_subcommands[0]}"
+                _; _.
+                __; _, "Available ${what}: "; yellow "$value";  _, '.'; _.
+                if [ -n "$interactive" ];then
+                    _; _.
+                    wordWrapDescription 'The one and only available value is selected.'
+                    userInputBooleanDefaultYes
+                    if [ -z "$boolean" ];then
+                        value=' '
+                    fi
+                else
+                    _; _.
+                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                fi
+            else
+                printSelectDialog available_subcommands[@] "$what"
+            fi
+            if [[ "$value" == ' ' ]];then
+                value=
+            fi
         fi
         if [ -n "$chapter_printed" ];then
-        ____
+            ____
         fi
     fi
     subcommand=
@@ -2179,7 +2200,6 @@ argument_after_doubledash=()
 
 if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
-        yellow '"$1"' "$1"; _.
         case "$1" in
             --)
                 confirmation=
