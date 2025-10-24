@@ -46,7 +46,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.3'
+    echo '0.18.0-alpha.4'
 }
 printHelp() {
     title RCM Ubuntu 22.04 Setup Server
