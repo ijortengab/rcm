@@ -44,6 +44,7 @@ while [[ $# -gt 0 ]]; do
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --without-resolve-dependencies) resolve_dependencies=0; shift ;;
         --with-resolve-dependencies) resolve_dependencies=1; shift ;;
+        -[^-]*) _new_arguments+=("$1"); shift ;;
         --)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
