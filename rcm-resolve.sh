@@ -484,6 +484,8 @@ else
     Rcm_resolve_dependencies "${command}"
 fi
 
+exit 0
+
 # parse-options.sh \
 # --without-end-options-double-dash \
 # --with-end-options-specific-operand \
