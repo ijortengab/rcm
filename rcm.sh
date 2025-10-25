@@ -422,6 +422,19 @@ if [ -n "$1" ];then
         extension_version=
     fi
 
+    # Get download information.
+    if command -v "$rcm_extension" > /dev/null;then
+        _help=$($rcm_extension --help 2>/dev/null)
+        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
+        if [ -n "$_download" ];then
+            while IFS= read -r _line; do
+                if ! grep -q -F -- "$_line" <<< "$table_downloads";then
+                    [ -n "$_line" ] && table_downloads+="$_line"$'\n'
+                fi
+            done <<< "$_download"
+        fi
+    fi
+
     # Boolean export as 0 or 1. Must not leave empty string.
     [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
     [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
@@ -442,7 +455,8 @@ if [ -n "$1" ];then
         RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
         RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
         RCM_VERSION="$RCM_VERSION" \
-        rcm-resolve $isfast $isverbose "${rcm_extension}${extension_version}"
+        rcm-resolve $isfast $isverbose "${rcm_extension}${extension_version}" \
+        ; [ ! $? -eq 0 ] && x
     fi
 
     [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
@@ -462,6 +476,8 @@ else
     printHelp >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
 fi
+
+exit 0
 
 # parse-options.sh \
 # --compact \
