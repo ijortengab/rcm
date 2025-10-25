@@ -402,6 +402,7 @@ if [ -n "$1" ];then
     for each in "${rcm_extension_required[@]}"; do
         if ! command -v "$each" > /dev/null;then
             Rcm_init $each
+            ____
         fi
     done
 
