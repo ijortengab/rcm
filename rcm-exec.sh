@@ -1372,18 +1372,37 @@ Rcm_prompt() {
 
     if [ -n "$subcommand_substitute" ];then
         _; _.
+        if grep -q -F : <<< "$subcommand_substitute";then
+            subcommand_substitute_raw="$subcommand_substitute"
+            subcommand_substitute=$(cut -d':' -f1 <<< "$subcommand_substitute_raw")
+            subcommand_substitute_version=$(cut -d':' -f2 <<< "$subcommand_substitute_raw")
+        else
+            subcommand_substitute_version=`$command --version`
+        fi
+
         wordWrapDescriptionColorize "Subcommand <magenta>${subcommand}</magenta> makes command shift to <yellow>$subcommand_substitute</yellow> automatically." green
         command="$subcommand_substitute"
+        command_version="$subcommand_substitute_version"
         subcommand=
         if [ -n "$chapter_printed" ];then
             ____
 
-            chapter Prepare argument for command '`'$command'`'.
+            chapter_printed=
         fi
-    # else
-        # argument_pass+=("${subcommand}")
-        # argument_preview+=("${subcommand}")
-        # argument_preview_real+=("${subcommand}")
+
+        chapter Resolve dependency for command '`'$command'`'.
+        ____
+
+        INDENT+="$RCM_INDENT" \
+        rcm-resolve "${command}:${command_version}"
+
+    fi
+
+    # Mulai eksekusi event pre prompt.
+    Rcm_event_dispatcher 'Pre Prompt'
+
+    if [ -n "$subcommand_substitute" ];then
+        chapter Prepare argument for command '`'$command'`'.
     fi
 
     # Populate options.
@@ -2063,7 +2082,7 @@ Rcm_prompt_build_command() {
     fi
     [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
     if [ -z "$RCM_PROMPT_CHAIN" ];then
-        _RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension} --"
+        _RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
     else
         _RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
     fi
@@ -2263,8 +2282,6 @@ if [ $# -gt 0 ];then
     done
 fi
 
-# Mulai eksekusi event.
-
 # Export variables part 1.
 
 # Boolean export as 0 or 1. Must not leave empty string.
@@ -2280,10 +2297,6 @@ export RCM_VERBOSE="$verbose"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 export RCM_LOG="$log"
 export RCM_TABLE_DEPENDENCIES="$table_dependencies"
-
-# Mulai eksekusi event pre prompt.
-# Variable $subcommand baru auto populate setelah function Rcm_prompt executed.
-Rcm_event_dispatcher 'Pre Prompt'
 
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
