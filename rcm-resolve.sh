@@ -191,14 +191,20 @@ Rcm_resolve_dependencies() {
             if [[ "$command_required" =~ ^rcm- ]];then
                 [ -z "$fast" ] && isfast='' || isfast=' --fast'
                 [ -z "$quiet" ] && isquiet='' || isquiet=' --quiet'
-                export RCM_TABLE_DOWNLOADS="$table_downloads"
-                export RCM_TABLE_DEPENDENCIES="$table_dependencies"
                 extension="${command_required:4}"
                 if [ -n "$display_waiting" ];then
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
+                    RCM_TABLE_DOWNLOADS="$table_downloads" \
+                    RCM_TABLE_DEPENDENCIES="$table_dependencies" \
+                    INDENT+="${RCM_INDENT}" \
+                    rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
+                    [ ! $? -eq 0 ] && x
                 else
                     _.
-                    INDENT+="${RCM_INDENT}" rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install
+                    RCM_TABLE_DOWNLOADS="$table_downloads" \
+                    RCM_TABLE_DEPENDENCIES="$table_dependencies" \
+                    INDENT+="${RCM_INDENT}" \
+                    rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install
+                    [ ! $? -eq 0 ] && x
                 fi
             elif [[ "$command_required" =~ \.sh$ ]];then
                 url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
@@ -261,10 +267,23 @@ Rcm_resolve_dependencies() {
             x
         elif [[ "$command_required" =~ ^rcm- ]];then
             [ -z "$fast" ] && isfast='' || isfast=' --fast'
-            export RCM_TABLE_DOWNLOADS="$table_downloads"
+            [ -z "$quiet" ] && isquiet='' || isquiet=' --quiet'
             extension="${command_required:4}"
-            INDENT+="${RCM_INDENT}" rcm-update $isfast "$extension" "$command_required_version" --source=install
-            [ ! $? -eq 0 ] && x
+            if [ -n "$display_waiting" ];then
+                RCM_TABLE_DOWNLOADS="$table_downloads" \
+                RCM_TABLE_DEPENDENCIES="$table_dependencies" \
+                INDENT+="${RCM_INDENT}" \
+                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
+                [ ! $? -eq 0 ] && x
+            else
+                _.
+                RCM_TABLE_DOWNLOADS="$table_downloads" \
+                RCM_TABLE_DEPENDENCIES="$table_dependencies" \
+                INDENT+="${RCM_INDENT}" \
+                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install
+                [ ! $? -eq 0 ] && x
+            fi
+
             is_updated=1
         fi
         if [[ -z "$is_updated" ]];then
@@ -465,7 +484,7 @@ display_waiting=
 if [ -n "$quiet" ];then
     display_waiting=1
 
-    chapter Resolve dependencies.
+    chapter Resolve dependency for command '`'$command'`'.
     trap x SIGTERM
     Rcm_resolve_dependencies "${command}" &
     pid=$!
