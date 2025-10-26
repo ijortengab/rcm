@@ -456,7 +456,7 @@ if [ -n "$1" ];then
         RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
         RCM_VERSION="$RCM_VERSION" \
         rcm-resolve $isfast $isverbose "${rcm_extension}${extension_version}" \
-        ; [ ! $? -eq 0 ] && x
+            ; [ ! $? -eq 0 ] && x
     fi
 
     [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
@@ -471,7 +471,8 @@ if [ -n "$1" ];then
     RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
     RCM_LOG="$RCM_LOG" \
     RCM_VERSION="$RCM_VERSION" \
-    rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@"
+    rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" \
+        ; [ ! $? -eq 0 ] && x
 else
     printHelp >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
