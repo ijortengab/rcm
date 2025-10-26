@@ -68,10 +68,10 @@ case "$command" in
                 --help) help=1; shift ;;
                 --version) version=1; shift ;;
                 --fast) fast=1; shift ;;
-                --nginx-ssl-certificate-key=*) nginx_ssl_certificate_key="${1#*=}"; shift ;;
-                --nginx-ssl-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate_key="$2"; shift; fi; shift ;;
-                --nginx-ssl-certificate=*) nginx_ssl_certificate="${1#*=}"; shift ;;
-                --nginx-ssl-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_ssl_certificate="$2"; shift; fi; shift ;;
+                --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
+                --tls-certificate-key) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate_key="$2"; shift; fi; shift ;;
+                --tls-certificate=*) tls_certificate="${1#*=}"; shift ;;
+                --tls-certificate) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tls_certificate="$2"; shift; fi; shift ;;
                 --[^-]*) shift ;;
                 *) _new_arguments+=("$1"); shift ;;
             esac
@@ -109,12 +109,12 @@ Global Options.
         Show this help.
 
 Options for command tls-certificate:
-   --nginx-ssl-certificate
+   --tls-certificate
         Directive ssl_certificate in nginx config.
-        Prepopulate value from variable NGINX_SSL_CERTIFICATE.
-   --nginx-ssl-certificate-key
+        Prepopulate value from variable TLS_CERTIFICATE.
+   --tls-certificate-key
         Directive ssl_certificate_key in nginx config.
-        Prepopulate value from variable NGINX_SSL_CERTIFICATE_KEY.
+        Prepopulate value from variable TLS_CERTIFICATE_KEY.
 
 RCM Config:
    --no-timer
@@ -129,11 +129,11 @@ EOF
 # Functions.
 command-tls-certificate() {
     # If not set in argument, try load from environment.
-    [ -z "$nginx_ssl_certificate" ] && nginx_ssl_certificate="$NGINX_SSL_CERTIFICATE"
-    [ -z "$nginx_ssl_certificate_key" ] && nginx_ssl_certificate_key="$NGINX_SSL_CERTIFICATE_KEY"
+    [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+    [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
     # Export.
-    echo 'NGINX_SSL_CERTIFICATE='"$nginx_ssl_certificate"
-    echo 'NGINX_SSL_CERTIFICATE_KEY='"$nginx_ssl_certificate_key"
+    echo 'TLS_CERTIFICATE='"$tls_certificate"
+    echo 'TLS_CERTIFICATE_KEY='"$tls_certificate_key"
 }
 
 # Execute command.
@@ -191,8 +191,8 @@ _ Try; blue ' 'rcm-nginx-variables-export; magenta ' '--help; _, ' 'for more inf
 # --help
 # )
 # VALUE=(
-# --nginx-ssl-certificate
-# --nginx-ssl-certificate-key
+# --tls-certificate
+# --tls-certificate-key
 # )
 # EOF
 # clear
