@@ -1389,13 +1389,26 @@ Rcm_prompt() {
 
             chapter_printed=
         fi
+        if [ -n "$resolve_dependencies" ];then
+            chapter Resolve dependency for command '`'$command'`'.
+            ____
 
-        chapter Resolve dependency for command '`'$command'`'.
-        ____
+            # Boolean export as 0 or 1. Must not leave empty string.
+            [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
+            # Other variable, export as is.
+            RCM_TABLE_DOWNLOADS="$table_downloads"
+            RCM_TABLE_DEPENDENCIES="$table_dependencies"
+            RCM_VERSION="$rcm_version"
 
-        INDENT+="$RCM_INDENT" \
-        rcm-resolve "${command}:${command_version}"
-
+            INDENT+="$RCM_INDENT" \
+            BINARY_DIRECTORY="$BINARY_DIRECTORY" \
+            RCM_FAST="$RCM_FAST" \
+            RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
+            RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
+            RCM_VERSION="$RCM_VERSION" \
+            rcm-resolve "${command}:${command_version}" \
+                ; [ ! $? -eq 0 ] && x
+        fi
     fi
 
     # Mulai eksekusi event pre prompt.
