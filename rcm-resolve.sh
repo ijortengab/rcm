@@ -197,14 +197,15 @@ Rcm_resolve_dependencies() {
                     RCM_TABLE_DEPENDENCIES="$table_dependencies" \
                     INDENT+="${RCM_INDENT}" \
                     rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
-                    [ ! $? -eq 0 ] && x
+                    # Error pada rcm-install yang berada pada background process
+                    # akan diambil alih oleh varifikasi dibawah.
                 else
                     _.
                     RCM_TABLE_DOWNLOADS="$table_downloads" \
                     RCM_TABLE_DEPENDENCIES="$table_dependencies" \
                     INDENT+="${RCM_INDENT}" \
-                    rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install
-                    [ ! $? -eq 0 ] && x
+                    rcm-install $isfast $isquiet "$extension" "$command_required_version" --source=install \
+                        ; [ ! $? -eq 0 ] && x
                 fi
             elif [[ "$command_required" =~ \.sh$ ]];then
                 url=$(grep -F '['$command_required']' <<< "$table_downloads" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
@@ -273,18 +274,18 @@ Rcm_resolve_dependencies() {
                 RCM_TABLE_DOWNLOADS="$table_downloads" \
                 RCM_TABLE_DEPENDENCIES="$table_dependencies" \
                 INDENT+="${RCM_INDENT}" \
-                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null
-                [ ! $? -eq 0 ] && x
+                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install 2>/dev/null \
+                    ; [ $? -eq 0 ] && is_updated=1
+                # Error pada rcm-update yang berada pada background process
+                # akan diambil alih oleh varifikasi dibawah.
             else
                 _.
                 RCM_TABLE_DOWNLOADS="$table_downloads" \
                 RCM_TABLE_DEPENDENCIES="$table_dependencies" \
                 INDENT+="${RCM_INDENT}" \
-                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install
-                [ ! $? -eq 0 ] && x
+                rcm-update $isfast $isquiet "$extension" "$command_required_version" --source=install \
+                    ; [ ! $? -eq 0 ] && x
             fi
-
-            is_updated=1
         fi
         if [[ -z "$is_updated" ]];then
             if [ -n "$display_waiting" ];then
