@@ -202,6 +202,11 @@ green2() {
     hN "$word" green
 }
 
+magenta2() {
+    local word=$1
+    hN "$word" magenta
+}
+
 hN() {
     # hightlightNumber
     local other=$2 i
@@ -210,7 +215,7 @@ hN() {
     local word=$1 segment
     local current last
     for ((i = 0 ; i < ${#word} ; i++)); do
-        if [[ ${word:$i:1} =~ ^[0-9]+$ ]];then
+        if [[ ${word:$i:1} =~ ^[@0-9\.:\/]+$ ]];then
             current=number
         else
             current=other
