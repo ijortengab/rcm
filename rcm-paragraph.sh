@@ -454,6 +454,9 @@ wordWrapParagraph() {
             if [[ "$each" =~ ^[\ ]+$ ]];then
                 each=
             fi
+            if [ -z "$each" ];then
+                each_stripped=
+            fi
         }
         colorize() {
             local string="$1" words_array color each last opentag closetag
