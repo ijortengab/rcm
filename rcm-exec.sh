@@ -1257,7 +1257,6 @@ is_command_resolved() {
 }
 Rcm_prompt() {
     # global subcommand
-    # global subcommand_substitute
     local first_operand
     local value
     local command="$1"
@@ -1373,7 +1372,6 @@ Rcm_prompt() {
             subcommand="$value"
         fi
     fi
-    subcommand_substitute=
     if [ -n "$subcommand" ];then
         subcommand_substitute=`$command --help 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
         if [ -n "$subcommand_substitute" ];then
@@ -1381,6 +1379,12 @@ Rcm_prompt() {
             subcommand_substitute=`echo "$subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             if grep -E -q "^${subcommand}:\s+" <<< "$subcommand_substitute";then
                 subcommand_substitute=`grep -o -P "^${subcommand}:\s+\K(.*)" <<< "$subcommand_substitute" | tail -1`
+                _; _.
+                wordWrapDescriptionColorize "Subcommand <magenta>${subcommand}</magenta> makes command shift to <yellow>$subcommand_substitute</yellow> automatically." green
+                ____
+
+                echo "$subcommand_substitute"
+                exit 2
             fi
         fi
     fi
@@ -1391,59 +1395,8 @@ Rcm_prompt() {
         argument_preview_real+=("${subcommand}")
     fi
 
-    if [ -n "$subcommand_substitute" ];then
-        _; _.
-        if grep -q -F : <<< "$subcommand_substitute";then
-            subcommand_substitute_raw="$subcommand_substitute"
-            subcommand_substitute=$(cut -d':' -f1 <<< "$subcommand_substitute_raw")
-            subcommand_substitute_version=$(cut -d':' -f2 <<< "$subcommand_substitute_raw")
-        else
-            subcommand_substitute_version=`$command --version`
-        fi
-
-        wordWrapDescriptionColorize "Subcommand <magenta>${subcommand}</magenta> makes command shift to <yellow>$subcommand_substitute</yellow> automatically." green
-        command="$subcommand_substitute"
-        command_version="$subcommand_substitute_version"
-        subcommand=
-        if [ -n "$chapter_printed" ];then
-            ____
-
-            chapter_printed=
-        fi
-
-        rcm_extension="$command"
-
-        if ! is_command_resolved;then
-
-            chapter Resolve dependency for command '`'$command'`'.
-            ____
-
-            # Boolean export as 0 or 1. Must not leave empty string.
-            [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
-            # Other variable, export as is.
-            RCM_TABLE_DOWNLOADS="$table_downloads"
-            RCM_TABLE_DEPENDENCIES="$table_dependencies"
-            RCM_VERSION="$rcm_version"
-            RCM_VERBOSE="$verbose"
-
-            INDENT+="$RCM_INDENT" \
-            BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-            RCM_FAST="$RCM_FAST" \
-            RCM_VERBOSE="$RCM_VERBOSE" \
-            RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-            RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-            RCM_VERSION="$RCM_VERSION" \
-            rcm-resolve "${command}:${command_version}" \
-                ; [ ! $? -eq 0 ] && x
-        fi
-    fi
-
     # Mulai eksekusi event pre prompt.
     Rcm_event_dispatcher 'Pre Prompt'
-
-    if [ -n "$subcommand_substitute" ];then
-        chapter Prepare argument for command '`'$command'`'.
-    fi
 
     # Populate options.
     if [ -n "$subcommand" ];then
@@ -2343,9 +2296,6 @@ backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
 trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
-if [ -n "$subcommand_substitute" ];then
-    command="$subcommand_substitute"
-fi
 trap x SIGINT
 
 if [ -n "$subcommand" ];then
@@ -2433,12 +2383,6 @@ if [ "${#argument_after_doubledash[@]}" -gt 0 ];then
 fi
 
 if [[ "${#argument_preview_real[@]}" -gt 0 ]];then
-    if [ -n "$subcommand_substitute" ];then
-        # Revoke first array.
-        ArrayShift argument_preview_real[@]
-        argument_preview_real=("${_return[@]}")
-        unset _return
-    fi
     set -- "${argument_preview_real[@]}" "${_argument_after_doubledash[@]}"
 else
     set -- "${_argument_after_doubledash[@]}"
@@ -2476,12 +2420,6 @@ if [ -n "$timer" ];then
 fi
 
 if [[ "${#argument_pass[@]}" -gt 0 ]];then
-    if [ -n "$subcommand_substitute" ];then
-        # Revoke first array.
-        ArrayShift argument_pass[@]
-        argument_pass=("${_return[@]}")
-        unset _return
-    fi
     set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
 else
     set -- "${argument_after_doubledash[@]}"
