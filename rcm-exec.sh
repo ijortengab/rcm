@@ -116,6 +116,7 @@ resolve_relative_path() {
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 [ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
 [ -n "$RCM_TABLE_COMMAND_RESOLVED" ] && table_command_resolved="$RCM_TABLE_COMMAND_RESOLVED"
+[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
@@ -166,9 +167,6 @@ EOF
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
-
-# If set in environment, set to variable.
-[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION" || { error Environment Variable RCM_VERSION required.; x; }
 
 # Functions.
 ArrayDiff() {
@@ -975,6 +973,9 @@ if [[ ! "$command" =~ ^rcm- ]];then
 fi
 extension="${command:4}"
 [ -n "$debug" ] && code 'extension="'$extension'"'
+[ -z "$rcm_version" ] && rcm_version=$(rcm --version)
+[ -n "$debug" ] && code 'rcm_version="'$rcm_version'"'
+
 [ -n "$debug" ] && ____
 
 # Title.
@@ -2278,16 +2279,17 @@ fi
 # Export variables part 1.
 
 # Boolean export as 0 or 1. Must not leave empty string.
-[ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
-[ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
-[ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
-export RCM_INTERACTIVE="$RCM_INTERACTIVE"
-export RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES"
-export RCM_FAST="$RCM_FAST"
+[ -n "$fast" ] && rcm_fast=1 || rcm_fast=0
+[ -n "$interactive" ] && rcm_interactive=1 || rcm_interactive=0
+[ -n "$resolve_dependencies" ] && rcm_resolve_dependencies=1 || rcm_resolve_dependencies=0
+export RCM_FAST="$rcm_fast"
+export RCM_INTERACTIVE="$rcm_interactive"
+export RCM_RESOLVE_DEPENDENCIES="$rcm_resolve_dependencies"
 
 # Other variable, export as is.
 export RCM_VERBOSE="$verbose"
 export RCM_LOG="$log"
+export RCM_VERSION="$rcm_version"
 export RCM_TABLE_DOWNLOADS="$table_downloads"
 export RCM_TABLE_DEPENDENCIES="$table_dependencies"
 export RCM_TABLE_COMMAND_RESOLVED="$table_command_resolved"
