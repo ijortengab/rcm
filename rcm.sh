@@ -111,6 +111,21 @@ unset _n
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
+# Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
+
 # If not set in argument, try load from environment.
 [ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
@@ -119,8 +134,9 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # If set in environment, set to variable.
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
+[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
+[ -n "$RCM_TABLE_COMMAND_RESOLVED" ] && table_command_resolved="$RCM_TABLE_COMMAND_RESOLVED"
 [ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
@@ -142,6 +158,11 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 [ -z "$log" ] && log=rcm.log
 tempfile=
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+find='[__DIR__]'
+replace="$__DIR__"
+BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 
 # Functions. Help and Version.
 printVersion() {
@@ -188,19 +209,6 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions.
-resolve_relative_path() {
-    if [ -d "$1" ];then
-        cd "$1" || return 1
-        pwd
-    elif [ -e "$1" ];then
-        if [ ! "${1%/*}" = "$1" ]; then
-            cd "${1%/*}" || return 1
-        fi
-        echo "$(pwd)/${1##*/}"
-    else
-        return 1
-    fi
-}
 Rcm_wget() {
     # Global, untuk debug.
     local http_request line cache_file_basename
@@ -258,13 +266,6 @@ Rcm_wget() {
     fi
     cat "$cache_file"
 }
-
-# Define variables and constants.
-__FILE__=$(resolve_relative_path "$0")
-__DIR__=$(dirname "$__FILE__")
-find='[__DIR__]'
-replace="$__DIR__"
-BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 
 # Functions.
 Rcm_init() {
@@ -362,7 +363,15 @@ Rcm_github_download() {
         fi
     fi
 }
-
+is_command_resolved() {
+    if [ -z "$resolve_dependencies" ];then
+        return 0
+    fi
+    if grep -q -F "$rcm_extension" <<< "$table_command_resolved";then
+        return 0
+    fi
+    return 1
+}
 if [ -n "$1" ];then
 
     extension="$1"; shift
@@ -379,6 +388,7 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
     [ -n "$debug" ] && code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
     [ -n "$debug" ] && code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
+    [ -n "$debug" ] && code 'RCM_TABLE_COMMAND_RESOLVED="'"$RCM_TABLE_COMMAND_RESOLVED"'"'
     [ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
     [ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
     [ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
@@ -436,7 +446,6 @@ if [ -n "$1" ];then
     fi
 
     # Boolean export as 0 or 1. Must not leave empty string.
-    [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
     [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
     [ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
     # Other variable, export as is.
@@ -447,28 +456,28 @@ if [ -n "$1" ];then
 
     [ -n "$extension_version" ] && extension_version=":${extension_version}"
 
-    if [ -n "$resolve_dependencies" ];then
+    if ! is_command_resolved;then
         [ -n "$extension_version" ] && extension_version=":${extension_version}"
         INDENT+="$RCM_INDENT" \
         BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-        RCM_FAST="$RCM_FAST" \
-        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
         RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
+        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
         RCM_VERSION="$RCM_VERSION" \
         rcm-resolve $isfast $isverbose "${rcm_extension}${extension_version}" \
             ; [ ! $? -eq 0 ] && x
+        table_command_resolved+="$rcm_extension"$'\n'
     fi
+    RCM_TABLE_COMMAND_RESOLVED="$table_command_resolved"
 
     [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
 
     INDENT+="$RCM_INDENT" \
     BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-    RCM_FAST="$RCM_FAST" \
     RCM_INTERACTIVE="$RCM_INTERACTIVE" \
     RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES" \
-    RCM_FAST="$RCM_FAST" \
-    RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
     RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
+    RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
+    RCM_TABLE_COMMAND_RESOLVED="$RCM_TABLE_COMMAND_RESOLVED" \
     RCM_LOG="$RCM_LOG" \
     RCM_VERSION="$RCM_VERSION" \
     rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" \
