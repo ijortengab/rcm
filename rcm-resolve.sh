@@ -50,6 +50,22 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
+
+# Functions.
+resolve_relative_path() {
+    if [ -d "$1" ];then
+        cd "$1" || return 1
+        pwd
+    elif [ -e "$1" ];then
+        if [ ! "${1%/*}" = "$1" ]; then
+            cd "${1%/*}" || return 1
+        fi
+        echo "$(pwd)/${1##*/}"
+    else
+        return 1
+    fi
+}
 
 # If not set in argument, try load from environment.
 [ -z "$fast" ] && fast="$RCM_FAST"
@@ -58,7 +74,6 @@ unset _new_arguments
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION" || { error Environment Variable RCM_VERSION required.; x; }
 
 # Boolean default to TRUE.
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
@@ -73,6 +88,11 @@ quiet=; loud=; louder=; debug=;
 # Define variables and constants.
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+__FILE__=$(resolve_relative_path "$0")
+__DIR__=$(dirname "$__FILE__")
+find='[__DIR__]'
+replace="$__DIR__"
+BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 
 # Functions. Help and Version.
 printVersion() {
@@ -94,12 +114,18 @@ Global Options:
    --help
         Show this help.
 
+Environment Variables:
+   BINARY_DIRECTORY
+        Default to $BINARY_DIRECTORY
 EOF
 }
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
+
+# If set in environment, set to variable.
+[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION" || { error Environment Variable RCM_VERSION required.; x; }
 
 # Functions.
 ArrayDiff() {
