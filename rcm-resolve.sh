@@ -74,6 +74,7 @@ resolve_relative_path() {
 # If set in environment, set to variable.
 [ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
+[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
@@ -123,9 +124,6 @@ EOF
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
-
-# If set in environment, set to variable.
-[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION" || { error Environment Variable RCM_VERSION required.; x; }
 
 # Functions.
 ArrayDiff() {
@@ -495,6 +493,9 @@ fi
 [ -n "$debug" ] && code 'loud="'$loud'"'
 [ -n "$debug" ] && code 'louder="'$louder'"'
 [ -n "$debug" ] && code 'debug="'$debug'"'
+[ -z "$rcm_version" ] && rcm_version=$(rcm --version)
+[ -n "$debug" ] && code 'rcm_version="'$rcm_version'"'
+
 [ -n "$debug" ] && ____
 
 # Simpan informasi download.
