@@ -146,16 +146,32 @@ case "$command" in
 esac
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+
 # If not set in argument, try load from environment.
-[ -z "$verbose" ] && verbose="$RCM_VERBOSE"
+[ -z "$fast" ] && fast="$RCM_FAST"
+
+# If set in environment, set to variable.
+[ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"
+[ -n "$RCM_RESOLVE_DEPENDENCIES" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
+[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
+[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
+[ -n "$RCM_TABLE_COMMAND_RESOLVED" ] && table_command_resolved="$RCM_TABLE_COMMAND_RESOLVED"
+[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
+
+# Boolean default to TRUE.
+[ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
+[ -z "$resolve_dependencies" ] && resolve_dependencies=1; [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
+
+# Verbosity.
 quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
+# Define variables and constants.
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
+RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions. Help and Version.
 printVersion() {
@@ -169,7 +185,11 @@ printHelp() {
 cat << EOF
 Usage: rcm-plugin <command> [options]
 
-Available commands: add, list, execute.
+Available commands: add, list, execute, init.
+
+Options for command init:
+   --interface *
+        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
 
 Options for command add:
    --interface *
@@ -367,6 +387,16 @@ command-list() {
     echo "$contents" | sed '/^[[:space:]]*$/d'
 }
 command-execute() {
+    is_command_resolved() {
+        if [ -z "$resolve_dependencies" ];then
+            return 0
+        fi
+        if grep -q -F "$rcm_extension" <<< "$table_command_resolved";then
+            return 0
+        fi
+        return 1
+    }
+
     title rcm-plugin::execute
     ____
 
@@ -432,8 +462,8 @@ command-execute() {
         contents+=$(<"$table")
     fi
     if [ -n "$contents" ];then
-        # @todo, version dipikirkan.
         command=$(echo "$contents" | grep ^"$name" | cut -d' ' -f2 | tail -1)
+        command_version=$(echo "$contents" | grep ^"$name" | cut -d' ' -f3 | tail -1)
     fi
     if [ -z "$command" ];then
         error "The Command of \`plugin::${interface}-${name}\` is not defined in table."; x
@@ -443,6 +473,32 @@ command-execute() {
     fi
 
     [ -n "$louder" ] && ____
+
+    rcm_extension="$command"
+
+    if ! is_command_resolved;then
+
+        chapter Resolve dependency for command '`'$command'`'.
+        ____
+
+        # Boolean export as 0 or 1. Must not leave empty string.
+        [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
+        # Other variable, export as is.
+        RCM_TABLE_DOWNLOADS="$table_downloads"
+        RCM_TABLE_DEPENDENCIES="$table_dependencies"
+        RCM_VERSION="$rcm_version"
+        RCM_VERBOSE="$verbose"
+
+        INDENT+="$RCM_INDENT" \
+        BINARY_DIRECTORY="$BINARY_DIRECTORY" \
+        RCM_FAST="$RCM_FAST" \
+        RCM_VERBOSE="$RCM_VERBOSE" \
+        RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
+        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
+        RCM_VERSION="$RCM_VERSION" \
+        rcm-resolve "${command}:${command_version}" \
+            ; [ ! $? -eq 0 ] && x
+    fi
 
     chapter Execute "${command}::plugin-${interface}-${name}-${method}()"
     code "${command} plugin ${interface} ${name} ${method}"
