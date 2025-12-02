@@ -537,7 +537,16 @@ wordWrapParagraph() {
         local i=0
         local count="${#words_array[@]}"
         first_line=1
+        # Bersihkan next karakter whitespace, jika terjadi new line karena word wrap.
+        white_space_clear=
         for each in "${words_array[@]}"; do
+            if [ -n "$white_space_clear" ];then
+                if [[ "$each" == $'\t' || "$each" =~ ^[\ ]+$ ]];then
+                    each=
+                else
+                    white_space_clear=
+                fi
+            fi
             each_original="$each"
             if [[ "$each" == $'\t' ]];then
                 each=
@@ -589,6 +598,7 @@ wordWrapParagraph() {
                 elif [ "${#_current_line}" -le $max ];then
                     colorize "$each"; _.
                     current_line=
+                    white_space_clear=1
                 else
                     _.;
                     _; printf %"${indent_first_line}"s >&2;
