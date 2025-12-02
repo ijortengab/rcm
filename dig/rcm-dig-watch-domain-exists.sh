@@ -153,7 +153,7 @@ until [ -n "$finish" ];do
         --domain="$domain" \
         --type=cname \
         --hostname="@" \
-        --hostname-origin="*" \
+        --alias-of="*" \
         ; [ $? -eq 0 ] && _finish+="1"
 
     if [[ "$_finish" =~ 1 ]];then
