@@ -460,6 +460,9 @@ wordWrapParagraph() {
         }
         colorize() {
             local string="$1" words_array color each last opentag closetag
+            # Solusi spasi tidak menjadi enter new line adalah dengan mengubah
+            # menjadi middle dot.
+            string=${string//·/ }
             if [[ ! "$string" =~ [\<\>] ]];then
                 # Tanpa warna. Contoh: "Variation"
                 _, "$string"
@@ -635,7 +638,7 @@ wordWrapParagraph() {
             calculateTabStopPosition "$line"
         done
     fi
-    # echo '"${tab_stop_position[@]}"' "${tab_stop_position[@]}" >&2
+    # echo "${tab_stop_position[@]}" >> ~/a.txt
     # Start drawing.
     if [ -n "$output" ];then
         tempfile="$output"
