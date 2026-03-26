@@ -41,7 +41,7 @@ BASENAME=${BASENAME:=host-trigger-wsl-autorun-sshd}
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.5'
+    echo '0.18.0-alpha.6'
 }
 printHelp() {
     title RCM Cron Setup

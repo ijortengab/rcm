@@ -51,7 +51,7 @@ fi
 
 # Functions.
 printVersion() {
-    echo '0.18.0-alpha.5'
+    echo '0.18.0-alpha.6'
 }
 printHelp() {
     title RCM Dig Has Address
