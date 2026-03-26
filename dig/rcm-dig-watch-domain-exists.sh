@@ -42,6 +42,16 @@ unset _new_arguments
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
+# If set in environment, set to variable.
+[ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"
+
+# Verbosity.
+quiet=; loud=; louder=; debug=;
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+
 # Functions.
 printVersion() {
     echo '0.18.0-alpha.5'
@@ -118,7 +128,7 @@ sleepExtended() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+[ -n "$debug" ] && chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$waiting_time" ];then
     waiting_time=60
@@ -126,8 +136,8 @@ fi
 if [[ "$waiting_time" =~ [^0-9] ]];then
     waiting_time=60
 fi
-code 'waiting_time="'$waiting_time'"'
-____
+[ -n "$debug" ] && code 'waiting_time="'$waiting_time'"'
+[ -n "$debug" ] && ____
 
 chapter Watching Begin
 __ Make sure the DNS Record '(A or CNAME)' of '`'$domain'`' is exist.
