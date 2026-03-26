@@ -59,9 +59,15 @@ unset _new_arguments
 [ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-if [ -n "$RCM_VERBOSE" ];then
-    verbose="$RCM_VERBOSE"
-fi
+
+# If set in environment, set to variable.
+[ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"
+
+# Boolean default to TRUE.
+[ -z "$colorize" ] && colorize=1; [ "$colorize" == 0 ] && colorize=
+
+# Verbosity.
+quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
@@ -186,13 +192,13 @@ EOF
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+[ -n "$debug" ] && chapter Dump variable.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
-code 'name_server="'$name_server'"'
+[ -n "$debug" ] && code 'domain="'$domain'"'
+[ -n "$debug" ] && code 'name_server="'$name_server'"'
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -209,7 +215,7 @@ else
            x
     esac
 fi
-code 'type="'$type'"'
+[ -n "$debug" ] && code 'type="'$type'"'
 type_uppercase=${type^^}
 case "$type" in
     a)
@@ -236,15 +242,14 @@ case "$type" in
         fi
         ;;
 esac
-code 'type_uppercase="'$type_uppercase'"'
-code 'ip_address="'$ip_address'"'
-code 'hostname="'$hostname'"'
-code 'mail_provider="'$mail_provider'"'
-code 'value="'$value'"'
-code 'label="'$label'"'
-[ -z "$colorize" ] && colorize=1
-[ "$colorize" == 0 ] && colorize=
-____
+[ -n "$debug" ] && code 'type_uppercase="'$type_uppercase'"'
+[ -n "$debug" ] && code 'ip_address="'$ip_address'"'
+[ -n "$debug" ] && code 'hostname="'$hostname'"'
+[ -n "$debug" ] && code 'mail_provider="'$mail_provider'"'
+[ -n "$debug" ] && code 'value="'$value'"'
+[ -n "$debug" ] && code 'label="'$label'"'
+[ -n "$debug" ] && code 'colorize="'$colorize'"'
+[ -n "$debug" ] && ____
 
 if [ -z "$name_exists_sure" ];then
     INDENT+="    " \
