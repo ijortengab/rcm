@@ -28,11 +28,8 @@ while [[ $# -gt 0 ]]; do
         --no-confirmation) confirmation=0; shift ;;
         --non-interactive|-x) interactive=0; shift ;;
         --no-timer) timer=0; shift ;;
-        --resolved|-r) resolve_dependencies=0; shift ;;
         --slow|-s) fast=0; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
-        --without-resolve-dependencies) resolve_dependencies=0; shift ;;
-        --with-resolve-dependencies) resolve_dependencies=1; shift ;;
         -[^-]*) _new_arguments+=("$1"); shift ;;
         --)
             while [[ $# -gt 0 ]]; do
@@ -56,12 +53,11 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVxrsv" opt; do
+            while getopts ":hVxsv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
                     x) interactive=0 ;;
-                    r) resolve_dependencies=0 ;;
                     s) fast=0 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
@@ -119,20 +115,15 @@ resolve_relative_path() {
 [ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
-[ -z "$resolve_dependencies" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
 
 # If set in environment, set to variable.
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
-[ -n "$RCM_TABLE_COMMAND_RESOLVED" ] && table_command_resolved="$RCM_TABLE_COMMAND_RESOLVED"
 [ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
-[ -z "$resolve_dependencies" ] && resolve_dependencies=1; [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
 [ -z "$interactive" ] && interactive=1; [ "$interactive" == 0 ] && interactive=
 
 # Verbosity.
@@ -179,10 +170,6 @@ Global Options:
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
         The maximum is 3.
-   --without-resolve-dependencies, --resolved, -r
-        Skip resolve dependenices.
-   --with-resolve-dependencies
-        Resolve dependenices. Default action.
 
 Environment Variables:
    BINARY_DIRECTORY
@@ -349,15 +336,6 @@ Rcm_github_download() {
         fi
     fi
 }
-is_command_resolved() {
-    if [ -z "$resolve_dependencies" ];then
-        return 0
-    fi
-    if grep -q -F "$rcm_extension" <<< "$table_command_resolved";then
-        return 0
-    fi
-    return 1
-}
 if [ -n "$1" ];then
 
     extension="$1"; shift
@@ -371,10 +349,6 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
     [ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
     [ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
-    [ -n "$debug" ] && code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
-    [ -n "$debug" ] && code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
-    [ -n "$debug" ] && code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
-    [ -n "$debug" ] && code 'RCM_TABLE_COMMAND_RESOLVED="'"$RCM_TABLE_COMMAND_RESOLVED"'"'
     [ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
     [ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
     [ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
@@ -384,7 +358,6 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'loud="'$loud'"'
     [ -n "$debug" ] && code 'louder="'$louder'"'
     [ -n "$debug" ] && code 'debug="'$debug'"'
-    [ -n "$debug" ] && code 'resolve_dependencies="'$resolve_dependencies'"'
     [ -n "$debug" ] && code 'log="'$log'"'
     if [ -z "$rcm_version" ];then
         rcm_version=`printVersion`
@@ -394,7 +367,7 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'rcm_version="'$rcm_version'"'
     [ -n "$debug" ] && ____
 
-    rcm_extension_required=(rcm-exec rcm-get rcm-history rcm-install rcm-list rcm-paragraph rcm-plugin rcm-resolve rcm-update)
+    rcm_extension_required=(rcm-exec rcm-get rcm-history rcm-install rcm-list rcm-paragraph rcm-plugin rcm-update)
     for each in "${rcm_extension_required[@]}"; do
         if ! command -v "$each" > /dev/null;then
             Rcm_init $each
@@ -418,52 +391,19 @@ if [ -n "$1" ];then
         extension_version=
     fi
 
-    # Get download information.
-    if command -v "$rcm_extension" > /dev/null;then
-        _help=$($rcm_extension --help 2>/dev/null)
-        _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
-        if [ -n "$_download" ];then
-            while IFS= read -r _line; do
-                if ! grep -q -F -- "$_line" <<< "$table_downloads";then
-                    [ -n "$_line" ] && table_downloads+="$_line"$'\n'
-                fi
-            done <<< "$_download"
-        fi
-    fi
-
     # Boolean export as 0 or 1. Must not leave empty string.
     [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
-    [ -n "$resolve_dependencies" ] && RCM_RESOLVE_DEPENDENCIES=1 || RCM_RESOLVE_DEPENDENCIES=0
     # Other variable, export as is.
-    RCM_TABLE_DOWNLOADS="$table_downloads"
-    RCM_TABLE_DEPENDENCIES="$table_dependencies"
     RCM_LOG="$log"
     RCM_VERSION="$rcm_version"
 
     [ -n "$extension_version" ] && extension_version=":${extension_version}"
-
-    if ! is_command_resolved;then
-        [ -n "$extension_version" ] && extension_version=":${extension_version}"
-        INDENT+="$RCM_INDENT" \
-        BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-        RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-        RCM_VERSION="$RCM_VERSION" \
-        rcm-resolve $isfast $isverbose "${rcm_extension}${extension_version}" \
-            ; [ ! $? -eq 0 ] && x
-        table_command_resolved+="$rcm_extension"$'\n'
-    fi
-    RCM_TABLE_COMMAND_RESOLVED="$table_command_resolved"
 
     [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
 
     INDENT+="$RCM_INDENT" \
     BINARY_DIRECTORY="$BINARY_DIRECTORY" \
     RCM_INTERACTIVE="$RCM_INTERACTIVE" \
-    RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES" \
-    RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-    RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-    RCM_TABLE_COMMAND_RESOLVED="$RCM_TABLE_COMMAND_RESOLVED" \
     RCM_LOG="$RCM_LOG" \
     RCM_VERSION="$RCM_VERSION" \
     rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" \
@@ -500,9 +440,6 @@ exit 0
 # CSV=(
 #     'long:--interactive,parameter:interactive'
 #     'long:--non-interactive,short:-x,parameter:interactive,flag_option:reverse'
-#     'long:--with-resolve-dependencies,parameter:resolve_dependencies'
-#     'long:--without-resolve-dependencies,parameter:resolve_dependencies,flag_option:reverse'
-#     'long:--resolved,short:-r,parameter:resolve_dependencies,flag_option:reverse'
 #     'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
 #     'long:--no-timer,parameter:timer,flag_option:reverse'
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
