@@ -118,7 +118,6 @@ resolve_relative_path() {
 
 # If set in environment, set to variable.
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-[ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
@@ -339,7 +338,7 @@ Rcm_github_download() {
 if [ -n "$1" ];then
 
     extension="$1"; shift
-    rcm_extension="rcm-${extension}"
+    command="rcm-${extension}"
 
     # Title.
     title rcm
@@ -359,15 +358,9 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'louder="'$louder'"'
     [ -n "$debug" ] && code 'debug="'$debug'"'
     [ -n "$debug" ] && code 'log="'$log'"'
-    if [ -z "$rcm_version" ];then
-        rcm_version=`printVersion`
-    elif [[ ! "$rcm_version" == `printVersion` ]];then
-        error RCM Version dari parent process tidak sama dengan current process; x
-    fi
-    [ -n "$debug" ] && code 'rcm_version="'$rcm_version'"'
     [ -n "$debug" ] && ____
 
-    rcm_extension_required=(rcm-exec rcm-get rcm-history rcm-install rcm-list rcm-paragraph rcm-plugin rcm-update)
+    rcm_extension_required=(rcm-get rcm-history rcm-install rcm-list rcm-paragraph rcm-plugin rcm-update)
     for each in "${rcm_extension_required[@]}"; do
         if ! command -v "$each" > /dev/null;then
             Rcm_init $each
@@ -375,39 +368,7 @@ if [ -n "$1" ];then
         fi
     done
 
-    [ -z "$fast" ] && isfast='' || isfast=' --fast'
-    [ -n "$verbose" ] && {
-        isverbose=
-        for ((i = 0 ; i < "$verbose" ; i++)); do
-            isverbose+=' --verbose'
-        done
-    } || isverbose=
-    if [[ "$extension" =~ : ]];then
-        extension_raw="$extension"
-        extension=`cut -d: -f1 <<< "${extension_raw}"`
-        extension_version=`cut -d: -f2 <<< "${extension_raw}"`
-    else
-        extension_raw="$extension"
-        extension_version=
-    fi
-
-    # Boolean export as 0 or 1. Must not leave empty string.
-    [ -n "$interactive" ] && RCM_INTERACTIVE=1 || RCM_INTERACTIVE=0
-    # Other variable, export as is.
-    RCM_LOG="$log"
-    RCM_VERSION="$rcm_version"
-
-    [ -n "$extension_version" ] && extension_version=":${extension_version}"
-
-    [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
-
-    INDENT+="$RCM_INDENT" \
-    BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-    RCM_INTERACTIVE="$RCM_INTERACTIVE" \
-    RCM_LOG="$RCM_LOG" \
-    RCM_VERSION="$RCM_VERSION" \
-    rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" \
-        ; [ ! $? -eq 0 ] && x
+    source /usr/local/rcm/$RCM_VERSION/rcm-exec.sh
 else
     printHelp >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
