@@ -101,16 +101,11 @@ resolve_relative_path() {
 # If set in environment, set to variable.
 [ -n "$RCM_INTERACTIVE" ] && interactive="$RCM_INTERACTIVE"
 [ -n "$RCM_LOG" ] && log="$RCM_LOG"
-[ -n "$RCM_RESOLVE_DEPENDENCIES" ] && resolve_dependencies="$RCM_RESOLVE_DEPENDENCIES"
-[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-[ -n "$RCM_TABLE_DEPENDENCIES" ] && table_dependencies="$RCM_TABLE_DEPENDENCIES"
-[ -n "$RCM_TABLE_COMMAND_RESOLVED" ] && table_command_resolved="$RCM_TABLE_COMMAND_RESOLVED"
 [ -n "$RCM_VERSION" ] && rcm_version="$RCM_VERSION"
 
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
-[ -z "$resolve_dependencies" ] && resolve_dependencies=1; [ "$resolve_dependencies" == 0 ] && resolve_dependencies=
 [ -z "$interactive" ] && interactive=1; [ "$interactive" == 0 ] && interactive=
 
 # Verbosity.
@@ -730,10 +725,6 @@ fi
 [ -n "$debug" ] && code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
 [ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
 [ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
-[ -n "$debug" ] && code 'RCM_RESOLVE_DEPENDENCIES="'$RCM_RESOLVE_DEPENDENCIES'"'
-[ -n "$debug" ] && code 'RCM_TABLE_DOWNLOADS="'"$RCM_TABLE_DOWNLOADS"'"'
-[ -n "$debug" ] && code 'RCM_TABLE_DEPENDENCIES="'"$RCM_TABLE_DEPENDENCIES"'"'
-[ -n "$debug" ] && code 'RCM_TABLE_COMMAND_RESOLVED="'"$RCM_TABLE_COMMAND_RESOLVED"'"'
 [ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
 [ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
 [ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
@@ -743,7 +734,6 @@ fi
 [ -n "$debug" ] && code 'loud="'$loud'"'
 [ -n "$debug" ] && code 'louder="'$louder'"'
 [ -n "$debug" ] && code 'debug="'$debug'"'
-[ -n "$debug" ] && code 'resolve_dependencies="'$resolve_dependencies'"'
 [ -n "$debug" ] && code 'log="'$log'"'
 if [[ ! "$command" =~ ^rcm- ]];then
     error Command is not valid; x
@@ -1738,7 +1728,6 @@ Rcm_prompt_build_command() {
     local _RCM_PROMPT_CHAIN
     wordWrapDescription 'Use command below to return to the last dialog.' 0
     local shortoptions
-    [ -n "$resolve_dependencies" ] && shortoptions+='r'
     [ -z "$interactive" ] && shortoptions+='x'
     [ -z "$fast" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
@@ -1953,18 +1942,13 @@ fi
 # Boolean export as 0 or 1. Must not leave empty string.
 [ -n "$fast" ] && rcm_fast=1 || rcm_fast=0
 [ -n "$interactive" ] && rcm_interactive=1 || rcm_interactive=0
-[ -n "$resolve_dependencies" ] && rcm_resolve_dependencies=1 || rcm_resolve_dependencies=0
 export RCM_FAST="$rcm_fast"
 export RCM_INTERACTIVE="$rcm_interactive"
-export RCM_RESOLVE_DEPENDENCIES="$rcm_resolve_dependencies"
 
 # Other variable, export as is.
 export RCM_VERBOSE="$verbose"
 export RCM_LOG="$log"
 export RCM_VERSION="$rcm_version"
-export RCM_TABLE_DOWNLOADS="$table_downloads"
-export RCM_TABLE_DEPENDENCIES="$table_dependencies"
-export RCM_TABLE_COMMAND_RESOLVED="$table_command_resolved"
 
 backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
 history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
@@ -1980,7 +1964,6 @@ fi
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 shortoptions=
-[ -z "$resolve_dependencies" ] && shortoptions+='r'
 [ -z "$interactive" ] && shortoptions+='x'
 [ -z "$fast" ] && shortoptions+='s'
 [ -z "$fast" ] && isfast='' || isfast=' --fast'
