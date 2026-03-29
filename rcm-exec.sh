@@ -1350,22 +1350,6 @@ Rcm_prompt() {
             subcommand="$value"
         fi
     fi
-    if [ -n "$subcommand" ];then
-        subcommand_substitute=`$command --help 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-        if [ -n "$subcommand_substitute" ];then
-            # Trim.
-            subcommand_substitute=`echo "$subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if grep -E -q "^${subcommand}:\s+" <<< "$subcommand_substitute";then
-                subcommand_substitute=`grep -o -P "^${subcommand}:\s+\K(.*)" <<< "$subcommand_substitute" | tail -1`
-                _; _.
-                wordWrapDescriptionColorize "Subcommand <magenta>${subcommand}</magenta> makes command shift to <yellow>$subcommand_substitute</yellow> automatically." green
-                ____
-
-                echo "$subcommand_substitute"
-                exit 2
-            fi
-        fi
-    fi
 
     if [ -n "$subcommand" ];then
         argument_pass+=("${subcommand}")
