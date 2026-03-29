@@ -455,67 +455,19 @@ if [ -n "$1" ];then
     fi
     RCM_TABLE_COMMAND_RESOLVED="$table_command_resolved"
 
-    subcommand_substitute=
-    if [ -n "$1" ];then
-        first_operand="$1"
-        _subcommand_substitute=`$rcm_extension --help 2>/dev/null | sed -n '/^Subcommand Substitute[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-        if [ -n "$_subcommand_substitute" ];then
-            # Trim.
-            _subcommand_substitute=`echo "$_subcommand_substitute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if grep -E -q "^${first_operand}:\s+" <<< "$_subcommand_substitute";then
-                subcommand_substitute=`grep -o -P "^${first_operand}:\s+\K(.*)" <<< "$_subcommand_substitute" | tail -1`
-                shift
-                chapter Subcommand substitute.
-                _; _, Subcommand ; magenta ' '"$first_operand"' '; _, makes command shift to; yellow ' '"$subcommand_substitute"' '; _, automatically.; _.
-                ____
+    [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
 
-            fi
-        fi
-    fi
-
-    if [ -z "$subcommand_substitute" ];then
-        [ -z "$confirmation" ] && isconfirmation=' --no-confirmation' || isconfirmation=' '
-
-        [ -z "$tempfile" ] && tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
-        INDENT+="$RCM_INDENT" \
-        BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-        RCM_INTERACTIVE="$RCM_INTERACTIVE" \
-        RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES" \
-        RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-        RCM_TABLE_COMMAND_RESOLVED="$RCM_TABLE_COMMAND_RESOLVED" \
-        RCM_LOG="$RCM_LOG" \
-        RCM_VERSION="$RCM_VERSION" \
-        rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" > "$tempfile"
-        rcm_exec_exit_code=$?
-        if [ -s "$tempfile" ];then
-            rcm_exec_stdout=$(<"$tempfile")
-        else
-            rcm_exec_stdout=
-        fi
-        rm "$tempfile"
-        case "$rcm_exec_exit_code" in
-            0) echo "$rcm_exec_stdout" ;;
-            1) x ;;
-            2) subcommand_substitute="$rcm_exec_stdout" ;;
-            *) echo "$rcm_exec_stdout" ;;
-        esac
-    fi
-
-    if [ -n "$subcommand_substitute" ];then
-
-        extension="${subcommand_substitute:4}"
-
-        INDENT+="$RCM_INDENT" \
-        BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-        RCM_INTERACTIVE="$RCM_INTERACTIVE" \
-        RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES" \
-        RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-        RCM_TABLE_COMMAND_RESOLVED="$RCM_TABLE_COMMAND_RESOLVED" \
-        RCM_LOG="$RCM_LOG" \
-        rcm $isfast $isverbose "$extension" "$@"
-    fi
+    INDENT+="$RCM_INDENT" \
+    BINARY_DIRECTORY="$BINARY_DIRECTORY" \
+    RCM_INTERACTIVE="$RCM_INTERACTIVE" \
+    RCM_RESOLVE_DEPENDENCIES="$RCM_RESOLVE_DEPENDENCIES" \
+    RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
+    RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
+    RCM_TABLE_COMMAND_RESOLVED="$RCM_TABLE_COMMAND_RESOLVED" \
+    RCM_LOG="$RCM_LOG" \
+    RCM_VERSION="$RCM_VERSION" \
+    rcm-exec $isfast $isverbose $isconfirmation "${rcm_extension}${extension_version}" "$@" \
+        ; [ ! $? -eq 0 ] && x
 else
     printHelp >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
