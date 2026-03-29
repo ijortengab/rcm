@@ -1,3 +1,8 @@
+source /usr/local/rcm/$RCM_VERSION/functions/array/array-search.sh
+source /usr/local/rcm/$RCM_VERSION/functions/array/array-shift.sh
+source /usr/local/rcm/$RCM_VERSION/functions/array/array-remove.sh
+source /usr/local/rcm/$RCM_VERSION/functions/array/array-remove-all.sh
+
 # Functions.
 wordWrapDescription() {
     local paragraph="$1" indent_first_line=$2 words_array
@@ -559,44 +564,6 @@ printSelectOtherDialog() {
             is_typing=1
         fi
     fi
-}
-ArraySearch() {
-    local index match="$1"
-    local source=("${!2}")
-    for index in "${!source[@]}"; do
-       if [[ "${source[$index]}" == "${match}" ]]; then
-           _return=$index; return 0
-       fi
-    done
-    return 1
-}
-ArrayShift() {
-    local index
-    local source=("${!1}")
-    _return=()
-    for (( index=1; index < ${#source[@]} ; index++ )); do
-        _return+=("${source[$index]}")
-    done
-}
-ArrayRemove() {
-    local index match="$1"
-    _return=("${!2}")
-    for index in "${!_return[@]}"; do
-       if [[ "${_return[$index]}" == "${match}" ]]; then
-            _return=("${_return[@]:0:$index}" "${_return[@]:$(($index + 1))}")
-           break
-       fi
-    done
-}
-ArrayRemoveAll() {
-    local index match="$1"
-    local source=("${!2}")
-    _return=()
-    for index in "${!source[@]}"; do
-       if [[ ! "${source[$index]}" == "${match}" ]]; then
-           _return+=("${source[$index]}")
-       fi
-    done
 }
 wordWrapCommand() {
     # global words_array RCM_INDENT
