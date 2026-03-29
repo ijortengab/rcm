@@ -155,82 +155,6 @@ EOF
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions.
-ArrayDiff() {
-    # Computes the difference of arrays.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the array to compare from.
-    #   2 = Parameter of the array to compare against.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   yours=("cherry" "blackberry")
-    #   ArrayDiff my[@] yours[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("manggo" "manggo")
-    #   ```
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
-ArrayUnique() {
-    # Removes duplicate values from an array.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the input array.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   ArrayUnique my[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("cherry" "manggo" "blackberry")
-    #   ```
-    local e source=("${!1}")
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    _return=()
-    for e in "${source[@]}";do
-        if ! inArray "$e" "${_return[@]}";then
-            _return+=("$e")
-        fi
-    done
-}
 wordWrapDescription() {
     local paragraph="$1" indent_first_line=$2 words_array
     local current_line first_line last
@@ -395,16 +319,6 @@ wordWrapDescriptionColorize() {
     }
     temp=$(wordWrapSentence 2>&1)
     echo "$temp" >&2
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
 }
 userInputBooleanDefaultYes() {
     _; _.
@@ -802,129 +716,6 @@ printSelectOtherDialog() {
         fi
     fi
 }
-sleepExtended() {
-    # Menggunakan global variable countdown agar sleep ini dapat di-interupsi.
-    # Contoh:
-    # ```
-    # immediately() {
-    #     countdown=0
-    # }
-    # trap immediately SIGINT
-    # sleepExtended 30
-    # trap x SIGINT
-    # ```
-    local timer=$1
-    local width=$2
-    if [ -z "$width" ];then
-        width=80
-    fi
-    if [ "$timer" -gt 0 ];then
-        dikali10=$((timer*10))
-        countdown=$dikali10
-        _dotLength=$(( ( width * countdown ) / dikali10 ))
-        printf "\r\033[K" >&2
-        e; printf %"$_dotLength"s | tr " " "." >&2
-        printf "\r" >&2
-        while [ "$countdown" -ge 0 ]; do
-            dotLength=$(( ( width * countdown ) / dikali10 ))
-            if [[ ! "$dotLength" == "$_dotLength" ]];then
-                _dotLength="$dotLength"
-                printf "\r\033[K" >&2
-                e; printf %"$dotLength"s | tr " " "." >&2
-                printf "\r" >&2
-            fi
-            countdown=$((countdown - 1))
-            sleep .1
-        done
-    fi
-}
-immediately() {
-    countdown=0
-}
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-Rcm_parse_url() {
-    # Reset
-    PHP_URL_SCHEME=
-    PHP_URL_HOST=
-    PHP_URL_PORT=
-    PHP_URL_USER=
-    PHP_URL_PASS=
-    PHP_URL_PATH=
-    PHP_URL_QUERY=
-    PHP_URL_FRAGMENT=
-    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
-    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
-    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
-    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
-    fi
-    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
-    fi
-    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
-    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
-    if [ -n "$PHP_URL_PASS" ]; then
-        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
-    else
-        PHP_URL_USER=$_PHP_URL_USER_PASS
-    fi
-    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
-    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
-    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
-        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-    fi
-    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
-    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
-    if [ -n "$_PHP_URL_USER_PASS" ];then
-        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
-        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
-    fi
-    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
-
-    # Debug
-    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"
-    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"
-    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"
-    # e '"$PHP_URL_USER"' "$PHP_URL_USER"
-    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"
-    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"
-    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"
-    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"
-}
 
 # Title.
 title rcm-exec
@@ -964,10 +755,6 @@ extension="${command:4}"
 
 [ -n "$debug" ] && ____
 
-# Title.
-# title rcm-exec
-# ____
-
 # Functions.
 # https://github.com/ijortengab/bash/tree/master/functions
 ArraySearch() {
@@ -979,82 +766,6 @@ ArraySearch() {
        fi
     done
     return 1
-}
-ArrayDiff() {
-    # Computes the difference of arrays.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the array to compare from.
-    #   2 = Parameter of the array to compare against.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   yours=("cherry" "blackberry")
-    #   ArrayDiff my[@] yours[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("manggo" "manggo")
-    #   ```
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
-ArrayUnique() {
-    # Removes duplicate values from an array.
-    #
-    # Globals:
-    #   Modified: _return
-    #
-    # Arguments:
-    #   1 = Parameter of the input array.
-    #
-    # Returns:
-    #   None
-    #
-    # Example:
-    #   ```
-    #   my=("cherry" "manggo" "blackberry" "manggo" "blackberry")
-    #   ArrayUnique my[@]
-    #   # Get result in variable `$_return`.
-    #   # _return=("cherry" "manggo" "blackberry")
-    #   ```
-    local e source=("${!1}")
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    _return=()
-    for e in "${source[@]}";do
-        if ! inArray "$e" "${_return[@]}";then
-            _return+=("$e")
-        fi
-    done
 }
 ArrayShift() {
     local index
