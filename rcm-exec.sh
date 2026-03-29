@@ -1233,15 +1233,6 @@ wordWrapList() {
         fi
     done
 }
-is_command_resolved() {
-    if [ -z "$resolve_dependencies" ];then
-        return 0
-    fi
-    if grep -q -F "$rcm_extension" <<< "$table_command_resolved";then
-        return 0
-    fi
-    return 1
-}
 Rcm_prompt() {
     # global subcommand
     local first_operand
