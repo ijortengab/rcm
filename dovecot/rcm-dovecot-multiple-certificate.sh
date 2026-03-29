@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Common Functions.
+printVersion() {
+    echo '0.18.0-alpha.6'
+}
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 yellow() { echo -ne "\e[93m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -50,9 +53,6 @@ DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovecot.conf}
 
 # Functions.
-printVersion() {
-    echo '0.18.0-alpha.6'
-}
 printHelp() {
     title RCM Dovecot Multiple Certificate
     _ 'Variation '; yellow ISPConfig; _, . ; _.

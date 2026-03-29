@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Common Functions.
+printVersion() {
+    echo '0.18.0-alpha.6'
+}
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 yellow() { echo -ne "\e[93m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -49,9 +52,6 @@ SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
 RCM_CONF=${RCM_CONF:=rcm.conf}
 
 # Functions.
-printVersion() {
-    echo '0.18.0-alpha.6'
-}
 printHelp() {
     title RCM SSH Setup
     _ 'Variation '; yellow SSHD Listen Port; _.

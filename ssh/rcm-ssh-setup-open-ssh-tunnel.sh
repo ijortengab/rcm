@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Common Functions.
+printVersion() {
+    echo '0.18.0-alpha.6'
+}
 red() { echo -ne "\e[91m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 green() { echo -ne "\e[92m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
 yellow() { echo -ne "\e[93m" >&2; echo -n "$@" >&2; echo -ne "\e[39m" >&2; }
@@ -46,9 +49,6 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 
 # Functions.
-printVersion() {
-    echo '0.18.0-alpha.6'
-}
 printHelp() {
     title RCM SSH Setup
     _ 'Variation '; yellow Open SSH Tunnel; _.
