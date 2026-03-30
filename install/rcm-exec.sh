@@ -715,7 +715,6 @@ wordWrapList() {
     done
 }
 Rcm_prompt() {
-    # global subcommand
     local first_operand
     local value
     local command="$1"
@@ -723,7 +722,6 @@ Rcm_prompt() {
     local load_other_options=
     local immediately_other_options=
     local argument_preview_bypass=
-    local available_subcommands
     argument_pass=()
     argument_preview=()
     argument_preview_real=()
@@ -756,97 +754,11 @@ Rcm_prompt() {
         ____
     fi
 
-    parameter='subcommand'
-    available_subcommands=()
-    _available_subcommands=`$command --help 2>/dev/null | sed -n -E 's/^Available subcommands?: ([^\.]+)\.$/\1/p' | head -1`
-    if [ -n "$_available_subcommands" ];then
-        available_subcommands=(`echo $_available_subcommands | tr ',' ' '`)
-    fi
-    _available_subcommands_from_command=`$command --help 2>/dev/null | grep -i -o -E '^Available subcommands? from command:\s*[^\(]+\((\)|[^\)]+\))\.$'`
-
-    # Memulai subcommand.
-    for first_operand in "${argument_operand_prepopulate[@]}";do
-        ArrayShift argument_operand_prepopulate[@]
-        break
-    done
-    if [ -n "$first_operand" ];then
-        chapter Prepare argument for command '`'$command'`'.
-        chapter_printed=1
-        _; _.
-        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$first_operand</yellow>." green
-        argument_operand_prepopulate=("${_return[@]}")
-        unset _return
-        subcommand="$first_operand"
-    else
-        if [ -n "$_available_subcommands_from_command" ];then
-            chapter Prepare argument for command '`'$command'`'.
-            _; _.
-            chapter_printed=1
-            _command_arguments=$(echo "$_available_subcommands_from_command" | sed -n -E 's/^Available subcommands? from command:\s*([^\)]+\))\.$/\1/p')
-            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-            wordWrapDescriptionColorize "Subcommand available from command: <magenta>${_command}${_arguments}</magenta>"
-            if command -v "$_command" > /dev/null;then
-                mktemp=$(mktemp -p /dev/shm)
-                ${_command}${_arguments} > "$mktemp"
-                while read line;do
-                    [ -n "$line" ] && available_subcommands+=("$line")
-                done < "$mktemp"
-                rm "$mktemp"
-            fi
-        fi
-        if [ -z "$chapter_printed" ];then
-            chapter Prepare argument for command '`'$command'`'.
-            chapter_printed=1
-        fi
-        if [ "${#available_subcommands[@]}" -gt 0 ];then
-            what=subcommand
-            if [ "${#available_subcommands[@]}" -gt 1 ];then
-                what=subcommands
-            fi
-            if [[ "${#available_subcommands[@]}" -eq 1 ]];then
-                value="${available_subcommands[0]}"
-                _; _.
-                __; _, "Available ${what}: "; yellow "$value";  _, '.'; _.
-                if [ -n "$interactive" ];then
-                    _; _.
-                    wordWrapDescription 'The one and only available value is selected.'
-                    userInputBooleanDefaultYes
-                    if [ -z "$boolean" ];then
-                        value=' '
-                    fi
-                else
-                    _; _.
-                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
-                fi
-            else
-                printSelectDialog available_subcommands[@] "$what"
-            fi
-            if [[ "$value" == ' ' ]];then
-                value=
-            fi
-        fi
-        if [ -n "$value" ];then
-            subcommand="$value"
-        fi
-    fi
-
-    if [ -n "$subcommand" ];then
-        argument_pass+=("${subcommand}")
-        argument_preview+=("${subcommand}")
-        argument_preview_real+=("${subcommand}")
-    fi
-
     # Mulai eksekusi event pre prompt.
     Rcm_event_dispatcher 'Pre Prompt'
 
     # Populate options.
-    if [ -n "$subcommand" ];then
-        options=`$command $subcommand --help 2>/dev/null | sed -n '/^Options for command '$subcommand'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    else
-        options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    fi
+    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
 
     if [ -n "$options" ];then
         until [[ -z "$options" ]];do
@@ -1471,11 +1383,7 @@ Rcm_prompt() {
             fi
             # Other options.
             if [[ -z "$options" && -z "$load_other_options" ]];then
-                if [ -n "$subcommand" ];then
-                    other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions for command '$subcommand'.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-                else
-                    other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-                fi
+                other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1
@@ -1727,11 +1635,7 @@ trap Rcm_prompt_sigint SIGINT
 Rcm_prompt $command
 trap x SIGINT
 
-if [ -n "$subcommand" ];then
-    Rcm_event_dispatcher 'Post Prompt for command '$subcommand
-else
-    Rcm_event_dispatcher 'Post Prompt'
-fi
+Rcm_event_dispatcher 'Post Prompt'
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 shortoptions=
