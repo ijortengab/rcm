@@ -10,10 +10,7 @@
 #
 
 # Common Functions.
-printVersion() {
-    echo '0.18.0-alpha.6'
-}
-RCM_VERSION=`printVersion`
+RCM_VERSION='0.18.0-alpha.6'
 
 source /usr/local/rcm/$RCM_VERSION/functions/common/echo.sh
 
@@ -146,7 +143,7 @@ BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 # Functions. Help and Version.
 printHelp() {
     title Rapid Construct Massive
-    _ 'Version '; yellow `printVersion`; _.
+    _ 'Version '; yellow $RCM_VERSION; _.
     _ 'URL '; yellow git.io/rcm; _.
     _.
 cat << EOF
@@ -178,163 +175,8 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { echo $RCM_VERSION; exit 1; }
 
-# Functions.
-Rcm_wget() {
-    # Global, untuk debug.
-    local http_request line cache_file_basename
-    local start end runtime line_number
-    http_request=
-    local expired="$1"
-    local url="$2"
-    local table=$HOME/.cache/rcm/rcm.table.cache
-    local cache_file=
-    if [ -f "$table" ];then
-        line=$(grep -n -F "$url"' ' "$table")
-        if [ -z "$line" ];then
-            http_request=1
-        else
-            cache_file_basename=$(cut -d' ' -f2 <<< "$line")
-            cache_file=$HOME/.cache/rcm/"$cache_file_basename"
-        fi
-    else
-        http_request=1
-    fi
-    local do_delete_record_cache_file=
-    if [ -n "$cache_file" ];then
-        if [ -f "$cache_file" ];then
-            start=`date -r "$cache_file" +'%s'`
-            end=`date +%s`
-            runtime=$((end-start))
-            if [ $runtime -gt $expired ];then
-                do_delete_record_cache_file=1
-            fi
-        else
-            do_delete_record_cache_file=1
-        fi
-    fi
-    if [ -n "$do_delete_record_cache_file" ];then
-        line_number=$(cut -d':' -f1 <<< "$line")
-        sed -i $line_number'd' "$table"
-        http_request=1
-        if [ -f "$cache_file" ];then
-            rm "$cache_file"
-        fi
-        cache_file=
-    fi
-    if [ -n "$http_request" ];then
-        mkdir -p $HOME/.cache/rcm
-        cache_file=$(mktemp --tmpdir=$HOME/.cache/rcm rcm.wget.XXXXXXXXXXXX.cache)
-        cache_file_basename=$(basename "$cache_file")
-        # echo wget -q -O "$cache_file" "$url"
-        wget -q -O "$cache_file" "$url"
-        touch "$cache_file" # wajib karena wget mengubah modified sesuai http header response.
-        mkdir -p $(dirname "$table")
-        echo "$url" "$cache_file_basename" >> "$table"
-    fi
-    if [ ! -f "$cache_file" ];then
-        exit 1
-    fi
-    cat "$cache_file"
-}
-
-# Functions.
-Rcm_init() {
-    # global display_waiting
-    local owner repository tag_name rcm_extension
-    owner=ijortengab
-    repository=rcm
-    tag_name=`printVersion`
-    rcm_extension=$1
-    local cache_directory="${HOME}/.cache/rcm/${owner}/${repository}/${tag_name}"
-    Rcm_github_download "$owner" "$repository" "$tag_name" "$cache_directory"
-    local source="${cache_directory}/${rcm_extension}.sh"
-    if [ ! -f "$source" ];then
-        error File is not found: "$source".; x
-    fi
-    local target="${BINARY_DIRECTORY}/${rcm_extension}"
-    if [ -f "$target" ];then
-        backupFile move "$target"
-    fi
-    if [ -z "$display_waiting" ];then
-        code cp "$source" "$target"
-    fi
-    cp "$source" "$target"
-    if [ -z "$display_waiting" ];then
-        _ 'Success install '; magenta "$rcm_extension"; _, ' version: '; yellow "$tag_name"; _.
-    fi
-}
-Rcm_github_download() {
-    [[ $(type -t Rcm_wget) == function ]] || { error Function Rcm_wget not found.; x; }
-    # global display_waiting
-    local owner=$1 repository=$2 tag_name=$3 output_dir=$4
-    if [ -z "$owner" ];then
-        error "Operand <owner> required."; x
-    fi
-    if [ -z "$repository" ];then
-        error "Operand <repository> required."; x
-    fi
-    if [ -z "$tag_name" ];then
-        error "Operand <tag_name> required."; x
-    fi
-    if [ -z "$output_dir" ];then
-        error "Operand <output_dir> required."; x
-    fi
-    local url="https://api.github.com/repos/${owner}/${repository}/releases/tags/${tag_name}"
-    local tag_name_validate=$(Rcm_wget 3600 "$url" | grep '^  "tag_name": ".*",$' | sed -E 's/  "tag_name": "(.*)",/\1/')
-    if [ -z "$tag_name_validate" ];then
-        if [ -n "$display_waiting" ];then
-            printf "\r\033[K" >&2
-        fi
-        error "The repository does not have that release tag: ${tag_name}."
-        if [ -n "$display_waiting" ];then
-            kill -SIGTERM $$
-        fi
-        # Pastikan exit.
-        x
-    fi
-    if [ -z "$display_waiting" ];then
-        _ "Download Github repository ${owner}/${repository}."; _.
-    fi
-    local tempdir found_directory_extracted cache_directory url_tarball output_dir_parent
-    url_tarball="https://api.github.com/repos/${owner}/${repository}/tarball/${tag_name}"
-    if [ ! -d "$output_dir" ];then
-        if [ -z "$display_waiting" ];then
-            _ 'Downloading version: '; yellow "$tag_name"; _.
-        fi
-        tempdir=$(mktemp -d)
-        cd "$tempdir"
-        wget -q -O "${tag_name}.tar.gz" "$url_tarball"
-        if [ ! -f "${tag_name}.tar.gz" ];then
-            error Failed to download file: "${tag_name}.tar.gz".
-            cd - >/dev/null
-            rm -rf "$tempdir"
-            x
-        fi
-        tar xfz "${tag_name}.tar.gz"
-        found_directory_extracted=$(find -maxdepth 1 -mindepth 1 -type d)
-        if [ ! -d "$found_directory_extracted" ];then
-            error Failed to extract archieve: "${tag_name}.tar.gz".;
-            cd - >/dev/null
-            rm -rf "$tempdir"
-            x
-        fi
-        output_dir_parent="$(dirname "$output_dir")"
-        mkdir -p "$output_dir_parent"
-        if [ ! -d "$output_dir_parent" ];then
-            error Failed to create output directory parent: "$output_dir_parent".;
-        fi
-        mv $(realpath "$found_directory_extracted") "$output_dir"
-        # Cleaning.
-        cd - >/dev/null
-        rm -rf "$tempdir"
-    else
-        if [ -z "$display_waiting" ];then
-            _ 'Using downloaded version: '; yellow "$tag_name"; _.
-        fi
-    fi
-}
 if [ -n "$1" ];then
 
     extension="$1"; shift
@@ -359,14 +201,6 @@ if [ -n "$1" ];then
     [ -n "$debug" ] && code 'debug="'$debug'"'
     [ -n "$debug" ] && code 'log="'$log'"'
     [ -n "$debug" ] && ____
-
-    rcm_extension_required=(rcm-get rcm-history rcm-install rcm-list rcm-paragraph rcm-plugin rcm-update)
-    for each in "${rcm_extension_required[@]}"; do
-        if ! command -v "$each" > /dev/null;then
-            Rcm_init $each
-            ____
-        fi
-    done
 
     source /usr/local/rcm/$RCM_VERSION/rcm-exec.sh
 else
