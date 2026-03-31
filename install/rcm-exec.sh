@@ -724,7 +724,6 @@ Rcm_prompt() {
     local argument_preview_bypass=
     argument_pass=()
     argument_preview=()
-    argument_preview_real=()
     argument_placeholders=
 
     mapping_operand=`$command --help 2>/dev/null | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
@@ -1063,18 +1062,15 @@ Rcm_prompt() {
                             argument_pass+=("${parameter}=${value}")
                             [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                             argument_preview+=("${parameter}=${_value}")
-                            argument_preview_real+=("${parameter}=${_value}")
                         else
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
                         fi
                     else
                         i=1
                         until [[ $i -gt $flags ]];do
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
                             let i++
                         done
                     fi
@@ -1128,7 +1124,6 @@ Rcm_prompt() {
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
                         argument_preview+=("${parameter} ${value}")
-                        argument_preview_real+=("${parameter} ${value}")
                     fi
                 fi
             else
@@ -1243,7 +1238,6 @@ Rcm_prompt() {
                         argument_pass+=("${parameter}=${value}")
                         [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                         argument_preview+=("${parameter}=${_value}")
-                        argument_preview_real+=("${parameter}=${_value}")
                         if [ "${#available_values[@]}" -gt 0 ];then
                             ArrayRemove "$value" available_values[@]
                             available_values=("${_return[@]}")
@@ -1321,7 +1315,6 @@ Rcm_prompt() {
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
                             is_flagged=1
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
@@ -1339,7 +1332,6 @@ Rcm_prompt() {
                             if [ -n "$value" ];then
                                 argument_pass+=("${value}")
                                 argument_preview+=("${value}")
-                                argument_preview_real+=("${value}")
                             fi
                         else
                             Rcm_get_list_values "$value_before"
@@ -1351,7 +1343,6 @@ Rcm_prompt() {
                                 argument_pass+=("${parameter}=${value}")
                                 [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                                 argument_preview+=("${parameter}=${_value}")
-                                argument_preview_real+=("${parameter}=${_value}")
                             fi
                         fi
                         # Backup to text file.
@@ -1694,34 +1685,6 @@ else
     words_array=($_rcm_prompt_chain)
 fi
 
-wordWrapCommand
-____
-
-chapter The real command has been built.
-_argument_after_doubledash=()
-if [ "${#argument_after_doubledash[@]}" -gt 0 ];then
-    for each in "${argument_after_doubledash[@]}"; do
-        # Credit: https://devhints.io/bash
-        _argument="${each%%=*}"
-        _value="${each#$_argument=}"
-        [[ "$_argument" == "$_value" ]] && is_flag=1 ||  is_flag=
-        if [ -n "$is_flag" ];then
-            _argument_after_doubledash+=" ${each}"
-        else
-            [[ "$_value" =~ ' ' ]] && _value="'$_value'"
-            _argument_after_doubledash+=" ${_argument}=${_value}"
-        fi
-    done
-fi
-
-if [[ "${#argument_preview_real[@]}" -gt 0 ]];then
-    set -- "${argument_preview_real[@]}" "${_argument_after_doubledash[@]}"
-else
-    set -- "${_argument_after_doubledash[@]}"
-fi
-# Hanya --fast dan --verbose yang juga dioper ke command sebagai option.
-# Selebihnya dioper sebagai export VARIABLES.
-words_array=(${RCM_ENVIRONMENT_VARIABLES} ${command} ${isfast} ${isverbose} $@)
 wordWrapCommand
 ____
 
