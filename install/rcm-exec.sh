@@ -1558,13 +1558,6 @@ Rcm_event_dispatcher() {
 }
 
 # Requirement, validate, and populate value.
-if [ ! -d "$BINARY_DIRECTORY" ];then
-    mkdir -p "$BINARY_DIRECTORY"
-    if [ ! -d "$BINARY_DIRECTORY" ];then
-        error Direktori '`'$BINARY_DIRECTORY'`' tidak ditemukan.; x
-    fi
-fi
-PATH="${BINARY_DIRECTORY}:${PATH}"
 _help=$("$command" --help 2>/dev/null)
 rcm_config_no_confirmation=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-confirmation')
 if [ -n "$rcm_config_no_confirmation" ];then
@@ -1719,7 +1712,7 @@ if [[ "${#argument_pass[@]}" -gt 0 ]];then
 else
     set -- "${argument_after_doubledash[@]}"
 fi
-INDENT+="$RCM_INDENT" BINARY_DIRECTORY="$BINARY_DIRECTORY" $command $isfast $isverbose "$@"
+INDENT+="$RCM_INDENT" $command $isfast $isverbose "$@"
 
 if [ -n "$timer" ];then
     chapter Timer Finish.
