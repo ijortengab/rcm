@@ -90,24 +90,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 unset _n
 
-# Define variables and constants.
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
-
-# Functions.
-resolve_relative_path() {
-    if [ -d "$1" ];then
-        cd "$1" || return 1
-        pwd
-    elif [ -e "$1" ];then
-        if [ ! "${1%/*}" = "$1" ]; then
-            cd "${1%/*}" || return 1
-        fi
-        echo "$(pwd)/${1##*/}"
-    else
-        return 1
-    fi
-}
-
 # If not set in argument, try load from environment.
 [ -z "$fast" ] && fast="$RCM_FAST"
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
@@ -134,11 +116,6 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 [ -z "$log" ] && log=rcm.log
 tempfile=
-__FILE__=$(resolve_relative_path "$0")
-__DIR__=$(dirname "$__FILE__")
-find='[__DIR__]'
-replace="$__DIR__"
-BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 
 # Functions. Help and Version.
 printHelp() {
@@ -166,10 +143,6 @@ Global Options:
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
         The maximum is 3.
-
-Environment Variables:
-   BINARY_DIRECTORY
-        Default to $BINARY_DIRECTORY
 EOF
 }
 
@@ -187,7 +160,6 @@ if [ -n "$1" ];then
     ____
 
     [ -n "$debug" ] && chapter Dump variable.
-    [ -n "$debug" ] && code 'BINARY_DIRECTORY="'$BINARY_DIRECTORY'"'
     [ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
     [ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
     [ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
