@@ -87,29 +87,32 @@ unset _n
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 
-# If set in environment, set to variable.
-[ -n "$RCM_LOG" ] && log="$RCM_LOG"
-
 # Boolean default to TRUE.
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
 [ -z "$interactive" ] && interactive=1; [ "$interactive" == 0 ] && interactive=
 
+# Copy to RCM variable then unset.
+RCM_TIMER="$timer"; unset timer
+
 # Verbosity.
-quiet=; loud=; louder=; debug=;
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && RCM_QUIET=1 || RCM_QUIET=
+[[ "$verbose" -gt 0 ]] && RCM_LOUD=1
+[[ "$verbose" -gt 1 ]] && RCM_LOUD=1 && RCM_LOUDER=1
+[[ "$verbose" -gt 2 ]] && RCM_LOUD=1 && RCM_LOUDER=1 && RCM_DEBUG=1
 
 # Define variables and constants.
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-[ -z "$log" ] && log=rcm.log
+[ -z "$RCM_LOG" ] && RCM_LOG=rcm.log
 tempfile=
 
 # Functions. Help and Version.
+printVersion() {
+    echo $RCM_VERSION
+}
 printHelp() {
     title Rapid Construct Massive
     _ 'Version '; yellow $RCM_VERSION; _.
@@ -140,7 +143,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
-[ -n "$version" ] && { echo $RCM_VERSION; exit 1; }
+[ -n "$version" ] && { printVersion; exit 1; }
 
 if [ -z "$1" ];then
     printHelp >/dev/null | head -3
@@ -154,21 +157,6 @@ command="rcm-${extension}"
 # Title.
 title rcm
 ____
-
-[ -n "$debug" ] && chapter Dump variable.
-[ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
-[ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
-[ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
-[ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
-[ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
-[ -n "$debug" ] && code 'interactive="'$interactive'"'
-[ -n "$debug" ] && code 'verbose="'$verbose'"'
-[ -n "$debug" ] && code 'quiet="'$quiet'"'
-[ -n "$debug" ] && code 'loud="'$loud'"'
-[ -n "$debug" ] && code 'louder="'$louder'"'
-[ -n "$debug" ] && code 'debug="'$debug'"'
-[ -n "$debug" ] && code 'log="'$log'"'
-[ -n "$debug" ] && ____
 
 # Functions.
 wordWrapDescription() {
@@ -1005,7 +993,7 @@ Rcm_prompt() {
             _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
             _available_values_from_command_executed=
             if [ -n "$_available_values_from_command" ];then
-                description=`echo "$description" | sed -E 's/ *Values? available from command: ([^\.]+)\.//i'`
+                description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
             fi
             or_other=
             if [ -n "$_available_values" ];then
@@ -1861,21 +1849,16 @@ if [ -n "$confirmation" ];then
     fi
     ____
 
-else
-    chapter The real command is execute.
-    _ Direct to '`'${command}'`' command.; _.
-    ____
-
 fi
 
 rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-timer')
 if [ -n "$rcm_config_no_timer" ];then
-    timer=
+    RCM_TIMER=
 fi
-if [ -n "$timer" ];then
+if [ -n "$RCM_TIMER" ];then
     chapter Timer Start.
     _ Begin: $(date +%Y%m%d-%H%M%S); _.
-    Rcm_BEGIN=$SECONDS
+    RCM_BEGIN=$SECONDS
     ____
 fi
 
@@ -1886,11 +1869,11 @@ else
 fi
 INDENT+="$RCM_INDENT" $command $isfast $isverbose "$@"
 
-if [ -n "$timer" ];then
+if [ -n "$RCM_TIMER" ];then
     chapter Timer Finish.
     _ End: $(date +%Y%m%d-%H%M%S); _.
-    Rcm_END=$SECONDS
-    duration=$(( Rcm_END - Rcm_BEGIN ))
+    RCM_END=$SECONDS
+    duration=$(( RCM_END - RCM_BEGIN ))
     hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
     runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
     _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
