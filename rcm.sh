@@ -150,35 +150,35 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { echo $RCM_VERSION; exit 1; }
 
-if [ -n "$1" ];then
-
-    extension="$1"; shift
-    command="rcm-${extension}"
-
-    # Title.
-    title rcm
-    ____
-
-    [ -n "$debug" ] && chapter Dump variable.
-    [ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
-    [ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
-    [ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
-    [ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
-    [ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
-    [ -n "$debug" ] && code 'interactive="'$interactive'"'
-    [ -n "$debug" ] && code 'verbose="'$verbose'"'
-    [ -n "$debug" ] && code 'quiet="'$quiet'"'
-    [ -n "$debug" ] && code 'loud="'$loud'"'
-    [ -n "$debug" ] && code 'louder="'$louder'"'
-    [ -n "$debug" ] && code 'debug="'$debug'"'
-    [ -n "$debug" ] && code 'log="'$log'"'
-    [ -n "$debug" ] && ____
-
-    source /usr/local/rcm/$RCM_VERSION/rcm-exec.sh
-else
+if [ -z "$1" ];then
     printHelp >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
+    exit 0
 fi
+
+extension="$1"; shift
+command="rcm-${extension}"
+
+# Title.
+title rcm
+____
+
+[ -n "$debug" ] && chapter Dump variable.
+[ -n "$debug" ] && code 'RCM_INTERACTIVE="'$RCM_INTERACTIVE'"'
+[ -n "$debug" ] && code 'RCM_VERBOSE="'$RCM_VERBOSE'"'
+[ -n "$debug" ] && code 'RCM_FAST="'$RCM_FAST'"'
+[ -n "$debug" ] && code 'RCM_LOG="'$RCM_LOG'"'
+[ -n "$debug" ] && code 'RCM_VERSION="'$RCM_VERSION'"'
+[ -n "$debug" ] && code 'interactive="'$interactive'"'
+[ -n "$debug" ] && code 'verbose="'$verbose'"'
+[ -n "$debug" ] && code 'quiet="'$quiet'"'
+[ -n "$debug" ] && code 'loud="'$loud'"'
+[ -n "$debug" ] && code 'louder="'$louder'"'
+[ -n "$debug" ] && code 'debug="'$debug'"'
+[ -n "$debug" ] && code 'log="'$log'"'
+[ -n "$debug" ] && ____
+
+source /usr/local/rcm/$RCM_VERSION/rcm-exec.sh
 
 exit 0
 
