@@ -1037,16 +1037,21 @@ Rcm_prompt() {
                 prepopulate_value="${!_prepopulate_value}"
             fi
             if [ -n "$placeholders" ];then
-                while read line; do
-                    find=$(echo ${line} | cut -d: -f1 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    replace=$(echo ${line} | cut -d: -f2 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    if [ -n "$_available_values" ];then
-                        _available_values="${_available_values/"$find"/"$replace"}"
+                _available_values=(`echo "$_available_values" | tr ',' ' '`)
+                available_values=()
+                for each in "${_available_values[@]}"; do
+                    if grep -q -F "${each}: " <<< "$placeholders";then
+                        line=`grep -F "${each}: " <<< "$placeholders"`
+                        replace=$(echo ${line} | cut -d: -f2 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        available_values+=("$replace")
+                    else
+                        available_values+=("$each")
                     fi
-                done <<< "$placeholders"
-            fi
-            if [ -n "$_available_values" ];then
-                available_values=(`echo $_available_values | tr ',' ' '`)
+                done
+            else
+                if [ -n "$_available_values" ];then
+                    available_values=(`echo "$_available_values" | tr ',' ' '`)
+                fi
             fi
             _; _.
             if [ -n "$_available_values_from_command" ];then
