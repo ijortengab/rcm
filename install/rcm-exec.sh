@@ -13,9 +13,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
-        --interactive) interactive=1; shift ;;
+        --interactive|-i) interactive=1; shift ;;
         --no-confirmation) confirmation=0; shift ;;
-        --non-interactive|-x) interactive=0; shift ;;
+        --non-interactive) interactive=0; shift ;;
         --no-timer) timer=0; shift ;;
         --slow|-s) fast=0; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
@@ -42,11 +42,11 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVxsv" opt; do
+            while getopts ":hVisv" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
-                    x) interactive=0 ;;
+                    i) interactive=1 ;;
                     s) fast=0 ;;
                     v) verbose="$((verbose+1))" ;;
                 esac
@@ -91,7 +91,6 @@ unset _n
 [ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
-[ -z "$interactive" ] && interactive=1; [ "$interactive" == 0 ] && interactive=
 
 # Copy to RCM variable then unset.
 RCM_TIMER="$timer"; unset timer
@@ -130,10 +129,10 @@ Global Options:
         Show this help.
    --slow, -s
         Add delay every subtask.
-   --interactive
-        Show asking for confirmation if needed. Default action.
-   --non-interactive, -x
-        Run without ever asking for user input.
+   --interactive, -i
+        Show asking for confirmation if needed.
+   --non-interactive
+        Run without ever asking for user input. Default action.
    --verbose, -v
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
@@ -1567,7 +1566,7 @@ Rcm_prompt_build_command() {
     local _RCM_PROMPT_CHAIN
     wordWrapDescription 'Use command below to return to the last dialog.' 0
     local shortoptions
-    [ -z "$interactive" ] && shortoptions+='x'
+    [ -n "$interactive" ] && shortoptions+='i'
     [ -z "$fast" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
@@ -1783,7 +1782,7 @@ Rcm_event_dispatcher 'Post Prompt'
 [ -f "$backup_storage" ] && rm "$backup_storage"
 
 shortoptions=
-[ -z "$interactive" ] && shortoptions+='x'
+[ -n "$interactive" ] && shortoptions+='i'
 [ -z "$fast" ] && shortoptions+='s'
 [ -z "$fast" ] && isfast='' || isfast=' --fast'
 [ -n "$verbose" ] && {
@@ -1905,8 +1904,8 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
-#     'long:--interactive,parameter:interactive'
-#     'long:--non-interactive,short:-x,parameter:interactive,flag_option:reverse'
+#     'long:--interactive,short:-i,parameter:interactive'
+#     'long:--non-interactive,parameter:interactive,flag_option:reverse'
 #     'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
 #     'long:--no-timer,parameter:timer,flag_option:reverse'
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
