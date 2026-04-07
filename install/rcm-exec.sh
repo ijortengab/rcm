@@ -19,6 +19,7 @@ while [[ $# -gt 0 ]]; do
         --no-timer) timer=0; shift ;;
         --slow|-s) fast=0; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
+        --yes|-y) autoyes=1; shift ;;
         -[^-]*) _new_arguments+=("$1"); shift ;;
         --)
             while [[ $# -gt 0 ]]; do
@@ -42,13 +43,14 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVisv" opt; do
+            while getopts ":hVisvy" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
                     i) interactive=1 ;;
                     s) fast=0 ;;
                     v) verbose="$((verbose+1))" ;;
+                    y) autoyes=1 ;;
                 esac
             done
             _n="$((OPTIND-1))"
@@ -137,6 +139,8 @@ Global Options:
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
         The maximum is 3.
+   --yes, -y
+        Auto yes for every question.
 EOF
 }
 
@@ -1152,8 +1156,8 @@ Rcm_prompt() {
                     fi
                 fi
 
-                # Jika non interactive, maka skip.
-                if [ -z "$interactive" ];then
+                # Jika auto yes, maka skip.
+                if [ -n "$autoyes" ];then
                     if [ -z "$_boolean" ];then
                         backup_flag=
                         master_boolean=' '
@@ -1336,8 +1340,8 @@ Rcm_prompt() {
                     fi
                 fi
 
-                # Jika non interactive, maka skip.
-                if [ -z "$interactive" ];then
+                # Jika auto yes, maka skip.
+                if [ -n "$autoyes" ];then
                     if [ -z "$value" ];then
                         backup_value=
                         value=' '
@@ -1567,6 +1571,7 @@ Rcm_prompt_build_command() {
     wordWrapDescription 'Use command below to return to the last dialog.' 0
     local shortoptions
     [ -n "$interactive" ] && shortoptions+='i'
+    [ -n "$autoyes" ] && shortoptions+='y'
     [ -z "$fast" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
@@ -1623,7 +1628,7 @@ Rcm_get_list_values() {
             value="${available_values[0]}"
             _; _.
             __; _, "Available value: "; yellow "$value";  _, '.'; _.
-            if [ -n "$interactive" ];then
+            if [ -z "$autoyes" ];then
                 _; _.
                 wordWrapDescription 'The one and only available value is selected.'
                 userInputBooleanDefaultYes
@@ -1722,7 +1727,7 @@ rcm_config_no_confirmation=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n
 if [ -n "$rcm_config_no_confirmation" ];then
     confirmation=
 fi
-if [ -z "$interactive" ];then
+if [ -n "$autoyes" ];then
     confirmation=
 fi
 
@@ -1783,6 +1788,7 @@ Rcm_event_dispatcher 'Post Prompt'
 
 shortoptions=
 [ -n "$interactive" ] && shortoptions+='i'
+[ -n "$autoyes" ] && shortoptions+='y'
 [ -z "$fast" ] && shortoptions+='s'
 [ -z "$fast" ] && isfast='' || isfast=' --fast'
 [ -n "$verbose" ] && {
@@ -1904,6 +1910,7 @@ exit 0
 # FLAG_VALUE=(
 # )
 # CSV=(
+#     'long:--yes,short:-y,parameter:autoyes'
 #     'long:--interactive,short:-i,parameter:interactive'
 #     'long:--non-interactive,parameter:interactive,flag_option:reverse'
 #     'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
