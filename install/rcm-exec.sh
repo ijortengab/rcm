@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
         --interactive|-i) interactive=1; shift ;;
-        --no-confirmation) confirmation=0; shift ;;
         --non-interactive) interactive=0; shift ;;
         --no-timer) timer=0; shift ;;
         --slow|-s) fast=0; shift ;;
@@ -90,7 +89,6 @@ unset _n
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 
 # Boolean default to TRUE.
-[ -z "$confirmation" ] && confirmation=1; [ "$confirmation" == 0 ] && confirmation=
 [ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
 
@@ -124,23 +122,23 @@ Usage: rcm [options]
        rcm <extension> [options]
        rcm [options] <extension> [options]
 
-Global Options:
+Options:
    --version
         Print version of this script.
    --help
         Show this help.
    --slow, -s
         Add delay every subtask.
+   --yes, -y
+        Skip every question and use the default value even the default value is equivalent to negate.
    --interactive, -i
-        Show asking for confirmation if needed.
+        Display the user input if needed.
    --non-interactive
         Run without ever asking for user input. Default action.
    --verbose, -v
         Verbose mode. Causes rcm to print debugging messages about its progress.
         Multiple -v options increase the verbosity.
         The maximum is 3.
-   --yes, -y
-        Auto yes for every question.
 EOF
 }
 
@@ -1156,14 +1154,6 @@ Rcm_prompt() {
                     fi
                 fi
 
-                # Jika auto yes, maka skip.
-                if [ -n "$autoyes" ];then
-                    if [ -z "$_boolean" ];then
-                        backup_flag=
-                        master_boolean=' '
-                    fi
-                fi
-
                 if [ -n "$backup_flag" ];then
                     printBackupFlagDialog
                     master_boolean="$boolean"
@@ -1340,14 +1330,6 @@ Rcm_prompt() {
                     fi
                 fi
 
-                # Jika auto yes, maka skip.
-                if [ -n "$autoyes" ];then
-                    if [ -z "$value" ];then
-                        backup_value=
-                        value=' '
-                    fi
-                fi
-
                 # Backup dialog belum mendukung multivalue.
                 if [ -n "$backup_value" ];then
                     printBackupDialog
@@ -1455,7 +1437,7 @@ Rcm_prompt() {
                     is_press=
                     boolean=
                     if [ -n "$is_flag" ];then
-                        if [[ -n "$is_flagged" && -n "$confirmation" ]];then
+                        if [[ -n "$is_flagged" && -z "$autoyes" ]];then
                             # Reset condition before multivalue.
                             is_flagged=
                             _; _.
@@ -1464,7 +1446,7 @@ Rcm_prompt() {
                             is_press=1
                         fi
                     else
-                        if [[ -n "$value" && -n "$confirmation" ]];then
+                        if [[ -n "$value" && -z "$autoyes" ]];then
                             # Reset condition before multivalue.
                             value_before="$value"
                             value=
@@ -1541,7 +1523,7 @@ Rcm_prompt() {
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1
-                    if [ -n "$confirmation" ];then
+                    if [ -z "$autoyes" ];then
                         _; _.
                         _; _, 'There are '; yellow other ;_, ' arguments available and optional.'; _.
                         _; _.
@@ -1723,12 +1705,9 @@ Rcm_event_dispatcher() {
 
 # Requirement, validate, and populate value.
 _help=$("$command" --help 2>/dev/null)
-rcm_config_no_confirmation=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-confirmation')
-if [ -n "$rcm_config_no_confirmation" ];then
-    confirmation=
-fi
-if [ -n "$autoyes" ];then
-    confirmation=
+rcm_config_autoyes=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^autoyes')
+if [ -n "$rcm_config_autoyes" ];then
+    autoyes=1
 fi
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
@@ -1741,7 +1720,6 @@ if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --)
-                confirmation=
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
                         *) argument_after_doubledash+=("$1"); shift ;;
@@ -1816,7 +1794,7 @@ export RCM_ENVIRONMENT_VARIABLES="$RCM_ENVIRONMENT_VARIABLES"
 chapter Command has been built.
 _ Use command below to arrive in this position with non-interactive mode.; _.
 # Simpan ke log, last command.
-if [ -n "$confirmation" ];then
+if [ -z "$autoyes" ];then
     echo "$RCM_PROMPT_CHAIN" >> "$log"
     _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
 fi
@@ -1846,7 +1824,7 @@ fi
 wordWrapCommand
 ____
 
-if [ -n "$confirmation" ];then
+if [ -z "$autoyes" ];then
     chapter Execute:
     userInputBooleanDefaultYes
     if [ -z "$boolean" ];then
@@ -1913,7 +1891,6 @@ exit 0
 #     'long:--yes,short:-y,parameter:autoyes'
 #     'long:--interactive,short:-i,parameter:interactive'
 #     'long:--non-interactive,parameter:interactive,flag_option:reverse'
-#     'long:--no-confirmation,parameter:confirmation,flag_option:reverse'
 #     'long:--no-timer,parameter:timer,flag_option:reverse'
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
 # )
