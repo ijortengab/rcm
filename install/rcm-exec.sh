@@ -1755,74 +1755,88 @@ export RCM_FAST="$rcm_fast"
 # Other variable, export as is.
 export RCM_VERBOSE="$verbose"
 
-backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
-history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-trap Rcm_prompt_sigint SIGINT
-Rcm_prompt $command
-trap x SIGINT
+if [ -n "$interactive" ];then
 
-Rcm_event_dispatcher 'Post Prompt'
-[ -f "$backup_storage" ] && rm "$backup_storage"
+    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
+    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
+    trap Rcm_prompt_sigint SIGINT
+    Rcm_prompt $command
+    trap x SIGINT
 
-shortoptions=
-[ -n "$interactive" ] && shortoptions+='i'
-[ -n "$autoyes" ] && shortoptions+='y'
-[ -z "$fast" ] && shortoptions+='s'
-[ -z "$fast" ] && isfast='' || isfast=' --fast'
-[ -n "$verbose" ] && {
-    isverbose=
-    for ((i = 0 ; i < "$verbose" ; i++)); do
-        isverbose+=' --verbose'
-        shortoptions+='v'
-    done
-} || isverbose=
-[ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
-argument_preview+=(--)
+    Rcm_event_dispatcher 'Post Prompt'
+    [ -f "$backup_storage" ] && rm "$backup_storage"
 
-# Export variables part 2.
-# Special for variable RCM_PROMPT_CHAIN, append value then export it.
-if [ -z "$RCM_PROMPT_CHAIN" ];then
-    RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
-fi
-for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
-[ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
-RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
-export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
-export RCM_ENVIRONMENT_VARIABLES="$RCM_ENVIRONMENT_VARIABLES"
-[ -n "$tempfile" ] && rm "$tempfile"
+    # Set command with non interactive mode.
+    interactive=
 
-chapter Command has been built.
-_ Use command below to arrive in this position with non-interactive mode.; _.
-# Simpan ke log, last command.
-if [ -z "$autoyes" ];then
-    echo "$RCM_PROMPT_CHAIN" >> "$log"
-    _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
-fi
-if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
-    words_array=($RCM_PROMPT_CHAIN)
+    shortoptions=
+    [ -n "$interactive" ] && shortoptions+='i'
+    [ -n "$autoyes" ] && shortoptions+='y'
+    [ -z "$fast" ] && shortoptions+='s'
+    [ -z "$fast" ] && isfast='' || isfast=' --fast'
+    [ -n "$verbose" ] && {
+        isverbose=
+        for ((i = 0 ; i < "$verbose" ; i++)); do
+            isverbose+=' --verbose'
+            shortoptions+='v'
+        done
+    } || isverbose=
+    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
+    argument_preview+=(--)
+
+    # Export variables part 2.
+    # Special for variable RCM_PROMPT_CHAIN, append value then export it.
+    if [ -z "$RCM_PROMPT_CHAIN" ];then
+        RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
+    fi
+    for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+    [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
+    RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
+    export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
+    export RCM_ENVIRONMENT_VARIABLES="$RCM_ENVIRONMENT_VARIABLES"
+    [ -n "$tempfile" ] && rm "$tempfile"
+
+    chapter Command has been built.
+    _ Use command below to arrive in this position with non-interactive mode.; _.
+    # Simpan ke log, last command.
+    if [ -z "$autoyes" ];then
+        echo "$RCM_PROMPT_CHAIN" >> "$log"
+        _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
+    fi
+    if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
+        words_array=($RCM_PROMPT_CHAIN)
+    else
+        _rcm_prompt_chain="$RCM_PROMPT_CHAIN"
+        _argument_after_doubledash=("${argument_after_doubledash[@]}")
+        ArrayShift _argument_after_doubledash[@]
+        _argument_after_doubledash=("${_return[@]}")
+        unset _return
+        for each in "${_argument_after_doubledash[@]}"; do
+            # Credit: https://devhints.io/bash
+            _argument="${each%%=*}"
+            _value="${each#$_argument=}"
+            [[ "$_argument" == "$_value" ]] && is_flag=1 || is_flag=
+            if [ -n "$is_flag" ];then
+                _rcm_prompt_chain+=" ${each}"
+            else
+                [[ "$_value" =~ ' ' ]] && _value="'$_value'"
+                _rcm_prompt_chain+=" ${_argument}=${_value}"
+            fi
+        done
+        words_array=($_rcm_prompt_chain)
+    fi
+
+    wordWrapCommand
+    ____
+
+    if [[ "${#argument_pass[@]}" -gt 0 ]];then
+        set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
+    else
+        set -- "${argument_after_doubledash[@]}"
+    fi
 else
-    _rcm_prompt_chain="$RCM_PROMPT_CHAIN"
-    _argument_after_doubledash=("${argument_after_doubledash[@]}")
-    ArrayShift _argument_after_doubledash[@]
-    _argument_after_doubledash=("${_return[@]}")
-    unset _return
-    for each in "${_argument_after_doubledash[@]}"; do
-        # Credit: https://devhints.io/bash
-        _argument="${each%%=*}"
-        _value="${each#$_argument=}"
-        [[ "$_argument" == "$_value" ]] && is_flag=1 || is_flag=
-        if [ -n "$is_flag" ];then
-            _rcm_prompt_chain+=" ${each}"
-        else
-            [[ "$_value" =~ ' ' ]] && _value="'$_value'"
-            _rcm_prompt_chain+=" ${_argument}=${_value}"
-        fi
-    done
-    words_array=($_rcm_prompt_chain)
+    set -- "${argument_operand_prepopulate[@]}" "${argument_prepopulate[@]}" "${argument_after_doubledash[@]}"
 fi
-
-wordWrapCommand
-____
 
 if [ -z "$autoyes" ];then
     chapter Execute:
@@ -1845,11 +1859,6 @@ if [ -n "$RCM_TIMER" ];then
     ____
 fi
 
-if [[ "${#argument_pass[@]}" -gt 0 ]];then
-    set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
-else
-    set -- "${argument_after_doubledash[@]}"
-fi
 INDENT+="$RCM_INDENT" $command $isfast $isverbose "$@"
 
 if [ -n "$RCM_TIMER" ];then
