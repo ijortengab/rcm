@@ -1768,6 +1768,7 @@ if [ -n "$interactive" ];then
 
     # Set command with non interactive mode.
     interactive=
+    autoyes=1
 
     shortoptions=
     [ -n "$interactive" ] && shortoptions+='i'
@@ -1782,7 +1783,6 @@ if [ -n "$interactive" ];then
         done
     } || isverbose=
     [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
-    argument_preview+=(--)
 
     # Export variables part 2.
     # Special for variable RCM_PROMPT_CHAIN, append value then export it.
