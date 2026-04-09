@@ -1705,10 +1705,6 @@ Rcm_event_dispatcher() {
 
 # Requirement, validate, and populate value.
 _help=$("$command" --help 2>/dev/null)
-rcm_config_autoyes=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^autoyes')
-if [ -n "$rcm_config_autoyes" ];then
-    autoyes=1
-fi
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
@@ -1855,10 +1851,6 @@ else
     set -- "${argument_operand_prepopulate[@]}" "${argument_prepopulate[@]}" "${argument_after_doubledash[@]}"
 fi
 
-rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-timer')
-if [ -n "$rcm_config_no_timer" ];then
-    RCM_TIMER=
-fi
 if [ -n "$RCM_TIMER" ];then
     chapter Timer Start.
     _ Begin: $(date +%Y%m%d-%H%M%S); _.
