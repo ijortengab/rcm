@@ -1437,7 +1437,7 @@ Rcm_prompt() {
                     is_press=
                     boolean=
                     if [ -n "$is_flag" ];then
-                        if [[ -n "$is_flagged" && -z "$autoyes" ]];then
+                        if [[ -n "$is_flagged" ]];then
                             # Reset condition before multivalue.
                             is_flagged=
                             _; _.
@@ -1446,7 +1446,7 @@ Rcm_prompt() {
                             is_press=1
                         fi
                     else
-                        if [[ -n "$value" && -z "$autoyes" ]];then
+                        if [[ -n "$value" ]];then
                             # Reset condition before multivalue.
                             value_before="$value"
                             value=
@@ -1767,8 +1767,10 @@ if [ -n "$interactive" ];then
     [ -f "$backup_storage" ] && rm "$backup_storage"
 
     # Set command with non interactive mode.
+    _interactive="$interactive"
+    _autoyes="$autoyes"
     interactive=
-    autoyes=1
+    autoyes=
 
     shortoptions=
     [ -n "$interactive" ] && shortoptions+='i'
@@ -1783,6 +1785,10 @@ if [ -n "$interactive" ];then
         done
     } || isverbose=
     [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
+
+    # Restore.
+    interactive="$_interactive"
+    autoyes="$_autoyes"
 
     # Export variables part 2.
     # Special for variable RCM_PROMPT_CHAIN, append value then export it.
@@ -1834,18 +1840,19 @@ if [ -n "$interactive" ];then
     else
         set -- "${argument_after_doubledash[@]}"
     fi
+
+    if [ -z "$autoyes" ];then
+        chapter Execute:
+        userInputBooleanDefaultYes
+        if [ -z "$boolean" ];then
+            exit 0
+        fi
+        ____
+
+    fi
+
 else
     set -- "${argument_operand_prepopulate[@]}" "${argument_prepopulate[@]}" "${argument_after_doubledash[@]}"
-fi
-
-if [ -z "$autoyes" ];then
-    chapter Execute:
-    userInputBooleanDefaultYes
-    if [ -z "$boolean" ];then
-        exit 0
-    fi
-    ____
-
 fi
 
 rcm_config_no_timer=$(echo "$_help" | sed -n '/^RCM Config:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g' | grep '^--no-timer')
