@@ -15,8 +15,8 @@ while [[ $# -gt 0 ]]; do
         --version|-V) version=1; shift ;;
         --interactive|-i) interactive=1; shift ;;
         --non-interactive) interactive=0; shift ;;
-        --no-timer) timer=0; shift ;;
         --slow|-s) fast=0; shift ;;
+        --timer|-t) timer=1; shift ;;
         --verbose|-v) verbose="$((verbose+1))"; shift ;;
         --yes|-y) autoyes=1; shift ;;
         -[^-]*) _new_arguments+=("$1"); shift ;;
@@ -42,12 +42,13 @@ _new_arguments=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -[^-]*) OPTIND=1
-            while getopts ":hVisvy" opt; do
+            while getopts ":hVistvy" opt; do
                 case $opt in
                     h) help=1 ;;
                     V) version=1 ;;
                     i) interactive=1 ;;
                     s) fast=0 ;;
+                    t) timer=1 ;;
                     v) verbose="$((verbose+1))" ;;
                     y) autoyes=1 ;;
                 esac
@@ -89,7 +90,6 @@ unset _n
 [ -z "$interactive" ] && interactive="$RCM_INTERACTIVE"
 
 # Boolean default to TRUE.
-[ -z "$timer" ] && timer=1; [ "$timer" == 0 ] && timer=
 [ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
 
 # Copy to RCM variable then unset.
@@ -1554,6 +1554,7 @@ Rcm_prompt_build_command() {
     local shortoptions
     [ -n "$interactive" ] && shortoptions+='i'
     [ -n "$autoyes" ] && shortoptions+='y'
+    [ -n "$timer" ] && shortoptions+='t'
     [ -z "$fast" ] && shortoptions+='s'
     if [ -n "$verbose" ];then
         for ((i = 0 ; i < "$verbose" ; i++)); do
@@ -1771,6 +1772,7 @@ if [ -n "$interactive" ];then
     shortoptions=
     [ -n "$interactive" ] && shortoptions+='i'
     [ -n "$autoyes" ] && shortoptions+='y'
+    [ -n "$timer" ] && shortoptions+='t'
     [ -z "$fast" ] && shortoptions+='s'
     [ -z "$fast" ] && isfast='' || isfast=' --fast'
     [ -n "$verbose" ] && {
@@ -1899,7 +1901,7 @@ exit 0
 #     'long:--yes,short:-y,parameter:autoyes'
 #     'long:--interactive,short:-i,parameter:interactive'
 #     'long:--non-interactive,parameter:interactive,flag_option:reverse'
-#     'long:--no-timer,parameter:timer,flag_option:reverse'
+#     'long:--timer,short:-t,parameter:timer'
 #     'long:--slow,short:-s,parameter:fast,flag_option:reverse'
 # )
 # OPERAND=(
