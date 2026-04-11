@@ -8,10 +8,6 @@ rcm-prompt() {
     local load_other_options=
     local immediately_other_options=
     local argument_preview_bypass=
-    argument_pass=()
-    argument_preview=()
-    argument_preview_real=()
-    argument_placeholders=
 
     mapping_operand=`$command --help 2>/dev/null | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$mapping_operand" ];then
@@ -147,12 +143,12 @@ rcm-prompt() {
             _prepopulate_value=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
             if [ -n "$_prepopulate_value" ];then
                 description=`echo "$description" | sed -E 's/ *Prepopulate value from variable:? ([^\.]+)\.//i'`
-                if [ -n "$argument_placeholders" ];then
+                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                     while read line; do
                         find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         _prepopulate_value="${_prepopulate_value/"$find"/"$replace"}"
-                    done <<< "$argument_placeholders"
+                    done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
                 fi
                 prepopulate_value="${!_prepopulate_value}"
             fi
@@ -185,7 +181,7 @@ rcm-prompt() {
                 _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
                 _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
                 if command -v "$_command" > /dev/null;then
-                    if [ -n "$argument_placeholders" ];then
+                    if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                         while read line; do
                             find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                             replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -193,16 +189,16 @@ rcm-prompt() {
                             if [ -n "$_arguments" ];then
                                 _arguments="${_arguments/"$find"/"$replace"}"
                             fi
-                        done <<< "$argument_placeholders"
+                        done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
                     fi
                 fi
             fi
-            if [ -n "$argument_placeholders" ];then
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                 while read line; do
                     find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                     replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                     description="${description/"$find"/"$replace"}"
-                done <<< "$argument_placeholders"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
             fi
             if [ -n "$is_flag" ];then
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
@@ -305,8 +301,8 @@ rcm-prompt() {
                     master_boolean=
                 fi
                 # Populate placeholders.
-                if [ -n "$argument_placeholders" ];then
-                    argument_placeholders+=$'\n'
+                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                    RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
                 fi
                 if [ -n "$master_boolean" ]; then
                     is_flagged=1
@@ -343,37 +339,37 @@ rcm-prompt() {
                             # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
                             # Credit: https://stackoverflow.com/a/47918586
                             value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                            argument_pass+=("${parameter}=${value}")
+                            RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                             [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                            argument_preview+=("${parameter}=${_value}")
-                            argument_preview_real+=("${parameter}=${_value}")
+                            RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
+                            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
                         else
-                            argument_pass+=("${parameter}")
-                            argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
+                            RCM_ARGUMENT_PASS+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
                         fi
                     else
                         i=1
                         until [[ $i -gt $flags ]];do
-                            argument_pass+=("${parameter}")
-                            argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
+                            RCM_ARGUMENT_PASS+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
                             let i++
                         done
                     fi
                     # Populate placeholders.
                     if [ -n "$value" ];then
-                        argument_placeholders+='['"$parameter"']: '"$value"
-                        argument_placeholders+=$'\n'
-                        argument_placeholders+='['"$parameter"'^^]: '"${value^^}"
+                        RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
+                        RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
+                        RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
                     else
-                        argument_placeholders+='['"$parameter"']: '"1"
+                        RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"1"
                     fi
                 else
                     # Populate placeholders.
-                    argument_placeholders+='['"$parameter"']: '"0"
+                    RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"0"
                     if [ -z "$argument_preview_bypass" ];then
-                        argument_preview+=("${parameter}-")
+                        RCM_ARGUMENT_PREVIEW+=("${parameter}-")
                     fi
                 fi
                 if [ -n "$master_boolean" ];then
@@ -409,9 +405,9 @@ rcm-prompt() {
                         __; read -p "Type the value: " value
                     fi
                     if [ -n "$value" ];then
-                        argument_pass+=("${parameter} ${value}")
-                        argument_preview+=("${parameter} ${value}")
-                        argument_preview_real+=("${parameter} ${value}")
+                        RCM_ARGUMENT_PASS+=("${parameter} ${value}")
+                        RCM_ARGUMENT_PREVIEW+=("${parameter} ${value}")
+                        RCM_ARGUMENT_PREVIEW_REAL+=("${parameter} ${value}")
                     fi
                 fi
             else
@@ -503,8 +499,8 @@ rcm-prompt() {
                     value="$default_value"
                 fi
                 # Populate placeholders.
-                if [ -n "$argument_placeholders" ];then
-                    argument_placeholders+=$'\n'
+                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                    RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
                 fi
                 if [ -n "$value" ];then
                     # Sanitize user input
@@ -515,10 +511,10 @@ rcm-prompt() {
                     fi
                     for value in "${values[@]}";do
                         value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        argument_pass+=("${parameter}=${value}")
+                        RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                         [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                        argument_preview+=("${parameter}=${_value}")
-                        argument_preview_real+=("${parameter}=${_value}")
+                        RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
+                        RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
                         if [ "${#available_values[@]}" -gt 0 ];then
                             ArrayRemove "$value" available_values[@]
                             available_values=("${_return[@]}")
@@ -527,13 +523,13 @@ rcm-prompt() {
                     done
                     # Placeholder tidak berlaku untuk multivalue. @todo, masukkan ke dokumentasi.
                     # Hanya berlaku nilai terakhir.
-                    argument_placeholders+='['"$parameter"']: '"$value"
-                    argument_placeholders+=$'\n'
-                    argument_placeholders+='['"$parameter"'^^]: '"${value^^}"
+                    RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
+                    RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
+                    RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
                 else
-                    argument_placeholders+='['"$parameter"']: -'
+                    RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: -'
                     if [ -z "$argument_preview_bypass" ];then
-                        argument_preview+=("${parameter}-")
+                        RCM_ARGUMENT_PREVIEW+=("${parameter}-")
                     fi
                 fi
                 if [[ -n "$value" && -n "$is_typing" ]];then
@@ -594,9 +590,9 @@ rcm-prompt() {
                     fi
                     if [ -n "$boolean" ];then
                         if [ -n "$is_flag" ];then
-                            argument_pass+=("${parameter}")
-                            argument_preview+=("${parameter}")
-                            argument_preview_real+=("${parameter}")
+                            RCM_ARGUMENT_PASS+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
                             is_flagged=1
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
@@ -612,9 +608,9 @@ rcm-prompt() {
                                 is_typing=1
                             fi
                             if [ -n "$value" ];then
-                                argument_pass+=("${value}")
-                                argument_preview+=("${value}")
-                                argument_preview_real+=("${value}")
+                                RCM_ARGUMENT_PASS+=("${value}")
+                                RCM_ARGUMENT_PREVIEW+=("${value}")
+                                RCM_ARGUMENT_PREVIEW_REAL+=("${value}")
                             fi
                         else
                             Rcm_get_list_values "$value_before"
@@ -623,10 +619,10 @@ rcm-prompt() {
                                 # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
                                 # Credit: https://stackoverflow.com/a/47918586
                                 value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                                argument_pass+=("${parameter}=${value}")
+                                RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                                 [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                                argument_preview+=("${parameter}=${_value}")
-                                argument_preview_real+=("${parameter}=${_value}")
+                                RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
+                                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
                             fi
                         fi
                         # Backup to text file.

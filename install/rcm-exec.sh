@@ -889,7 +889,7 @@ Rcm_prompt_build_command() {
     else
         _RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
     fi
-    for each in "${argument_preview[@]}"; do _RCM_PROMPT_CHAIN+=" ${each}"; done
+    for each in "${RCM_ARGUMENT_PREVIEW[@]}"; do _RCM_PROMPT_CHAIN+=" ${each}"; done
     words_array=($_RCM_PROMPT_CHAIN)
     wordWrapCommand
 }
@@ -970,7 +970,7 @@ Rcm_get_list_values() {
     fi
 }
 Rcm_event_dispatcher() {
-    # global command argument_placeholders RCM_ENVIRONMENT_VARIABLES tempfile
+    # global command RCM_ARGUMENT_PLACEHOLDERS RCM_ENVIRONMENT_VARIABLES tempfile
     local key value
     local label="$1"; shift
     local to_execute command_raw _command_arguments _command _arguments
@@ -986,7 +986,7 @@ Rcm_event_dispatcher() {
             _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
             _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
             if command -v "$_command" > /dev/null;then
-                if [ -n "$argument_placeholders" ];then
+                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                     while read line; do
                         find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
                         replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -994,7 +994,7 @@ Rcm_event_dispatcher() {
                         if [ -n "$_arguments" ];then
                             _arguments="${_arguments/"$find"/"$replace"}"
                         fi
-                    done <<< "$argument_placeholders"
+                    done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
                 fi
             fi
             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
@@ -1081,6 +1081,12 @@ if [ -n "$interactive" ];then
     backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
     history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
     trap Rcm_prompt_sigint SIGINT
+
+    RCM_ARGUMENT_PASS=()
+    RCM_ARGUMENT_PREVIEW=()
+    RCM_ARGUMENT_PREVIEW_REAL=()
+    RCM_ARGUMENT_PLACEHOLDERS=
+
     rcm-prompt $command
     trap x SIGINT
 
@@ -1117,7 +1123,7 @@ if [ -n "$interactive" ];then
     if [ -z "$RCM_PROMPT_CHAIN" ];then
         RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
     fi
-    for each in "${argument_preview_real[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+    for each in "${RCM_ARGUMENT_PREVIEW_REAL[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
     [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
     RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
     export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
@@ -1155,8 +1161,8 @@ if [ -n "$interactive" ];then
     wordWrapCommand
     ____
 
-    if [[ "${#argument_pass[@]}" -gt 0 ]];then
-        set -- "${argument_pass[@]}" "${argument_after_doubledash[@]}"
+    if [[ "${#RCM_ARGUMENT_PASS[@]}" -gt 0 ]];then
+        set -- "${RCM_ARGUMENT_PASS[@]}" "${argument_after_doubledash[@]}"
     else
         set -- "${argument_after_doubledash[@]}"
     fi
