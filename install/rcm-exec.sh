@@ -105,7 +105,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 # Define variables and constants.
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-[ -z "$RCM_LOG" ] && RCM_LOG=rcm.log
+[ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 tempfile=
 
 # Functions. Help and Version.
@@ -1812,10 +1812,8 @@ if [ -n "$interactive" ];then
     chapter Command has been built.
     _ Use command below to arrive in this position with non-interactive mode.; _.
     # Simpan ke log, last command.
-    if [ -z "$autoyes" ];then
-        echo "$RCM_PROMPT_CHAIN" >> "$log"
-        _ Command has been saved to log file: '`'$(basename "$log")'`'.; _.
-    fi
+    echo "$RCM_PROMPT_CHAIN" >> "$RCM_LOG"
+    _ Command has been saved to log file: '`'$(basename "$RCM_LOG")'`'.; _.
     if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
         words_array=($RCM_PROMPT_CHAIN)
     else
