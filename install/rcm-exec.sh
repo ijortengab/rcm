@@ -880,6 +880,7 @@ Rcm_prompt() {
     local argument_preview_bypass=
     argument_pass=()
     argument_preview=()
+    argument_preview_real=()
     argument_placeholders=
 
     mapping_operand=`$command --help 2>/dev/null | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
@@ -1215,15 +1216,18 @@ Rcm_prompt() {
                             argument_pass+=("${parameter}=${value}")
                             [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                             argument_preview+=("${parameter}=${_value}")
+                            argument_preview_real+=("${parameter}=${_value}")
                         else
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
                         fi
                     else
                         i=1
                         until [[ $i -gt $flags ]];do
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
                             let i++
                         done
                     fi
@@ -1277,6 +1281,7 @@ Rcm_prompt() {
                     if [ -n "$value" ];then
                         argument_pass+=("${parameter} ${value}")
                         argument_preview+=("${parameter} ${value}")
+                        argument_preview_real+=("${parameter} ${value}")
                     fi
                 fi
             else
@@ -1383,6 +1388,7 @@ Rcm_prompt() {
                         argument_pass+=("${parameter}=${value}")
                         [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                         argument_preview+=("${parameter}=${_value}")
+                        argument_preview_real+=("${parameter}=${_value}")
                         if [ "${#available_values[@]}" -gt 0 ];then
                             ArrayRemove "$value" available_values[@]
                             available_values=("${_return[@]}")
@@ -1460,6 +1466,7 @@ Rcm_prompt() {
                         if [ -n "$is_flag" ];then
                             argument_pass+=("${parameter}")
                             argument_preview+=("${parameter}")
+                            argument_preview_real+=("${parameter}")
                             is_flagged=1
                         elif [[ "$parameter" == '--' ]];then
                             if [ -n "$history_value" ];then
@@ -1477,6 +1484,7 @@ Rcm_prompt() {
                             if [ -n "$value" ];then
                                 argument_pass+=("${value}")
                                 argument_preview+=("${value}")
+                                argument_preview_real+=("${value}")
                             fi
                         else
                             Rcm_get_list_values "$value_before"
@@ -1488,6 +1496,7 @@ Rcm_prompt() {
                                 argument_pass+=("${parameter}=${value}")
                                 [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
                                 argument_preview+=("${parameter}=${_value}")
+                                argument_preview_real+=("${parameter}=${_value}")
                             fi
                         fi
                         # Backup to text file.
@@ -1793,7 +1802,7 @@ if [ -n "$interactive" ];then
     if [ -z "$RCM_PROMPT_CHAIN" ];then
         RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
     fi
-    for each in "${argument_preview[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+    for each in "${argument_preview_real[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
     [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
     RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
     export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
