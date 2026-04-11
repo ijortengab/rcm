@@ -870,7 +870,7 @@ wordWrapList() {
         fi
     done
 }
-Rcm_prompt() {
+rcm-prompt() {
     local first_operand
     local value
     local command="$1"
@@ -1766,7 +1766,7 @@ if [ -n "$interactive" ];then
     backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
     history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
     trap Rcm_prompt_sigint SIGINT
-    Rcm_prompt $command
+    rcm-prompt $command
     trap x SIGINT
 
     Rcm_event_dispatcher 'Post Prompt'
