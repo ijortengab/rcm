@@ -970,12 +970,18 @@ Rcm_get_list_values() {
     fi
 }
 Rcm_event_dispatcher() {
+    # Required Global variable.
+    [ -z "$RCM_CONTENTS" ] && { error "Variable RCM_CONTENTS is required."; x; }
+
+    # Local variable as property.
+    local contents="$RCM_CONTENTS"
+
     # global command RCM_ARGUMENT_PLACEHOLDERS RCM_ENVIRONMENT_VARIABLES tempfile
     local key value
     local label="$1"; shift
     local to_execute command_raw _command_arguments _command _arguments
     local line  find replace
-    to_execute=`${command} --help 2>/dev/null | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$to_execute" ];then
         Rcm_prompt_build_command
         _.;
