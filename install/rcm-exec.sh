@@ -1031,9 +1031,10 @@ _help=$("$command" --help 2>/dev/null)
 
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
-argument_prepopulate=()
-argument_operand_prepopulate=()
-argument_after_doubledash=()
+RCM_PREPOPULATE_ARGUMENTS=()
+RCM_PREPOPULATE_ARGUMENT_OPTIONS=()
+RCM_PREPOPULATE_ARGUMENT_OPERANDS=()
+RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS=()
 
 if [ $# -gt 0 ];then
     while [[ $# -gt 0 ]]; do
@@ -1041,27 +1042,35 @@ if [ $# -gt 0 ];then
             --)
                 while [[ $# -gt 0 ]]; do
                     case "$1" in
-                        *) argument_after_doubledash+=("$1"); shift ;;
+                        *)
+                            RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS+=("$1");
+                            RCM_PREPOPULATE_ARGUMENTS+=("$1");
+                            shift ;;
                     esac
                 done
                 ;;
             --[^-]*)
                 if [[ "$2" =~ ^-- ]];then
-                    argument_prepopulate+=("$1");
+                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1");
+                    RCM_PREPOPULATE_ARGUMENTS+=("$1");
                 elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
-                    argument_prepopulate+=("$1"="$2");
+                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1"="$2");
+                    RCM_PREPOPULATE_ARGUMENTS+=("$1"="$2");
                     shift
                 else
-                    argument_prepopulate+=("$1");
+                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1");
+                    RCM_PREPOPULATE_ARGUMENTS+=("$1");
                 fi
                 shift
                 ;;
             -[^-]*)
                 # Short option tidak bisa dijadikan prepopulate.
+                RCM_PREPOPULATE_ARGUMENTS+=("$1");
                 shift
                 ;;
             *)
-                argument_operand_prepopulate+=("$1");
+                RCM_PREPOPULATE_ARGUMENT_OPERANDS+=("$1");
+                RCM_PREPOPULATE_ARGUMENTS+=("$1");
                 shift
         esac
     done
@@ -1136,11 +1145,11 @@ if [ -n "$interactive" ];then
     # Simpan ke log, last command.
     echo "$RCM_PROMPT_CHAIN" >> "$RCM_LOG"
     _ Command has been saved to log file: '`'$(basename "$RCM_LOG")'`'.; _.
-    if [ "${#argument_after_doubledash[@]}" -eq 0 ];then
+    if [ "${#RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}" -eq 0 ];then
         words_array=($RCM_PROMPT_CHAIN)
     else
         _rcm_prompt_chain="$RCM_PROMPT_CHAIN"
-        _argument_after_doubledash=("${argument_after_doubledash[@]}")
+        _argument_after_doubledash=("${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}")
         ArrayShift _argument_after_doubledash[@]
         _argument_after_doubledash=("${_return[@]}")
         unset _return
@@ -1163,9 +1172,9 @@ if [ -n "$interactive" ];then
     ____
 
     if [[ "${#RCM_ARGUMENT_PASS[@]}" -gt 0 ]];then
-        set -- "${RCM_ARGUMENT_PASS[@]}" "${argument_after_doubledash[@]}"
+        set -- "${RCM_ARGUMENT_PASS[@]}" "${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}"
     else
-        set -- "${argument_after_doubledash[@]}"
+        set -- "${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}"
     fi
 
     if [ -z "$autoyes" ];then
@@ -1179,7 +1188,7 @@ if [ -n "$interactive" ];then
     fi
 
 else
-    set -- "${argument_operand_prepopulate[@]}" "${argument_prepopulate[@]}" "${argument_after_doubledash[@]}"
+    set -- "${RCM_PREPOPULATE_ARGUMENTS[@]}"
 fi
 
 if [ -n "$RCM_TIMER" ];then

@@ -26,13 +26,13 @@ rcm-prompt() {
             if [ -z "$below" ];then
                 break
             fi
-            for _value in "${argument_operand_prepopulate[@]}";do
-                ArrayShift argument_operand_prepopulate[@]
+            for _value in "${RCM_PREPOPULATE_ARGUMENT_OPERANDS[@]}";do
+                ArrayShift RCM_PREPOPULATE_ARGUMENT_OPERANDS[@]
                 break
             done
-            argument_operand_prepopulate=("${_return[@]}")
+            RCM_PREPOPULATE_ARGUMENT_OPERANDS=("${_return[@]}")
             if [ -n "$_value" ];then
-                argument_prepopulate+=("${below}=${_value}")
+                RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("${below}=${_value}")
                 code "${below}=${_value}"
             fi
             unset _return
@@ -213,7 +213,7 @@ rcm-prompt() {
                     wordWrapDescription "$line"
                 done <<< "$description"
                 _boolean=
-                for each in "${argument_prepopulate[@]}";do
+                for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _boolean=0
                         break
@@ -228,8 +228,8 @@ rcm-prompt() {
                             value_addon=
                         fi
                         if [[ "$value_addon" == 'multivalue' ]];then
-                            ArrayRemove "$parameter" argument_prepopulate[@]
-                            argument_prepopulate=("${_return[@]}")
+                            ArrayRemove "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
+                            RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
                             unset _return
                         fi
                         break
@@ -259,7 +259,7 @@ rcm-prompt() {
                         wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
                         if [[ "$value_addon" == 'multivalue' ]];then
                             found=
-                            for each in "${argument_prepopulate[@]}";do
+                            for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                                 if grep -q -- "^${parameter}\$" <<< "$each";then
                                     found=1
                                     let flags++
@@ -268,8 +268,8 @@ rcm-prompt() {
                             done
                             # Biar tidak membingunkan kedepannya, hapus saja semua dari array.
                             if [ -n "$found" ];then
-                                ArrayRemoveAll "$parameter" argument_prepopulate[@]
-                                argument_prepopulate=("${_return[@]}")
+                                ArrayRemoveAll "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
+                                RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
                                 unset _return
                             fi
                         fi
@@ -433,7 +433,7 @@ rcm-prompt() {
                     backup_value=
                     history_value=
                 fi
-                for each in "${argument_prepopulate[@]}";do
+                for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                     if grep -q -- "^${parameter}-\$" <<< "$each";then
                         _; _.
                         __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
@@ -446,7 +446,7 @@ rcm-prompt() {
                 done
                 # Jika tidak multivalue, tapi di prepopulate berkali-kali, maka
                 # kita menggunakan last value.
-                for each in "${argument_prepopulate[@]}";do
+                for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                     if grep -q -- "^${parameter}=" <<< "$each";then
                         value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
                         if [[ "$value_addon" == 'multivalue' ]];then
