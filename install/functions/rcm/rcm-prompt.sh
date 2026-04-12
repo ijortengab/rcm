@@ -1,6 +1,12 @@
 #!/bin/bash
 
 rcm-prompt() {
+    # Required Global variable.
+    [ -z "$RCM_CONTENTS" ] && { error "Variable RCM_CONTENTS is required."; x; }
+
+    # Local variable as property.
+    local contents="$RCM_CONTENTS"
+
     local first_operand
     local value
     local command="$1"
@@ -9,7 +15,7 @@ rcm-prompt() {
     local immediately_other_options=
     local argument_preview_bypass=
 
-    mapping_operand=`$command --help 2>/dev/null | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$mapping_operand" ];then
         chapter Mapping operand as value of options.
         unset count
@@ -40,7 +46,7 @@ rcm-prompt() {
     Rcm_event_dispatcher 'Pre Prompt'
 
     # Populate options.
-    options=`$command --help 2>/dev/null | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    options=`echo "$contents" | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
 
     if [ -n "$options" ];then
         until [[ -z "$options" ]];do
@@ -654,7 +660,7 @@ rcm-prompt() {
             fi
             # Other options.
             if [[ -z "$options" && -z "$load_other_options" ]];then
-                other_options=`$command --help 2>/dev/null | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+                other_options=`echo "$contents" | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
                 if [ -n "$other_options" ];then
                     options="$other_options"
                     load_other_options=1

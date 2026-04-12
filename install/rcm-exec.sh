@@ -1087,7 +1087,8 @@ if [ -n "$interactive" ];then
     RCM_ARGUMENT_PREVIEW_REAL=()
     RCM_ARGUMENT_PLACEHOLDERS=
 
-    rcm-prompt $command
+    RCM_CONTENTS=`$command --help 2>/dev/null`
+    rcm-prompt
     trap x SIGINT
 
     Rcm_event_dispatcher 'Post Prompt'
