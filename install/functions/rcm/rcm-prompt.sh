@@ -6,7 +6,7 @@ rcm-prompt() {
 
     # Local variable as property.
     local contents="$RCM_CONTENTS"
-
+    local mapping_operand
     local first_operand
     local value
     local command="$1"
@@ -15,8 +15,11 @@ rcm-prompt() {
     local immediately_other_options=
     local argument_preview_bypass=
 
-    mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    if [ -n "$mapping_operand" ];then
+    # Mem-parse chapter 'Mapping Operand:" pada contents.
+    parse-mapping-operand() {
+        local contents=$1
+        local count
+        [ -z "$contents" ] && { error "Argument <contents> is required."; x; }
         chapter Mapping operand as value of options.
         unset count
         declare -i count
@@ -40,6 +43,11 @@ rcm-prompt() {
             count+=1
         done
         ____
+    }
+
+    mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$mapping_operand" ];then
+        parse-mapping-operand "$mapping_operand"
     fi
 
     # Mulai eksekusi event pre prompt.
