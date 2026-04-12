@@ -160,7 +160,7 @@ title rcm
 ____
 
 # Functions.
-wordWrapDescription() {
+echo-wrap() {
     local paragraph="$1" indent_first_line=$2 words_array
     local current_line first_line last
     local max=0
@@ -223,7 +223,7 @@ wordWrapDescription() {
         fi
     done
 }
-wordWrapDescriptionColorize() {
+echo-wrap-color() {
     cleaningTag() {
         # global each
         # global color
@@ -366,25 +366,25 @@ userInputBooleanDefaultNo() {
 }
 printBackupDialog() {
     _; _.
-    wordWrapDescriptionColorize "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
+    echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
         _; _.
         value="$backup_value";
         if [ -n "$is_flag" ];then
-            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> which is restored." green
+            echo-wrap-color "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> which is restored." green
         else
-            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is restored." green
+            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is restored." green
         fi
     fi
 }
 printBackupFlagDialog() {
     _; _.
-    wordWrapDescription "This argument has been added before. Would you like to restore this argument?"
+    echo-wrap "This argument has been added before. Would you like to restore this argument?"
     userInputBooleanDefaultYes
     if [ -n "$boolean" ];then
         _; _.
-        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added which is restored." green
+        echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
     fi
 }
 printHistoryDialog() {
@@ -396,7 +396,7 @@ printHistoryDialog() {
     declare -i count
     count=0
     _; _.
-    wordWrapDescription 'There are values available from history.'
+    echo-wrap 'There are values available from history.'
 
     while read opt; do
         count+=1
@@ -436,7 +436,7 @@ printSelectDialog() {
     fi
     _; _.
     words_array=("${source[@]}")
-    wordWrapList "Available ${what}:"
+    echo-wrap-list "Available ${what}:"
     _; _.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
@@ -548,7 +548,7 @@ printSelectDialog() {
                 fi
             done
             _; _.
-            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
+            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
         fi
     fi
     if [[ -n "$type_mode" ]];then
@@ -593,7 +593,7 @@ printSelectOtherDialog() {
     _; _.
     words_array=("${source[@]}")
     words_array+=(other)
-    wordWrapList "Available ${what}:"
+    echo-wrap-list "Available ${what}:"
     _; _.
     __; _, '['; yellow Enter; _, ']'; _, ' '; yellow T; _, 'ype the value.'; _.
     __; _, '['; yellow Backspace; _, ']'; _, ' '; yellow S; _, 'witch to select list.'; _.
@@ -706,7 +706,7 @@ printSelectOtherDialog() {
                 fi
             done
             _; _.
-            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
+            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list." green
         fi
     fi
     if [[ -n "$type_mode" ]];then
@@ -721,7 +721,7 @@ printSelectOtherDialog() {
         fi
     fi
 }
-wordWrapCommand() {
+echo-wrap-multiline() {
     # global words_array RCM_INDENT
     local inline_description="$1"
     local current_line first_line
@@ -790,7 +790,7 @@ wordWrapCommand() {
         fi
     done
 }
-wordWrapList() {
+echo-wrap-list() {
     # global words_array
     local inline_description="$1"
     local current_line first_line last
@@ -872,7 +872,7 @@ wordWrapList() {
 }
 Rcm_prompt_build_command() {
     local _RCM_PROMPT_CHAIN
-    wordWrapDescription 'Use command below to return to the last dialog.' 0
+    echo-wrap 'Use command below to return to the last dialog.' 0
     local shortoptions
     [ -n "$interactive" ] && shortoptions+='i'
     [ -n "$autoyes" ] && shortoptions+='y'
@@ -891,7 +891,7 @@ Rcm_prompt_build_command() {
     fi
     for each in "${RCM_ARGUMENT_PREVIEW[@]}"; do _RCM_PROMPT_CHAIN+=" ${each}"; done
     words_array=($_RCM_PROMPT_CHAIN)
-    wordWrapCommand
+    echo-wrap-multiline
 }
 Rcm_prompt_sigint() {
     _.;
@@ -907,7 +907,7 @@ Rcm_get_list_values() {
         if command -v "$_command" > /dev/null;then
             _; _.
             [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-            wordWrapDescriptionColorize "Value available from command: <magenta>${_command}${_arguments}</magenta>"
+            echo-wrap-color "Value available from command: <magenta>${_command}${_arguments}</magenta>"
             mktemp=$(mktemp -p /dev/shm)
             ${_command}${_arguments} > "$mktemp"
             exit_code=$?
@@ -935,14 +935,14 @@ Rcm_get_list_values() {
             __; _, "Available value: "; yellow "$value";  _, '.'; _.
             if [ -z "$autoyes" ];then
                 _; _.
-                wordWrapDescription 'The one and only available value is selected.'
+                echo-wrap 'The one and only available value is selected.'
                 userInputBooleanDefaultYes
                 if [ -z "$boolean" ];then
                     value=' '
                 fi
             else
                 _; _.
-                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
             fi
         else
             printSelectDialog available_values[@]
@@ -1111,7 +1111,7 @@ if [ -n "$interactive" ];then
         words_array=($_rcm_prompt_chain)
     fi
 
-    wordWrapCommand
+    echo-wrap-multiline
     ____
 
     if [[ "${#RCM_ARGUMENT_PASS[@]}" -gt 0 ]];then

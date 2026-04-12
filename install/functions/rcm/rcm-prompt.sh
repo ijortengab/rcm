@@ -279,7 +279,7 @@ rcm-prompt() {
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 _; _.
                 while read line; do
-                    wordWrapDescription "$line"
+                    echo-wrap "$line"
                 done <<< "$description"
                 _boolean=
                 for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
@@ -323,16 +323,16 @@ rcm-prompt() {
                 elif [[ "$_boolean" == 1 ]];then
                     _; _.
                     if [ -n "$value" ];then
-                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
                     else
-                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
                         if [[ "$value_addon" == 'multivalue' ]];then
                             found=
                             for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                                 if grep -q -- "^${parameter}\$" <<< "$each";then
                                     found=1
                                     let flags++
-                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated." green
+                                    echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
                                 fi
                             done
                             # Biar tidak membingunkan kedepannya, hapus saja semua dari array.
@@ -397,7 +397,7 @@ rcm-prompt() {
                                     printHistoryDialog
                                     if [ -n "$value" ];then
                                         _; _.
-                                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                                        echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                                     fi
                                 fi
                             fi
@@ -452,11 +452,11 @@ rcm-prompt() {
                         if [ -n "$value" ];then
                             if [ -n "$is_typing" ];then
                                 _; _.
-                                wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> manually." green
+                                echo-wrap-color "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> manually." green
                             fi
                         else
                             _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added manually." green
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
                         fi
                     fi
                 fi
@@ -464,7 +464,7 @@ rcm-prompt() {
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
                 _; _.
                 while read line; do
-                    wordWrapDescription "$line"
+                    echo-wrap "$line"
                 done <<< "$description"
                 __; _, Add value?; _.
                 userInputBooleanDefaultNo
@@ -473,7 +473,7 @@ rcm-prompt() {
                         printHistoryDialog
                         if [ -n "$value" ];then
                             _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                         fi
                     fi
                     if [ -z "$value" ];then
@@ -493,10 +493,10 @@ rcm-prompt() {
                 fi
                 _; _.
                 while read line; do
-                    wordWrapDescription "$line"
+                    echo-wrap "$line"
                 done <<< "$description"
                 if [ -n "$default_value" ];then
-                    wordWrapDescriptionColorize "Default value: <yellow>${default_value}</yellow>."
+                    echo-wrap-color "Default value: <yellow>${default_value}</yellow>."
                 fi
                 if [ -n "$prepopulate_value" ];then
                     backup_value=
@@ -522,7 +522,7 @@ rcm-prompt() {
                             values+=("$value")
                         fi
                         _; _.
-                        wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
                         backup_value=
                     fi
                 done
@@ -546,7 +546,7 @@ rcm-prompt() {
                         printHistoryDialog
                         if [ -n "$value" ];then
                             _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                         fi
                     fi
                 fi
@@ -555,7 +555,7 @@ rcm-prompt() {
                     # daripada variable.
                     value="$prepopulate_value"
                     _; _.
-                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> from environment variable." green
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> from environment variable." green
                 fi
                 # Available value dialog juga belum mendukung multivalue.
                 if [ -z "$value" ];then
@@ -610,7 +610,7 @@ rcm-prompt() {
                 if [[ -n "$value" && -n "$is_typing" ]];then
                     _; _.
                     [ -z "$default_value" ] && suffix=' manually' || suffix=' automatically'
-                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow>${suffix}." green
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow>${suffix}." green
                 fi
             fi
             # Backup to text file.
@@ -674,7 +674,7 @@ rcm-prompt() {
                                 printHistoryDialog
                                 if [ -n "$value" ];then
                                     _; _.
-                                    wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
+                                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
                                 fi
                             fi
                             if [ -z "$value" ];then
@@ -716,11 +716,11 @@ rcm-prompt() {
                         fi
                         if [[ -n "$value" && "$is_typing" ]];then
                             _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
                         fi
                         if [[ -n "$is_flagged" && "$is_press" ]];then
                             _; _.
-                            wordWrapDescriptionColorize "Argument <magenta>${parameter}</magenta> added again manually." green
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> added again manually." green
                         fi
                     else
                         again=
