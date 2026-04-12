@@ -969,68 +969,6 @@ Rcm_get_list_values() {
         fi
     fi
 }
-Rcm_event_dispatcher() {
-    # Required Global variable.
-    [ -z "$RCM_CONTENTS" ] && { error "Variable RCM_CONTENTS is required."; x; }
-
-    # Local variable as property.
-    local contents="$RCM_CONTENTS"
-
-    # global command RCM_ARGUMENT_PLACEHOLDERS RCM_ENVIRONMENT_VARIABLES tempfile
-    local key value
-    local label="$1"; shift
-    local to_execute command_raw _command_arguments _command _arguments
-    local line  find replace
-    to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    if [ -n "$to_execute" ];then
-        Rcm_prompt_build_command
-        _.;
-        until [[ -z "$to_execute" ]];do
-            command_raw=`sed -n 1p <<< "$to_execute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            to_execute=`sed -n '2,$p' <<< "$to_execute"`
-            _command_arguments=$(echo "$command_raw" | sed -n -E 's/\s*([^\)]+\))/\1/p')
-            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-            if command -v "$_command" > /dev/null;then
-                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-                    while read line; do
-                        find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        # description="${description/"$find"/"$replace"}"
-                        if [ -n "$_arguments" ];then
-                            _arguments="${_arguments/"$find"/"$replace"}"
-                        fi
-                    done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
-                fi
-            fi
-            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-            chapter "$label" command.
-            code ${_command}${_arguments}
-            ____
-
-            if [ -z "$tempfile" ];then
-                tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
-            fi
-            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${_command}${_arguments} \
-                > "$tempfile" \
-                ; [ ! $? -eq 0 ] && { rm "$tempfile"; x; }
-
-            while IFS= read -r to_export; do
-                key=$(cut -d= -f1 <<< "$to_export")
-                value=$(cut -d= -f2- <<< "$to_export")
-                [ -z "$value" ] && value=-
-                code export "$key"="$value"
-                export "$key"="$value"
-                [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=" "
-                RCM_ENVIRONMENT_VARIABLES+="${key}=${value}"
-            done < "$tempfile"
-            if [ -s "$tempfile" ];then
-                ____
-            fi
-
-        done
-    fi
-}
 
 # Requirement, validate, and populate value.
 _help=$("$command" --help 2>/dev/null)
@@ -1106,7 +1044,6 @@ if [ -n "$interactive" ];then
     rcm-prompt
     trap x SIGINT
 
-    Rcm_event_dispatcher 'Post Prompt'
     [ -f "$backup_storage" ] && rm "$backup_storage"
 
     # Set command with non interactive mode.

@@ -14,6 +14,7 @@ rcm-prompt() {
     local load_other_options=
     local immediately_other_options=
     local argument_preview_bypass=
+    local label list_to_execute
 
     # Mem-parse chapter 'Mapping Operand:" pada contents.
     parse-mapping-operand() {
@@ -45,13 +46,73 @@ rcm-prompt() {
         ____
     }
 
+    # Mem-parse chapter $label pada contents, yang digunakan untuk list
+    # execute command.
+    parse-to-execute() {
+        local label="$1"
+        local to_execute="$2"
+        local command_raw _command_arguments _command _arguments
+        local line find replace
+        [ -z "$label" ] && { error "Argument <label> is required."; x; }
+        [ -z "$to_execute" ] && { error "Argument <to_execute> is required."; x; }
+
+        Rcm_prompt_build_command
+        _.;
+        until [[ -z "$to_execute" ]];do
+            command_raw=`sed -n 1p <<< "$to_execute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            to_execute=`sed -n '2,$p' <<< "$to_execute"`
+            _command_arguments=$(echo "$command_raw" | sed -n -E 's/\s*([^\)]+\))/\1/p')
+            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+            if command -v "$_command" > /dev/null;then
+                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                    while read line; do
+                        find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                        # description="${description/"$find"/"$replace"}"
+                        if [ -n "$_arguments" ];then
+                            _arguments="${_arguments/"$find"/"$replace"}"
+                        fi
+                    done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+                fi
+            fi
+            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            chapter "$label" command.
+            code ${_command}${_arguments}
+            ____
+
+            if [ -z "$tempfile" ];then
+                tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
+            fi
+            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${_command}${_arguments} \
+                > "$tempfile" \
+                ; [ ! $? -eq 0 ] && { rm "$tempfile"; x; }
+
+            while IFS= read -r to_export; do
+                key=$(cut -d= -f1 <<< "$to_export")
+                value=$(cut -d= -f2- <<< "$to_export")
+                [ -z "$value" ] && value=-
+                code export "$key"="$value"
+                export "$key"="$value"
+                [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=" "
+                RCM_ENVIRONMENT_VARIABLES+="${key}=${value}"
+            done < "$tempfile"
+            if [ -s "$tempfile" ];then
+                ____
+            fi
+        done
+    }
+
     mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$mapping_operand" ];then
         parse-mapping-operand "$mapping_operand"
     fi
 
-    # Mulai eksekusi event pre prompt.
-    Rcm_event_dispatcher 'Pre Prompt'
+    label='Pre Prompt'
+    list_to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$list_to_execute" ];then
+        parse-to-execute "$label" "$list_to_execute"
+    fi
 
     # Populate options.
     options=`echo "$contents" | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
@@ -695,5 +756,11 @@ rcm-prompt() {
     fi
     if [ -n "$chapter_printed" ];then
         ____
+    fi
+
+    label='Post Prompt'
+    list_to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
+    if [ -n "$list_to_execute" ];then
+        parse-to-execute "$label" "$list_to_execute"
     fi
 }
