@@ -50,41 +50,47 @@ rcm-prompt() {
     # execute command.
     parse-to-execute() {
         local label="$1"
-        local to_execute="$2"
-        local command_raw _command_arguments _command _arguments
+        local contents="$2"
+        local first_line_trimmed is_valid
+        local command arguments
         local line find replace
         [ -z "$label" ] && { error "Argument <label> is required."; x; }
-        [ -z "$to_execute" ] && { error "Argument <to_execute> is required."; x; }
+        [ -z "$contents" ] && { error "Argument <contents> is required."; x; }
 
         Rcm_prompt_build_command
         _.;
-        until [[ -z "$to_execute" ]];do
-            command_raw=`sed -n 1p <<< "$to_execute" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            to_execute=`sed -n '2,$p' <<< "$to_execute"`
-            _command_arguments=$(echo "$command_raw" | sed -n -E 's/\s*([^\)]+\))/\1/p')
-            _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-            _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-            if command -v "$_command" > /dev/null;then
-                if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-                    while read line; do
-                        find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        # description="${description/"$find"/"$replace"}"
-                        if [ -n "$_arguments" ];then
-                            _arguments="${_arguments/"$find"/"$replace"}"
-                        fi
-                    done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
-                fi
+        until [[ -z "$contents" ]];do
+            first_line_trimmed=`sed -n 1p <<< "$contents" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            contents=`sed -n '2,$p' <<< "$contents"`
+            is_valid=$(echo "$first_line_trimmed" | sed -n -E 's/\s*([^\)]+\))/\1/p')
+            if [ -z "$is_valid" ];then
+                error The command format is not valid: '`'"$first_line_trimmed"'`'.; x;
             fi
-            [ -n "$_arguments" ] && _arguments=' '"$_arguments"
+            command=$(echo "$first_line_trimmed" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+            arguments=$(echo "$first_line_trimmed" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+
+            if ! command -v "$command" > /dev/null;then
+                error The command is not found.; x;
+            fi
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    # description="${description/"$find"/"$replace"}"
+                    if [ -n "$arguments" ];then
+                        arguments="${arguments/"$find"/"$replace"}"
+                    fi
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            [ -n "$arguments" ] && arguments=' '"$arguments"
             chapter "$label" command.
-            code ${_command}${_arguments}
+            code ${command}${arguments}
             ____
 
             if [ -z "$tempfile" ];then
                 tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
             fi
-            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${_command}${_arguments} \
+            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${command}${arguments} \
                 > "$tempfile" \
                 ; [ ! $? -eq 0 ] && { rm "$tempfile"; x; }
 
