@@ -37,10 +37,10 @@ rcm-prompt-options() {
             is_flag=
             value_addon=multivalue
         fi
-        description=`sed -n 2p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        description=
         unset count
         declare -i count
-        count=3
+        count=2
         placeholders=
         while true; do
             below=`sed -n ${count}p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
@@ -56,11 +56,12 @@ rcm-prompt-options() {
                 fi
                 placeholders+="$below"
             else
-                description+=$'\n'
                 description+="$below"
+                description+=$'\n'
             fi
             count+=1
         done
+
         if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
             value_addon=multivalue
         fi
@@ -170,10 +171,12 @@ rcm-prompt-options() {
         fi
         if [ -n "$is_flag" ];then
             _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
             _boolean=
             for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
                 if grep -q -- "^${parameter}-\$" <<< "$each";then
@@ -355,10 +358,12 @@ rcm-prompt-options() {
             fi
         elif [[ "$parameter" == '--' ]];then
             _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
             __; _, Add value?; _.
             userInputBooleanDefaultNo
             if [ -n "$boolean" ]; then
@@ -384,10 +389,12 @@ rcm-prompt-options() {
             else
                 _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
             fi
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
             if [ -n "$default_value" ];then
                 echo-wrap-color "Default value: <yellow>${default_value}</yellow>."
             fi
