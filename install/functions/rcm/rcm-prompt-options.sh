@@ -9,7 +9,6 @@ rcm-prompt-options() {
     local other_options="$RCM_OTHER_OPTIONS"
     local load_other_options=
     local immediately_other_options=
-    local argument_preview_bypass=
     local count below
 
     rcm-prompt-options-option() {
@@ -343,9 +342,7 @@ rcm-prompt-options() {
             else
                 # Populate placeholders.
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"0"
-                if [ -z "$argument_preview_bypass" ];then
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}-")
-                fi
+                RCM_ARGUMENT_PREVIEW+=("${parameter}-")
             fi
             if [ -n "$master_boolean" ];then
                 if [ -n "$is_press" ];then
@@ -507,9 +504,7 @@ rcm-prompt-options() {
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
             else
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: -'
-                if [ -z "$argument_preview_bypass" ];then
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}-")
-                fi
+                RCM_ARGUMENT_PREVIEW+=("${parameter}-")
             fi
             if [[ -n "$value" && -n "$is_typing" ]];then
                 _; _.
@@ -667,10 +662,8 @@ rcm-prompt-options() {
                     userInputBooleanDefaultNo
                     if [ -z "$boolean" ]; then
                         immediately_other_options=1
-                        argument_preview_bypass=1
                     fi
                 else
-                    argument_preview_bypass=1
                     immediately_other_options=1
                 fi
             fi
