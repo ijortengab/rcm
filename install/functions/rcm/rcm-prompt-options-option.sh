@@ -21,6 +21,8 @@ rcm-prompt-options-option() {
     local is_required=
     local is_flag=
     local value_addon=
+    local description=
+    local placeholders=
 
     parse-parameter() {
         # global option
@@ -43,7 +45,33 @@ rcm-prompt-options-option() {
         fi
     }
 
+    parse-description() {
+        # global option
+        # global description
+        # global placeholders
+        local count below
+        unset count
+        declare -i count
+        count=2
+        while true; do
+            below=`sed -n ${count}p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            if [ -z "$below" ];then
+                break
+            fi
+            if [[ "${below:0:1}" == '[' ]];then
+                placeholders+="$below"
+                placeholders+=$'\n'
+            else
+                description+="$below"
+                description+=$'\n'
+            fi
+            count+=1
+        done
+    }
+
     parse-parameter
+
+    parse-description
 
     is_flagvalue=
     save_history=1
@@ -52,27 +80,6 @@ rcm-prompt-options-option() {
     is_flagged=
     default_value=
     prepopulate_value=
-    description=
-    unset count
-    declare -i count
-    count=2
-    placeholders=
-    while true; do
-        below=`sed -n ${count}p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-        if [ -z "$below" ];then
-            break
-        fi
-        if [[ "${below:0:1}" == '[' ]];then
-            if [ -n "$placeholders" ];then
-                placeholders+=$'\n'
-            fi
-            placeholders+="$below"
-        else
-            description+="$below"
-            description+=$'\n'
-        fi
-        count+=1
-    done
 
     if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
         value_addon=multivalue
