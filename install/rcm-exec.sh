@@ -6,6 +6,7 @@ source /usr/local/rcm/$RCM_VERSION/functions/common/echo-wrap-color.sh
 source /usr/local/rcm/$RCM_VERSION/functions/common/echo-wrap-list.sh
 source /usr/local/rcm/$RCM_VERSION/functions/common/echo-wrap-multiline.sh
 source /usr/local/rcm/$RCM_VERSION/functions/common/read-true.sh
+source /usr/local/rcm/$RCM_VERSION/functions/common/read-false.sh
 source /usr/local/rcm/$RCM_VERSION/functions/array/array-search.sh
 source /usr/local/rcm/$RCM_VERSION/functions/array/array-shift.sh
 source /usr/local/rcm/$RCM_VERSION/functions/array/array-remove.sh
@@ -165,25 +166,6 @@ title rcm
 ____
 
 # Functions.
-read-false() {
-    _; _.
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-    RCM_BOOLEAN=
-    _; _.
-    __ Press the yellow key to select.
-    while true; do
-        __; read -rsn 1 -p "Select: " char
-        if [ -z "$char" ];then
-            char=n
-        fi
-        case $char in
-            y|Y) echo "$char" >&2; RCM_BOOLEAN=1; break;;
-            n|N) echo "$char" >&2; break ;;
-            *) echo >&2
-        esac
-    done
-}
 printBackupDialog() {
     _; _.
     echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
