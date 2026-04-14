@@ -8,10 +8,20 @@ rcm-prompt-options() {
     local options="$RCM_OPTIONS"
     local other_options="$RCM_OTHER_OPTIONS"
     local load_other_options=
-    local immediately_other_options=
+    local bypass_dialog=
     local count below
 
     rcm-prompt-options-option() {
+        local bypass_dialog=
+
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --bypass-dialog) bypass_dialog=1; shift ;;
+                --[^-]*) shift ;;
+                *) shift ;;
+            esac
+        done
+
         # Required Global variable.
         [ -z "$RCM_OPTION" ] && { error "Variable RCM_OPTION is required."; x; }
 
@@ -248,7 +258,7 @@ rcm-prompt-options() {
 
             # Jika $parameter merupakan other option, maka skip semua dialog.
             # jika tidak ada prepopulate value.
-            if [ -n "$immediately_other_options" ];then
+            if [ -n "$bypass_dialog" ];then
                 if [ -z "$_boolean" ];then
                     backup_flag=
                     master_boolean=' '
@@ -430,7 +440,7 @@ rcm-prompt-options() {
 
             # Jika $parameter merupakan other option, maka skip semua dialog.
             # jika tidak ada prepopulate value.
-            if [ -n "$immediately_other_options" ];then
+            if [ -n "$bypass_dialog" ];then
                 if [ -z "$value" ];then
                     backup_value=
                     value=' '
@@ -646,7 +656,7 @@ rcm-prompt-options() {
             RCM_OPTION+="$below"
             count+=1
         done
-        rcm-prompt-options-option
+        rcm-prompt-options-option $bypass_dialog
         options=`sed -n ${count}',$p' <<< "$options"`
 
         # Other options.
@@ -661,10 +671,10 @@ rcm-prompt-options() {
                     __; _, Prompt other arguments?; _.
                     userInputBooleanDefaultNo
                     if [ -z "$boolean" ]; then
-                        immediately_other_options=1
+                        bypass_dialog='--bypass-dialog'
                     fi
                 else
-                    immediately_other_options=1
+                    bypass_dialog='--bypass-dialog'
                 fi
             fi
         fi
@@ -672,3 +682,31 @@ rcm-prompt-options() {
     ____
 
 }
+
+# parse-options.sh \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --no-rebuild-arguments \
+# --without-end-options-first-operand \
+# --without-end-options-double-dash \
+# --no-error-require-arguments << EOF | clip
+# INCREMENT=(
+# )
+# FLAG=(
+# '--bypass-dialog'
+# )
+# VALUE=(
+# )
+# MULTIVALUE=(
+# )
+# FLAG_VALUE=(
+# )
+# CSV=(
+# )
+# OPERAND=(
+# )
+# EOF
+# clear
