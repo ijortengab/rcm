@@ -17,11 +17,34 @@ rcm-prompt-options-option() {
     # Local variable as property.
     local option="$RCM_OPTION"
     local count below
+    local parameter
+    local is_required=
+    local is_flag=
+    local value_addon=
 
-    parameter=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-    is_required=
-    is_flag=
-    value_addon=
+    parse-parameter() {
+        # global option
+        # global parameter
+        # global is_required is_flag value_addon
+        parameter=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        if [[ "${parameter:(-1):1}" == '*' ]];then
+            is_required=1
+            parameter="${parameter::-1}"
+            parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        elif [[ "${parameter:(-1):1}" == '^' ]];then
+            is_flag=1
+            parameter="${parameter::-1}"
+            parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        fi
+        if [[ "$parameter" == '--' ]];then
+            is_required=
+            is_flag=
+            value_addon=multivalue
+        fi
+    }
+
+    parse-parameter
+
     is_flagvalue=
     save_history=1
     is_typing=
@@ -29,20 +52,6 @@ rcm-prompt-options-option() {
     is_flagged=
     default_value=
     prepopulate_value=
-    if [[ "${parameter:(-1):1}" == '*' ]];then
-        is_required=1
-        parameter="${parameter::-1}"
-        parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-    elif [[ "${parameter:(-1):1}" == '^' ]];then
-        is_flag=1
-        parameter="${parameter::-1}"
-        parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-    fi
-    if [[ "$parameter" == '--' ]];then
-        is_required=
-        is_flag=
-        value_addon=multivalue
-    fi
     description=
     unset count
     declare -i count
