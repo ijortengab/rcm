@@ -10,9 +10,17 @@ rcm-prompt-options() {
     local load_other_options=
     local immediately_other_options=
     local argument_preview_bypass=
+    local count below
 
-    until [[ -z "$options" ]];do
-        parameter=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+    rcm-prompt-options-option() {
+        # Required Global variable.
+        [ -z "$RCM_OPTION" ] && { error "Variable RCM_OPTION is required."; x; }
+
+        # Local variable as property.
+        local option="$RCM_OPTION"
+        local count below
+
+        parameter=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
         is_required=
         is_flag=
         value_addon=
@@ -43,10 +51,7 @@ rcm-prompt-options() {
         count=2
         placeholders=
         while true; do
-            below=`sed -n ${count}p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if grep -q '^--' <<< "$below";then
-                break
-            fi
+            below=`sed -n ${count}p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
             if [ -z "$below" ];then
                 break
             fi
@@ -68,7 +73,6 @@ rcm-prompt-options() {
         if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$description";then
             value_addon=canhavevalue
         fi
-        options=`sed -n ${count}',$p' <<< "$options"`
         value=
         values=()
         flags=1
@@ -627,6 +631,28 @@ rcm-prompt-options() {
                 fi
             done
         fi
+
+    }
+
+    until [[ -z "$options" ]];do
+        RCM_OPTION=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        unset count
+        declare -i count
+        count=2
+        while true; do
+            below=`sed -n ${count}p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+            if grep -q '^--' <<< "$below";then
+                break
+            fi
+            if [ -z "$below" ];then
+                break
+            fi
+            RCM_OPTION+=$'\n'
+            RCM_OPTION+="$below"
+            count+=1
+        done
+        rcm-prompt-options-option
+        options=`sed -n ${count}',$p' <<< "$options"`
 
         # Other options.
         if [[ -z "$options" && -z "$load_other_options" ]];then
