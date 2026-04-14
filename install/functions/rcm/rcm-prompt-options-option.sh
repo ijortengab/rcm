@@ -23,6 +23,9 @@ rcm-prompt-options-option() {
     local value_addon=
     local description=
     local placeholders=
+    local find
+    local or_other=
+    local available_values=()
 
     parse-parameter() {
         # global option
@@ -69,6 +72,47 @@ rcm-prompt-options-option() {
         done
     }
 
+    parse-available-values() {
+        local found="$1"
+        local each line
+        # global available_values
+        # global description
+        # global placeholders
+        # global or_other
+        description=`echo "$description" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
+        if grep -i -q -E 'or others?' <<< "$found";then
+            or_other=1
+            found=`echo "$found" | sed -E 's/or others?$//'`
+        fi
+        if [ -n "$placeholders" ];then
+            IFS=',' read -ra found <<< "$found"
+            available_values=()
+            for each in "${found[@]}"; do
+                each=$(echo "${each}" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                if [ -z "$each" ];then
+                    continue
+                fi
+                if grep -q -F "${each}: " <<< "$placeholders";then
+                    line=`grep -F "${each}: " <<< "$placeholders"`
+                    line=$(echo "${line}" | cut -d: -f2 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    available_values+=("$line")
+                else
+                    available_values+=("$each")
+                fi
+            done
+        else
+            IFS=',' read -ra found <<< "$found"
+            available_values=()
+            for each in "${found[@]}"; do
+                each=$(echo "${each}" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                if [ -z "$each" ];then
+                    continue
+                fi
+                available_values+=("$each")
+            done
+        fi
+    }
+
     parse-parameter
 
     parse-description
@@ -100,22 +144,20 @@ rcm-prompt-options-option() {
     if [ -f "$history_storage" ];then
         history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
     fi
-    available_values=()
-    _available_values=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
-    if [ -n "$_available_values" ];then
-        description=`echo "$description" | sed -E 's/ *Available values?: ([^\.]+)\.//i'`
-    fi
+
+    while true; do
+        find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+        if [ -n "$find" ];then
+            parse-available-values "$find"
+            break
+        fi
+        break
+    done
+
     _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
     _available_values_from_command_executed=
     if [ -n "$_available_values_from_command" ];then
         description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
-    fi
-    or_other=
-    if [ -n "$_available_values" ];then
-        if grep -i -q -E 'or others?' <<< "$_available_values";then
-            or_other=1
-            _available_values=`echo "$_available_values" | sed -E 's/or others?$//'`
-        fi
     fi
     if [ -n "$_available_values_from_command" ];then
         if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
@@ -138,23 +180,6 @@ rcm-prompt-options-option() {
             done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
         fi
         prepopulate_value="${!_prepopulate_value}"
-    fi
-    if [ -n "$placeholders" ];then
-        _available_values=(`echo "$_available_values" | tr ',' ' '`)
-        available_values=()
-        for each in "${_available_values[@]}"; do
-            if grep -q -F "${each}: " <<< "$placeholders";then
-                line=`grep -F "${each}: " <<< "$placeholders"`
-                replace=$(echo ${line} | cut -d: -f2 | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                available_values+=("$replace")
-            else
-                available_values+=("$each")
-            fi
-        done
-    else
-        if [ -n "$_available_values" ];then
-            available_values=(`echo "$_available_values" | tr ',' ' '`)
-        fi
     fi
     _; _.
     if [ -n "$_available_values_from_command" ];then
