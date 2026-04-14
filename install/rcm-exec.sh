@@ -164,7 +164,7 @@ title rcm
 ____
 
 # Functions.
-userInputBooleanDefaultYes() {
+read-true() {
     _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
     __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
@@ -184,7 +184,7 @@ userInputBooleanDefaultYes() {
         esac
     done
 }
-userInputBooleanDefaultNo() {
+read-false() {
     _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
     __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
@@ -206,7 +206,7 @@ userInputBooleanDefaultNo() {
 printBackupDialog() {
     _; _.
     echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
-    userInputBooleanDefaultYes
+    read-true
     if [ -n "$boolean" ];then
         _; _.
         value="$backup_value";
@@ -220,7 +220,7 @@ printBackupDialog() {
 printBackupFlagDialog() {
     _; _.
     echo-wrap "This argument has been added before. Would you like to restore this argument?"
-    userInputBooleanDefaultYes
+    read-true
     if [ -n "$boolean" ];then
         _; _.
         echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
@@ -626,7 +626,7 @@ Rcm_get_list_values() {
             if [ -z "$autoyes" ];then
                 _; _.
                 echo-wrap 'The one and only available value is selected.'
-                userInputBooleanDefaultYes
+                read-true
                 if [ -z "$boolean" ];then
                     value=' '
                 fi
@@ -812,7 +812,7 @@ if [ -n "$interactive" ];then
 
     if [ -z "$autoyes" ];then
         chapter Execute:
-        userInputBooleanDefaultYes
+        read-true
         if [ -z "$boolean" ];then
             exit 0
         fi

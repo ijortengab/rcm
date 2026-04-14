@@ -277,7 +277,7 @@ rcm-prompt-options() {
             if [ -z "$master_boolean" ];then
                 _; _.
                 __; _, Add this argument?; _.
-                userInputBooleanDefaultNo
+                read-false
                 master_boolean="$boolean"
                 is_press=1
             fi
@@ -294,7 +294,7 @@ rcm-prompt-options() {
                     if [ -z "$value" ];then
                         _; _.
                         __; _, Do you want fill with value?; _.
-                        userInputBooleanDefaultNo
+                        read-false
                     fi
                     if [ -n "$value" ];then
                         # fill from prepopulated
@@ -376,7 +376,7 @@ rcm-prompt-options() {
                 done <<< "$description"
             fi
             __; _, Add value?; _.
-            userInputBooleanDefaultNo
+            read-false
             if [ -n "$boolean" ]; then
                 if [ -n "$history_value" ];then
                     printHistoryDialog
@@ -558,7 +558,7 @@ rcm-prompt-options() {
                         is_flagged=
                         _; _.
                         __ Add this argument again?
-                        userInputBooleanDefaultNo
+                        read-false
                         is_press=1
                     fi
                 else
@@ -568,7 +568,7 @@ rcm-prompt-options() {
                         value=
                         _; _.
                         __ Add another value?
-                        userInputBooleanDefaultNo
+                        read-false
                         is_press=1
                     fi
                 fi
@@ -669,7 +669,7 @@ rcm-prompt-options() {
                     _; _, 'There are '; yellow other ;_, ' arguments available and optional.'; _.
                     _; _.
                     __; _, Prompt other arguments?; _.
-                    userInputBooleanDefaultNo
+                    read-false
                     if [ -z "$boolean" ]; then
                         bypass_dialog='--bypass-dialog'
                     fi
