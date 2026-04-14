@@ -220,9 +220,7 @@ rcm-prompt-options() {
                 fi
             done
             # Reset first.
-            boolean=
-            # Variable $boolean digunakan dimana-mana, jadi kita gunakan
-            # variable terpisah.
+            RCM_BOOLEAN=
             master_boolean=
             if [[ "$_boolean" == 0 ]];then
                 _; _.
@@ -267,7 +265,7 @@ rcm-prompt-options() {
 
             if [ -n "$backup_flag" ];then
                 printBackupFlagDialog
-                master_boolean="$boolean"
+                master_boolean="$RCM_BOOLEAN"
                 if [[ "$value_addon" == 'canhavevalue' ]];then
                     if [ -n "$backup_value" ];then
                         printBackupDialog
@@ -278,7 +276,7 @@ rcm-prompt-options() {
                 _; _.
                 __; _, Add this argument?; _.
                 read-false
-                master_boolean="$boolean"
+                master_boolean="$RCM_BOOLEAN"
                 is_press=1
             fi
             if [[ "$master_boolean" == ' ' ]];then
@@ -298,9 +296,9 @@ rcm-prompt-options() {
                     fi
                     if [ -n "$value" ];then
                         # fill from prepopulated
-                        boolean=1
+                        RCM_BOOLEAN=1
                     fi
-                    if [ -n "$boolean" ]; then
+                    if [ -n "$RCM_BOOLEAN" ]; then
                         if [ -z "$value" ];then
                             if [ -n "$history_value" ];then
                                 printHistoryDialog
@@ -377,7 +375,7 @@ rcm-prompt-options() {
             fi
             __; _, Add value?; _.
             read-false
-            if [ -n "$boolean" ]; then
+            if [ -n "$RCM_BOOLEAN" ]; then
                 if [ -n "$history_value" ];then
                     printHistoryDialog
                     if [ -n "$value" ];then
@@ -551,7 +549,7 @@ rcm-prompt-options() {
             again=1
             until [ -z "$again" ]; do
                 is_press=
-                boolean=
+                RCM_BOOLEAN=
                 if [ -n "$is_flag" ];then
                     if [[ -n "$is_flagged" ]];then
                         # Reset condition before multivalue.
@@ -572,7 +570,7 @@ rcm-prompt-options() {
                         is_press=1
                     fi
                 fi
-                if [ -n "$boolean" ];then
+                if [ -n "$RCM_BOOLEAN" ];then
                     if [ -n "$is_flag" ];then
                         RCM_ARGUMENT_PASS+=("${parameter}")
                         RCM_ARGUMENT_PREVIEW+=("${parameter}")
@@ -670,7 +668,7 @@ rcm-prompt-options() {
                     _; _.
                     __; _, Prompt other arguments?; _.
                     read-false
-                    if [ -z "$boolean" ]; then
+                    if [ -z "$RCM_BOOLEAN" ]; then
                         bypass_dialog='--bypass-dialog'
                     fi
                 else

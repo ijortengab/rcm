@@ -168,7 +168,7 @@ read-true() {
     _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
     __;  _, '['; yellow Esc; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    boolean=
+    RCM_BOOLEAN=
     _; _.
     __ Press the yellow key to select.
     while true; do
@@ -177,7 +177,7 @@ read-true() {
             char=y
         fi
         case $char in
-            y|Y) echo "$char" >&2; boolean=1; break;;
+            y|Y) echo "$char" >&2; RCM_BOOLEAN=1; break;;
             n|N) echo "$char" >&2; break ;;
             $'\33') echo "n" >&2; break ;;
             *) echo >&2
@@ -188,7 +188,7 @@ read-false() {
     _; _.
     __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
     __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
-    boolean=
+    RCM_BOOLEAN=
     _; _.
     __ Press the yellow key to select.
     while true; do
@@ -197,7 +197,7 @@ read-false() {
             char=n
         fi
         case $char in
-            y|Y) echo "$char" >&2; boolean=1; break;;
+            y|Y) echo "$char" >&2; RCM_BOOLEAN=1; break;;
             n|N) echo "$char" >&2; break ;;
             *) echo >&2
         esac
@@ -207,7 +207,7 @@ printBackupDialog() {
     _; _.
     echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
     read-true
-    if [ -n "$boolean" ];then
+    if [ -n "$RCM_BOOLEAN" ];then
         _; _.
         value="$backup_value";
         if [ -n "$is_flag" ];then
@@ -221,7 +221,7 @@ printBackupFlagDialog() {
     _; _.
     echo-wrap "This argument has been added before. Would you like to restore this argument?"
     read-true
-    if [ -n "$boolean" ];then
+    if [ -n "$RCM_BOOLEAN" ];then
         _; _.
         echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
     fi
@@ -627,7 +627,7 @@ Rcm_get_list_values() {
                 _; _.
                 echo-wrap 'The one and only available value is selected.'
                 read-true
-                if [ -z "$boolean" ];then
+                if [ -z "$RCM_BOOLEAN" ];then
                     value=' '
                 fi
             else
@@ -813,7 +813,7 @@ if [ -n "$interactive" ];then
     if [ -z "$autoyes" ];then
         chapter Execute:
         read-true
-        if [ -z "$boolean" ];then
+        if [ -z "$RCM_BOOLEAN" ];then
             exit 0
         fi
         ____
