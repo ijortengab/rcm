@@ -33,6 +33,9 @@ rcm-prompt-options-option() {
     local history_value=
     local default_value=
     local prepopulate_value=
+    local boolean=
+    local value=
+    local prepopulate_boolean=
 
     parse-parameter() {
         local first_line_trimmed residue
@@ -277,7 +280,6 @@ rcm-prompt-options-option() {
     if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
         value_addon=multivalue
     fi
-    value=
     values=()
     flags=1
     backup_value=
@@ -349,19 +351,19 @@ rcm-prompt-options-option() {
             echo-wrap "$line"
         done <<< "$description"
     fi
+
     if [ -n "$is_flag" ];then
-        _boolean=
         for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
             if grep -q -- "^${parameter}-\$" <<< "$each";then
-                _boolean=0
+                prepopulate_boolean=0
                 break
             elif grep -q -- "^${parameter}-=" <<< "$each";then
                 # Ada argument lupa dihapus, contoh: --with-roundcube- mail.example.org
                 # maka set sebagai skip.
-                _boolean=0
+                prepopulate_boolean=0
                 break
             elif grep -q -- "^${parameter}\$" <<< "$each";then
-                _boolean=1
+                prepopulate_boolean=1
                 if [[ "$value_addon" == 'multivalue' ]];then
                     ArrayRemove "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
                     RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
@@ -372,13 +374,12 @@ rcm-prompt-options-option() {
         done
         # Reset first.
         RCM_BOOLEAN=
-        master_boolean=
-        if [[ "$_boolean" == 0 ]];then
+        if [[ "$prepopulate_boolean" == 0 ]];then
             _; _.
             __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
             backup_flag=
-            master_boolean=' '
-        elif [[ "$_boolean" == 1 ]];then
+            boolean=' '
+        elif [[ "$prepopulate_boolean" == 1 ]];then
             _; _.
             if [ -n "$value" ];then
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
@@ -402,37 +403,37 @@ rcm-prompt-options-option() {
                 fi
             fi
             backup_flag=
-            master_boolean=1
+            boolean=1
         fi
 
         # Jika $parameter merupakan other option, maka skip semua dialog.
         # jika tidak ada prepopulate value.
         if [ -n "$bypass_dialog" ];then
-            if [ -z "$_boolean" ];then
+            if [ -z "$prepopulate_boolean" ];then
                 backup_flag=
-                master_boolean=' '
+                boolean=' '
             fi
         fi
 
         if [ -n "$backup_flag" ];then
             printBackupFlagDialog
-            master_boolean="$RCM_BOOLEAN"
+            boolean="$RCM_BOOLEAN"
         fi
-        if [ -z "$master_boolean" ];then
+        if [ -z "$boolean" ];then
             _; _.
             __; _, Add this argument?; _.
             read-false
-            master_boolean="$RCM_BOOLEAN"
+            boolean="$RCM_BOOLEAN"
             is_press=1
         fi
-        if [[ "$master_boolean" == ' ' ]];then
-            master_boolean=
+        if [[ "$boolean" == ' ' ]];then
+            boolean=
         fi
         # Populate placeholders.
         if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
             RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
         fi
-        if [ -n "$master_boolean" ]; then
+        if [ -n "$boolean" ]; then
             is_flagged=1
                 i=1
                 until [[ $i -gt $flags ]];do
@@ -454,7 +455,7 @@ rcm-prompt-options-option() {
             RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"0"
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
         fi
-        if [ -n "$master_boolean" ];then
+        if [ -n "$boolean" ];then
             if [ -n "$is_press" ];then
                 if [ -n "$value" ];then
                     if [ -n "$is_typing" ];then
@@ -634,7 +635,7 @@ rcm-prompt-options-option() {
         fi
     fi
     # Backup to text file for flag.
-    if [ -n "$master_boolean" ];then
+    if [ -n "$boolean" ];then
         mkdir -p $(dirname "$backup_storage")
         echo "${parameter}" >> "$backup_storage"
     fi
