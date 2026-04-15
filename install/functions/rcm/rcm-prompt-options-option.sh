@@ -32,6 +32,7 @@ rcm-prompt-options-option() {
     local save_history=1
     local history_value=
     local default_value=
+    local prepopulate_value=
 
     parse-parameter() {
         # global option
@@ -160,6 +161,22 @@ rcm-prompt-options-option() {
         default_value="${!found}"
     }
 
+    parse-prepopulate-value() {
+        local found="$1"
+        local find replace
+        # global description
+        # global prepopulate_value
+        description=`echo "$description" | sed -E 's/ *Prepopulate value from variable:? ([^\.]+)\.//i'`
+        if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+            while read line; do
+                find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                found="${found/"$find"/"$replace"}"
+            done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+        fi
+        prepopulate_value="${!found}"
+    }
+
     Rcm_get_list_values() {
         # global available_values_command
         # global available_values_arguments
@@ -240,7 +257,6 @@ rcm-prompt-options-option() {
     is_typing=
     is_press=
     is_flagged=
-    prepopulate_value=
 
     if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
         value_addon=multivalue
@@ -276,6 +292,11 @@ rcm-prompt-options-option() {
     done
 
     while true; do
+        find=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
+        if [ -n "$find" ];then
+            parse-prepopulate-value "$find"
+            break
+        fi
         find=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
         if [ -n "$find" ];then
             parse-default-value "$find"
@@ -284,18 +305,6 @@ rcm-prompt-options-option() {
         break
     done
 
-    _prepopulate_value=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
-    if [ -n "$_prepopulate_value" ];then
-        description=`echo "$description" | sed -E 's/ *Prepopulate value from variable:? ([^\.]+)\.//i'`
-        if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-            while read line; do
-                find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                _prepopulate_value="${_prepopulate_value/"$find"/"$replace"}"
-            done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
-        fi
-        prepopulate_value="${!_prepopulate_value}"
-    fi
     _; _.
     if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
         while read line; do
