@@ -166,37 +166,6 @@ title rcm
 ____
 
 # Functions.
-Rcm_prompt_build_command() {
-    local _RCM_PROMPT_CHAIN
-    echo-wrap 'Use command below to return to the last dialog.' 0
-    local shortoptions
-    [ -n "$interactive" ] && shortoptions+='i'
-    [ -n "$autoyes" ] && shortoptions+='y'
-    [ -n "$timer" ] && shortoptions+='t'
-    [ -z "$fast" ] && shortoptions+='s'
-    if [ -n "$verbose" ];then
-        for ((i = 0 ; i < "$verbose" ; i++)); do
-            shortoptions+='v'
-        done
-    fi
-    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
-    if [ -z "$RCM_PROMPT_CHAIN" ];then
-        _RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
-    else
-        _RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
-    fi
-    for each in "${RCM_ARGUMENT_PREVIEW[@]}"; do _RCM_PROMPT_CHAIN+=" ${each}"; done
-    words_array=($_RCM_PROMPT_CHAIN)
-    echo-wrap-multiline
-}
-Rcm_prompt_sigint() {
-    _.;
-    _.;
-    error Interrupt by User.
-    _.;
-    Rcm_prompt_build_command
-    exit 0
-}
 
 # Requirement, validate, and populate value.
 _help=$("$command" --help 2>/dev/null)
@@ -261,7 +230,6 @@ if [ -n "$interactive" ];then
 
     backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
     history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-    trap Rcm_prompt_sigint SIGINT
 
     RCM_ARGUMENT_PASS=()
     RCM_ARGUMENT_PREVIEW=()
