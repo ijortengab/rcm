@@ -318,7 +318,6 @@ rcm-prompt-options-option() {
         break
     done
 
-    _; _.
     if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
         while read line; do
             find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -326,14 +325,31 @@ rcm-prompt-options-option() {
             description="${description/"$find"/"$replace"}"
         done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
     fi
+    _; _.
     if [ -n "$is_flag" ];then
         _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-        if [ -n "$description" ];then
+    else
+        if [ -n "$is_required" ];then
+            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required;_, '.'; _.
+        else
+            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
             _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
+            __; _, Do you want fill with value?; _.
+            read-false
+            if [ -z "$RCM_BOOLEAN" ]; then
+                backup_value=
+                history_value=
+                value=' '
+            fi
         fi
+    fi
+    if [ -n "$description" ];then
+        _; _.
+        while read line; do
+            echo-wrap "$line"
+        done <<< "$description"
+    fi
+    if [ -n "$is_flag" ];then
         _boolean=
         for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
             if grep -q -- "^${parameter}-\$" <<< "$each";then
@@ -479,25 +495,6 @@ rcm-prompt-options-option() {
             fi
         fi
     else
-        if [ -n "$is_required" ];then
-            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required;_, '.'; _.
-        else
-            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-            _; _.
-            __; _, Do you want fill with value?; _.
-            read-false
-            if [ -z "$RCM_BOOLEAN" ]; then
-                backup_value=
-                history_value=
-                value=' '
-            fi
-        fi
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
         if [ -n "$default_value" ];then
             _; _.
             echo-wrap-color "Default value: <yellow>${default_value}</yellow>."
