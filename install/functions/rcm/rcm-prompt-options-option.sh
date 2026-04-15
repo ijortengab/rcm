@@ -515,6 +515,7 @@ rcm-prompt-options-option() {
             done <<< "$description"
         fi
         if [ -n "$default_value" ];then
+            _; _.
             echo-wrap-color "Default value: <yellow>${default_value}</yellow>."
         fi
         if [ -n "$prepopulate_value" ];then
@@ -591,6 +592,7 @@ rcm-prompt-options-option() {
         fi
         if [[ -z "$value" && -n "$default_value" ]];then
             value="$default_value"
+            suffix=' automatically'
         fi
         # Populate placeholders.
         if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
@@ -626,7 +628,7 @@ rcm-prompt-options-option() {
         fi
         if [[ -n "$value" && -n "$is_typing" ]];then
             _; _.
-            [ -z "$default_value" ] && suffix=' manually' || suffix=' automatically'
+            [ -z "$suffix" ] && suffix=' manually'
             echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow>${suffix}." green
         fi
     fi
