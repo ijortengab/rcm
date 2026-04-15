@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /usr/local/rcm/$RCM_VERSION/functions/rcm/rcm-prompt-options.sh
+
 rcm-prompt() {
     # Required Global variable.
     [ -z "$RCM_CONTENTS" ] && { error "Variable RCM_CONTENTS is required."; x; }
@@ -119,7 +121,6 @@ rcm-prompt() {
     # Populate options.
     RCM_OPTIONS=`echo "$contents" | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$RCM_OPTIONS" ];then
-        source /usr/local/rcm/$RCM_VERSION/functions/rcm/rcm-prompt-options.sh
         RCM_OTHER_OPTIONS=`echo "$contents" | sed -n '/^Other [Oo]ptions.*[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
         rcm-prompt-options
     fi
