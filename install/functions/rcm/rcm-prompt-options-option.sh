@@ -31,6 +31,7 @@ rcm-prompt-options-option() {
     local available_values_command_executed=
     local save_history=1
     local history_value=
+    local default_value=
 
     parse-parameter() {
         # global option
@@ -151,6 +152,14 @@ rcm-prompt-options-option() {
         fi
     }
 
+    parse-default-value() {
+        local found="$1"
+        # global description
+        # global default_value
+        description=`echo "$description" | sed -E 's/ *Default value from variable:? ([^\.]+)\.//i'`
+        default_value="${!found}"
+    }
+
     Rcm_get_list_values() {
         # global available_values_command
         # global available_values_arguments
@@ -231,7 +240,6 @@ rcm-prompt-options-option() {
     is_typing=
     is_press=
     is_flagged=
-    default_value=
     prepopulate_value=
 
     if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
@@ -267,11 +275,15 @@ rcm-prompt-options-option() {
         break
     done
 
-    _default_value=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
-    if [ -n "$_default_value" ];then
-        description=`echo "$description" | sed -E 's/ *Default value from variable:? ([^\.]+)\.//i'`
-        default_value="${!_default_value}"
-    fi
+    while true; do
+        find=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
+        if [ -n "$find" ];then
+            parse-default-value "$find"
+            break
+        fi
+        break
+    done
+
     _prepopulate_value=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
     if [ -n "$_prepopulate_value" ];then
         description=`echo "$description" | sed -E 's/ *Prepopulate value from variable:? ([^\.]+)\.//i'`
