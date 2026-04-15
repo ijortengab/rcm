@@ -14,7 +14,7 @@ rcm-prompt() {
     local command="$1"
     local label list_to_execute
 
-    Rcm_prompt_build_command() {
+    build-command() {
         local _RCM_PROMPT_CHAIN
         echo-wrap 'Use command below to return to the last dialog.' 0
         local shortoptions
@@ -37,12 +37,13 @@ rcm-prompt() {
         words_array=($_RCM_PROMPT_CHAIN)
         echo-wrap-multiline
     }
-    Rcm_prompt_sigint() {
+
+    trap-sigint() {
         _.;
         _.;
         error Interrupt by User.
         _.;
-        Rcm_prompt_build_command
+        build-command
         exit 0
     }
 
@@ -87,7 +88,7 @@ rcm-prompt() {
         [ -z "$label" ] && { error "Argument <label> is required."; x; }
         [ -z "$contents" ] && { error "Argument <contents> is required."; x; }
 
-        Rcm_prompt_build_command
+        build-command
         _.;
         until [[ -z "$contents" ]];do
             first_line_trimmed=`sed -n 1p <<< "$contents" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
@@ -150,7 +151,7 @@ rcm-prompt() {
         parse-to-execute "$label" "$list_to_execute"
     fi
 
-    trap Rcm_prompt_sigint SIGINT
+    trap trap-sigint SIGINT
 
     # Populate options.
     RCM_OPTIONS=`echo "$contents" | sed -n '/^Options[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
