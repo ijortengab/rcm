@@ -261,9 +261,6 @@ rcm-prompt-options-option() {
     if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
         value_addon=multivalue
     fi
-    if grep -q -i -E '(^|\.\s)Can have value\.' <<< "$description";then
-        value_addon=canhavevalue
-    fi
     value=
     values=()
     flags=1
@@ -333,21 +330,12 @@ rcm-prompt-options-option() {
                 break
             elif grep -q -- "^${parameter}\$" <<< "$each";then
                 _boolean=1
-                if [[ "$value_addon" == 'canhavevalue' ]];then
-                    value_addon=
-                fi
                 if [[ "$value_addon" == 'multivalue' ]];then
                     ArrayRemove "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
                     RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
                     unset _return
                 fi
                 break
-            elif grep -q -- "^${parameter}=" <<< "$each";then
-                if [[ "$value_addon" == 'canhavevalue' ]];then
-                    _boolean=1
-                    value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
-                    break
-                fi
             fi
         done
         # Reset first.
@@ -397,11 +385,6 @@ rcm-prompt-options-option() {
         if [ -n "$backup_flag" ];then
             printBackupFlagDialog
             master_boolean="$RCM_BOOLEAN"
-            if [[ "$value_addon" == 'canhavevalue' ]];then
-                if [ -n "$backup_value" ];then
-                    printBackupDialog
-                fi
-            fi
         fi
         if [ -z "$master_boolean" ];then
             _; _.
@@ -419,49 +402,6 @@ rcm-prompt-options-option() {
         fi
         if [ -n "$master_boolean" ]; then
             is_flagged=1
-            if [[ "$value_addon" == 'canhavevalue' ]];then
-                if [ -z "$value" ];then
-                    _; _.
-                    __; _, Do you want fill with value?; _.
-                    read-false
-                fi
-                if [ -n "$value" ];then
-                    # fill from prepopulated
-                    RCM_BOOLEAN=1
-                fi
-                if [ -n "$RCM_BOOLEAN" ]; then
-                    if [ -z "$value" ];then
-                        if [ -n "$history_value" ];then
-                            printHistoryDialog
-                            if [ -n "$value" ];then
-                                _; _.
-                                echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
-                            fi
-                        fi
-                    fi
-                    if [ -z "$value" ];then
-                        if [ "${#available_values[@]}" -gt 0 ];then
-                            printSelectDialog available_values[@]
-                        fi
-                    fi
-                    until [[ -n "$value" ]];do
-                        __; read -p "Type the value: " value
-                        is_typing=1
-                    done
-                    # Sanitize user input
-                    # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
-                    # Credit: https://stackoverflow.com/a/47918586
-                    value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    RCM_ARGUMENT_PASS+=("${parameter}=${value}")
-                    [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
-                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
-                else
-                    RCM_ARGUMENT_PASS+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
-                fi
-            else
                 i=1
                 until [[ $i -gt $flags ]];do
                     RCM_ARGUMENT_PASS+=("${parameter}")
@@ -469,7 +409,6 @@ rcm-prompt-options-option() {
                     RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
                     let i++
                 done
-            fi
             # Populate placeholders.
             if [ -n "$value" ];then
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
