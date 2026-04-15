@@ -327,7 +327,7 @@ rcm-prompt-options-option() {
         done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
     fi
     if [ -n "$is_flag" ];then
-        _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
+        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
         if [ -n "$description" ];then
             _; _.
             while read line; do
@@ -480,9 +480,9 @@ rcm-prompt-options-option() {
         fi
     else
         if [ -n "$is_required" ];then
-            _ 'Argument '; magenta ${parameter};_, ' is '; yellow required;_, '.'; _.
+            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required;_, '.'; _.
         else
-            _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
+            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
             _; _.
             __; _, Do you want fill with value?; _.
             read-false
