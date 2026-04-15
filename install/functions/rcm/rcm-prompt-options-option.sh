@@ -26,6 +26,11 @@ rcm-prompt-options-option() {
     local find
     local or_other=
     local available_values=()
+    local available_values_command=
+    local available_values_arguments=
+    local available_values_command_executed=
+    local save_history=1
+    local history_value=
 
     parse-parameter() {
         # global option
@@ -113,9 +118,47 @@ rcm-prompt-options-option() {
         fi
     }
 
+    parse-available-values-from-command() {
+        local found="$1"
+        local line
+        local find replace
+        # global available_values
+        # global description
+        # global or_other
+        # global available_values_source
+        # global history_value
+        # global save_history
+        # global available_values_command=
+        # global available_values_arguments=
+        description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
+        if grep -i -q -E 'or others?' <<< "$found";then
+            or_other=1
+        fi
+        # Tidak ada history jika value dari command.
+        history_value=
+        save_history=
+        line=$(echo "$found" | sed -n -E 's/^Values? available from command:\s*([^\)]+\))(\.$|, or others?\.$)/\1/p')
+        available_values_command=$(echo "$line" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
+        available_values_arguments=$(echo "$line" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
+        if [ -n "$available_values_arguments" ];then
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    available_values_arguments="${available_values_arguments/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+        fi
+    }
+
     Rcm_get_list_values() {
-        if [[ -n "$_available_values_from_command" && -z "$_available_values_from_command_executed" ]];then
-            _available_values_from_command_executed=1
+        # global available_values_command
+        # global available_values_arguments
+        # global available_values_command_executed
+        local _command="$available_values_command"
+        local _arguments="$available_values_arguments"
+        if [[ -n "$available_values_command" && -z "$available_values_command_executed" ]];then
+            available_values_command_executed=1
             if command -v "$_command" > /dev/null;then
                 _; _.
                 [ -n "$_arguments" ] && _arguments=' '"$_arguments"
@@ -129,9 +172,7 @@ rcm-prompt-options-option() {
                 rm "$mktemp"
             fi
         fi
-        if [ -z "$available_values_backup" ];then
-            available_values_backup=("${available_values[@]}")
-        fi
+
         while [[ $# -gt 0 ]]; do
             ArrayRemove "$1" available_values[@]
             available_values=("${_return[@]}")
@@ -161,10 +202,10 @@ rcm-prompt-options-option() {
             fi
         else
             _; _.
-            if [[ -n "$_available_values_from_command" && ! $exit_code -eq 0 ]];then
+            if [[ -n "$available_values_command" && ! $exit_code -eq 0 ]];then
                 is_required=
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
-            elif [[ -n "$_available_values_from_command" && -z "$or_other" ]];then
+            elif [[ -n "$available_values_command" && -z "$or_other" ]];then
                 __; _, No value available,' '; red Process Terminated; _, .; x
             else
                 if [ -n "$default_value" ];then
@@ -187,7 +228,6 @@ rcm-prompt-options-option() {
     parse-description
 
     is_flagvalue=
-    save_history=1
     is_typing=
     is_press=
     is_flagged=
@@ -209,7 +249,6 @@ rcm-prompt-options-option() {
         backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
         backup_flag=$(grep -q -- "^${parameter}$" "$backup_storage" && echo 1)
     fi
-    history_value=
     if [ -f "$history_storage" ];then
         history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
     fi
@@ -220,19 +259,14 @@ rcm-prompt-options-option() {
             parse-available-values "$find"
             break
         fi
+        find=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+        if [ -n "$find" ];then
+            parse-available-values-from-command "$find"
+            break
+        fi
         break
     done
 
-    _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
-    _available_values_from_command_executed=
-    if [ -n "$_available_values_from_command" ];then
-        description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
-    fi
-    if [ -n "$_available_values_from_command" ];then
-        if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
-            or_other=1
-        fi
-    fi
     _default_value=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
     if [ -n "$_default_value" ];then
         description=`echo "$description" | sed -E 's/ *Default value from variable:? ([^\.]+)\.//i'`
@@ -251,29 +285,6 @@ rcm-prompt-options-option() {
         prepopulate_value="${!_prepopulate_value}"
     fi
     _; _.
-    if [ -n "$_available_values_from_command" ];then
-        # Tidak ada history jika value dari command.
-        history_value=
-        save_history=
-    fi
-    if [ -n "$_available_values_from_command" ];then
-        # parsing argument.
-        _command_arguments=$(echo "$_available_values_from_command" | sed -n -E 's/^Values? available from command:\s*([^\)]+\))(\.$|, or others?\.$)/\1/p')
-        _command=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-        _arguments=$(echo "$_command_arguments" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-        if command -v "$_command" > /dev/null;then
-            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-                while read line; do
-                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    description="${description/"$find"/"$replace"}"
-                    if [ -n "$_arguments" ];then
-                        _arguments="${_arguments/"$find"/"$replace"}"
-                    fi
-                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
-            fi
-        fi
-    fi
     if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
         while read line; do
             find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
