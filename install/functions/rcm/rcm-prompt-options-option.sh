@@ -197,7 +197,7 @@ rcm-prompt-options-option() {
         prepopulate_value="${!found}"
     }
 
-    Rcm_get_list_values() {
+    print-list-values-dialog() {
         # global available_values_command
         # global available_values_arguments
         # global available_values_command_executed
@@ -227,7 +227,7 @@ rcm-prompt-options-option() {
         done
         if [ "${#available_values[@]}" -gt 0 ];then
             if [ -n "$or_other" ];then
-                printSelectOtherDialog available_values[@]
+                print-select-other-dialog available_values[@]
             elif [[ "${#available_values[@]}" -eq 1 && -n "$is_required" ]];then
                 value="${available_values[0]}"
                 _; _.
@@ -244,7 +244,7 @@ rcm-prompt-options-option() {
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
                 fi
             else
-                printSelectDialog available_values[@]
+                print-select-dialog available_values[@]
             fi
         else
             _; _.
@@ -269,7 +269,7 @@ rcm-prompt-options-option() {
         fi
     }
 
-    printBackupDialog() {
+    print-backup-dialog() {
         _; _.
         echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
         read-true
@@ -283,7 +283,8 @@ rcm-prompt-options-option() {
             fi
         fi
     }
-    printBackupFlagDialog() {
+
+    print-backup-flag-dialog() {
         _; _.
         echo-wrap "This argument has been added before. Would you like to restore this argument?"
         read-true
@@ -292,7 +293,8 @@ rcm-prompt-options-option() {
             echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
         fi
     }
-    printHistoryDialog() {
+
+    print-history-dialog() {
         local count_max=$(wc -l <<< "$history_value")
         if [ $count_max -gt 9 ];then
             count_max=9
@@ -327,7 +329,8 @@ rcm-prompt-options-option() {
             esac
         done
     }
-    printSelectDialog() {
+
+    print-select-dialog() {
         declare -i count
         declare -i new_line
         local source=("${!1}")
@@ -483,7 +486,8 @@ rcm-prompt-options-option() {
             fi
         done
     }
-    printSelectOtherDialog() {
+
+    print-select-other-dialog() {
         declare -i count
         declare -i new_line
         local source=("${!1}")
@@ -774,7 +778,7 @@ rcm-prompt-options-option() {
         fi
 
         if [ -n "$backup_flag" ];then
-            printBackupFlagDialog
+            print-backup-flag-dialog
             boolean="$RCM_BOOLEAN"
         fi
         if [ -z "$boolean" ];then
@@ -838,7 +842,7 @@ rcm-prompt-options-option() {
         read-false
         if [ -n "$RCM_BOOLEAN" ]; then
             if [ -n "$history_value" ];then
-                printHistoryDialog
+                print-history-dialog
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
@@ -898,12 +902,12 @@ rcm-prompt-options-option() {
 
         # Backup dialog belum mendukung multivalue.
         if [ -n "$backup_value" ];then
-            printBackupDialog
+            print-backup-dialog
         fi
         if [ -z "$value" ];then
             # History dialog belum mendukung multivalue.
             if [ -n "$history_value" ];then
-                printHistoryDialog
+                print-history-dialog
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
@@ -919,7 +923,7 @@ rcm-prompt-options-option() {
         fi
         # Available value dialog juga belum mendukung multivalue.
         if [ -z "$value" ];then
-            Rcm_get_list_values
+            print-list-values-dialog
         fi
         if [ -n "$is_required" ];then
             until [[ -n "$value" ]];do
@@ -1030,7 +1034,7 @@ rcm-prompt-options-option() {
                     is_flagged=1
                 elif [[ "$parameter" == '--' ]];then
                     if [ -n "$history_value" ];then
-                        printHistoryDialog
+                        print-history-dialog
                         if [ -n "$value" ];then
                             _; _.
                             echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
@@ -1047,7 +1051,7 @@ rcm-prompt-options-option() {
                         RCM_ARGUMENT_PREVIEW_REAL+=("${value}")
                     fi
                 else
-                    Rcm_get_list_values "$value_before"
+                    print-list-values-dialog "$value_before"
                     if [ -n "$value" ];then
                         # Sanitize user input
                         # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
