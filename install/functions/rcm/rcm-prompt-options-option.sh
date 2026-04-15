@@ -223,10 +223,10 @@ rcm-prompt-options-option() {
         break
     done
 
-    _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+    _available_values_from_command=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
     _available_values_from_command_executed=
     if [ -n "$_available_values_from_command" ];then
-        description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
+        description=`echo "$description" | sed -E 's/ *Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)//i'`
     fi
     if [ -n "$_available_values_from_command" ];then
         if grep -i -q -E 'or others?' <<< "$_available_values_from_command";then
