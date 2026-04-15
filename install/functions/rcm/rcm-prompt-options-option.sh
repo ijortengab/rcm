@@ -35,18 +35,35 @@ rcm-prompt-options-option() {
     local prepopulate_value=
 
     parse-parameter() {
+        local first_line_trimmed residue
         # global option
         # global parameter
         # global is_required is_flag value_addon
-        parameter=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-        if [[ "${parameter:(-1):1}" == '*' ]];then
-            is_required=1
-            parameter="${parameter::-1}"
-            parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-        elif [[ "${parameter:(-1):1}" == '^' ]];then
+        first_line_trimmed=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+        # Contoh YANG BENAR:
+        # --path
+        # --path=DIR
+        # --path[=DIR]
+        # Contoh YANG SALAH:
+        # --path=[DIR]
+        parameter=`echo "$first_line_trimmed" | grep -E -o -- '^--[^-_\[\=0-9][^\[\=]+'`
+        if [ -z "$parameter" ];then
+            error Format of parameter is not correct: '`'"$first_line_trimmed"'`'.; x
+        fi
+        residue="${first_line_trimmed##$parameter}"
+        if [ -n "$residue" ];then
+            while true;do
+                if grep -q -E -o '^\[\=.+\]$' <<< "${residue}";then
+                    break
+                fi
+                if grep -q -E -o '^=.+$' <<< "${residue}";then
+                    is_required=1
+                    break
+                fi
+                break
+            done
+        else
             is_flag=1
-            parameter="${parameter::-1}"
-            parameter=`echo "$parameter" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
         fi
         if [[ "$parameter" == '--' ]];then
             is_required=
@@ -253,7 +270,6 @@ rcm-prompt-options-option() {
 
     parse-description
 
-    is_flagvalue=
     is_typing=
     is_press=
     is_flagged=
