@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /usr/local/rcm/$RCM_VERSION/functions/rcm/rcm-prompt-options-option.sh
+
 rcm-prompt-options() {
     # Required Global variable.
     [ -z "$RCM_OPTIONS" ] && { error "Variable RCM_OPTIONS is required."; x; }
@@ -10,8 +12,6 @@ rcm-prompt-options() {
     local load_other_options=
     local bypass_dialog=
     local count below
-
-    source /usr/local/rcm/$RCM_VERSION/functions/rcm/rcm-prompt-options-option.sh
 
     until [[ -z "$options" ]];do
         RCM_OPTION=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
