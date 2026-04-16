@@ -697,14 +697,6 @@ rcm-prompt-options-option() {
             _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required;_, '.'; _.
         else
             _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-            _; _.
-            __; _, Do you want fill with value?; _.
-            read-false
-            if [ -z "$RCM_BOOLEAN" ]; then
-                backup_value=
-                history_value=
-                value=' '
-            fi
         fi
     fi
     if [ -n "$description" ];then
@@ -896,6 +888,17 @@ rcm-prompt-options-option() {
         if [ -n "$bypass_dialog" ];then
             if [ -z "$value" ];then
                 backup_value=
+                value=' '
+            fi
+        fi
+
+        if [ -z "$value" ];then
+            _; _.
+            __; _, Do you want fill with value?; _.
+            read-false
+            if [ -z "$RCM_BOOLEAN" ]; then
+                backup_value=
+                history_value=
                 value=' '
             fi
         fi
