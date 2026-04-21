@@ -49,11 +49,17 @@ rcm-prompt-options-option() {
         # --path[=DIR]
         # Contoh YANG SALAH:
         # --path=[DIR]
-        parameter=`echo "$first_line_trimmed" | grep -E -o -- '^--[^-_\[\=0-9][^\[\=]+'`
+        parameter=`echo "$first_line_trimmed" | grep -E -o -- '^--[^-_\[\=0-9\.][^\[\=\.]+'`
         if [ -z "$parameter" ];then
             error Format of parameter is not correct: '`'"$first_line_trimmed"'`'.; x
         fi
         residue="${first_line_trimmed##$parameter}"
+        if [ -n "$residue" ];then
+            if [[ "$residue" =~ \.\.\.$ ]];then
+                value_addon=multivalue
+                residue="${residue::-3}"
+            fi
+        fi
         if [ -n "$residue" ];then
             while true;do
                 if grep -q -E -o '^\[\=.+\]$' <<< "${residue}";then
