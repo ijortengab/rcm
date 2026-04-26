@@ -9,7 +9,9 @@
 # Command to install: `wget -qO- git.io/rcm | sh`
 #
 
+RCM_PREFIX=${RCM_PREFIX:=/usr/local/rcm}
 RCM_VERSION='0.18.0-alpha.6'
+RCM_LIB="${RCM_PREFIX}/lib/${RCM_VERSION}"
 
 if ! command -v rcm > /dev/null;then
     echo -n "\e[95m"rcm; echo -n "\e[39m" command is; echo -n "\e[91m" not found; echo "\e[39m".
@@ -43,8 +45,8 @@ if ! command -v rcm > /dev/null;then
         echo Extracted.
     fi
     echo -n Installing...
-    mkdir -p /usr/local/rcm/
-    mv "$found_directory_extracted/install" -T /usr/local/rcm/$RCM_VERSION
+    mkdir -p "$RCM_LIB"
+    mv "$found_directory_extracted/install" -T "$RCM_LIB"
     chmod a+x "$found_directory_extracted/rcm.sh"
     mv "$found_directory_extracted/rcm.sh" /usr/local/bin/rcm
     printf "\r\033[K" >&2
@@ -57,4 +59,4 @@ if ! command -v rcm > /dev/null;then
     echo -n "\e[95m"rcm; echo -n "\e[39m" command is; echo -n "\e[92m" found; echo "\e[39m".
 fi
 
-source /usr/local/rcm/$RCM_VERSION/rcm-exec.sh
+source "${RCM_LIB}"/rcm-exec.sh
