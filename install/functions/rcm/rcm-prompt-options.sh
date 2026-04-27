@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/local/rcm/$RCM_VERSION/functions/rcm/rcm-prompt-options-option.sh
+source "$RCM_LIB"/functions/rcm/rcm-prompt-options-option.sh
 
 rcm-prompt-options() {
     # Required Global variable.
