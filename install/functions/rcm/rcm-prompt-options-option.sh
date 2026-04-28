@@ -300,78 +300,6 @@ rcm-prompt-options-option() {
         done
     }
 
-    print-list-values-dialog() {
-        # global available_values_command
-        # global available_values_arguments
-        # global available_values_command_executed
-        local _command="$available_values_command"
-        local _arguments="$available_values_arguments"
-        if [[ -n "$available_values_command" && -z "$available_values_command_executed" ]];then
-            available_values_command_executed=1
-            if command -v "$_command" > /dev/null;then
-                _; _.
-                [ -n "$_arguments" ] && _arguments=' '"$_arguments"
-                echo-wrap-color "Value available from command: <magenta>${_command}${_arguments}</magenta>"
-                mktemp=$(mktemp -p /dev/shm)
-                ${_command}${_arguments} > "$mktemp"
-                exit_code=$?
-                while read line;do
-                    [ -n "$line" ] && available_values+=("$line")
-                done < "$mktemp"
-                rm "$mktemp"
-            fi
-        fi
-
-        while [[ $# -gt 0 ]]; do
-            ArrayRemove "$1" available_values[@]
-            available_values=("${_return[@]}")
-            unset _return
-            shift
-        done
-        if [ "${#available_values[@]}" -gt 0 ];then
-            if [ -n "$or_other" ];then
-                print-select-other-dialog available_values[@]
-            elif [[ "${#available_values[@]}" -eq 1 && -n "$is_required" ]];then
-                value="${available_values[0]}"
-                _; _.
-                __; _, "Available value: "; yellow "$value";  _, '.'; _.
-                if [ -z "$autoyes" ];then
-                    _; _.
-                    echo-wrap 'The one and only available value is selected.'
-                    read-true
-                    if [ -z "$RCM_BOOLEAN" ];then
-                        value=' '
-                    fi
-                else
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
-                fi
-            else
-                print-select-dialog available_values[@]
-            fi
-        else
-            _; _.
-            if [[ -n "$available_values_command" && ! $exit_code -eq 0 ]];then
-                is_required=
-                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by command,' '; _, pass; _, .; _.
-            elif [[ -n "$available_values_command" && -z "$or_other" ]];then
-                __; _, No value available,' '; red Process Terminated; _, .; x
-            else
-                if [ -n "$default_value" ];then
-                    __; _, Leave blank will use default value.; _.
-                    label=$(_, 'Type the value [' 2>&1; yellow "$default_value" 2>&1; _, ']: ' 2>&1)
-                    __; read -p "$label" value
-                    [ -z "$value" ] && value=' '
-                elif [ -n "$is_required" ];then
-                    __; read -p "Type the value: " value
-                else
-                    __; read -p "Type the value or leave blank to skip: " value
-                fi
-                is_typing=1
-            fi
-        fi
-    }
-
     print-backup-dialog() {
         _; _.
         echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
@@ -1558,20 +1486,32 @@ rcm-prompt-options-option() {
 
     parse-description
 
+    rcm-yaml find parameter "${parameter}" then get type
+    type="$_return_value"
+
     is_typing=
     is_press=
     is_flagged=
 
-    if grep -q -i -E '(^|\.\s)Multivalue\.' <<< "$description";then
-        value_addon=multivalue
-    fi
     values=()
     flags=1
+    backup_values=
     backup_value=
     backup_flag=
     if [ -f "$backup_storage" ];then
-        backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
-        backup_flag=$(grep -q -- "^${parameter}$" "$backup_storage" && echo 1)
+        case "$type" in
+            flag*)
+                backup_flag=$(grep -q -- "^${parameter}$" "$backup_storage" && echo 1)
+                ;;
+        esac
+        case "$type" in
+            *multivalue)
+                backup_values=$(grep -- "^${parameter}=.*$" "$backup_storage" | sed -E -e 's|'"^${parameter}=(.*)$"'|\1|' -e "s|^'(.*)'$|\1|" | sort -u)
+                ;;
+            *)
+                backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+                ;;
+        esac
     fi
     if [ -f "$history_storage" ];then
         history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
@@ -1612,411 +1552,27 @@ rcm-prompt-options-option() {
             description="${description/"$find"/"$replace"}"
         done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
     fi
-    _; _.
-    if [ -n "$is_flag" ];then
-        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-    else
-        if [ -n "$is_required" ];then
-            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required;_, '.'; _.
-        else
-            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-        fi
-    fi
-    if [ -n "$description" ];then
-        _; _.
-        while read line; do
-            echo-wrap "$line"
-        done <<< "$description"
-    fi
 
-    if [ -n "$is_flag" ];then
-        for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
-            if grep -q -- "^${parameter}-\$" <<< "$each";then
-                prepopulate_boolean=0
-                break
-            elif grep -q -- "^${parameter}-=" <<< "$each";then
-                # Ada argument lupa dihapus, contoh: --with-roundcube- mail.example.org
-                # maka set sebagai skip.
-                prepopulate_boolean=0
-                break
-            elif grep -q -- "^${parameter}\$" <<< "$each";then
-                prepopulate_boolean=1
-                if [[ "$value_addon" == 'multivalue' ]];then
-                    ArrayRemove "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
-                    RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
-                    unset _return
-                fi
-                break
-            fi
-        done
-        # Reset first.
-        RCM_BOOLEAN=
-        if [[ "$prepopulate_boolean" == 0 ]];then
-            _; _.
-            __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
-            backup_flag=
-            boolean=' '
-        elif [[ "$prepopulate_boolean" == 1 ]];then
-            _; _.
-            if [ -n "$value" ];then
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow>.'" green
-            else
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
-                if [[ "$value_addon" == 'multivalue' ]];then
-                    found=
-                    for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
-                        if grep -q -- "^${parameter}\$" <<< "$each";then
-                            found=1
-                            let flags++
-                            echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
-                        fi
-                    done
-                    # Biar tidak membingunkan kedepannya, hapus saja semua dari array.
-                    if [ -n "$found" ];then
-                        ArrayRemoveAll "$parameter" RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]
-                        RCM_PREPOPULATE_ARGUMENT_OPTIONS=("${_return[@]}")
-                        unset _return
-                    fi
-                fi
-            fi
-            backup_flag=
-            boolean=1
-        fi
-
-        # Jika $parameter merupakan other option, maka skip semua dialog.
-        # jika tidak ada prepopulate value.
-        if [ -n "$bypass_dialog" ];then
-            if [ -z "$prepopulate_boolean" ];then
-                backup_flag=
-                boolean=' '
-            fi
-        fi
-
-        if [ -n "$backup_flag" ];then
-            print-backup-flag-dialog
-            boolean="$RCM_BOOLEAN"
-        fi
-        if [ -z "$boolean" ];then
-            _; _.
-            __; _, Add this argument?; _.
-            read-false
-            boolean="$RCM_BOOLEAN"
-            is_press=1
-        fi
-        if [[ "$boolean" == ' ' ]];then
-            boolean=
-        fi
-        # Populate placeholders.
-        if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-            RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
-        fi
-        if [ -n "$boolean" ]; then
-            is_flagged=1
-                i=1
-                until [[ $i -gt $flags ]];do
-                    RCM_ARGUMENT_PASS+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
-                    let i++
-                done
-            # Populate placeholders.
-            if [ -n "$value" ];then
-                RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
-                RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
-                RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
-            else
-                RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"1"
-            fi
-        else
-            # Populate placeholders.
-            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"0"
-            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
-        fi
-        if [ -n "$boolean" ];then
-            if [ -n "$is_press" ];then
-                if [ -n "$value" ];then
-                    if [ -n "$is_typing" ];then
-                        _; _.
-                        echo-wrap-color "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> manually." green
-                    fi
-                else
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
-                fi
-            fi
-        fi
-    elif [[ "$parameter" == '--' ]];then
-        _ 'Argument '; magenta ${parameter};_, ' is '; _, optional;_, '.'; _.
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
-        __; _, Add value?; _.
-        read-false
-        if [ -n "$RCM_BOOLEAN" ]; then
-            if [ -n "$history_value" ];then
-                print-history-dialog
-                if [ -n "$value" ];then
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
-                fi
-            fi
-            if [ -z "$value" ];then
-                __; read -p "Type the value: " value
-            fi
-            if [ -n "$value" ];then
-                RCM_ARGUMENT_PASS+=("${parameter} ${value}")
-                RCM_ARGUMENT_PREVIEW+=("${parameter} ${value}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter} ${value}")
-            fi
-        fi
-    else
-        if [ -n "$default_value" ];then
-            _; _.
-            echo-wrap-color "Default value: <yellow>${default_value}</yellow>."
-        fi
-        if [ -n "$prepopulate_value" ];then
-            backup_value=
-            history_value=
-        fi
-        for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
-            if grep -q -- "^${parameter}-\$" <<< "$each";then
-                _; _.
-                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
-                backup_value=
-                history_value=
-                is_required=
-                value=' '
-                break
-            fi
-        done
-        # Jika tidak multivalue, tapi di prepopulate berkali-kali, maka
-        # kita menggunakan last value.
-        for each in "${RCM_PREPOPULATE_ARGUMENT_OPTIONS[@]}";do
-            if grep -q -- "^${parameter}=" <<< "$each";then
-                value=$(echo "$each" | sed -n -E 's|^[^=]+=(.*)|\1|p')
-                if [[ "$value_addon" == 'multivalue' ]];then
-                    values+=("$value")
-                fi
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
-                backup_value=
-            fi
-        done
-
-        # Jika $parameter merupakan other option, maka skip semua dialog.
-        # jika tidak ada prepopulate value.
-        if [ -n "$bypass_dialog" ];then
-            if [ -z "$value" ];then
-                backup_value=
-                value=' '
-            fi
-        fi
-
-        if [ -z "$value" ];then
-            _; _.
-            __; _, Do you want fill with value?; _.
-            read-false
-            if [ -z "$RCM_BOOLEAN" ]; then
-                backup_value=
-                history_value=
-                value=' '
-            fi
-        fi
-
-        # Backup dialog belum mendukung multivalue.
-        if [ -n "$backup_value" ];then
-            print-backup-dialog
-        fi
-        if [ -z "$value" ];then
-            # History dialog belum mendukung multivalue.
-            if [ -n "$history_value" ];then
-                print-history-dialog
-                if [ -n "$value" ];then
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
-                fi
-            fi
-        fi
-        if [[ -z "$value" && -n "$prepopulate_value" ]];then
-            # Value from prepopulate argument tetap diutamakan
-            # daripada variable.
-            value="$prepopulate_value"
-            _; _.
-            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> from environment variable." green
-        fi
-        # Available value dialog juga belum mendukung multivalue.
-        if [ -z "$value" ];then
-            print-list-values-dialog
-        fi
-        if [ -n "$is_required" ];then
-            until [[ -n "$value" ]];do
-                __; read -p "Type the value: " value
-                is_typing=1
-            done
-        fi
-        if [[ "$value" == ' ' ]];then
-            value=
-        fi
-        if [[ -z "$value" && -n "$default_value" ]];then
-            value="$default_value"
-            suffix=' automatically'
-        fi
-        # Populate placeholders.
-        if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-            RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
-        fi
-        if [ -n "$value" ];then
-            # Sanitize user input
-            # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
-            # Credit: https://stackoverflow.com/a/47918586
-            if [ "${#values[@]}" -eq 0 ];then
-                values=("$value")
-            fi
-            for value in "${values[@]}";do
-                value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                RCM_ARGUMENT_PASS+=("${parameter}=${value}")
-                [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
-                if [ "${#available_values[@]}" -gt 0 ];then
-                    ArrayRemove "$value" available_values[@]
-                    available_values=("${_return[@]}")
-                    unset _return
-                fi
-            done
-            # Placeholder tidak berlaku untuk multivalue. @todo, masukkan ke dokumentasi.
-            # Hanya berlaku nilai terakhir.
-            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
-            RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
-            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
-        else
-            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: -'
-            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
-        fi
-        if [[ -n "$value" && -n "$is_typing" ]];then
-            _; _.
-            [ -z "$suffix" ] && suffix=' manually'
-            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow>${suffix}." green
-        fi
-    fi
-    # Backup to text file.
-    if [ -n "$value" ];then
-        # Belum support history untuk kasus multivalue.
-        mkdir -p $(dirname "$backup_storage")
-        echo "${parameter}=${value}" >> "$backup_storage"
-        if [ -f "$history_storage" ];then
-            if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
-                save_history=
-            fi
-            if [[ "$value" =~ []\[] ]];then
-                if grep -q -F -- "${parameter}=${value}" "$history_storage";then
-                    save_history=
-                fi
-            fi
-        fi
-        if [ -n "$save_history" ];then
-            mkdir -p $(dirname "$history_storage");
-            echo "${parameter}=${value}" >> "$history_storage"
-        fi
-    fi
-    # Backup to text file for flag.
-    if [ -n "$boolean" ];then
-        mkdir -p $(dirname "$backup_storage")
-        echo "${parameter}" >> "$backup_storage"
-    fi
-    if [[ "$value_addon" == 'multivalue' ]];then
-        again=1
-        until [ -z "$again" ]; do
-            is_press=
-            RCM_BOOLEAN=
-            if [ -n "$is_flag" ];then
-                if [[ -n "$is_flagged" ]];then
-                    # Reset condition before multivalue.
-                    is_flagged=
-                    _; _.
-                    __ Add this argument again?
-                    read-false
-                    is_press=1
-                fi
-            else
-                if [[ -n "$value" ]];then
-                    # Reset condition before multivalue.
-                    value_before="$value"
-                    value=
-                    _; _.
-                    __ Add another value?
-                    read-false
-                    is_press=1
-                fi
-            fi
-            if [ -n "$RCM_BOOLEAN" ];then
-                if [ -n "$is_flag" ];then
-                    RCM_ARGUMENT_PASS+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
-                    is_flagged=1
-                elif [[ "$parameter" == '--' ]];then
-                    if [ -n "$history_value" ];then
-                        print-history-dialog
-                        if [ -n "$value" ];then
-                            _; _.
-                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is selected from the list of history." green
-                        fi
-                    fi
-                    if [ -z "$value" ];then
-                        _; _.
-                        __; read -p "Type the value or leave blank to skip: " value
-                        is_typing=1
-                    fi
-                    if [ -n "$value" ];then
-                        RCM_ARGUMENT_PASS+=("${value}")
-                        RCM_ARGUMENT_PREVIEW+=("${value}")
-                        RCM_ARGUMENT_PREVIEW_REAL+=("${value}")
-                    fi
-                else
-                    print-list-values-dialog "$value_before"
-                    if [ -n "$value" ];then
-                        # Sanitize user input
-                        # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
-                        # Credit: https://stackoverflow.com/a/47918586
-                        value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                        RCM_ARGUMENT_PASS+=("${parameter}=${value}")
-                        [[ "$value" =~ ' ' ]] && _value="'$value'" || _value="$value"
-                        RCM_ARGUMENT_PREVIEW+=("${parameter}=${_value}")
-                        RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${_value}")
-                    fi
-                fi
-                # Backup to text file.
-                if [ -n "$value" ];then
-                    mkdir -p $(dirname "$backup_storage");
-                    echo "${parameter}=${value}" >> "$backup_storage"
-                    if [ -f "$history_storage" ];then
-                        if grep -q -- "^${parameter}=${value}\$" "$history_storage";then
-                            save_history=
-                        fi
-                    fi
-                    if [ -n "$save_history" ];then
-                        mkdir -p $(dirname "$history_storage");
-                        echo "${parameter}=${value}" >> "$history_storage"
-                    fi
-                fi
-                if [[ -n "$value" && "$is_typing" ]];then
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
-                fi
-                if [[ -n "$is_flagged" && "$is_press" ]];then
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> added again manually." green
-                fi
-            else
-                again=
-            fi
-        done
-    fi
-
+    case "$type" in
+        flag)
+            print-flag-dialog
+            ;;
+        value)
+            print-value-dialog
+            ;;
+        flag_value)
+            print-flag-value-dialog
+            ;;
+        increment)
+            print-increment-dialog
+            ;;
+        multivalue)
+            print-multivalue-dialog
+            ;;
+        flag_multivalue)
+            print-flag-multivalue-dialog
+            ;;
+    esac
 }
 
 # parse-options.sh \
