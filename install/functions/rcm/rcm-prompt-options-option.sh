@@ -38,16 +38,20 @@ rcm-prompt-options-option() {
     local prepopulate_boolean=
 
     parse-parameter() {
+        local type
+        local is_multiple
+        local is_required
         local first_line_trimmed residue
+
         # global option
         # global parameter
         # global is_required is_flag value_addon
         first_line_trimmed=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-        # Contoh YANG BENAR:
+
+        # Contoh:
         # --path
         # --path=DIR
         # --path[=DIR]
-        # Contoh YANG SALAH:
         # --path=[DIR]
         parameter=`echo "$first_line_trimmed" | grep -E -o -- '^--[^-_\[\=0-9\.][^\[\=\.]+'`
         if [ -z "$parameter" ];then
@@ -57,27 +61,50 @@ rcm-prompt-options-option() {
         if [ -n "$residue" ];then
             if [[ "$residue" =~ \.\.\.$ ]];then
                 value_addon=multivalue
+                is_multiple=1
                 residue="${residue::-3}"
             fi
         fi
         if [ -n "$residue" ];then
             while true;do
+                if grep -q -E -o '^\=\[.+\]$' <<< "${residue}";then
+                    type=value
+                    break
+                fi
                 if grep -q -E -o '^\[\=.+\]$' <<< "${residue}";then
+                    type=flag_value
                     break
                 fi
                 if grep -q -E -o '^=.+$' <<< "${residue}";then
+                    type=value
                     is_required=1
                     break
                 fi
                 break
             done
         else
+            type=flag
             is_flag=1
+        fi
+
+        if [ -n "$is_multiple" ];then
+            case "$type" in
+                flag) type=increment ;;
+                value) type=multivalue ;;
+                flag_value) type=flag_multivalue ;;
+            esac
         fi
         if [[ "$parameter" == '--' ]];then
             is_required=
             is_flag=
             value_addon=multivalue
+        fi
+        # @todo, support comment starts with # character.
+        RCM_YAML+='- parameter: '"$parameter"$'\n'
+        RCM_YAML+='  type: '$type$'\n'
+        if [ -n "$is_required" ];then
+            RCM_YAML+='  validate:'$'\n'
+            RCM_YAML+='    is_required: '$is_required$'\n'
         fi
     }
 
