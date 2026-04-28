@@ -320,8 +320,16 @@ rcm-prompt-options-option() {
         echo-wrap "This argument has been added before. Would you like to restore this argument?"
         read-true
         if [ -n "$RCM_BOOLEAN" ];then
-            _; _.
-            echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
+            case "$type" in
+                *multivalue)
+                    ;;
+                increment)
+                    ;;
+                *)
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
+                    ;;
+            esac
         fi
     }
 
