@@ -304,10 +304,12 @@ rcm-prompt-options-option() {
         _; _.
         echo-wrap-color "Restore the value: <yellow>$backup_value</yellow>. Would you like to use that value?"
         read-true
+        # Reset.
+        value=
         if [ -n "$RCM_BOOLEAN" ];then
             _; _.
             value="$backup_value";
-            if [ -n "$is_flag" ];then
+            if [[ "$type" == flag_value ]];then
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> added with value <yellow>$value</yellow> which is restored." green
             else
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> which is restored." green
