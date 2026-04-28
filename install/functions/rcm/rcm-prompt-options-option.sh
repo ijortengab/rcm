@@ -230,6 +230,76 @@ rcm-prompt-options-option() {
         prepopulate_value="${!found}"
     }
 
+    print-available-values-dialog() {
+        # global available_values_command
+        # global available_values_arguments
+        # global available_values_command_executed
+        # global value
+        # global available_values
+        # global or_other
+        # global is_required
+        # global autoyes
+        local command="$available_values_command"
+        local arguments="$available_values_arguments"
+        local is_executed="$available_values_command_executed"
+        if [[ -n "$command" && -z "$is_executed" ]];then
+            available_values_command_executed=1
+            if command -v "$command" > /dev/null;then
+                _; _.
+                [ -n "$arguments" ] && arguments=' '"$arguments"
+                echo-wrap-color "Value available from command: <magenta>${command}${arguments}</magenta>"
+                mktemp="$(${command}${arguments})"
+                while read line;do
+                    [ -n "$line" ] && available_values+=("$line")
+                done <<< "$mktemp"
+            fi
+        fi
+
+        while [[ $# -gt 0 ]]; do
+            ArrayRemove "$1" available_values[@]
+            available_values=("${_return[@]}")
+            unset _return
+            shift
+        done
+
+        while true; do
+            if [ "${#available_values[@]}" -eq 0 ];then
+                if [[ -n "$command" && -z "$or_other" ]];then
+                    __; _, No value available,' '; red Process Terminated; _, .; x
+                fi
+                break
+            fi
+            if [ "${#available_values[@]}" -eq 1 ];then
+                value="${available_values[0]}"
+                if [[ -n "$is_required"  && -z "$or_other" ]];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                    break
+                fi
+                _; _.
+                __; _, "Available value: "; yellow "$value";  _, '.'; _.
+                if [ -n "$autoyes" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with the only available value <yellow>$value</yellow> automatically." green
+                else
+                    _; _.
+                    echo-wrap 'The one and only available value is selected.'
+                    read-true
+                    if [ -z "$RCM_BOOLEAN" ];then
+                        value=
+                    fi
+                fi
+                break
+            fi
+            if [ -n "$or_other" ];then
+                print-select-other-dialog available_values[@]
+            else
+                print-select-dialog available_values[@]
+            fi
+            break
+        done
+    }
+
     print-list-values-dialog() {
         # global available_values_command
         # global available_values_arguments
@@ -662,6 +732,826 @@ rcm-prompt-options-option() {
                 is_typing=1
             fi
         fi
+    }
+
+    sanitize-value() {
+        # Sanitize user input
+        # Menghapus karakter aneh karena menekan arrow up/down/right/left di keyboard.
+        # Credit: https://stackoverflow.com/a/47918586
+        if [ -n "$value" ];then
+            value=$(echo "$value" | tr -cd '\11\12\15\40-\176' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+        fi
+    }
+
+    print-fill-a-value-dialog() {
+        _; _.
+        echo-wrap "Do you want fill with value?"
+        read-false
+        # Reset.
+        value=
+        if [ -n "$RCM_BOOLEAN" ];then
+            __; read -p "Type the value or leave blank to skip: " value
+            sanitize-value
+            if [ -n "$value" ];then
+                is_typing=1
+            fi
+        fi
+    }
+
+    print-flag-dialog() {
+        _; _.
+        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" == "${parameter}" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                break
+            fi
+            # Prepopulate.
+            rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
+                rcm-yaml find parameter "${parameter}" then set flag 1
+                break
+            fi
+            # Restore.
+            if [ -n "$backup_flag" ];then
+                print-backup-flag-dialog
+                if [ -n "$RCM_BOOLEAN" ];then
+                    rcm-yaml find parameter "${parameter}" then set flag 1
+                fi
+                # Note. Langusng break jika menolak restore, artinya false.
+                break
+            fi
+            # Todo, how about other options.
+            _; _.
+            __; _, Add this argument?; _.
+            read-false
+            if [ -n "$RCM_BOOLEAN" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
+                rcm-yaml find parameter "${parameter}" then set flag 1
+                break
+            fi
+            break
+        done
+
+        # Save value.
+        rcm-yaml find parameter "${parameter}" then get flag
+        if [ -n "$_return_value" ];then
+            RCM_ARGUMENT_PASS+=("${parameter}")
+            RCM_ARGUMENT_PREVIEW+=("${parameter}")
+            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for flag.
+        if [ -n "$_return_value" ];then
+            mkdir -p $(dirname "$backup_storage")
+            echo "${parameter}" >> "$backup_storage"
+        fi
+    }
+
+    print-value-dialog() {
+        rcm-yaml find parameter "${parameter}" then get validate is_required
+        is_required="$_return_value"
+        _; _.
+        if [ -n "$is_required" ];then
+            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow requires;_, ' a value.'; _.
+        else
+            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have value.'; _.
+        fi
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" =~ "${parameter}=" ]];then
+                        value="${each#$parameter=}"
+                        rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
+            # Bypass.
+            if [ -z "$is_required" ];then
+                # Tidak ada bypass jika required.
+                rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+                if [ -n "$_return_value" ];then
+                    _; _.
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                    break
+                fi
+            fi
+            # Prepopulate.
+            rcm-yaml find parameter "${parameter}" then get prepopulate value
+            if [ -n "$_return_value" ];then
+                _; _.
+                value="$_return_value"
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow> ." green
+                rcm-yaml find parameter "${parameter}" then set value "$value"
+                break
+            fi
+            # Restore.
+            if [ -n "$backup_value" ];then
+                print-backup-dialog
+                if [ -n "$value" ];then
+                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                    break
+                fi
+            fi
+
+            print-available-values-dialog
+
+            if [ -z "$value" ];then
+                while true; do
+                    if [ -n "$default_value" ];then
+                        _; _.
+                        __; _, Leave blank will use default value.; _.
+                        label=$(_, 'Type the value [' 2>&1; yellow "$default_value" 2>&1; _, ']: ' 2>&1)
+                        __; read -p "$label" value
+                        if [ -n "$value" ];then
+                            is_typing=1
+                        else
+                            value="$default_value"
+                            _; _.
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> automatically." green
+                        fi
+                        break
+                    fi
+                    if [ -n "$is_required" ];then
+                        _; _.
+                        until [[ -n "$value" ]];do
+                            __; read -p "Type the value: " value
+                            sanitize-value
+                        done
+                        is_typing=1
+                        break
+                    fi
+                    print-fill-a-value-dialog
+                    break
+                done
+            fi
+            if [ -n "$is_typing" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+            fi
+            if [ -n "$value" ];then
+                rcm-yaml find parameter "${parameter}" then set value "$value"
+            fi
+            break
+        done
+
+        # Save value.
+        rcm-yaml find parameter "${parameter}" then get value
+        value="$_return_value"
+        if [ -n "$value" ];then
+            [[ "$value" =~ ' ' ]] && value="'$value'"
+            RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+            RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
+            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for value.
+        if [ -n "$value" ];then
+            mkdir -p $(dirname "$backup_storage")
+            echo "${parameter}=${value}" >> "$backup_storage"
+        fi
+
+        # Save to placeholders.
+        if [ -n "$value" ];then
+            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
+            RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
+            RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
+        fi
+    }
+
+    print-flag-value-dialog() {
+        _; _.
+        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional; _, ' and may have value.'; _.
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" == "${parameter}" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        break
+                    fi
+                    if [[ "$each" =~ "${parameter}=" ]];then
+                        value="${each#$parameter=}"
+                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                break
+            fi
+            # Prepopulate.
+            rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            if [ -n "$_return_value" ];then
+                rcm-yaml find parameter "${parameter}" then set flag 1
+                rcm-yaml find parameter "${parameter}" then get prepopulate value
+                if [ -n "$_return_value" ];then
+                    value="$_return_value"
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow> ." green
+                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                else
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
+                fi
+                break
+            fi
+            # Restore.
+            if [ -n "$backup_value" ];then
+                backup_flag=1
+            fi
+            if [ -n "$backup_flag" ];then
+                print-backup-flag-dialog
+                if [ -n "$RCM_BOOLEAN" ];then
+                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    if [ -n "$backup_value" ];then
+                        print-backup-dialog
+                    fi
+                    if [ -z "$value" ];then
+                        print-fill-a-value-dialog
+                    fi
+                    # User may leave blank.
+                    if [ -n "$value" ];then
+                        rcm-yaml find parameter "${parameter}" then set value "$value"
+                    fi
+                fi
+                # Note. Langusng break jika menolak restore, artinya false.
+                break
+            fi
+
+            # Todo, how about other options.
+            # Todo, how about prepopulate value from variable.
+            _; _.
+            __; _, Add this argument?; _.
+            read-false
+            if [ -n "$RCM_BOOLEAN" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
+                rcm-yaml find parameter "${parameter}" then set flag 1
+                print-fill-a-value-dialog
+                if [ -n "$value" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                fi
+                break
+            fi
+            break
+        done
+
+        # Save value.
+        rcm-yaml find parameter "${parameter}" then get flag
+        flag="$_return_value"
+        if [ -n "$flag" ];then
+            rcm-yaml find parameter "${parameter}" then get value
+            value="$_return_value"
+            if [ -n "$value" ];then
+                [[ "$value" =~ ' ' ]] && value="'$value'"
+                RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
+                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+            else
+                RCM_ARGUMENT_PASS+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+            fi
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for flag or value.
+        if [ -n "$flag" ];then
+            mkdir -p $(dirname "$backup_storage")
+            if [ -n "$value" ];then
+                echo "${parameter}=${value}" >> "$backup_storage"
+            else
+                echo "${parameter}" >> "$backup_storage"
+            fi
+        fi
+
+        # Save to placeholders.
+        if [ -n "$flag" ];then
+            if [ -n "$value" ];then
+                RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
+                RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
+                RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
+            fi
+        fi
+
+    }
+
+    print-increment-dialog() {
+        _; _.
+        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" == "${parameter}" ]];then
+                        rcm-yaml find parameter "${parameter}" then increase prepopulate count
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                break
+            fi
+            # Khusus increment, pilih salah satu antara prepopulate
+            # atau restore.
+            count=0
+            while true; do
+                # Prepopulate.
+                rcm-yaml find parameter "${parameter}" then get prepopulate count
+                if [ -n "$_return_value" ];then
+                    count="$_return_value"
+                    _; _.
+                    for ((i = 0 ; i < $count ; i++)); do
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
+                    done
+                    rcm-yaml find parameter "${parameter}" then set count "$count"
+                    break
+                fi
+                # Restore.
+                if [ -n "$backup_value" ];then
+                    print-backup-flag-dialog
+                    if [ -n "$RCM_BOOLEAN" ];then
+                        count="$backup_value"
+                        _; _.
+                        for ((i = 0 ; i < $count ; i++)); do
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
+                        done
+                        rcm-yaml find parameter "${parameter}" then set count "$count"
+                        break
+                    fi
+                fi
+                break
+            done
+            # Todo, how about other options.
+            while true; do
+                if [ "$count" -eq 0 ];then
+                    _; _.
+                    __; _, Add this argument?; _.
+                    read-false
+                    if [ -n "$RCM_BOOLEAN" ];then
+                        _; _.
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
+                        count=$((count + 1))
+                        rcm-yaml find parameter "${parameter}" then set count $count
+                    else
+                        break
+                    fi
+                else
+                    _; _.
+                    __ Add this argument again?
+                    read-false
+                    if [ -n "$RCM_BOOLEAN" ];then
+                        _; _.
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> added again manually." green
+                        count=$((count + 1))
+                        rcm-yaml find parameter "${parameter}" then set count $count
+                    else
+                        break
+                    fi
+                fi
+            done
+            break
+        done
+
+        # Save value.
+        rcm-yaml find parameter "${parameter}" then get count
+        count="$_return_value"
+        if [ -n "$count" ];then
+            for ((i = 0 ; i < $count ; i++)); do
+                RCM_ARGUMENT_PASS+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+            done
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for increment.
+        if [ -n "$count" ];then
+            mkdir -p $(dirname "$backup_storage")
+            echo "${parameter}=${count}" >> "$backup_storage"
+        fi
+
+    }
+
+    print-multivalue-dialog() {
+        rcm-yaml find parameter "${parameter}" then get validate is_required
+        is_required="$_return_value"
+        _; _.
+        if [ -n "$is_required" ];then
+            _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required; _, ' at least a value.'; _.
+        else
+            _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have many value.'; _.
+        fi
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" =~ "${parameter}=" ]];then
+                        value="${each#$parameter=}"
+                        rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            if [ -z "$is_required" ];then
+                # Tidak ada prepopulate bypass jika required.
+                rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+                if [ -n "$_return_value" ];then
+                    _; _.
+                    __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                    break
+                fi
+            fi
+            # Prepopulate.
+            rcm-yaml find parameter "${parameter}" then get prepopulate values
+            values=("${_return_array[@]}")
+            if [ "${#values[@]}" -gt 0 ];then
+                _; _.
+                for value in "${values[@]}"; do
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
+                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                done
+                # break
+                # Note: Tidak ada break seperti flag_value atau value, tapi tetap
+                # dilanjutkan karena multivalue.
+            fi
+            # Restore.
+            if [ -n "$backup_values" ];then
+                print-backup-flag-dialog
+                if [ -n "$RCM_BOOLEAN" ];then
+                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    until [[ -z "$backup_values" ]];do
+                        backup_value=`sed -n 1p <<< "$backup_values"`
+                        backup_values=`sed -n '2,$p' <<< "$backup_values"`
+                        print-backup-dialog
+                        if [ -n "$value" ];then
+                            rcm-yaml find parameter "${parameter}" then append values "$value"
+                        fi
+                    done
+                    rcm-yaml find parameter "${parameter}" then get prepopulate values
+                    values=("${_return_array[@]}")
+                    if [ "${#values[@]}" -eq 0 ];then
+                        print-fill-a-value-dialog
+                    fi
+                    # User may leave blank.
+                    if [ -n "$value" ];then
+                        rcm-yaml find parameter "${parameter}" then set value "$value"
+                    fi
+                    # break
+                    # Note: Tidak ada break seperti flag_value atau value, tapi tetap
+                    # dilanjutkan karena multivalue.
+                fi
+            fi
+            rcm-yaml find parameter "${parameter}" then get prepopulate values
+            values=("${_return_array[@]}")
+            if [ "${#values[@]}" -eq 0 ];then
+                if [ -z "$is_required" ];then
+                    print-fill-a-value-dialog
+                    if [ -z "$value" ];then
+                        break
+                    fi
+                else
+                    _; _.
+                    until [[ -n "$value" ]];do
+                        __; read -p "Type the value: " value
+                        sanitize-value
+                    done
+                fi
+                if [ -n "$value" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                fi
+            fi
+            while true;do
+                _; _.
+                __ Add another value?
+                read-false
+                if [ -z "$RCM_BOOLEAN" ];then
+                    break
+                fi
+                __; read -p "Type the value or leave blank to skip: " value
+                sanitize-value
+                if [ -n "$value" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
+                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                else
+                    break
+                fi
+            done
+            break
+        done
+
+        rcm-yaml find parameter "${parameter}" then get values
+        values=("${_return_array[@]}")
+        if [ "${#values[@]}" -gt 0 ];then
+            for value in "${values[@]}"; do
+                [[ "$value" =~ ' ' ]] && value="'$value'"
+                RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
+                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+            done
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for value.
+        if [ "${#values[@]}" -gt 0 ];then
+            mkdir -p $(dirname "$backup_storage")
+            for value in "${values[@]}"; do
+                [[ "$value" =~ ' ' ]] && value="'$value'"
+                echo "${parameter}=${value}" >> "$backup_storage"
+            done
+        fi
+
+        # Placeholder tidak berlaku untuk multivalue.
+    }
+
+    print-flag-multivalue-dialog() {
+        _; _.
+        _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have many value.'; _.
+        if [ -n "$description" ];then
+            _; _.
+            while read line; do
+                echo-wrap "$line"
+            done <<< "$description"
+        fi
+        for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
+            if grep -q -- "^${parameter}" <<< "$each";then
+                while true; do
+                    if [[ "$each" == "${parameter}-" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        break
+                    fi
+                    if [[ "$each" == "${parameter}" ]];then
+                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        break
+                    fi
+                    if [[ "$each" =~ "${parameter}=" ]];then
+                        value="${each#$parameter=}"
+                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        break
+                    fi
+                    break
+                done
+            fi
+        done
+        while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
+                break
+            fi
+            # Prepopulate.
+            rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            flag="$_return_value"
+            if [ -n "$flag" ];then
+                rcm-yaml find parameter "${parameter}" then set flag 1
+                rcm-yaml find parameter "${parameter}" then get prepopulate values
+                values=("${_return_array[@]}")
+                if [ "${#values[@]}" -gt 0 ];then
+                    _; _.
+                    for value in "${values[@]}"; do
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
+                        rcm-yaml find parameter "${parameter}" then append values "$value"
+                    done
+                else
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
+                fi
+                # break
+                # Note: Tidak ada break seperti flag_value atau value, tapi tetap
+                # dilanjutkan karena multivalue.
+            fi
+            # Restore.
+            if [ -n "$backup_values" ];then
+                backup_flag=1
+            fi
+            if [ -n "$backup_flag" ];then
+                print-backup-flag-dialog
+                if [ -n "$RCM_BOOLEAN" ];then
+                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    flag=1
+                    if [ -n "$backup_values" ];then
+                        until [[ -z "$backup_values" ]];do
+                            backup_value=`sed -n 1p <<< "$backup_values"`
+                            backup_values=`sed -n '2,$p' <<< "$backup_values"`
+                            print-backup-dialog
+                            if [ -n "$value" ];then
+                                rcm-yaml find parameter "${parameter}" then append values "$value"
+                            fi
+                        done
+                    else
+                        print-fill-a-value-dialog
+                        # User may leave blank.
+                        if [ -n "$value" ];then
+                            rcm-yaml find parameter "${parameter}" then append values "$value"
+                        fi
+                    fi
+                    # break
+                    # Note: Tidak ada break seperti flag_value atau value, tapi tetap
+                    # dilanjutkan karena multivalue.
+                else
+                    # Note. Langusng break jika menolak restore, artinya false.
+                    break
+                fi
+            fi
+
+            # Todo, how about other options.
+            # Todo, how about prepopulate value from variable.
+            if [ -z "$flag" ];then
+                _; _.
+                __; _, Add this argument?; _.
+                read-false
+                if [ -n "$RCM_BOOLEAN" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
+                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    if [ -z "$value" ];then
+                        print-fill-a-value-dialog
+                        if [ -n "$value" ];then
+                            _; _.
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+                            rcm-yaml find parameter "${parameter}" then append values "$value"
+                        fi
+                    fi
+                    break
+                fi
+            fi
+            break
+        done
+        rcm-yaml find parameter "${parameter}" then get values
+        values=("${_return_array[@]}")
+        if [ "${#values[@]}" -gt 0 ];then
+            while true;do
+                _; _.
+                __ Add another value?
+                read-false
+                if [ -z "$RCM_BOOLEAN" ];then
+                    break
+                fi
+                __; read -p "Type the value or leave blank to skip: " value
+                sanitize-value
+                if [ -n "$value" ];then
+                    _; _.
+                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
+                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                else
+                    break
+                fi
+            done
+        fi
+
+        # Save value.
+        rcm-yaml find parameter "${parameter}" then get flag
+        flag="$_return_value"
+        rcm-yaml find parameter "${parameter}" then get values
+        values=("${_return_array[@]}")
+        if [ -n "$flag" ];then
+            if [ "${#values[@]}" -gt 0 ];then
+                for value in "${values[@]}"; do
+                    [[ "$value" =~ ' ' ]] && value="'$value'"
+                    RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                    RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
+                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+                done
+            else
+                RCM_ARGUMENT_PASS+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW+=("${parameter}")
+                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+            fi
+        else
+            RCM_ARGUMENT_PREVIEW+=("${parameter}-")
+        fi
+
+        # Backup to text file for flag.
+        if [ -n "$flag" ];then
+            mkdir -p $(dirname "$backup_storage")
+            if [ "${#values[@]}" -gt 0 ];then
+                for value in "${values[@]}"; do
+                    [[ "$value" =~ ' ' ]] && value="'$value'"
+                    echo "${parameter}=${value}" >> "$backup_storage"
+                done
+            else
+                echo "${parameter}" >> "$backup_storage"
+            fi
+        fi
+
+        # Placeholder tidak berlaku untuk multivalue.
+
     }
 
     parse-parameter
