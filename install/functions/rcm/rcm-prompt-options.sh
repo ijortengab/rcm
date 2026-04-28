@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source "$RCM_LIB"/functions/rcm/rcm-yaml.sh
 source "$RCM_LIB"/functions/rcm/rcm-prompt-options-option.sh
 
 rcm-prompt-options() {
@@ -12,6 +13,8 @@ rcm-prompt-options() {
     local load_other_options=
     local bypass_dialog=
     local count below
+
+    rcm-yaml init
 
     until [[ -z "$options" ]];do
         RCM_OPTION=`sed -n 1p <<< "$options" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
