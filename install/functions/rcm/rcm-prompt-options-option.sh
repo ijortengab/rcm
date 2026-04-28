@@ -36,6 +36,7 @@ rcm-prompt-options-option() {
     local boolean=
     local value=
     local prepopulate_boolean=
+    local conditional
 
     parse-parameter() {
         local type
@@ -228,6 +229,43 @@ rcm-prompt-options-option() {
             done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
         fi
         prepopulate_value="${!found}"
+    }
+
+    parse-conditional() {
+        # global conditional
+        local found="$1"
+        description=`echo "$description" | sed -E 's/ *'"${found}"'//i'`
+        while true; do
+            match=`echo "$found" | grep -i -o -E 'Conditional: Bypass if --[^-_\[\=0-9\.][^\[\=\.]+ has no value\.' | sed -E 's/^Conditional: Bypass if (.*) has no value./\1/i'`
+            if [ -n "$match" ];then
+                if ! has-value "${match}";then
+                    conditional="$found"
+                    rcm-yaml find parameter "${parameter}" then set conditional bypass 1
+                fi
+                break
+            fi
+            break
+        done
+    }
+
+    has-value() {
+        if [ -z "$1" ];then
+            error 'Argument <parameter> is required'; x
+        fi
+        local parameter="$1"
+        local type
+        rcm-yaml find parameter "${parameter}" then get type
+        type="$_return_value"
+        case "$type" in
+            value)
+                rcm-yaml find parameter "${parameter}" then get value
+                value="$_return_value"
+                if [ -n "$value" ];then
+                    return 0
+                else
+                    return 1
+                fi
+        esac
     }
 
     print-available-values-dialog() {
@@ -722,6 +760,17 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+            # Bypass.
             rcm-yaml find parameter "${parameter}" then get prepopulate bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -819,7 +868,6 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
-
             # Bypass.
             if [ -z "$is_required" ];then
                 # Tidak ada bypass jika required.
@@ -946,6 +994,17 @@ rcm-prompt-options-option() {
             fi
         done
         while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
             # Bypass.
             rcm-yaml find parameter "${parameter}" then get prepopulate bypass
             if [ -n "$_return_value" ];then
@@ -1079,6 +1138,17 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+            # Bypass.
             rcm-yaml find parameter "${parameter}" then get prepopulate bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -1199,6 +1269,17 @@ rcm-prompt-options-option() {
             fi
         done
         while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
             # Bypass.
             if [ -z "$is_required" ];then
                 # Tidak ada prepopulate bypass jika required.
@@ -1346,6 +1427,17 @@ rcm-prompt-options-option() {
             fi
         done
         while true; do
+            # Bypass.
+            rcm-yaml find parameter "${parameter}" then get conditional bypass
+            if [ -n "$_return_value" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
             # Bypass.
             rcm-yaml find parameter "${parameter}" then get prepopulate bypass
             if [ -n "$_return_value" ];then
@@ -1526,6 +1618,15 @@ rcm-prompt-options-option() {
     if [ -f "$history_storage" ];then
         history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
     fi
+
+    while true; do
+        find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+        if [ -n "$find" ];then
+            parse-conditional "$find"
+            break
+        fi
+        break
+    done
 
     while true; do
         find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
