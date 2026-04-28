@@ -753,6 +753,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -787,7 +790,6 @@ rcm-prompt-options-option() {
                 # Note. Langusng break jika menolak restore, artinya false.
                 break
             fi
-            # Todo, how about other options.
             _; _.
             __; _, Add this argument?; _.
             read-false
@@ -851,6 +853,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -988,6 +993,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -1044,7 +1052,6 @@ rcm-prompt-options-option() {
                 break
             fi
 
-            # Todo, how about other options.
             # Todo, how about prepopulate value from variable.
             _; _.
             __; _, Add this argument?; _.
@@ -1131,6 +1138,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -1178,7 +1188,6 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
-            # Todo, how about other options.
             while true; do
                 if [ "$count" -eq 0 ];then
                     _; _.
@@ -1263,6 +1272,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -1421,6 +1433,9 @@ rcm-prompt-options-option() {
         done
         while true; do
             # Bypass.
+            if [ -n "$bypass_dialog" ];then
+                break
+            fi
             rcm-yaml find parameter "${parameter}" then get conditional bypass
             if [ -n "$_return_value" ];then
                 _; _.
@@ -1493,7 +1508,6 @@ rcm-prompt-options-option() {
                 fi
             fi
 
-            # Todo, how about other options.
             # Todo, how about prepopulate value from variable.
             if [ -z "$flag" ];then
                 _; _.
