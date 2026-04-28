@@ -19,8 +19,6 @@ rcm-prompt-options-option() {
     local count below
     local parameter
     local is_required=
-    local is_flag=
-    local value_addon=
     local description=
     local placeholders=
     local find
@@ -33,7 +31,6 @@ rcm-prompt-options-option() {
     local history_value=
     local default_value=
     local prepopulate_value=
-    local boolean=
     local value=
     local prepopulate_boolean=
     local conditional
@@ -46,7 +43,7 @@ rcm-prompt-options-option() {
 
         # global option
         # global parameter
-        # global is_required is_flag value_addon
+        # global is_required
         first_line_trimmed=`sed -n 1p <<< "$option" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
         # Contoh:
@@ -61,7 +58,6 @@ rcm-prompt-options-option() {
         residue="${first_line_trimmed##$parameter}"
         if [ -n "$residue" ];then
             if [[ "$residue" =~ \.\.\.$ ]];then
-                value_addon=multivalue
                 is_multiple=1
                 residue="${residue::-3}"
             fi
@@ -85,7 +81,6 @@ rcm-prompt-options-option() {
             done
         else
             type=flag
-            is_flag=1
         fi
 
         if [ -n "$is_multiple" ];then
@@ -97,8 +92,6 @@ rcm-prompt-options-option() {
         fi
         if [[ "$parameter" == '--' ]];then
             is_required=
-            is_flag=
-            value_addon=multivalue
         fi
         # @todo, support comment starts with # character.
         RCM_YAML+='- parameter: '"$parameter"$'\n'
@@ -1593,7 +1586,6 @@ rcm-prompt-options-option() {
 
     is_typing=
     is_press=
-    is_flagged=
 
     values=()
     flags=1
