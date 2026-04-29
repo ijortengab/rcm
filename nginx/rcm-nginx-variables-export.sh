@@ -6,7 +6,7 @@ printVersion() {
 }
 RCM_VERSION=`printVersion`
 
-source /usr/local/rcm/$RCM_VERSION/functions/common/echo.sh
+source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "# ${RCM_INDENT}" >&2; [ -n "$1" ] && echo "$@" >&2; }
