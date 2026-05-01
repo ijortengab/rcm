@@ -958,6 +958,7 @@ rcm-prompt-options-option() {
             RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
             RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
             RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
+            RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
         fi
     }
 
@@ -1617,7 +1618,7 @@ rcm-prompt-options-option() {
                 backup_values=$(grep -- "^${parameter}=.*$" "$backup_storage" | sed -E -e 's|'"^${parameter}=(.*)$"'|\1|' -e "s|^'(.*)'$|\1|" | sort -u)
                 ;;
             *)
-                backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
+                backup_value=$(grep -- "^${parameter}=.*$" "$backup_storage" | tail -1 | sed -E -e 's|'"^${parameter}=(.*)$"'|\1|' -e "s|^'(.*)'$|\1|")
                 ;;
         esac
     fi
