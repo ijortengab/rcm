@@ -77,78 +77,9 @@ rcm-prompt() {
         ____
     }
 
-    # Mem-parse chapter $label pada contents, yang digunakan untuk list
-    # execute command.
-    parse-to-execute() {
-        local label="$1"
-        local contents="$2"
-        local first_line_trimmed is_valid
-        local command arguments
-        local line find replace
-        [ -z "$label" ] && { error "Argument <label> is required."; x; }
-        [ -z "$contents" ] && { error "Argument <contents> is required."; x; }
-
-        build-command
-        _.;
-        until [[ -z "$contents" ]];do
-            first_line_trimmed=`sed -n 1p <<< "$contents" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            contents=`sed -n '2,$p' <<< "$contents"`
-            is_valid=$(echo "$first_line_trimmed" | sed -n -E 's/\s*([^\)]+\))/\1/p')
-            if [ -z "$is_valid" ];then
-                error The command format is not valid: '`'"$first_line_trimmed"'`'.; x;
-            fi
-            command=$(echo "$first_line_trimmed" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\1/p')
-            arguments=$(echo "$first_line_trimmed" | sed -n -E 's/^([^\(]+)\(([^\)]*)\)$/\2/p')
-
-            if ! command -v "$command" > /dev/null;then
-                error The command is not found.; x;
-            fi
-            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-                while read line; do
-                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-                    # description="${description/"$find"/"$replace"}"
-                    if [ -n "$arguments" ];then
-                        arguments="${arguments/"$find"/"$replace"}"
-                    fi
-                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
-            fi
-            [ -n "$arguments" ] && arguments=' '"$arguments"
-            chapter "$label" command.
-            code ${command}${arguments}
-            ____
-
-            if [ -z "$tempfile" ];then
-                tempfile=$(mktemp -p /dev/shm -t rcm.XXXXXX)
-            fi
-            RCM_PROMPT_CHAIN= INDENT+="$RCM_INDENT" ${command}${arguments} \
-                > "$tempfile" \
-                ; [ ! $? -eq 0 ] && { rm "$tempfile"; x; }
-
-            while IFS= read -r to_export; do
-                key=$(cut -d= -f1 <<< "$to_export")
-                value=$(cut -d= -f2- <<< "$to_export")
-                [ -z "$value" ] && value=-
-                code export "$key"="$value"
-                export "$key"="$value"
-                [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=" "
-                RCM_ENVIRONMENT_VARIABLES+="${key}=${value}"
-            done < "$tempfile"
-            if [ -s "$tempfile" ];then
-                ____
-            fi
-        done
-    }
-
     mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
     if [ -n "$mapping_operand" ];then
         parse-mapping-operand "$mapping_operand"
-    fi
-
-    label='Pre Prompt'
-    list_to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    if [ -n "$list_to_execute" ];then
-        parse-to-execute "$label" "$list_to_execute"
     fi
 
     trap trap-sigint SIGINT
@@ -160,9 +91,4 @@ rcm-prompt() {
         rcm-prompt-options
     fi
 
-    label='Post Prompt'
-    list_to_execute=`echo "$contents" | sed -n '/^'"$label"'[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    if [ -n "$list_to_execute" ];then
-        parse-to-execute "$label" "$list_to_execute"
-    fi
 }
