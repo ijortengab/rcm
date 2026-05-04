@@ -47,41 +47,6 @@ rcm-prompt() {
         exit 0
     }
 
-    # Mem-parse chapter 'Mapping Operand:" pada contents.
-    parse-mapping-operand() {
-        local contents=$1
-        local count
-        [ -z "$contents" ] && { error "Argument <contents> is required."; x; }
-        chapter Mapping operand as value of options.
-        unset count
-        declare -i count
-        count=1
-        while true; do
-            below=`sed -n ${count}p <<< "$mapping_operand" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-            if [ -z "$below" ];then
-                break
-            fi
-            for _value in "${RCM_PREPOPULATE_ARGUMENT_OPERANDS[@]}";do
-                ArrayShift RCM_PREPOPULATE_ARGUMENT_OPERANDS[@]
-                break
-            done
-            RCM_PREPOPULATE_ARGUMENT_OPERANDS=("${_return[@]}")
-            if [ -n "$_value" ];then
-                RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("${below}=${_value}")
-                code "${below}=${_value}"
-            fi
-            unset _return
-            unset _value
-            count+=1
-        done
-        ____
-    }
-
-    mapping_operand=`echo "$contents" | sed -n '/^Mapping Operand[:\.]$/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p'`
-    if [ -n "$mapping_operand" ];then
-        parse-mapping-operand "$mapping_operand"
-    fi
-
     trap trap-sigint SIGINT
 
     # Populate options.
