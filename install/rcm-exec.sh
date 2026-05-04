@@ -391,6 +391,30 @@ parse-prompt-yaml() {
     fi
 }
 
+while true; do
+    if [ -n "$prompt" ];then
+        do-prompt
+        break
+    fi
+    if [ -n "$interactive" ];then
+        do-interactive
+        break
+    fi
+    if [ -n "$RCM_PROMPT_YAML" ];then
+        # Variable RCM_PROMPT_YAML didapat dari rcm -i command
+        # Kemudian ada plugin yang mengeksekusi rcm command
+        # tanpa -i dan tanpa -p
+        parse-prompt-yaml
+        do-execute
+        break
+    fi
+    RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}")
+    do-execute
+    break
+done
+
+exit 0
+
 if [ -n "$interactive" ];then
 
     source "${RCM_LIB}"/functions/rcm/rcm-prompt.sh
