@@ -238,7 +238,7 @@ if [ -n "$interactive" ];then
 
     RCM_ARGUMENT_PASS=()
     RCM_ARGUMENT_PREVIEW=()
-    RCM_ARGUMENT_PREVIEW_REAL=()
+    RCM_ARGUMENT_PASS_QUOTED=()
     RCM_ARGUMENT_PLACEHOLDERS=
 
     RCM_CONTENTS=`$command --help 2>/dev/null`
@@ -277,7 +277,7 @@ if [ -n "$interactive" ];then
     if [ -z "$RCM_PROMPT_CHAIN" ];then
         RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
     fi
-    for each in "${RCM_ARGUMENT_PREVIEW_REAL[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
+    for each in "${RCM_ARGUMENT_PASS_QUOTED[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
     [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
     RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
     export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"

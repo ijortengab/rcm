@@ -506,7 +506,7 @@ rcm-prompt-options-option() {
         if [ -n "$_return_value" ];then
             RCM_ARGUMENT_PASS+=("${parameter}")
             RCM_ARGUMENT_PREVIEW+=("${parameter}")
-            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+            RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
         fi
@@ -641,7 +641,7 @@ rcm-prompt-options-option() {
             [[ "$value" =~ ' ' ]] && value="'$value'"
             RCM_ARGUMENT_PASS+=("${parameter}=${value}")
             RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
-            RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+            RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
         fi
@@ -781,11 +781,11 @@ rcm-prompt-options-option() {
                 [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+                RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
             else
                 RCM_ARGUMENT_PASS+=("${parameter}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+                RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
             fi
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
@@ -925,7 +925,7 @@ rcm-prompt-options-option() {
             for ((i = 0 ; i < $count ; i++)); do
                 RCM_ARGUMENT_PASS+=("${parameter}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+                RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
             done
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
@@ -1083,7 +1083,7 @@ rcm-prompt-options-option() {
                 [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+                RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
             done
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
@@ -1263,12 +1263,12 @@ rcm-prompt-options-option() {
                     [[ "$value" =~ ' ' ]] && value="'$value'"
                     RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                     RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
-                    RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}=${value}")
+                    RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
                 done
             else
                 RCM_ARGUMENT_PASS+=("${parameter}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}")
-                RCM_ARGUMENT_PREVIEW_REAL+=("${parameter}")
+                RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
             fi
         else
             RCM_ARGUMENT_PREVIEW+=("${parameter}-")
