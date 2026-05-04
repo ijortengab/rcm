@@ -59,4 +59,30 @@ if ! command -v rcm > /dev/null;then
     echo -n "\e[95m"rcm; echo -n "\e[39m" command is; echo -n "\e[92m" found; echo "\e[39m".
 fi
 
+includes=(
+    "$RCM_LIB"/rcm-exec.sh
+    "$RCM_LIB"/functions/common/echo.sh
+    "$RCM_LIB"/functions/common/echo-wrap.sh
+    "$RCM_LIB"/functions/common/echo-wrap-color.sh
+    "$RCM_LIB"/functions/common/echo-wrap-list.sh
+    "$RCM_LIB"/functions/common/echo-wrap-multiline.sh
+    "$RCM_LIB"/functions/common/read-true.sh
+    "$RCM_LIB"/functions/common/read-false.sh
+    "$RCM_LIB"/functions/common/print-select-dialog.sh
+    "$RCM_LIB"/functions/common/print-select-other-dialog.sh
+    "$RCM_LIB"/functions/array/array.sh
+    "$RCM_LIB"/functions/array/array-search.sh
+    "$RCM_LIB"/functions/array/array-shift.sh
+    "$RCM_LIB"/functions/array/array-remove.sh
+    "$RCM_LIB"/functions/array/array-remove-all.sh
+    "$RCM_LIB"/functions/array/array-pop.sh
+    "$RCM_LIB"/functions/rcm/rcm-prompt.sh
+    "$RCM_LIB"/functions/rcm/rcm-prompt-options.sh
+    "$RCM_LIB"/functions/rcm/rcm-prompt-options-option.sh
+    "$RCM_LIB"/functions/rcm/rcm-yaml.sh
+)
+for each in "${includes[@]}"; do
+    [ -f "$each" ] || { echo Requires file: $each >&2; exit 1; }
+done
+
 source "${RCM_LIB}"/rcm-exec.sh
