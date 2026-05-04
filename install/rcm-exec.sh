@@ -180,49 +180,10 @@ _help=$("$command" --help 2>/dev/null)
 command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
 
 RCM_PREPOPULATE_ARGUMENTS=()
-RCM_PREPOPULATE_ARGUMENT_OPTIONS=()
-RCM_PREPOPULATE_ARGUMENT_OPERANDS=()
-RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS=()
 
-if [ $# -gt 0 ];then
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --)
-                while [[ $# -gt 0 ]]; do
-                    case "$1" in
-                        *)
-                            RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS+=("$1");
-                            RCM_PREPOPULATE_ARGUMENTS+=("$1");
-                            shift ;;
-                    esac
-                done
-                ;;
-            --[^-]*)
-                if [[ "$2" =~ ^-- ]];then
-                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1");
-                    RCM_PREPOPULATE_ARGUMENTS+=("$1");
-                elif [[ ! $2 == "" && ! $2 =~ ^-[^-] ]];then
-                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1"="$2");
-                    RCM_PREPOPULATE_ARGUMENTS+=("$1"="$2");
-                    shift
-                else
-                    RCM_PREPOPULATE_ARGUMENT_OPTIONS+=("$1");
-                    RCM_PREPOPULATE_ARGUMENTS+=("$1");
-                fi
-                shift
-                ;;
-            -[^-]*)
-                # Short option tidak bisa dijadikan prepopulate.
-                RCM_PREPOPULATE_ARGUMENTS+=("$1");
-                shift
-                ;;
-            *)
-                RCM_PREPOPULATE_ARGUMENT_OPERANDS+=("$1");
-                RCM_PREPOPULATE_ARGUMENTS+=("$1");
-                shift
-        esac
-    done
-fi
+while [ $# -gt 0 ]; do
+    RCM_PREPOPULATE_ARGUMENTS+=("$1"); shift
+done
 
 # Export variables part 1.
 # Boolean export as 0 or 1. Must not leave empty string.
