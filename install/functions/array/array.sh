@@ -75,6 +75,10 @@ array() {
         local count find found below each
         local value
 
+        if [ $# -eq 0 ];then
+            array_local_child="$array_local"
+        fi
+
         while [ $# -gt 0 ]; do
             args+=("$1"); shift
         done
