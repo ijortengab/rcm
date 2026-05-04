@@ -159,25 +159,65 @@ EOF
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
-if [ -z "$1" ];then
-    printHelp >/dev/null | head -3
-    _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
-    exit 0
+# Requirement, validate, and populate value.
+prefix="$RCM_LIB"
+RCM_EXTENSION_CHAIN=()
+command="rcm"
+is_intro_printed=
+is_required=1
+parameter=command
+parameter_plural=commands
+is_dialog_printed=
+until [[ ! -d "$prefix/commands" ]];do
+    list=(`ls "$prefix/commands"`)
+    if [ -n "$1" ];then
+        value="$1"; shift
+        if ! ArraySearch "$value" list[@];then
+            error Command unknown: '`'"$value"'`'.; x
+        fi
+        unset _return
+        command+=" ${value}"
+    else
+        if [ -z "$is_intro_printed" ];then
+
+            title rcm
+            ____
+
+            chapter Prepare argument for command '`'$command'`'.
+            is_intro_printed=1
+        fi
+        _; _.
+        _ Select available command to execute.; _.
+        print-select-dialog list[@] "$parameter" "$parameter_plural"
+        is_dialog_printed=1
+        _; _.
+        command+=" ${value}"
+        _; _, Execute' '; magenta $command; _.
+    fi
+    prefix+=/commands/$value
+    RCM_EXTENSION_CHAIN+=("$value")
+    value=
+done
+if [ -n "$is_dialog_printed" ];then
+    if [ -z "$interactive" ];then
+        _; _.
+        _ Do you want to enable --interactive option?; _.
+        read-true
+        if [ -n "$RCM_BOOLEAN" ];then
+            interactive=1
+        fi
+    fi
 fi
 
-extension="$1"; shift
-command="rcm-${extension}"
+# Populate $command_file and $command_file_sh
+command_file="rcm"
+for each in "${RCM_EXTENSION_CHAIN[@]}"; do
+    command_file+="-${each}"
+done
+command_file_sh="${command_file}.sh"
 
-# Title.
-title rcm
-____
-
-# Functions.
-
-# Requirement, validate, and populate value.
-_help=$("$command" --help 2>/dev/null)
-
-command -v "$command" >/dev/null || { red "Unable to proceed, $command command not found."; x; }
+PATH="$prefix":"$PATH"
+command -v "$command_file_sh" >/dev/null || { red "Unable to proceed, $command_file_sh command not found."; x; }
 
 RCM_PREPOPULATE_ARGUMENTS=()
 
@@ -189,7 +229,6 @@ done
 # Boolean export as 0 or 1. Must not leave empty string.
 [ -n "$fast" ] && rcm_fast=1 || rcm_fast=0
 export RCM_FAST="$rcm_fast"
-# Other variable, export as is.
 export RCM_VERBOSE="$verbose"
 export RCM_LIB="$RCM_LIB"
 
@@ -412,134 +451,6 @@ while true; do
     do-execute
     break
 done
-
-exit 0
-
-if [ -n "$interactive" ];then
-
-    source "${RCM_LIB}"/functions/rcm/rcm-prompt.sh
-
-    backup_storage=$HOME'/.cache/rcm/rcm.'$command'.bak'
-    history_storage=$HOME'/.cache/rcm/rcm.'$command'.history'
-
-    RCM_ARGUMENT_PASS=()
-    RCM_ARGUMENT_PREVIEW=()
-    RCM_ARGUMENT_PASS_QUOTED=()
-    RCM_ARGUMENT_PLACEHOLDERS=
-
-    RCM_CONTENTS=`$command --help 2>/dev/null`
-    rcm-prompt
-    trap x SIGINT
-
-    [ -f "$backup_storage" ] && rm "$backup_storage"
-
-    # Set command with non interactive mode.
-    _interactive="$interactive"
-    _autoyes="$autoyes"
-    interactive=
-    autoyes=
-
-    shortoptions=
-    [ -n "$interactive" ] && shortoptions+='i'
-    [ -n "$autoyes" ] && shortoptions+='y'
-    [ -n "$timer" ] && shortoptions+='t'
-    [ -z "$fast" ] && shortoptions+='s'
-    [ -z "$fast" ] && isfast='' || isfast=' --fast'
-    [ -n "$verbose" ] && {
-        isverbose=
-        for ((i = 0 ; i < "$verbose" ; i++)); do
-            isverbose+=' --verbose'
-            shortoptions+='v'
-        done
-    } || isverbose=
-    [ -n "$shortoptions" ] && shortoptions=" -${shortoptions}"
-
-    # Restore.
-    interactive="$_interactive"
-    autoyes="$_autoyes"
-
-    # Export variables part 2.
-    # Special for variable RCM_PROMPT_CHAIN, append value then export it.
-    if [ -z "$RCM_PROMPT_CHAIN" ];then
-        RCM_PROMPT_CHAIN="rcm${shortoptions} ${extension}"
-    fi
-    for each in "${RCM_ARGUMENT_PASS_QUOTED[@]}"; do RCM_PROMPT_CHAIN+=" ${each}"; done
-    [ -n "$RCM_ENVIRONMENT_VARIABLES" ] && RCM_ENVIRONMENT_VARIABLES+=' '
-    RCM_PROMPT_CHAIN="${RCM_ENVIRONMENT_VARIABLES}${RCM_PROMPT_CHAIN}"
-    export RCM_PROMPT_CHAIN="$RCM_PROMPT_CHAIN"
-    export RCM_ENVIRONMENT_VARIABLES="$RCM_ENVIRONMENT_VARIABLES"
-    [ -n "$tempfile" ] && rm "$tempfile"
-
-    chapter Command has been built.
-    _ Use command below to arrive in this position with non-interactive mode.; _.
-    # Simpan ke log, last command.
-    echo "$RCM_PROMPT_CHAIN" >> "$RCM_LOG"
-    _ Command has been saved to log file: '`'$(basename "$RCM_LOG")'`'.; _.
-    if [ "${#RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}" -eq 0 ];then
-        words_array=($RCM_PROMPT_CHAIN)
-    else
-        _rcm_prompt_chain="$RCM_PROMPT_CHAIN"
-        _argument_after_doubledash=("${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}")
-        ArrayShift _argument_after_doubledash[@]
-        _argument_after_doubledash=("${_return[@]}")
-        unset _return
-        for each in "${_argument_after_doubledash[@]}"; do
-            # Credit: https://devhints.io/bash
-            _argument="${each%%=*}"
-            _value="${each#$_argument=}"
-            [[ "$_argument" == "$_value" ]] && is_flag=1 || is_flag=
-            if [ -n "$is_flag" ];then
-                _rcm_prompt_chain+=" ${each}"
-            else
-                [[ "$_value" =~ ' ' ]] && _value="'$_value'"
-                _rcm_prompt_chain+=" ${_argument}=${_value}"
-            fi
-        done
-        words_array=($_rcm_prompt_chain)
-    fi
-
-    echo-wrap-multiline
-    ____
-
-    if [[ "${#RCM_ARGUMENT_PASS[@]}" -gt 0 ]];then
-        set -- "${RCM_ARGUMENT_PASS[@]}" "${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}"
-    else
-        set -- "${RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS[@]}"
-    fi
-
-    if [ -z "$autoyes" ];then
-        chapter Execute:
-        read-true
-        if [ -z "$RCM_BOOLEAN" ];then
-            exit 0
-        fi
-        ____
-
-    fi
-
-else
-    set -- "${RCM_PREPOPULATE_ARGUMENTS[@]}"
-fi
-
-if [ -n "$RCM_TIMER" ];then
-    chapter Timer Start.
-    _ Begin: $(date +%Y%m%d-%H%M%S); _.
-    RCM_BEGIN=$SECONDS
-    ____
-fi
-
-INDENT+="$RCM_INDENT" $command $isfast $isverbose "$@"
-
-if [ -n "$RCM_TIMER" ];then
-    chapter Timer Finish.
-    _ End: $(date +%Y%m%d-%H%M%S); _.
-    RCM_END=$SECONDS
-    duration=$(( RCM_END - RCM_BEGIN ))
-    hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (duration % 3600) % 60 ));
-    runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
-    _ Duration: $runtime; if [ $duration -gt 60 ];then _, " (${duration} seconds)"; fi; _, '.'; _.
-    ____
-fi
 
 exit 0
 
