@@ -638,8 +638,8 @@ rcm-prompt-options-option() {
         rcm-yaml find parameter "${parameter}" then get value
         value="$_return_value"
         if [ -n "$value" ];then
-            [[ "$value" =~ ' ' ]] && value="'$value'"
             RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+            [[ "$value" =~ ' ' ]] && value="'$value'"
             RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
             RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
         else
@@ -778,8 +778,8 @@ rcm-prompt-options-option() {
             rcm-yaml find parameter "${parameter}" then get value
             value="$_return_value"
             if [ -n "$value" ];then
-                [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
                 RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
             else
@@ -1080,8 +1080,8 @@ rcm-prompt-options-option() {
         values=("${_return_array[@]}")
         if [ "${#values[@]}" -gt 0 ];then
             for value in "${values[@]}"; do
-                [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
                 RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
             done
@@ -1260,8 +1260,8 @@ rcm-prompt-options-option() {
         if [ -n "$flag" ];then
             if [ "${#values[@]}" -gt 0 ];then
                 for value in "${values[@]}"; do
-                    [[ "$value" =~ ' ' ]] && value="'$value'"
                     RCM_ARGUMENT_PASS+=("${parameter}=${value}")
+                    [[ "$value" =~ ' ' ]] && value="'$value'"
                     RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
                     RCM_ARGUMENT_PASS_QUOTED+=("${parameter}=${value}")
                 done
