@@ -454,12 +454,6 @@ rcm-prompt-options-option() {
     print-flag-dialog() {
         _; _.
         _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
@@ -513,6 +507,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -526,6 +521,7 @@ rcm-prompt-options-option() {
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
+
             # Prepopulate.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -547,6 +543,7 @@ rcm-prompt-options-option() {
                 yaml_flag=1
                 break
             fi
+
             # Restore.
             if [ -n "$backup_flag" ];then
                 print-backup-flag-dialog
@@ -563,6 +560,30 @@ rcm-prompt-options-option() {
                 # Note. Langusng break jika menolak restore, artinya false.
                 break
             fi
+
+            # Process description.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
+
             _; _.
             __; _, Add this argument?; _.
             read-false
@@ -619,12 +640,6 @@ rcm-prompt-options-option() {
         else
             _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have value.'; _.
         fi
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
 
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
@@ -679,6 +694,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Bypass.
             if [ -z "$is_required" ];then
                 # Tidak ada bypass jika required.
@@ -695,6 +711,7 @@ rcm-prompt-options-option() {
                     break
                 fi
             fi
+
             # Prepopulate.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -715,6 +732,7 @@ rcm-prompt-options-option() {
                 RCM_YAML+='  value: '"$value"$'\n'
                 break
             fi
+
             # Restore.
             if [ -n "$backup_value" ];then
                 print-backup-dialog
@@ -727,6 +745,55 @@ rcm-prompt-options-option() {
                     RCM_YAML+='  value: '"$value"$'\n'
                     break
                 fi
+            fi
+
+            # Process description.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-available-values "$find"
+                    break
+                fi
+                find=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+                if [ -n "$find" ];then
+                    parse-available-values-from-command "$find"
+                    break
+                fi
+                break
+            done
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-prepopulate-value "$find"
+                    break
+                fi
+                find=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-default-value "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
             fi
 
             print-available-values-dialog
@@ -811,12 +878,6 @@ rcm-prompt-options-option() {
     print-flag-value-dialog() {
         _; _.
         _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional; _, ' and may have value.'; _.
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
@@ -886,6 +947,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -899,6 +961,7 @@ rcm-prompt-options-option() {
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
+
             # Prepopulate.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -939,6 +1002,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Restore.
             if [ -n "$backup_value" ];then
                 backup_flag=1
@@ -972,6 +1036,42 @@ rcm-prompt-options-option() {
                 fi
                 # Note. Langusng break jika menolak restore, artinya false.
                 break
+            fi
+
+            # Process description.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-prepopulate-value "$find"
+                    break
+                fi
+                find=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-default-value "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
             fi
 
             # Todo, how about prepopulate value from variable.
@@ -1058,12 +1158,6 @@ rcm-prompt-options-option() {
     print-increment-dialog() {
         _; _.
         _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, '.'; _.
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
@@ -1093,7 +1187,6 @@ rcm-prompt-options-option() {
                 done
             fi
         done
-
         # Cara dibawah ini simple, tapi lambat.
         # ```
         #     rcm-yaml find parameter "${parameter}" then increase prepopulate count
@@ -1104,6 +1197,7 @@ rcm-prompt-options-option() {
             RCM_YAML+='  prepopulate:'$'\n'
             RCM_YAML+='    count: '"$yaml_prepopulate_count"$'\n'
         fi
+
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
@@ -1125,6 +1219,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -1185,6 +1280,30 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Process description.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
+
             while true; do
                 if [ "$yaml_count" -eq 0 ];then
                     _; _.
@@ -1267,12 +1386,6 @@ rcm-prompt-options-option() {
         else
             _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have many value.'; _.
         fi
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
 
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
@@ -1340,6 +1453,7 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+
             # Bypass.
             if [ -z "$is_required" ];then
                 # Tidak ada bypass jika required.
@@ -1356,8 +1470,8 @@ rcm-prompt-options-option() {
                     break
                 fi
             fi
-            # Prepopulate.
 
+            # Prepopulate.
             # Cara dibawah ini simple, tapi lambat.
             # ```
             #     rcm-yaml find parameter "${parameter}" then get prepopulate values
@@ -1394,6 +1508,7 @@ rcm-prompt-options-option() {
                 # Note: Tidak ada break seperti flag_value atau value, tapi tetap
                 # dilanjutkan karena multivalue.
             fi
+
             # Restore.
             if [ -n "$backup_values" ];then
                 # Backup and reset.
@@ -1433,6 +1548,42 @@ rcm-prompt-options-option() {
                 # break
                 # Note: Tidak ada break seperti flag_value atau value, tapi tetap
                 # dilanjutkan karena multivalue.
+            fi
+
+            # Process description.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-available-values "$find"
+                    break
+                fi
+                find=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+                if [ -n "$find" ];then
+                    parse-available-values-from-command "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
             fi
 
             # Cara dibawah ini simple, tapi lambat.
@@ -1530,12 +1681,6 @@ rcm-prompt-options-option() {
     print-flag-multivalue-dialog() {
         _; _.
         _ 'Argument '; magenta "${parameter}";_, ' is '; _, optional;_, ' and may have many value.'; _.
-        if [ -n "$description" ];then
-            _; _.
-            while read line; do
-                echo-wrap "$line"
-            done <<< "$description"
-        fi
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
@@ -1664,6 +1809,7 @@ rcm-prompt-options-option() {
                 # ```
                 # Gunakan saja variable $yaml_prepopulate_values yang sudah kita
                 # definisikan diatas.
+
                 if [ "${#yaml_prepopulate_values[@]}" -gt 0 ];then
                     _; _.
                     for value in "${yaml_prepopulate_values[@]}"; do
@@ -1697,6 +1843,44 @@ rcm-prompt-options-option() {
                 # Note: Tidak ada break seperti flag_value atau value, tapi tetap
                 # dilanjutkan karena multivalue.
             fi
+
+            # Process description.
+            # Restore terdapat dialog, sehingga description berada diatas restore.
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
+                if [ -n "$find" ];then
+                    parse-conditional "$find"
+                    break
+                fi
+                break
+            done
+            while true; do
+                find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
+                if [ -n "$find" ];then
+                    parse-available-values "$find"
+                    break
+                fi
+                find=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
+                if [ -n "$find" ];then
+                    parse-available-values-from-command "$find"
+                    break
+                fi
+                break
+            done
+            if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
+                while read line; do
+                    find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
+                    description="${description/"$find"/"$replace"}"
+                done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
+            fi
+            if [ -n "$description" ];then
+                _; _.
+                while read line; do
+                    echo-wrap "$line"
+                done <<< "$description"
+            fi
+
             # Restore.
             if [ -n "$backup_values" ];then
                 backup_flag=1
@@ -1930,51 +2114,6 @@ rcm-prompt-options-option() {
     fi
     if [ -f "$history_storage" ];then
         history_value=$(grep -- "^${parameter}=.*$" "$history_storage" | tail -9 | sed -E 's|'"^${parameter}=(.*)$"'|\1|')
-    fi
-
-    while true; do
-        find=`echo "$description" | grep -i -o -E 'Conditional: [^\.]+\.'`
-        if [ -n "$find" ];then
-            parse-conditional "$find"
-            break
-        fi
-        break
-    done
-
-    while true; do
-        find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
-        if [ -n "$find" ];then
-            parse-available-values "$find"
-            break
-        fi
-        find=`echo "$description" | grep -i -o -E 'Values? available from command:\s*[^\(\ ]+\((\)|[^\)]+\))(\.|, or others?\.)'`
-        if [ -n "$find" ];then
-            parse-available-values-from-command "$find"
-            break
-        fi
-        break
-    done
-
-    while true; do
-        find=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
-        if [ -n "$find" ];then
-            parse-prepopulate-value "$find"
-            break
-        fi
-        find=`echo "$description" | grep -i -o -E 'Default value from variable:? [^\.]+\.'| sed -n -E 's/^Default value from variable:? ([^\.]+)\.$/\1/ip'`
-        if [ -n "$find" ];then
-            parse-default-value "$find"
-            break
-        fi
-        break
-    done
-
-    if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
-        while read line; do
-            find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-            replace=$(echo ${line} | sed -E 's|^[^:]+:(.*)|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
-            description="${description/"$find"/"$replace"}"
-        done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
     fi
 
     case "$type" in
