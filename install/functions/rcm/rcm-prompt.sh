@@ -32,7 +32,7 @@ rcm-prompt() {
             done
         fi
         for each in "${rcm_options_array[@]}";do
-            rcm_options="$each"
+            rcm_options+="$each"
         done
         [ -n "$rcm_options" ] && rcm_options="-${rcm_options}"
         words_array+=(rcm $rcm_options)
