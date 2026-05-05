@@ -19,6 +19,17 @@ rcm-prompt-options-option() {
     local count below
     local parameter
     local is_required=
+    local yaml_prepopulate_bypass=
+    local yaml_prepopulate_value=
+    local yaml_prepopulate_flag=
+    local yaml_prepopulate_count=0
+    local yaml_prepopulate_values=()
+    local yaml_conditional_bypass=
+    local yaml_flag=
+    local yaml_count=0
+    local yaml_values=()
+    local yaml_values_backup=()
+    local yaml_values_key
     local description=
     local placeholders=
     local find
@@ -36,9 +47,9 @@ rcm-prompt-options-option() {
     local conditional
 
     parse-parameter() {
+        # global is_required
         local type
         local is_multiple
-        local is_required
         local first_line_trimmed residue
 
         # global option
@@ -233,7 +244,15 @@ rcm-prompt-options-option() {
             if [ -n "$match" ];then
                 if ! has-value "${match}";then
                     conditional="$found"
-                    rcm-yaml find parameter "${parameter}" then set conditional bypass 1
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set conditional bypass 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  conditional:'$'\n'
+                    RCM_YAML+='    bypass: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_conditional_bypass=1
                 fi
                 break
             fi
@@ -247,12 +266,18 @@ rcm-prompt-options-option() {
         fi
         local parameter="$1"
         local type
-        rcm-yaml find parameter "${parameter}" then get type
-        type="$_return_value"
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get type
+        # ```
+        # Alternative adalah, langsung populate variable array.
+        rcm-yaml find parameter "${parameter}"
+        # Lalu ambil property `type` via array function.
+        array type; type="$_return_value"
+        # Begitu juga dengan property `value`, via array function.
         case "$type" in
             value)
-                rcm-yaml find parameter "${parameter}" then get value
-                value="$_return_value"
+                array value; value="$_return_value"
                 if [ -n "$value" ];then
                     return 0
                 else
@@ -439,24 +464,47 @@ rcm-prompt-options-option() {
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" == "${parameter}" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    flag: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_flag=1
                         break
                     fi
                     break
                 done
             fi
         done
+
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -466,25 +514,51 @@ rcm-prompt-options-option() {
                 break
             fi
             # Bypass.
-            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            #     yaml_prepopulate_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_bypass" ];then
                 _; _.
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
             # Prepopulate.
-            rcm-yaml find parameter "${parameter}" then get prepopulate flag
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            #     yaml_prepopulate_flag="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_flag yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_flag" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
-                rcm-yaml find parameter "${parameter}" then set flag 1
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set flag 1
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  flag: 1'$'\n'
+                # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                yaml_flag=1
                 break
             fi
             # Restore.
             if [ -n "$backup_flag" ];then
                 print-backup-flag-dialog
                 if [ -n "$RCM_BOOLEAN" ];then
-                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set flag 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  flag: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_flag=1
                 fi
                 # Note. Langusng break jika menolak restore, artinya false.
                 break
@@ -495,15 +569,27 @@ rcm-prompt-options-option() {
             if [ -n "$RCM_BOOLEAN" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
-                rcm-yaml find parameter "${parameter}" then set flag 1
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set flag 1
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  flag: 1'$'\n'
+                # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                yaml_flag=1
                 break
             fi
             break
         done
 
-        # Save value.
-        rcm-yaml find parameter "${parameter}" then get flag
-        if [ -n "$_return_value" ];then
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get flag
+        #     yaml_flag="$_return_value"
+        # ```
+        # Gunakan saja variable $yaml_flag yang sudah kita
+        # definisikan diatas.
+        if [ -n "$yaml_flag" ];then
             RCM_ARGUMENT_PASS+=("${parameter}")
             RCM_ARGUMENT_PREVIEW+=("${parameter}")
             RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
@@ -512,15 +598,21 @@ rcm-prompt-options-option() {
         fi
 
         # Backup to text file for flag.
-        if [ -n "$_return_value" ];then
+        if [ -n "$yaml_flag" ];then
             mkdir -p $(dirname "$backup_storage")
             echo "${parameter}" >> "$backup_storage"
         fi
     }
 
     print-value-dialog() {
-        rcm-yaml find parameter "${parameter}" then get validate is_required
-        is_required="$_return_value"
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get validate is_required
+        #     is_required="$_return_value"
+        # ```
+        # Solusinya adalah dengan menyelesaikan semuanya di method
+        # parse-parameter() sehingga variable menjadi global.
+        # global is_required
         _; _.
         if [ -n "$is_required" ];then
             _ 'Argument '; magenta "${parameter}";_, ' is '; yellow requires;_, ' a value.'; _.
@@ -538,12 +630,28 @@ rcm-prompt-options-option() {
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" =~ "${parameter}=" ]];then
                         value="${each#$parameter=}"
-                        rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    value: '"$value"$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_value="$value"
                         break
                     fi
                     break
@@ -555,8 +663,14 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -568,27 +682,49 @@ rcm-prompt-options-option() {
             # Bypass.
             if [ -z "$is_required" ];then
                 # Tidak ada bypass jika required.
-                rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-                if [ -n "$_return_value" ];then
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+                #     yaml_prepopulate_bypass="$_return_value"
+                # ```
+                # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+                # definisikan diatas.
+                if [ -n "$yaml_prepopulate_bypass" ];then
                     _; _.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                     break
                 fi
             fi
             # Prepopulate.
-            rcm-yaml find parameter "${parameter}" then get prepopulate value
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate value
+            #     yaml_prepopulate_value="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_value yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_value" ];then
                 _; _.
-                value="$_return_value"
+                value="$yaml_prepopulate_value"
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow> ." green
-                rcm-yaml find parameter "${parameter}" then set value "$value"
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  value: '"$value"$'\n'
                 break
             fi
             # Restore.
             if [ -n "$backup_value" ];then
                 print-backup-dialog
                 if [ -n "$value" ];then
-                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  value: '"$value"$'\n'
                     break
                 fi
             fi
@@ -629,14 +765,25 @@ rcm-prompt-options-option() {
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
             fi
             if [ -n "$value" ];then
-                rcm-yaml find parameter "${parameter}" then set value "$value"
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  value: '"$value"$'\n'
             fi
+
             break
         done
 
         # Save value.
-        rcm-yaml find parameter "${parameter}" then get value
-        value="$_return_value"
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get value
+        #     value="$_return_value"
+        # ```
+        # Gunakan saja variable $value yang sudah kita
+        # definisikan diatas.
         if [ -n "$value" ];then
             RCM_ARGUMENT_PASS+=("${parameter}=${value}")
             [[ "$value" =~ ' ' ]] && value="'$value'"
@@ -674,30 +821,63 @@ rcm-prompt-options-option() {
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" == "${parameter}" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    flag: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_flag=1
                         break
                     fi
                     if [[ "$each" =~ "${parameter}=" ]];then
                         value="${each#$parameter=}"
-                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
-                        rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate value "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    flag: 1'$'\n'
+                        RCM_YAML+='    value: '"$value"$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_flag=1
+                        yaml_prepopulate_value="$value"
                         break
                     fi
                     break
                 done
             fi
         done
+
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -707,22 +887,52 @@ rcm-prompt-options-option() {
                 break
             fi
             # Bypass.
-            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            #     yaml_prepopulate_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_bypass" ];then
                 _; _.
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
             # Prepopulate.
-            rcm-yaml find parameter "${parameter}" then get prepopulate flag
-            if [ -n "$_return_value" ];then
-                rcm-yaml find parameter "${parameter}" then set flag 1
-                rcm-yaml find parameter "${parameter}" then get prepopulate value
-                if [ -n "$_return_value" ];then
-                    value="$_return_value"
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            #     yaml_prepopulate_flag="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_flag yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_flag" ];then
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set flag 1
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  flag: 1'$'\n'
+                # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                yaml_flag=1
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then get prepopulate value
+                #     yaml_prepopulate_value="$_return_value"
+                # ```
+                # Gunakan saja variable $yaml_prepopulate_value yang sudah kita
+                # definisikan diatas.
+                if [ -n "$yaml_prepopulate_value" ];then
+                    value="$yaml_prepopulate_value"
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>${value}</yellow> ." green
-                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  value: '"$value"$'\n'
                 else
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
@@ -736,7 +946,14 @@ rcm-prompt-options-option() {
             if [ -n "$backup_flag" ];then
                 print-backup-flag-dialog
                 if [ -n "$RCM_BOOLEAN" ];then
-                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set flag 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  flag: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_flag=1
                     if [ -n "$backup_value" ];then
                         print-backup-dialog
                     fi
@@ -745,7 +962,12 @@ rcm-prompt-options-option() {
                     fi
                     # User may leave blank.
                     if [ -n "$value" ];then
-                        rcm-yaml find parameter "${parameter}" then set value "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  value: '"$value"$'\n'
                     fi
                 fi
                 # Note. Langusng break jika menolak restore, artinya false.
@@ -759,12 +981,24 @@ rcm-prompt-options-option() {
             if [ -n "$RCM_BOOLEAN" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
-                rcm-yaml find parameter "${parameter}" then set flag 1
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set flag 1
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  flag: 1'$'\n'
+                # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                yaml_flag=1
                 print-fill-a-value-dialog
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
-                    rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set value "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  value: '"$value"$'\n'
                 fi
                 break
             fi
@@ -772,11 +1006,21 @@ rcm-prompt-options-option() {
         done
 
         # Save value.
-        rcm-yaml find parameter "${parameter}" then get flag
-        flag="$_return_value"
-        if [ -n "$flag" ];then
-            rcm-yaml find parameter "${parameter}" then get value
-            value="$_return_value"
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get flag
+        #     yaml_flag="$_return_value"
+        # ```
+        # Gunakan saja variable $yaml_flag yang sudah kita
+        # definisikan diatas.
+        if [ -n "$yaml_flag" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get value
+            #     value="$_return_value"
+            # ```
+            # Gunakan saja variable $value yang sudah kita
+            # definisikan diatas.
             if [ -n "$value" ];then
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                 [[ "$value" =~ ' ' ]] && value="'$value'"
@@ -792,7 +1036,7 @@ rcm-prompt-options-option() {
         fi
 
         # Backup to text file for flag or value.
-        if [ -n "$flag" ];then
+        if [ -n "$yaml_flag" ];then
             mkdir -p $(dirname "$backup_storage")
             if [ -n "$value" ];then
                 echo "${parameter}=${value}" >> "$backup_storage"
@@ -802,14 +1046,13 @@ rcm-prompt-options-option() {
         fi
 
         # Save to placeholders.
-        if [ -n "$flag" ];then
+        if [ -n "$yaml_flag" ];then
             if [ -n "$value" ];then
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"']: '"$value"
                 RCM_ARGUMENT_PLACEHOLDERS+=$'\n'
                 RCM_ARGUMENT_PLACEHOLDERS+='['"$parameter"'^^]: '"${value^^}"
             fi
         fi
-
     }
 
     print-increment-dialog() {
@@ -825,24 +1068,55 @@ rcm-prompt-options-option() {
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" == "${parameter}" ]];then
-                        rcm-yaml find parameter "${parameter}" then increase prepopulate count
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then increase prepopulate count
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap pertama: loop and gathered.
+                        yaml_prepopulate_count=$((yaml_prepopulate_count+1))
                         break
                     fi
                     break
                 done
             fi
         done
+
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then increase prepopulate count
+        # ```
+        # Solusinya dengan direct langsung ke RCM_YAML manual.
+        # Tahap kedua: edit.
+        if [ $yaml_prepopulate_count -gt 0 ];then
+            RCM_YAML+='  prepopulate:'$'\n'
+            RCM_YAML+='    count: '"$yaml_prepopulate_count"$'\n'
+        fi
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -852,52 +1126,80 @@ rcm-prompt-options-option() {
                 break
             fi
             # Bypass.
-            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            #     yaml_prepopulate_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_bypass" ];then
                 _; _.
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
             # Khusus increment, pilih salah satu antara prepopulate
             # atau restore.
-            count=0
             while true; do
+
                 # Prepopulate.
-                rcm-yaml find parameter "${parameter}" then get prepopulate count
-                if [ -n "$_return_value" ];then
-                    count="$_return_value"
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then get prepopulate count
+                #     yaml_prepopulate_count="$_return_value"
+                # ```
+                # Gunakan saja variable $yaml_prepopulate_count yang sudah kita
+                # definisikan diatas.
+
+                if [ -n "$yaml_prepopulate_count" ];then
+                    yaml_count="$yaml_prepopulate_count"
                     _; _.
-                    for ((i = 0 ; i < $count ; i++)); do
+                    for ((i = 0 ; i < $yaml_count ; i++)); do
                         echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
                     done
-                    rcm-yaml find parameter "${parameter}" then set count "$count"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set count $yaml_count
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  count: '"$yaml_count"$'\n'
                     break
                 fi
                 # Restore.
                 if [ -n "$backup_value" ];then
                     print-backup-flag-dialog
                     if [ -n "$RCM_BOOLEAN" ];then
-                        count="$backup_value"
+                        yaml_count="$backup_value"
                         _; _.
                         for ((i = 0 ; i < $count ; i++)); do
                             echo-wrap-color "Argument <magenta>${parameter}</magenta> added which is restored." green
                         done
-                        rcm-yaml find parameter "${parameter}" then set count "$count"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set count $yaml_count
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  count: '"$yaml_count"$'\n'
                         break
                     fi
                 fi
                 break
             done
             while true; do
-                if [ "$count" -eq 0 ];then
+                if [ "$yaml_count" -eq 0 ];then
                     _; _.
                     __; _, Add this argument?; _.
                     read-false
                     if [ -n "$RCM_BOOLEAN" ];then
                         _; _.
                         echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
-                        count=$((count + 1))
-                        rcm-yaml find parameter "${parameter}" then set count $count
+                        yaml_count=$((yaml_count + 1))
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set count $yaml_count
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  count: '"$yaml_count"$'\n'
                     else
                         break
                     fi
@@ -908,8 +1210,15 @@ rcm-prompt-options-option() {
                     if [ -n "$RCM_BOOLEAN" ];then
                         _; _.
                         echo-wrap-color "Argument <magenta>${parameter}</magenta> added again manually." green
-                        count=$((count + 1))
-                        rcm-yaml find parameter "${parameter}" then set count $count
+                        yaml_count=$((yaml_count + 1))
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set count $yaml_count
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Hapus dulu value existing.
+                        RCM_YAML=$(echo "$RCM_YAML" | head -n -2)$'\n'
+                        RCM_YAML+='  count: '"$yaml_count"$'\n'
                     else
                         break
                     fi
@@ -919,10 +1228,15 @@ rcm-prompt-options-option() {
         done
 
         # Save value.
-        rcm-yaml find parameter "${parameter}" then get count
-        count="$_return_value"
-        if [ -n "$count" ];then
-            for ((i = 0 ; i < $count ; i++)); do
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get count
+        #     yaml_count="$_return_value"
+        # ```
+        # Gunakan saja variable $yaml_flag yang sudah kita
+        # definisikan diatas.
+        if [ -n "$yaml_count" ];then
+            for ((i = 0 ; i < $yaml_count ; i++)); do
                 RCM_ARGUMENT_PASS+=("${parameter}")
                 RCM_ARGUMENT_PREVIEW+=("${parameter}")
                 RCM_ARGUMENT_PASS_QUOTED+=("${parameter}")
@@ -932,16 +1246,21 @@ rcm-prompt-options-option() {
         fi
 
         # Backup to text file for increment.
-        if [ -n "$count" ];then
+        if [ -n "$yaml_count" ];then
             mkdir -p $(dirname "$backup_storage")
             echo "${parameter}=${count}" >> "$backup_storage"
         fi
-
     }
 
     print-multivalue-dialog() {
-        rcm-yaml find parameter "${parameter}" then get validate is_required
-        is_required="$_return_value"
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get validate is_required
+        #     is_required="$_return_value"
+        # ```
+        # Solusinya adalah dengan menyelesaikan semuanya di method
+        # parse-parameter() sehingga variable menjadi global.
+        # global is_required
         _; _.
         if [ -n "$is_required" ];then
             _ 'Argument '; magenta "${parameter}";_, ' is '; yellow required; _, ' at least a value.'; _.
@@ -954,29 +1273,65 @@ rcm-prompt-options-option() {
                 echo-wrap "$line"
             done <<< "$description"
         fi
+
         for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}";do
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" =~ "${parameter}=" ]];then
                         value="${each#$parameter=}"
-                        rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap pertama: loop and gathered.
+                        yaml_prepopulate_values+=("$value")
                         break
                     fi
                     break
                 done
             fi
         done
+
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+        # ```
+        # Solusinya dengan direct langsung ke RCM_YAML manual.
+        # Tahap kedua: edit.
+        if [ ${#yaml_prepopulate_values[@]} -gt 0 ];then
+            RCM_YAML+='  prepopulate:'$'\n'
+            RCM_YAML+='    values:'$'\n'
+            for each in "${yaml_prepopulate_values[@]}"; do
+                RCM_YAML+='      - '"$each"$'\n'
+            done
+        fi
+
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -987,57 +1342,107 @@ rcm-prompt-options-option() {
             fi
             # Bypass.
             if [ -z "$is_required" ];then
-                # Tidak ada prepopulate bypass jika required.
-                rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-                if [ -n "$_return_value" ];then
+                # Tidak ada bypass jika required.
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+                #     yaml_prepopulate_bypass="$_return_value"
+                # ```
+                # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+                # definisikan diatas.
+                if [ -n "$yaml_prepopulate_bypass" ];then
                     _; _.
                     __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                     break
                 fi
             fi
             # Prepopulate.
-            rcm-yaml find parameter "${parameter}" then get prepopulate values
-            values=("${_return_array[@]}")
-            if [ "${#values[@]}" -gt 0 ];then
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate values
+            #     yaml_prepopulate_values=("${_return_array[@]}")
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_values yang sudah kita
+            # definisikan diatas.
+            if [ "${#yaml_prepopulate_values[@]}" -gt 0 ];then
                 _; _.
-                for value in "${values[@]}"; do
+                for value in "${yaml_prepopulate_values[@]}"; do
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
-                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    # Tahap pertama: loop and gathered.
+                    yaml_values+=("$value")
                 done
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                # Tahap kedua: edit.
+                if [ ${#yaml_values[@]} -gt 0 ];then
+                    RCM_YAML+='  values:'$'\n'
+                    yaml_values_key=1
+                    for each in "${yaml_prepopulate_values[@]}"; do
+                        RCM_YAML+='    - '"$each"$'\n'
+                    done
+                fi
                 # break
                 # Note: Tidak ada break seperti flag_value atau value, tapi tetap
                 # dilanjutkan karena multivalue.
             fi
             # Restore.
             if [ -n "$backup_values" ];then
-                print-backup-flag-dialog
-                if [ -n "$RCM_BOOLEAN" ];then
-                    rcm-yaml find parameter "${parameter}" then set flag 1
-                    until [[ -z "$backup_values" ]];do
-                        backup_value=`sed -n 1p <<< "$backup_values"`
-                        backup_values=`sed -n '2,$p' <<< "$backup_values"`
-                        print-backup-dialog
-                        if [ -n "$value" ];then
-                            rcm-yaml find parameter "${parameter}" then append values "$value"
-                        fi
-                    done
-                    rcm-yaml find parameter "${parameter}" then get prepopulate values
-                    values=("${_return_array[@]}")
-                    if [ "${#values[@]}" -eq 0 ];then
-                        print-fill-a-value-dialog
-                    fi
-                    # User may leave blank.
+                # Backup and reset.
+                yaml_values_backup=("${yaml_values[@]}")
+                yaml_values=()
+                until [[ -z "$backup_values" ]];do
+                    backup_value=`sed -n 1p <<< "$backup_values"`
+                    backup_values=`sed -n '2,$p' <<< "$backup_values"`
+                    print-backup-dialog
                     if [ -n "$value" ];then
-                        rcm-yaml find parameter "${parameter}" then set value "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap pertama: loop and gathered.
+                        yaml_values+=("$value")
                     fi
-                    # break
-                    # Note: Tidak ada break seperti flag_value atau value, tapi tetap
-                    # dilanjutkan karena multivalue.
+                done
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                # Tahap kedua: edit.
+                if [ ${#yaml_values[@]} -gt 0 ];then
+                    if [ -z "$yaml_values_key" ];then
+                        RCM_YAML+='  values:'$'\n'
+                        yaml_values_key=1
+                    fi
+                    for each in "${yaml_values[@]}"; do
+                        RCM_YAML+='    - '"$each"$'\n'
+                    done
                 fi
+                yaml_values=("${yaml_values[@]}" "${yaml_values_backup[@]}")
+
+                # break
+                # Note: Tidak ada break seperti flag_value atau value, tapi tetap
+                # dilanjutkan karena multivalue.
             fi
-            rcm-yaml find parameter "${parameter}" then get prepopulate values
-            values=("${_return_array[@]}")
-            if [ "${#values[@]}" -eq 0 ];then
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate values
+            #     values=("${_return_array[@]}")
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_values yang sudah kita
+            # definisikan diatas.
+            if [ "${#yaml_prepopulate_values[@]}" -eq 0 ];then
                 if [ -z "$is_required" ];then
                     print-fill-a-value-dialog
                     if [ -z "$value" ];then
@@ -1053,7 +1458,17 @@ rcm-prompt-options-option() {
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
-                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    if [ -z "$yaml_values_key" ];then
+                        RCM_YAML+='  values:'$'\n'
+                        yaml_values_key=1
+                    fi
+                    RCM_YAML+='    - '"$value"$'\n'
+                    yaml_values+=("$value")
                 fi
             fi
             while true;do
@@ -1068,7 +1483,13 @@ rcm-prompt-options-option() {
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
-                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='    - '"$value"$'\n'
+                    yaml_values+=("$value")
                 else
                     break
                 fi
@@ -1076,10 +1497,15 @@ rcm-prompt-options-option() {
             break
         done
 
-        rcm-yaml find parameter "${parameter}" then get values
-        values=("${_return_array[@]}")
-        if [ "${#values[@]}" -gt 0 ];then
-            for value in "${values[@]}"; do
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get values
+        #     yaml_values=("${_return_array[@]}")
+        # ```
+        # Gunakan saja variable $yaml_values yang sudah kita
+        # definisikan diatas.
+        if [ "${#yaml_values[@]}" -gt 0 ];then
+            for value in "${yaml_values[@]}"; do
                 RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                 [[ "$value" =~ ' ' ]] && value="'$value'"
                 RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
@@ -1090,9 +1516,9 @@ rcm-prompt-options-option() {
         fi
 
         # Backup to text file for value.
-        if [ "${#values[@]}" -gt 0 ];then
+        if [ "${#yaml_values[@]}" -gt 0 ];then
             mkdir -p $(dirname "$backup_storage")
-            for value in "${values[@]}"; do
+            for value in "${yaml_values[@]}"; do
                 [[ "$value" =~ ' ' ]] && value="'$value'"
                 echo "${parameter}=${value}" >> "$backup_storage"
             done
@@ -1114,30 +1540,81 @@ rcm-prompt-options-option() {
             if grep -q -- "^${parameter}" <<< "$each";then
                 while true; do
                     if [[ "$each" == "${parameter}-" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate bypass 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    bypass: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_bypass=1
                         break
                     fi
                     if [[ "$each" == "${parameter}" ]];then
-                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    flag: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_flag=1
                         break
                     fi
                     if [[ "$each" =~ "${parameter}=" ]];then
                         value="${each#$parameter=}"
-                        rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
-                        rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then set prepopulate flag 1
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='  prepopulate:'$'\n'
+                        RCM_YAML+='    flag: 1'$'\n'
+                        # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                        yaml_prepopulate_flag=1
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap pertama: loop and gathered.
+                        yaml_prepopulate_values+=("$value")
                         break
                     fi
                     break
                 done
             fi
         done
+
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then append prepopulate values "$value"
+        # ```
+        # Solusinya dengan direct langsung ke RCM_YAML manual.
+        # Tahap kedua: edit.
+        if [ ${#yaml_prepopulate_values[@]} -gt 0 ];then
+            RCM_YAML+='  prepopulate:'$'\n'
+            RCM_YAML+='    values:'$'\n'
+            for each in "${yaml_prepopulate_values[@]}"; do
+                RCM_YAML+='      - '"$each"$'\n'
+            done
+        fi
+
         while true; do
             # Bypass.
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            rcm-yaml find parameter "${parameter}" then get conditional bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
                 _; _.
                 echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
                 if [ -n "$conditional" ];then
@@ -1147,25 +1624,71 @@ rcm-prompt-options-option() {
                 break
             fi
             # Bypass.
-            rcm-yaml find parameter "${parameter}" then get prepopulate bypass
-            if [ -n "$_return_value" ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate bypass
+            #     yaml_prepopulate_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_prepopulate_bypass" ];then
                 _; _.
                 __; _, Argument; _, ' '; _, "$parameter"; _, ' ';  _, set to skip by user,' '; _, pass; _, .; _.
                 break
             fi
+
             # Prepopulate.
-            rcm-yaml find parameter "${parameter}" then get prepopulate flag
-            flag="$_return_value"
-            if [ -n "$flag" ];then
-                rcm-yaml find parameter "${parameter}" then set flag 1
-                rcm-yaml find parameter "${parameter}" then get prepopulate values
-                values=("${_return_array[@]}")
-                if [ "${#values[@]}" -gt 0 ];then
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get prepopulate flag
+            #     yaml_prepopulate_flag="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_prepopulate_flag yang sudah kita
+            # definisikan diatas.
+            yaml_flag="$yaml_prepopulate_flag"
+
+            if [ -n "$yaml_flag" ];then
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then set flag 1
+                # ```
+                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                RCM_YAML+='  flag: 1'$'\n'
+                # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                yaml_flag=1
+
+                # Cara dibawah ini simple, tapi lambat.
+                # ```
+                #     rcm-yaml find parameter "${parameter}" then get prepopulate values
+                #     yaml_prepopulate_values=("${_return_array[@]}")
+                # ```
+                # Gunakan saja variable $yaml_prepopulate_values yang sudah kita
+                # definisikan diatas.
+                if [ "${#yaml_prepopulate_values[@]}" -gt 0 ];then
                     _; _.
-                    for value in "${values[@]}"; do
+                    for value in "${yaml_prepopulate_values[@]}"; do
                         echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated with value <yellow>$value</yellow>." green
-                        rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap pertama: loop and gathered.
+                        yaml_values+=("$value")
                     done
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    # Tahap kedua: edit.
+                    if [ ${#yaml_values[@]} -gt 0 ];then
+                        RCM_YAML+='  values:'$'\n'
+                        yaml_values_key=1
+                        for each in "${yaml_prepopulate_values[@]}"; do
+                            RCM_YAML+='    - '"$each"$'\n'
+                        done
+                    fi
                 else
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> prepopulated." green
@@ -1181,22 +1704,64 @@ rcm-prompt-options-option() {
             if [ -n "$backup_flag" ];then
                 print-backup-flag-dialog
                 if [ -n "$RCM_BOOLEAN" ];then
-                    rcm-yaml find parameter "${parameter}" then set flag 1
-                    flag=1
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set flag 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  flag: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_flag=1
                     if [ -n "$backup_values" ];then
+                        yaml_values_backup=("${yaml_values[@]}")
+                        yaml_values=()
                         until [[ -z "$backup_values" ]];do
                             backup_value=`sed -n 1p <<< "$backup_values"`
                             backup_values=`sed -n '2,$p' <<< "$backup_values"`
                             print-backup-dialog
                             if [ -n "$value" ];then
-                                rcm-yaml find parameter "${parameter}" then append values "$value"
+                                # Cara dibawah ini simple, tapi lambat.
+                                # ```
+                                #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                                # ```
+                                # Solusinya dengan direct langsung ke RCM_YAML manual.
+                                # Tahap pertama: loop and gathered.
+                                yaml_values+=("$value")
                             fi
                         done
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        # Tahap kedua: edit.
+                        if [ ${#yaml_values[@]} -gt 0 ];then
+                            if [ -z "$yaml_values_key" ];then
+                                RCM_YAML+='  values:'$'\n'
+                                yaml_values_key=1
+                            fi
+                            for each in "${yaml_values[@]}"; do
+                                RCM_YAML+='    - '"$each"$'\n'
+                            done
+                        fi
+                        yaml_values=("${yaml_values[@]}" "${yaml_values_backup[@]}")
                     else
                         print-fill-a-value-dialog
                         # User may leave blank.
                         if [ -n "$value" ];then
-                            rcm-yaml find parameter "${parameter}" then append values "$value"
+                            _; _.
+                            echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
+                            # Cara dibawah ini simple, tapi lambat.
+                            # ```
+                            #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                            # ```
+                            # Solusinya dengan direct langsung ke RCM_YAML manual.
+                            if [ -z "$yaml_values_key" ];then
+                                RCM_YAML+='  values:'$'\n'
+                                yaml_values_key=1
+                            fi
+                            RCM_YAML+='    - '"$value"$'\n'
+                            yaml_values+=("$value")
                         fi
                     fi
                     # break
@@ -1209,20 +1774,37 @@ rcm-prompt-options-option() {
             fi
 
             # Todo, how about prepopulate value from variable.
-            if [ -z "$flag" ];then
+            if [ -z "$yaml_flag" ];then
                 _; _.
                 __; _, Add this argument?; _.
                 read-false
                 if [ -n "$RCM_BOOLEAN" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> added manually." green
-                    rcm-yaml find parameter "${parameter}" then set flag 1
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set flag 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  flag: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_flag=1
                     if [ -z "$value" ];then
                         print-fill-a-value-dialog
                         if [ -n "$value" ];then
                             _; _.
                             echo-wrap-color "Argument <magenta>${parameter}</magenta> filled with value <yellow>$value</yellow> manually." green
-                            rcm-yaml find parameter "${parameter}" then append values "$value"
+                            # Cara dibawah ini simple, tapi lambat.
+                            # ```
+                            #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                            # ```
+                            # Solusinya dengan direct langsung ke RCM_YAML manual.
+                            if [ -z "$yaml_values_key" ];then
+                                RCM_YAML+='  values:'$'\n'
+                                yaml_values_key=1
+                            fi
+                            RCM_YAML+='    - '"$value"$'\n'
+                            yaml_values+=("$value")
                         fi
                     fi
                     break
@@ -1230,9 +1812,15 @@ rcm-prompt-options-option() {
             fi
             break
         done
-        rcm-yaml find parameter "${parameter}" then get values
-        values=("${_return_array[@]}")
-        if [ "${#values[@]}" -gt 0 ];then
+
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get values
+        #     yaml_values=("${_return_array[@]}")
+        # ```
+        # Gunakan saja variable $yaml_values yang sudah kita
+        # definisikan diatas.
+        if [ "${#yaml_values[@]}" -gt 0 ];then
             while true;do
                 _; _.
                 __ Add another value?
@@ -1245,7 +1833,17 @@ rcm-prompt-options-option() {
                 if [ -n "$value" ];then
                     _; _.
                     echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
-                    rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    if [ -z "$yaml_values_key" ];then
+                        RCM_YAML+='  values:'$'\n'
+                        yaml_values_key=1
+                    fi
+                    RCM_YAML+='    - '"$value"$'\n'
+                    yaml_values+=("$value")
                 else
                     break
                 fi
@@ -1253,13 +1851,23 @@ rcm-prompt-options-option() {
         fi
 
         # Save value.
-        rcm-yaml find parameter "${parameter}" then get flag
-        flag="$_return_value"
-        rcm-yaml find parameter "${parameter}" then get values
-        values=("${_return_array[@]}")
-        if [ -n "$flag" ];then
-            if [ "${#values[@]}" -gt 0 ];then
-                for value in "${values[@]}"; do
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get flag
+        #     yaml_flag="$_return_value"
+        # ```
+        # Gunakan saja variable $yaml_flag yang sudah kita
+        # definisikan diatas.
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get values
+        #     yaml_values=("${_return_array[@]}")
+        # ```
+        # Gunakan saja variable $yaml_values yang sudah kita
+        # definisikan diatas.
+        if [ -n "$yaml_flag" ];then
+            if [ "${#yaml_values[@]}" -gt 0 ];then
+                for value in "${yaml_values[@]}"; do
                     RCM_ARGUMENT_PASS+=("${parameter}=${value}")
                     [[ "$value" =~ ' ' ]] && value="'$value'"
                     RCM_ARGUMENT_PREVIEW+=("${parameter}=${value}")
@@ -1275,10 +1883,10 @@ rcm-prompt-options-option() {
         fi
 
         # Backup to text file for flag.
-        if [ -n "$flag" ];then
+        if [ -n "$yaml_flag" ];then
             mkdir -p $(dirname "$backup_storage")
-            if [ "${#values[@]}" -gt 0 ];then
-                for value in "${values[@]}"; do
+            if [ "${#yaml_values[@]}" -gt 0 ];then
+                for value in "${yaml_values[@]}"; do
                     [[ "$value" =~ ' ' ]] && value="'$value'"
                     echo "${parameter}=${value}" >> "$backup_storage"
                 done
@@ -1288,7 +1896,6 @@ rcm-prompt-options-option() {
         fi
 
         # Placeholder tidak berlaku untuk multivalue.
-
     }
 
     parse-parameter
