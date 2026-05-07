@@ -156,6 +156,7 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 tempfile=
 
+# Functions.
 build-command() {
     local each
     local rcm_options=
@@ -377,6 +378,22 @@ build-options() {
 
 }
 
+intro() {
+    printHelp >/dev/null | head -3
+    _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
+    e; _.
+    _ Do you want to list available command?; _.
+    read-true
+    if [ -z "$RCM_BOOLEAN" ];then
+        x
+    fi
+    e; _.
+}
+
+if [ $# -eq 0 ];then
+    intro
+fi
+
 # Requirement, validate, and populate value.
 prefix="$RCM_LIB"
 RCM_EXTENSION_CHAIN=()
@@ -424,6 +441,10 @@ if [ -n "$is_dialog_printed" ];then
         read-true
         if [ -n "$RCM_BOOLEAN" ];then
             interactive=1
+            build-options
+            _; _.
+            _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
+
         fi
     fi
 fi
