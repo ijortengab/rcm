@@ -156,78 +156,6 @@ RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 tempfile=
 
-# Requirement, validate, and populate value.
-prefix="$RCM_LIB"
-RCM_EXTENSION_CHAIN=()
-command="rcm"
-is_intro_printed=
-is_required=1
-parameter=command
-parameter_plural=commands
-is_dialog_printed=
-until [[ ! -d "$prefix/commands" ]];do
-    list=(`ls "$prefix/commands"`)
-    if [ -n "$1" ];then
-        value="$1"; shift
-        if ! ArraySearch "$value" list[@];then
-            error Command unknown: '`'"$value"'`'.; x
-        fi
-        unset _return
-        command+=" ${value}"
-    else
-        if [ -z "$is_intro_printed" ];then
-
-            title rcm
-            ____
-
-            chapter Prepare argument for command '`'$command'`'.
-            is_intro_printed=1
-        fi
-        _; _.
-        _ Select available command to execute.; _.
-        print-select-dialog list[@] "$parameter" "$parameter_plural"
-        is_dialog_printed=1
-        _; _.
-        command+=" ${value}"
-        _; _, Execute' '; magenta $command; _.
-    fi
-    prefix+=/commands/$value
-    RCM_EXTENSION_CHAIN+=("$value")
-    value=
-done
-if [ -n "$is_dialog_printed" ];then
-    if [ -z "$interactive" ];then
-        _; _.
-        _ Do you want to enable --interactive option?; _.
-        read-true
-        if [ -n "$RCM_BOOLEAN" ];then
-            interactive=1
-        fi
-    fi
-fi
-
-# Populate $command_file and $command_file_sh
-command_file="rcm"
-for each in "${RCM_EXTENSION_CHAIN[@]}"; do
-    command_file+="-${each}"
-done
-command_file_sh="${command_file}.sh"
-
-PATH="$prefix":"$PATH"
-command -v "$command_file_sh" >/dev/null || { red "Unable to proceed, $command_file_sh command not found."; x; }
-
-RCM_PREPOPULATE_ARGUMENTS=()
-
-while [ $# -gt 0 ]; do
-    RCM_PREPOPULATE_ARGUMENTS+=("$1"); shift
-done
-
-# Export variables part 1.
-# Boolean export as 0 or 1. Must not leave empty string.
-export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
-export RCM_VERBOSE="$verbose"
-export RCM_LIB="$RCM_LIB"
-
 build-command() {
     local each
     local rcm_options=
@@ -425,6 +353,78 @@ parse-prompt-yaml() {
         RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}")
     fi
 }
+
+# Requirement, validate, and populate value.
+prefix="$RCM_LIB"
+RCM_EXTENSION_CHAIN=()
+command="rcm"
+is_intro_printed=
+is_required=1
+parameter=command
+parameter_plural=commands
+is_dialog_printed=
+until [[ ! -d "$prefix/commands" ]];do
+    list=(`ls "$prefix/commands"`)
+    if [ -n "$1" ];then
+        value="$1"; shift
+        if ! ArraySearch "$value" list[@];then
+            error Command unknown: '`'"$value"'`'.; x
+        fi
+        unset _return
+        command+=" ${value}"
+    else
+        if [ -z "$is_intro_printed" ];then
+
+            title rcm
+            ____
+
+            chapter Prepare argument for command '`'$command'`'.
+            is_intro_printed=1
+        fi
+        _; _.
+        _ Select available command to execute.; _.
+        print-select-dialog list[@] "$parameter" "$parameter_plural"
+        is_dialog_printed=1
+        _; _.
+        command+=" ${value}"
+        _; _, Execute' '; magenta $command; _.
+    fi
+    prefix+=/commands/$value
+    RCM_EXTENSION_CHAIN+=("$value")
+    value=
+done
+if [ -n "$is_dialog_printed" ];then
+    if [ -z "$interactive" ];then
+        _; _.
+        _ Do you want to enable --interactive option?; _.
+        read-true
+        if [ -n "$RCM_BOOLEAN" ];then
+            interactive=1
+        fi
+    fi
+fi
+
+# Populate $command_file and $command_file_sh
+command_file="rcm"
+for each in "${RCM_EXTENSION_CHAIN[@]}"; do
+    command_file+="-${each}"
+done
+command_file_sh="${command_file}.sh"
+
+PATH="$prefix":"$PATH"
+command -v "$command_file_sh" >/dev/null || { red "Unable to proceed, $command_file_sh command not found."; x; }
+
+RCM_PREPOPULATE_ARGUMENTS=()
+
+while [ $# -gt 0 ]; do
+    RCM_PREPOPULATE_ARGUMENTS+=("$1"); shift
+done
+
+# Export variables part 1.
+# Boolean export as 0 or 1. Must not leave empty string.
+export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
+export RCM_VERBOSE="$verbose"
+export RCM_LIB="$RCM_LIB"
 
 while true; do
     if [ -n "$prompt" ];then
