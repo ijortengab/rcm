@@ -235,6 +235,7 @@ do-interactive() {
     while true; do
         RCM_CONTENTS=`$command_file_sh --help 2>/dev/null`
         if [ -z "$RCM_CONTENTS" ];then
+            do-execute
             break
         fi
 
