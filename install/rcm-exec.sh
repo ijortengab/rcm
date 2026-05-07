@@ -165,6 +165,7 @@ build-command() {
     # tidak ada -y
     # [ -n "$interactive" ] && rcm_options_array+=(i)
     # [ -n "$autoyes" ] && rcm_options_array+=(y)
+    # [ -n "$prompt" ] && rcm_options_array+=(p)
     [ -n "$timer" ] && rcm_options_array+=(t)
     [ -z "$fast" ] && rcm_options_array+=(s)
     if [ -n "$verbose" ];then
@@ -355,6 +356,27 @@ parse-prompt-yaml() {
     fi
 }
 
+build-options() {
+    local rcm_options_array=()
+    # Reset.
+    rcm_options=
+    [ -n "$interactive" ] && rcm_options_array+=(i)
+    [ -n "$autoyes" ] && rcm_options_array+=(y)
+    [ -n "$prompt" ] && rcm_options_array+=(p)
+    [ -n "$timer" ] && rcm_options_array+=(t)
+    [ -z "$fast" ] && rcm_options_array+=(s)
+    if [ -n "$verbose" ];then
+        for ((i = 0 ; i < "$verbose" ; i++)); do
+            rcm_options_array+=(v)
+        done
+    fi
+    for each in "${rcm_options_array[@]}";do
+        rcm_options+="$each"
+    done
+    [ -n "$rcm_options" ] && rcm_options="-${rcm_options}"
+
+}
+
 # Requirement, validate, and populate value.
 prefix="$RCM_LIB"
 RCM_EXTENSION_CHAIN=()
@@ -388,7 +410,8 @@ until [[ ! -d "$prefix/commands" ]];do
         is_dialog_printed=1
         _; _.
         command+=" ${value}"
-        _; _, Execute' '; magenta $command; _.
+        build-options
+        _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
     fi
     prefix+=/commands/$value
     RCM_EXTENSION_CHAIN+=("$value")
