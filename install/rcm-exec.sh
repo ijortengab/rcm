@@ -96,31 +96,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 unset _n
 
-# If not set in argument, try load from environment.
-# Didapat dari export oleh rcm parent process.
-# Untuk fast dan verbose, maka child mengikuti parent.
-[ -z "$fast" ] && fast="$RCM_FAST"
-[ -z "$verbose" ] && verbose="$RCM_VERBOSE"
-
-# Boolean default to TRUE.
-[ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
-
-# Copy to RCM variable then unset.
-RCM_TIMER="$timer"; unset timer
-
-# Verbosity.
-RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && RCM_QUIET=1 || RCM_QUIET=
-[[ "$verbose" -gt 0 ]] && RCM_LOUD=1
-[[ "$verbose" -gt 1 ]] && RCM_LOUD=1 && RCM_LOUDER=1
-[[ "$verbose" -gt 2 ]] && RCM_LOUD=1 && RCM_LOUDER=1 && RCM_DEBUG=1
-
-# Define variables and constants.
-RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-[ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
-tempfile=
-
 # Functions. Help and Version.
 printVersion() {
     echo $RCM_VERSION
@@ -158,6 +133,28 @@ EOF
 # Help and Version.
 [ -n "$help" ] && { printHelp; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
+
+# If not set in argument, try load from environment.
+# Didapat dari export oleh rcm parent process.
+# Untuk fast dan verbose, maka child mengikuti parent.
+[ -z "$fast" ] && fast="$RCM_FAST"
+[ -z "$verbose" ] && verbose="$RCM_VERBOSE"
+
+# Boolean default to TRUE.
+[ -z "$fast" ] && fast=1; [ "$fast" == 0 ] && fast=
+
+# Verbosity.
+RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && RCM_QUIET=1 || RCM_QUIET=
+[[ "$verbose" -gt 0 ]] && RCM_LOUD=1
+[[ "$verbose" -gt 1 ]] && RCM_LOUD=1 && RCM_LOUDER=1
+[[ "$verbose" -gt 2 ]] && RCM_LOUD=1 && RCM_LOUDER=1 && RCM_DEBUG=1
+
+# Define variables and constants.
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
+RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+[ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
+tempfile=
 
 # Requirement, validate, and populate value.
 prefix="$RCM_LIB"
@@ -227,8 +224,7 @@ done
 
 # Export variables part 1.
 # Boolean export as 0 or 1. Must not leave empty string.
-[ -n "$fast" ] && rcm_fast=1 || rcm_fast=0
-export RCM_FAST="$rcm_fast"
+export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
 export RCM_VERBOSE="$verbose"
 export RCM_LIB="$RCM_LIB"
 
@@ -285,7 +281,7 @@ do-prompt() {
 
 do-execute() {
     set -- "${RCM_ARGUMENT_PASS[@]}"
-    if [ -n "$RCM_TIMER" ];then
+    if [ -n "$timer" ];then
         chapter Timer Start.
         _ Begin: $(date +%Y%m%d-%H%M%S); _.
         RCM_BEGIN=$SECONDS
@@ -295,7 +291,7 @@ do-execute() {
         ____
     fi
     INDENT+="${is_intro_printed:+$RCM_INDENT}" $command_file_sh "$@"
-    if [ -n "$RCM_TIMER" ];then
+    if [ -n "$timer" ];then
         chapter Timer Finish.
         _ End: $(date +%Y%m%d-%H%M%S); _.
         RCM_END=$SECONDS
