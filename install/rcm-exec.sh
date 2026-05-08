@@ -435,18 +435,25 @@ until [[ ! -d "$prefix/commands" ]];do
     value=
 done
 if [ -n "$is_dialog_printed" ];then
-    if [ -z "$interactive" ];then
-        _; _.
-        _ Do you want to enable --interactive option?; _.
-        read-true
-        if [ -n "$RCM_BOOLEAN" ];then
-            interactive=1
-            build-options
-            _; _.
-            _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
-
+    while true; do
+        if [ -n "$prompt" ];then
+            break
         fi
-    fi
+        if [ -z "$interactive" ];then
+            _; _.
+            _ Do you want to enable --interactive option?; _.
+            read-true
+            if [ -n "$RCM_BOOLEAN" ];then
+                interactive=1
+                build-options
+                _; _.
+                _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
+
+            fi
+            break
+        fi
+        break
+    done
 fi
 
 # Populate $command_file and $command_file_sh
@@ -470,6 +477,7 @@ done
 export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
 export RCM_VERBOSE="$verbose"
 export RCM_LIB="$RCM_LIB"
+export RCM_INDENT="$RCM_INDENT"
 
 while true; do
     if [ -n "$prompt" ];then
