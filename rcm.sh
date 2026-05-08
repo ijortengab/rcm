@@ -70,6 +70,7 @@ includes=(
     "$RCM_LIB"/functions/common/read-false.sh
     "$RCM_LIB"/functions/common/print-select-dialog.sh
     "$RCM_LIB"/functions/common/print-select-other-dialog.sh
+    "$RCM_LIB"/functions/common/spinning-dot.sh
     "$RCM_LIB"/functions/array/array.sh
     "$RCM_LIB"/functions/array/array-search.sh
     "$RCM_LIB"/functions/array/array-shift.sh

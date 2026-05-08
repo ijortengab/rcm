@@ -9,6 +9,7 @@ source "$RCM_LIB"/functions/common/read-true.sh
 source "$RCM_LIB"/functions/common/read-false.sh
 source "$RCM_LIB"/functions/common/print-select-dialog.sh
 source "$RCM_LIB"/functions/common/print-select-other-dialog.sh
+source "$RCM_LIB"/functions/common/spinning-dot.sh
 source "$RCM_LIB"/functions/array/array.sh
 source "$RCM_LIB"/functions/array/array-search.sh
 source "$RCM_LIB"/functions/array/array-shift.sh
