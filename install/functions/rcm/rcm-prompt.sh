@@ -24,6 +24,7 @@ rcm-prompt() {
         local words_array=()
         [ -n "$interactive" ] && rcm_options_array+=(i)
         [ -n "$autoyes" ] && rcm_options_array+=(y)
+        [ -n "$prompt" ] && rcm_options_array+=(p)
         [ -n "$timer" ] && rcm_options_array+=(t)
         [ -z "$fast" ] && rcm_options_array+=(s)
         if [ -n "$verbose" ];then
