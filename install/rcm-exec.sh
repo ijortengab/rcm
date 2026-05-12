@@ -156,6 +156,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 tempfile=
+exit_code=0
 
 # Functions.
 build-command() {
@@ -222,6 +223,7 @@ do-execute() {
         ____
     fi
     INDENT+="${is_intro_printed:+$RCM_INDENT}" $command_file_sh "$@"
+    exit_code=$?
     if [ -n "$timer" ];then
         chapter Timer Finish.
         _ End: $(date +%Y%m%d-%H%M%S); _.
@@ -502,7 +504,7 @@ while true; do
     break
 done
 
-exit 0
+exit $exit_code
 
 # parse-options.sh \
 # --compact \
