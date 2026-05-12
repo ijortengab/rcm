@@ -24,6 +24,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) help=1; shift ;;
         --version|-V) version=1; shift ;;
+        --config=*) config="${1#*=}"; shift ;;
+        --config) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config="$2"; shift; fi; shift ;;
         --interactive|-i) interactive=1; shift ;;
         --non-interactive) interactive=0; shift ;;
         --prompt|-p) prompt=1; shift ;;
@@ -292,7 +294,12 @@ do-interactive() {
 
 parse-prompt-yaml() {
     array="$RCM_PROMPT_YAML"
+    trap x SIGTERM
+    spinning-dot 'Config loading' &
+    pid=$!
     array "${RCM_EXTENSION_CHAIN[@]}"
+    kill $pid
+    printf "\r\033[K" >&2
     array_local=("${_return_array[@]}")
     if [ "${#array_local[@]}" -gt 0 ];then
         RCM_ARGUMENT_PASS=()
@@ -398,6 +405,10 @@ if [ $# -eq 0 ];then
 fi
 
 # Requirement, validate, and populate value.
+if [ -f "$config" ];then
+    RCM_PROMPT_YAML=$(< "$config")
+    export RCM_PROMPT_YAML="$RCM_PROMPT_YAML"
+fi
 prefix="$RCM_LIB"
 RCM_EXTENSION_CHAIN=()
 command="rcm"
@@ -440,6 +451,9 @@ done
 if [ -n "$is_dialog_printed" ];then
     while true; do
         if [ -n "$prompt" ];then
+            break
+        fi
+        if [ -n "$config" ];then
             break
         fi
         if [ -z "$interactive" ];then
@@ -523,6 +537,7 @@ exit $exit_code
 # '--help|-h'
 # )
 # VALUE=(
+# '--config'
 # )
 # MULTIVALUE=(
 # )
