@@ -484,9 +484,23 @@ PATH="$prefix":"$PATH"
 command -v "$command_file_sh" >/dev/null || { red "Unable to proceed, $command_file_sh command not found."; x; }
 
 RCM_PREPOPULATE_ARGUMENTS=()
+RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS=()
 
 while [ $# -gt 0 ]; do
-    RCM_PREPOPULATE_ARGUMENTS+=("$1"); shift
+    case "$1" in
+        --) shift
+            while [ $# -gt 0 ]; do
+                 case "$1" in
+                    *)
+                        RCM_PREPOPULATE_ARGUMENT_NON_OPTIONS+=("$1")
+                        shift
+                 esac
+            done
+            ;;
+        *)
+            RCM_PREPOPULATE_ARGUMENTS+=("$1")
+            shift
+    esac
 done
 
 # Export variables part 1.
@@ -495,6 +509,10 @@ export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
 export RCM_VERBOSE="$verbose"
 export RCM_LIB="$RCM_LIB"
 export RCM_INDENT="$RCM_INDENT"
+if [ -z "$RCM_MAIN_PID" ];then
+    RCM_MAIN_PID=$$
+    export RCM_MAIN_PID="$RCM_MAIN_PID"
+fi
 
 while true; do
     if [ -n "$prompt" ];then
