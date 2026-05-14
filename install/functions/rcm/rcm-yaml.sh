@@ -96,8 +96,11 @@ rcm-yaml() {
         [ -n "$part_3" ] && RCM_YAML+="${part_3}"
     }
 
+    # @ todo, setelah array() function bisa memparsing yaml comment, maka
+    # ubah kembali menjadi informasi create date.
+    # RCM_YAML='# Created at '`date +%Y%m%d-%H%M%S`$'\n'
     command-init() {
-        RCM_YAML='# Created at '`date +%Y%m%d-%H%M%S`$'\n'
+        RCM_YAML=''
     }
 
     command-find() {
