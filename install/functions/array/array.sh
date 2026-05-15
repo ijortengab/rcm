@@ -312,6 +312,7 @@ array() {
         local args=()
         local count find found below each
         local append_value
+        local _append_value
         local line_1
         local line_2
         local line_3
@@ -321,6 +322,7 @@ array() {
         local part_3
         local part_4
         local indent
+        local add_indent
         local parent
 
         while [ $# -gt 0 ]; do
@@ -387,6 +389,32 @@ array() {
             parent="$each"
         done
 
+        # Jika ada line break, maka kita anggap value yang di append adalah
+        # array.
+        if [[ "$append_value" =~ $'\n' ]];then
+            _append_value="$append_value"
+            append_value=
+            first=1
+            while IFS= read -r line; do
+                # @todo, heredoc yang ada empty line bisa gagal
+                # jika append.
+                if [ -n "$line" ];then
+                    if [ -n "$first" ];then
+                        first=
+                        append_value+="$line"$'\n'
+                    else
+                        add_indent=
+                        for ((i = 0 ; i < ${#args[@]} ; i++)); do
+                            add_indent+="${default_indent}"
+                        done
+                        add_indent+="${default_indent}"
+                        append_value+="${indent}${add_indent}$line"$'\n'
+                    fi
+                fi
+            done <<< "$_append_value"
+            append_value="${append_value::(-1)}"
+        fi
+
         if [ ${#args[@]} -gt 0 ];then
             if [ -n "$line_1" ];then
                 if [[ "$line_1" -eq 1 ]];then
@@ -411,9 +439,12 @@ array() {
                 part_2+="${indent}${each}:"
                 indent+="${default_indent}"
             done
-            part_2+=$'\n'
-            part_2+="${indent}- ${append_value}"
-
+            # Mendukung append_value sama dengan empty string
+            # Key chain tetap dibuat.
+            if [ -n "$append_value" ];then
+                part_2+=$'\n'
+                part_2+="${indent}- ${append_value}"
+            fi
         else
             if [ -n "$line_1" ];then
                 if [[ "$line_1" -eq 1 ]];then
@@ -429,7 +460,10 @@ array() {
                     line_3=$((line_1+1))
                 fi
             fi
-            part_3="${indent}- ${append_value}"
+            # Mendukung append_value sama dengan empty string.
+            if [ -n "$append_value" ];then
+                part_3="${indent}- ${append_value}"
+            fi
             part_4=$(sed -n $line_3',$p' <<< "$array")
         fi
 
