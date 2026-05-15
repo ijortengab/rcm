@@ -201,8 +201,8 @@ array() {
                 line_1=$line_number_found
             else
                 line_1=$(( line_1 + line_number_found))
-                line_2=$line_1
             fi
+            line_2=$line_1
 
             array_local_child=
             unset count; declare -i count; count=$line_number_found
