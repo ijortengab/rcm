@@ -577,27 +577,40 @@ array() {
         [ -n "${part_4}" ] && array+="${part_4}"
     }
 
-    if [ ${#args[@]} -gt 2 ];then
-        array-pop args[@]; args=("${_return_array[@]}")
-        last_one="$_return_value"
+    while true; do
+        if [ ${#args[@]} -gt 1 ];then
+            if [ "${args[0]}" == --unset ];then
+                array-shift args[@]; args=("${_return_array[@]}")
+                do-unset "${args[@]}"
+                break
+            fi
+            if [ ${#args[@]} -gt 2 ];then
+                array-pop args[@]; args=("${_return_array[@]}")
+                last_one="$_return_value"
 
-        array-pop args[@]; args=("${_return_array[@]}")
-        last_two="$_return_value"
-        # Ref: https://www.php.net/manual/en/language.operators.comparison.php
-        case "$last_two" in
-            ==)
-                comparison-equal "${args[@]}" "$last_one"
-                ;;
-            =)
-                set-value "${args[@]}" "$last_one"
-                ;;
-            [])
-                append-value "${args[@]}" "$last_one"
-                ;;
-            *)
-                get-value "${args[@]}" "$last_two" "$last_one"
-        esac
-    else
+                array-pop args[@]; args=("${_return_array[@]}")
+                last_two="$_return_value"
+
+                # Ref: https://www.php.net/manual/en/language.operators.comparison.php
+                case "$last_two" in
+                    ==)
+                        comparison-equal "${args[@]}" "$last_one"
+                        ;;
+                    =)
+                        set-value "${args[@]}" "$last_one"
+                        ;;
+                    [])
+                        append-value "${args[@]}" "$last_one"
+                        ;;
+                    *)
+                        get-value "${args[@]}" "$last_two" "$last_one"
+                esac
+                break
+            fi
+            get-value "${args[@]}"
+            break
+        fi
         get-value "${args[@]}"
-    fi
+        break
+    done
 }
