@@ -161,7 +161,20 @@ tempfile=
 exit_code=0
 
 # Functions.
-build-command() {
+build-command-config() {
+
+    array="$RCM_PROMPT_YAML"
+    array --unset _preview
+    array --unset _prepopulate_argument_non_options
+
+    tempfile=$(mktemp -t rcm.config.XXXXXX.yml)
+    echo "$array" > "$tempfile"
+    words_array+=(rcm --config="$tempfile" )
+    words_array+=("${RCM_EXTENSION_CHAIN[@]}")
+    echo-wrap-multiline
+}
+
+build-command-non-interactive() {
     local each
     local rcm_options=
     local rcm_options_array=()
@@ -189,28 +202,24 @@ build-command() {
 }
 
 do-prompt() {
-    while true; do
-        RCM_CONTENTS=`$command_file_sh --help 2>/dev/null`
-        if [ -z "$RCM_CONTENTS" ];then
-            break
-        fi
 
-        source "${RCM_LIB}"/functions/rcm/rcm-prompt.sh
-        backup_storage=$HOME'/.cache/rcm/rcm.'$command_file'.bak'
-        history_storage=$HOME'/.cache/rcm/rcm.'$command_file'.history'
+    RCM_CONTENTS=`$command_file_sh --help 2>/dev/null`
 
-        RCM_ARGUMENT_PASS=()
-        RCM_ARGUMENT_PREVIEW=()
-        RCM_ARGUMENT_PASS_QUOTED=()
-        RCM_ARGUMENT_PLACEHOLDERS=
-        rcm-prompt
-        trap x SIGINT
-        [ -f "$backup_storage" ] && rm "$backup_storage"
-        [ -n "$tempfile" ] && rm "$tempfile"
+    source "${RCM_LIB}"/functions/rcm/rcm-prompt.sh
+    backup_storage=$HOME'/.cache/rcm/rcm.'$command_file'.bak'
+    history_storage=$HOME'/.cache/rcm/rcm.'$command_file'.history'
 
-        echo "$RCM_PROMPT_YAML"
-        break
-    done
+    RCM_ARGUMENT_PASS=()
+    RCM_ARGUMENT_PREVIEW=()
+    RCM_ARGUMENT_PASS_QUOTED=()
+    RCM_ARGUMENT_PLACEHOLDERS=
+    RCM_ARGUMENT_PASS_CONFIG=
+    rcm-prompt
+    trap x SIGINT
+    [ -f "$backup_storage" ] && rm "$backup_storage"
+    [ -n "$tempfile" ] && rm "$tempfile"
+
+    echo "$RCM_PROMPT_YAML"
 }
 
 do-execute() {
@@ -254,6 +263,7 @@ do-interactive() {
         RCM_ARGUMENT_PREVIEW=()
         RCM_ARGUMENT_PASS_QUOTED=()
         RCM_ARGUMENT_PLACEHOLDERS=
+        RCM_ARGUMENT_PASS_CONFIG=
         if [ -z "$is_intro_printed" ];then
 
             title rcm
@@ -274,7 +284,11 @@ do-interactive() {
         # Build command.
         chapter Command has been built.
         _ Use command below to arrive in this position with non-interactive mode.; _.
-        build-command
+        if [ -n "$RCM_ARGUMENT_PASS_CONFIG" ];then
+            build-command-config
+        else
+            build-command-non-interactive
+        fi
         ____
 
         if [ -n "$autoyes" ];then
