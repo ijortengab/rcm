@@ -677,8 +677,110 @@ array() {
         [ -n "${part_4}" ] && array+="${part_4}"
     }
 
+    do-merge-recursive() {
+        local array_local="$array"
+        local args=()
+        local count find found below each
+        local indent
+        local parent
+        local yaml_local
+
+        merge-recursive() {
+            local yaml="$1"
+            local yaml_child
+            # Value yang digunakan tidak boleh parameter dari property dari object ini
+            local keys_chain="$2"
+            local count find found below each
+            local key
+            local value
+            local line_1
+            local line_2
+            local line_number_found
+            local line_string_found
+            local below_ltrim
+
+            until [[ -z "$yaml" ]];do
+                find='^[^- ]'
+                found=$(grep -n -- "$find" <<< "$yaml" | head -1)
+                line_number_found=
+                line_string_found=
+                if [ -n "$found" ];then
+                    line_number_found=$(cut -d: -f1 <<< "$found")
+                    line_string_found=$(cut -d: -f2- <<< "$found")
+                    find='^'"([^:]+):\s+(.*)"
+                    value=$(grep -E -- "${find}" <<< "$line_string_found" | sed -E 's|'"${find}"'|\2|')
+                    if [ -n "$value" ];then
+                        key=$(grep -E -- "${find}" <<< "$line_string_found" | sed -E 's|'"${find}"'|\1|')
+                        # @todo, key yang mengandung spasi tidak membuat hasil
+                        # membuat hasil tidak valid.
+                        get-value "$array" $keys_chain "${key}"
+                        if [[ -z "${_return_value}" && "${#_return_array[@]}" == 0 ]];then
+                            set-value $keys_chain "${key}" "${value}"
+                        else
+                            append-value $keys_chain "${key}" "${value}"
+                        fi
+
+                        unset count; declare -i count; count=$line_number_found
+                        count+=1
+                        yaml=`sed -n ${count}',$p' <<< "$yaml"`
+                    else
+                        key=${line_string_found%:}
+                        # Cari line_1
+                        line_1=$line_number_found
+                        line_2=$line_1
+
+                        # Cari line_2
+                        yaml_child=
+                        unset count; declare -i count; count=$line_number_found
+                        while true; do
+                            count+=1
+                            below=`sed -n ${count}p <<< "$yaml"`
+                            find='^'"${default_indent}"
+                            if grep -q -- "$find" <<< "$below";then
+                                below_ltrim=$(grep -E -- "${find}" <<< "$below" | sed -E 's|'"${find}(.+)"'|\1|')
+                                yaml_child+="$below_ltrim"$'\n'
+                                line_2=$(( line_2 + 1))
+                            else
+                                break
+                            fi
+                        done
+                        unset count; declare -i count; count=$line_2
+                        count+=1
+                        yaml=`sed -n ${count}',$p' <<< "$yaml"`
+                        merge-recursive "${yaml_child}" "${keys_chain} ${key}"
+                    fi
+                else
+                    get-value "$yaml"
+                    for each in "${_return_array[@]}";do
+                        # @todo, key yang mengandung spasi tidak membuat hasil
+                        # membuat hasil tidak valid.
+                        append-value $keys_chain "${each}"
+                    done
+                    # Disinilah kita buat stopper.
+                    yaml=
+                fi
+            done
+        }
+
+        while [ $# -gt 0 ]; do
+            args+=("$1"); shift
+        done
+
+        until [ ${#args[@]} -eq 0 ];do
+            array-shift args[@]; args=("${_return_array[@]}")
+            each="$_return_value"
+            merge-recursive "$each"
+        done
+    }
+
     while true; do
         if [ ${#args[@]} -gt 1 ];then
+            if [ "${args[0]}" == --merge-recursive ];then
+                array-shift args[@]; args=("${_return_array[@]}")
+                marge_array=1
+                do-merge-recursive "${args[@]}"
+                break
+            fi
             if [ "${args[0]}" == --unset ];then
                 array-shift args[@]; args=("${_return_array[@]}")
                 do-unset "${args[@]}"
