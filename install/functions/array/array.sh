@@ -8,6 +8,8 @@ array() {
     # global array
     local args=()
     local default_indent='  '
+    local marge_array
+
     while [ $# -gt 0 ]; do
         args+=("$1"); shift
     done
@@ -454,6 +456,14 @@ array() {
             # Mendukung append_value sama dengan empty string
             # Key chain tetap dibuat.
             if [ -n "$append_value" ];then
+                if [[ -n "$value" && -n "$marge_array" ]];then
+                    # Jika ada value sebelumnya dan non array, maka
+                    # jadikan array.
+                    part_2+=$'\n'
+                    part_2+="${indent}- ${value}"
+                fi
+                # todo error seperti PHP
+                # PHP Fatal error:  Uncaught Error: [] operator not supported for strings in /home/ijortengab/a.php:12
                 part_2+=$'\n'
                 part_2+="${indent}- ${append_value}"
             fi
@@ -474,7 +484,16 @@ array() {
             fi
             # Mendukung append_value sama dengan empty string.
             if [ -n "$append_value" ];then
-                part_3="${indent}- ${append_value}"
+                part_3=
+                if [[ -n "$value" && -n "$marge_array" ]];then
+                    # Jika ada value sebelumnya dan non array, maka
+                    # jadikan array.
+                    part_3+="${indent}- ${value}"
+                    part_3+=$'\n'
+                fi
+                # todo error seperti PHP
+                # PHP Fatal error:  Uncaught Error: [] operator not supported for strings in /home/ijortengab/a.php:12
+                part_3+="${indent}- ${append_value}"
             fi
             part_4=$(sed -n $line_3',$p' <<< "$array")
         fi
