@@ -588,7 +588,7 @@ array() {
             find='^'"${each}:"
             found=$(grep -n -- "$find" <<< "$array_local" | tail -1)
             if [ -z "$found" ];then
-                break
+                return
             fi
 
             line_number_found=$(cut -d: -f1 <<< "$found")
