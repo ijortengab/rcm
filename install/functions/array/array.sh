@@ -68,10 +68,9 @@ array() {
     }
 
     get-value() {
-        # global array
         # global _return_value
         # global _return_array
-        local array_local="$array"
+        local array_local="${!1}"; shift
         local array_local_child
         local args=()
         local count find found below each
@@ -647,14 +646,14 @@ array() {
                         append-value "${args[@]}" "$last_one"
                         ;;
                     *)
-                        get-value "${args[@]}" "$last_two" "$last_one"
+                        get-value array "${args[@]}" "$last_two" "$last_one"
                 esac
                 break
             fi
-            get-value "${args[@]}"
+            get-value array "${args[@]}"
             break
         fi
-        get-value "${args[@]}"
+        get-value array "${args[@]}"
         break
     done
 }
