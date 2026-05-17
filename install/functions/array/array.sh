@@ -81,6 +81,67 @@ array() {
         local line_string_found
         local parse_as_array
 
+        recursive-get-value() {
+            local yaml="$1"; shift
+            local yaml_child
+            local args=()
+            local count find found below each
+            local value
+            local line_number_found
+            local line_string_found
+            local parse_as_array
+
+            while [ $# -gt 0 ]; do
+                args+=("$1"); shift
+            done
+
+            until [ ${#args[@]} -eq 0 ];do
+
+                array-shift args[@]; args=("${_return_array[@]}")
+                each="$_return_value"
+
+                find='^'"${each}:"
+                found=$(grep -n -- "$find" <<< "$yaml")
+
+                if [ -z "$found" ];then
+                    break
+                fi
+
+                while IFS= read -r line; do
+                    line_number_found=$(cut -d: -f1 <<< "$line")
+                    line_string_found=$(cut -d: -f2- <<< "$line")
+                    find='^'"${each}:\s+(.*)"
+                    value=$(grep -E -- "${find}" <<< "$line_string_found" | sed -E 's|'"${find}"'|\1|')
+                    if [ -n "$value" ];then
+                        value_to_parent="$value"
+                    fi
+
+                    yaml_child=
+                    unset count; declare -i count; count=$line_number_found
+                    while true; do
+                        count+=1
+                        below=`sed -n ${count}p <<< "$yaml"`
+                        find='^'"${default_indent}"
+                        if grep -q -- "$find" <<< "$below";then
+                            below_ltrim=$(grep -E -- "${find}" <<< "$below" | sed -E 's|'"${find}(.+)"'|\1|')
+                            yaml_child+="$below_ltrim"$'\n'
+                        else
+                            break
+                        fi
+                    done
+                    if [ -n "$yaml_child" ];then
+                        parse_as_array=1
+                    fi
+                    if [ ${#args[@]} -gt 0 ];then
+                        recursive-get-value "$yaml_child" "${args[@]}"
+                    else
+                        yaml_child_to_parent="$yaml_child"
+                        parse_as_array_to_parent="$parse_as_array"
+                    fi
+                done <<< "$found"
+            done
+        }
+
         if [ $# -eq 0 ];then
             parse_as_array=1
         fi
