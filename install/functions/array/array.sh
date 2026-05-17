@@ -77,9 +77,10 @@ array() {
         local value
         local line_number_found
         local line_string_found
+        local parse_as_array
 
         if [ $# -eq 0 ];then
-            array_local_child="$array_local"
+            parse_as_array=1
         fi
 
         while [ $# -gt 0 ]; do
@@ -94,6 +95,7 @@ array() {
             found=$(grep -n -- "$find" <<< "$array_local" | tail -1)
 
             if [ -z "$found" ];then
+                parse_as_array=
                 break
             fi
 
@@ -115,6 +117,10 @@ array() {
                     break
                 fi
             done
+
+            if [ -n "$array_local_child" ];then
+                parse_as_array=1
+            fi
             array_local="$array_local_child"
         done
 
@@ -122,8 +128,7 @@ array() {
         _return_value=
         _return_array=()
         _return_value="$value"
-        if [ -n "$array_local_child" ];then
-            array_local="$array_local_child"
+        if [ -n "$parse_as_array" ];then
             until [[ -z "$array_local" ]];do
                 found=`sed -n 1p <<< "$array_local"`
                 each=
