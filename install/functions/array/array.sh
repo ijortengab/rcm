@@ -72,7 +72,7 @@ array() {
     get-value() {
         # global _return_value
         # global _return_array
-        local array_local="${!1}"; shift
+        local array_local="$1"; shift
         local array_local_child
         local args=()
         local count find found below each
@@ -80,6 +80,9 @@ array() {
         local line_number_found
         local line_string_found
         local parse_as_array
+        local yaml_child_to_parent
+        local parse_as_array_to_parent
+        local value_to_parent
 
         recursive-get-value() {
             local yaml="$1"; shift
@@ -142,50 +145,19 @@ array() {
             done
         }
 
+        # Gathered from recursive.
         if [ $# -eq 0 ];then
             parse_as_array=1
-        fi
-
-        while [ $# -gt 0 ]; do
-            args+=("$1"); shift
-        done
-
-        until [ ${#args[@]} -eq 0 ];do
-            array-shift args[@]; args=("${_return_array[@]}")
-            each="$_return_value"
-
-            find='^'"${each}:"
-            found=$(grep -n -- "$find" <<< "$array_local" | tail -1)
-
-            if [ -z "$found" ];then
-                parse_as_array=
-                break
-            fi
-
-            line_number_found=$(cut -d: -f1 <<< "$found")
-            line_string_found=$(cut -d: -f2- <<< "$found")
-            find='^'"${each}:\s+(.*)"
-            value=$(grep -E -- "${find}" <<< "$line_string_found" | sed -E 's|'"${find}"'|\1|')
-
-            array_local_child=
-            unset count; declare -i count; count=$line_number_found
-            while true; do
-                count+=1
-                below=`sed -n ${count}p <<< "$array_local"`
-                find='^'"${default_indent}"
-                if grep -q -- "$find" <<< "$below";then
-                    below_ltrim=$(grep -E -- "${find}" <<< "$below" | sed -E 's|'"${find}(.+)"'|\1|')
-                    array_local_child+="$below_ltrim"$'\n'
-                else
-                    break
-                fi
+        else
+            while [ $# -gt 0 ]; do
+                args+=("$1"); shift
             done
-
-            if [ -n "$array_local_child" ];then
-                parse_as_array=1
-            fi
-            array_local="$array_local_child"
-        done
+            recursive-get-value "$array_local" "${args[@]}"
+            yaml_child="$yaml_child_to_parent"
+            parse_as_array="$parse_as_array_to_parent"
+            value="$value_to_parent"
+            array_local="$yaml_child"
+        fi
 
         # Reset first.
         _return_value=
@@ -731,14 +703,14 @@ array() {
                         append-value "${args[@]}" "$last_one"
                         ;;
                     *)
-                        get-value array "${args[@]}" "$last_two" "$last_one"
+                        get-value "$array" "${args[@]}" "$last_two" "$last_one"
                 esac
                 break
             fi
-            get-value array "${args[@]}"
+            get-value "$array" "${args[@]}"
             break
         fi
-        get-value array "${args[@]}"
+        get-value "$array" "${args[@]}"
         break
     done
 }
