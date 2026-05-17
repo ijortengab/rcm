@@ -19,6 +19,8 @@ array() {
         local args=()
         local count find found below each
         local value expected_value
+        local line_number_found
+        local line_string_found
 
         while [ $# -gt 0 ]; do
             args+=("$1"); shift
@@ -74,6 +76,8 @@ array() {
         local args=()
         local count find found below each
         local value
+        local line_number_found
+        local line_string_found
 
         if [ $# -eq 0 ];then
             array_local_child="$array_local"
@@ -169,6 +173,8 @@ array() {
         local part_4
         local indent
         local parent
+        local line_number_found
+        local line_string_found
 
         while [ $# -gt 0 ]; do
             args+=("$1"); shift
@@ -324,6 +330,8 @@ array() {
         local indent
         local add_indent
         local parent
+        local line_number_found
+        local line_string_found
 
         while [ $# -gt 0 ]; do
             args+=("$1"); shift
@@ -510,6 +518,8 @@ array() {
         local part_4
         local indent
         local parent
+        local line_number_found
+        local line_string_found
 
         while [ $# -gt 0 ]; do
             args+=("$1"); shift
