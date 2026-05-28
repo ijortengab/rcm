@@ -104,7 +104,7 @@ sleepExtended() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 ____
 
 chapter Reload nginx configuration.

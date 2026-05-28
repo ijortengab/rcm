@@ -211,7 +211,7 @@ verifyKey() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'POSTFIX_CONFIG_DIR="'$POSTFIX_CONFIG_DIR'"'
 code 'POSTFIX_CONFIG_FILE_MAIN="'$POSTFIX_CONFIG_FILE_MAIN'"'
 if [ -z "$additional_config_file" ];then

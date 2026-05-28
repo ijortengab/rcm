@@ -64,7 +64,7 @@ done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/
 # Functions.
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 ____
 
 # Credit:

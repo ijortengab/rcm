@@ -94,7 +94,7 @@ validateApplication() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 ____
 
 downloadApplication mariadb-server mariadb-client

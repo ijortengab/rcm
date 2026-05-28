@@ -357,10 +357,10 @@ nginxGrep(){
         return 1
     fi
     [ -n "$debug" ] && { _; _.; }
-    [ -n "$debug" ] && { _ Dump variable '`'\$condition'`'.; _.; }
+    [ -n "$debug" ] && { _ Variable dump '`'\$condition'`'.; _.; }
     [ -n "$debug" ] && { e; magenta $condition; _.; }
     [ -n "$debug" ] && { _; _.; }
-    [ -n "$debug" ] && { _ Dump variable '`'\$token_list'`'.; _.; }
+    [ -n "$debug" ] && { _ Variable dump '`'\$token_list'`'.; _.; }
     [ -n "$debug" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
     # _; _.
     # Directive bisa berulang.
@@ -782,7 +782,7 @@ urlCompleteComponent() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi

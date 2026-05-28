@@ -105,7 +105,7 @@ fileMustExists() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'SSH_DIRECTORY="'$SSH_DIRECTORY'"'
 code 'SSHD_CONFIG="'$SSHD_CONFIG'"'
 code 'SSHD_CONFIG_DIRECTORY="'$SSHD_CONFIG_DIRECTORY'"'

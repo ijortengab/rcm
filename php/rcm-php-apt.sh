@@ -181,7 +181,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'php_version="'$php_version'"'
 code 'extension=('"${extension[@]}"')'
 php_extension=

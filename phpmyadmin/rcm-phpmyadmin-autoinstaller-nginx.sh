@@ -357,7 +357,7 @@ link_symbolic_dir() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
 code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'

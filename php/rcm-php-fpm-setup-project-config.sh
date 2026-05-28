@@ -266,7 +266,7 @@ fileMustExists() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'command="'$command'"'
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`

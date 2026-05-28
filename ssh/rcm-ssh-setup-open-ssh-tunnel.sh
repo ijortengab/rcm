@@ -264,7 +264,7 @@ vercomp() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'PREFIX_DIRECTORY="'$PREFIX_DIRECTORY'"'
 prefix_directory=${PREFIX_DIRECTORY%/} # remove suffix.
 code 'prefix_directory="'$prefix_directory'"'

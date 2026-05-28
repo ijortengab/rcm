@@ -112,7 +112,7 @@ EOF
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x

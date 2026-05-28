@@ -96,7 +96,7 @@ fileMustExists() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'BASENAME="'$BASENAME'"'
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;

@@ -122,7 +122,7 @@ backupFile() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$filename" ];then
     error "Argument --filename required."; x
 fi

@@ -254,7 +254,7 @@ command-add() {
     title rcm-plugin::add
     ____
 
-    [ -n "$louder" ] && chapter Dump variable
+    [ -n "$louder" ] && chapter Variable dump
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi
@@ -388,7 +388,7 @@ command-execute() {
 
     local find replace contents command
 
-    [ -n "$louder" ] && chapter Dump variable
+    [ -n "$louder" ] && chapter Variable dump
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi
@@ -506,7 +506,7 @@ command-init() {
     title rcm-plugin::init
     ____
 
-    [ -n "$louder" ] && chapter Dump variable
+    [ -n "$louder" ] && chapter Variable dump
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
     fi

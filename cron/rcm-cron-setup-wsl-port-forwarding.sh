@@ -106,7 +106,7 @@ fileMustExists() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$host_port" ];then
     error "Argument --host-port required."; x
 fi

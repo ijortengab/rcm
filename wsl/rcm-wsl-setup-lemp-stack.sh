@@ -133,7 +133,7 @@ makeSureRunning() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'php_version="'$php_version'"'
 ____
 

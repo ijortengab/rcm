@@ -114,7 +114,7 @@ sleepExtended() {
 }
 
 # Requirement, validate, and populate value.
-[ -n "$debug" ] && chapter Dump variable.
+[ -n "$debug" ] && chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$waiting_time" ];then
     waiting_time=60

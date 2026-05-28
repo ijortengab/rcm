@@ -172,7 +172,7 @@ findString() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 [ -z "$update_system" ] && update_system=1
 [ "$update_system" == 0 ] && update_system=
 [ -z "$upgrade_system" ] && upgrade_system=1

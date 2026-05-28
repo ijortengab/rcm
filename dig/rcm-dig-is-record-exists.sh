@@ -178,7 +178,7 @@ EOF
 }
 
 # Require, validate, and populate value.
-[ -n "$debug" ] && chapter Dump variable.
+[ -n "$debug" ] && chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$domain" ];then
     error "Argument --domain required."; x

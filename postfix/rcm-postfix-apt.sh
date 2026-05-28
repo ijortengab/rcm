@@ -103,7 +103,7 @@ validateApplication() {
 }
 
 # Requirement, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi

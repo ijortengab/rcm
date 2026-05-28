@@ -606,7 +606,7 @@ fi
 ____
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'verbose="'$verbose'"'
 code 'quiet="'$quiet'"'
 code 'loud="'$loud'"'

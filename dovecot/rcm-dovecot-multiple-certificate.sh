@@ -143,7 +143,7 @@ findString() {
 }
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 code 'DOVECOT_CONFIG_DIR="'$DOVECOT_CONFIG_DIR'"'
 code 'DOVECOT_CONFIG_FILE_MAIN="'$DOVECOT_CONFIG_FILE_MAIN'"'
 if [ -z "$additional_config_file" ];then

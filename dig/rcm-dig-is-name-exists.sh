@@ -80,7 +80,7 @@ while IFS= read -r line; do
 done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
-chapter Dump variable.
+chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
