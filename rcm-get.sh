@@ -97,7 +97,7 @@ quiet=; loud=; louder=; debug=;
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Functions. Help and Version.
-printHelp() {
+usage() {
     title Rapid Construct Massive
     _ 'HTTP Get System'; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -133,7 +133,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions before execute command.

@@ -39,7 +39,7 @@ POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
 POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.cf}
 
 # Functions.
-printHelp() {
+usage() {
     title RCM Postfix Multiple Certificate
     _ 'Variation '; yellow Default; _, . ; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -84,7 +84,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
@@ -96,7 +96,7 @@ ____
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 fileMustExists() {

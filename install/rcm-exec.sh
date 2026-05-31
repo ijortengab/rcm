@@ -103,7 +103,7 @@ unset _n
 printVersion() {
     echo $RCM_VERSION
 }
-printHelp() {
+usage() {
     title Rapid Construct Massive
     _ 'Version '; yellow $RCM_VERSION; _.
     _ 'URL '; yellow git.io/rcm; _.
@@ -134,7 +134,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # If not set in argument, try load from environment.
@@ -403,7 +403,7 @@ build-options() {
 }
 
 intro() {
-    printHelp >/dev/null | head -3
+    usage >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
     e; _.
     _ Do you want to list available command?; _.

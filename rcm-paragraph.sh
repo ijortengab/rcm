@@ -76,7 +76,7 @@ RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
-printHelp() {
+usage() {
     title Rapid Construct Massive
     _ 'Paragraph Formatter'; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -133,7 +133,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 case "$command" in
@@ -703,7 +703,7 @@ if [ -n "$command" ];then
     fi
 fi
 
-printHelp >/dev/null | head -3
+usage >/dev/null | head -3
 _ Try; blue ' 'rcm-paragraph; magenta ' '--help; _, ' 'for more information.; _.
 
 # parse-options.sh \

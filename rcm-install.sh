@@ -105,7 +105,7 @@ quiet=; loud=; louder=; debug=;
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Functions. Help and Version.
-printHelp() {
+usage() {
     title Rapid Construct Massive
     _ 'Installation System'; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -202,7 +202,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions before execute command.
@@ -647,7 +647,7 @@ code 'source="'$source'"'
 if [ -n "$source" ];then
     _url=
     if [ "$source" == install ];then
-        _help=`printHelp 2>/dev/null`
+        _help=`usage 2>/dev/null`
         _download=$(echo "$_help" | sed -n '/^Download:/,$p' | sed -n '1,/^\s*$/p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g')
         _url=$(grep -F '['$rcm_extension']' <<< "$_download" | tail -1 | sed -E 's/.*\((.*)\).*/\1/')
         if [ -n "$_url" ];then

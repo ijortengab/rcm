@@ -39,7 +39,7 @@ DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovecot.conf}
 
 # Functions.
-printHelp() {
+usage() {
     title RCM Dovecot Multiple Certificate
     _ 'Variation '; yellow ISPConfig; _, . ; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -71,7 +71,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
@@ -83,7 +83,7 @@ ____
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 fileMustExists() {

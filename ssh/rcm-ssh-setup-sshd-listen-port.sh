@@ -38,7 +38,7 @@ SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
 RCM_CONF=${RCM_CONF:=rcm.conf}
 
 # Functions.
-printHelp() {
+usage() {
     title RCM SSH Setup
     _ 'Variation '; yellow SSHD Listen Port; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -78,7 +78,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Title.
@@ -90,7 +90,7 @@ ____
 # Dependency.
 while IFS= read -r line; do
     [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `printHelp 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
+done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 fileMustExists() {

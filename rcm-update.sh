@@ -102,7 +102,7 @@ quiet=; loud=; louder=; debug=;
 [ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Functions. Help and Version.
-printHelp() {
+usage() {
     title Rapid Construct Massive
     _ 'Updating System'; _.
     _ 'Version '; yellow `printVersion`; _.
@@ -146,7 +146,7 @@ EOF
 }
 
 # Help and Version.
-[ -n "$help" ] && { printHelp; exit 1; }
+[ -n "$help" ] && { usage; exit 1; }
 [ -n "$version" ] && { printVersion; exit 1; }
 
 # Functions before execute command.
