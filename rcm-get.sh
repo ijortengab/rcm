@@ -80,7 +80,6 @@ unset _new_arguments
 unset _n
 
 # Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 # If not set in argument, try load from environment.
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 # If quiet set in argument, override the verbose.

@@ -82,7 +82,6 @@ unset _n
 
 # Define variables and constants.
 BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
 # If not set in argument, try load from environment.
 [ -z "$verbose" ] && verbose="$RCM_VERBOSE"
 # If quiet set in argument, override the verbose.
