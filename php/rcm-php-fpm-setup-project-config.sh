@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --config-line=*) config_line+=("${1#*=}"); shift ;;
         --config-line) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then config_line+=("$2"); shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --file=*) file="${1#*=}"; shift ;;
         --file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then file="$2"; shift; fi; shift ;;
         --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
@@ -624,7 +623,6 @@ exit 0
 # --with-end-options-specific-operand \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

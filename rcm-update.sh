@@ -28,7 +28,6 @@ while [[ $# -gt 0 ]]; do
         --extension) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then extension="$2"; shift; fi; shift ;;
         --extension-version=*) extension_version="${1#*=}"; shift ;;
         --extension-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then extension_version="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --quiet|-q) quiet=1; shift ;;
         --rollback) rollback=1; shift ;;
         --source=*) source="${1#*=}"; shift ;;
@@ -772,7 +771,6 @@ exit 0
 #     '--verbose|-v'
 # )
 # FLAG=(
-# --fast
 # --version
 # --help
 # '--quiet|-q'

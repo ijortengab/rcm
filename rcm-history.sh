@@ -17,7 +17,6 @@ while [[ $# -gt 0 ]]; do
         --delete-all) delete_all=1; shift ;;
         --delete=*) delete+=("${1#*=}"); shift ;;
         --delete) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then delete+=("$2"); shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -126,7 +125,6 @@ fi
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --delete-all

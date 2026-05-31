@@ -26,7 +26,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --expired=*) expired="${1#*=}"; shift ;;
         --expired) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then expired="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --quiet|-q) quiet=1; shift ;;
         --save-as=*) save_as="${1#*=}"; shift ;;
         --save-as) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then save_as="$2"; shift; fi; shift ;;
@@ -498,7 +497,6 @@ exit 0
 #     '--verbose|-v'
 # )
 # FLAG=(
-# --fast
 # --version
 # --help
 # '--quiet|-q'

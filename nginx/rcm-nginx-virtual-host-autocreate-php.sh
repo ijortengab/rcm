@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
@@ -1049,7 +1048,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

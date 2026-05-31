@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --filename=*) filename="${1#*=}"; shift ;;
         --filename) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then filename="$2"; shift; fi; shift ;;
         --front-controller=*) front_controller="${1#*=}"; shift ;;
@@ -280,7 +279,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

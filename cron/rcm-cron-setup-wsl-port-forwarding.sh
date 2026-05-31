@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --guest-port=*) guest_port="${1#*=}"; shift ;;
         --guest-port) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then guest_port="$2"; shift; fi; shift ;;
         --host-port=*) host_port="${1#*=}"; shift ;;
@@ -266,7 +265,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

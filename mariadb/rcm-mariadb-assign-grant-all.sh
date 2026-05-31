@@ -21,7 +21,6 @@ while [[ $# -gt 0 ]]; do
         --db-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_user="$2"; shift; fi; shift ;;
         --db-user-host=*) db_user_host="${1#*=}"; shift ;;
         --db-user-host) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_user_host="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --user-exists-sure) user_exists_sure=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -213,7 +212,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --database-exists-sure

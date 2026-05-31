@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --autorun=*) autorun="${1#*=}"; shift ;;
         --autorun) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then autorun="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --pattern=*) pattern="${1#*=}"; shift ;;
         --pattern) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then pattern="$2"; shift; fi; shift ;;
         --timeout-trigger-command=*) timeout_trigger_command="${1#*=}"; shift ;;
@@ -486,7 +485,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

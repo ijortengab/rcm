@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --db-suffix-name=*) db_suffix_name="${1#*=}"; shift ;;
         --db-suffix-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then db_suffix_name="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --project-name=*) project_name="${1#*=}"; shift ;;
         --project-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then project_name="$2"; shift; fi; shift ;;
         --project-parent-name=*) project_parent_name="${1#*=}"; shift ;;
@@ -186,7 +185,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

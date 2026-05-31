@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --nginx-config-dir=*) nginx_config_dir="${1#*=}"; shift ;;
         --nginx-config-dir) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_dir="$2"; shift; fi; shift ;;
         --nginx-config-file=*) nginx_config_file="${1#*=}"; shift ;;
@@ -1197,7 +1196,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

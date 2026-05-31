@@ -14,7 +14,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         add|list|execute|helper|init)
             while [[ $# -gt 0 ]]; do
@@ -587,7 +586,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )
@@ -618,7 +616,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --help
 # --temporary
 # )
@@ -648,7 +645,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --help
 # )
 # VALUE=(
@@ -674,7 +670,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --help
 # --ignore-fail-on-empty-name
 # )
@@ -704,7 +699,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --help
 # )
 # VALUE=(

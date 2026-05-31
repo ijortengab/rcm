@@ -20,7 +20,6 @@ while [[ $# -gt 0 ]]; do
         --disable) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then disable+=("$2"); shift; fi; shift ;;
         --enable=*) enable+=("${1#*=}"); shift ;;
         --enable) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then enable+=("$2"); shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -243,7 +242,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )

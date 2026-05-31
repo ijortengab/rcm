@@ -18,7 +18,6 @@ while [[ $# -gt 0 ]]; do
         --certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certificate_name="$2"; shift; fi; shift ;;
         --container=*) container="${1#*=}"; shift ;;
         --container) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then container="$2"; shift; fi; shift ;;
-        --fast) fast=1; shift ;;
         --hello) index_php=3; shift ;;
         --index-php=*) index_php="${1#*=}"; shift ;;
         --index-php) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then index_php="$2"; shift; else index_php=1; fi; shift ;;
@@ -1022,7 +1021,6 @@ exit 0
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # --no-auto-add-group

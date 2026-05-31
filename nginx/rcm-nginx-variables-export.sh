@@ -19,7 +19,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fast) fast=1; shift ;;
         --) shift
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -149,7 +148,6 @@ _ Try; blue ' 'rcm-nginx-variables-export; magenta ' '--help; _, ' 'for more inf
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )
@@ -176,7 +174,6 @@ _ Try; blue ' 'rcm-nginx-variables-export; magenta ' '--help; _, ' 'for more inf
 # --no-error-invalid-options \
 # --no-error-require-arguments << EOF | clip
 # FLAG=(
-# --fast
 # --version
 # --help
 # )
