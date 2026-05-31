@@ -44,7 +44,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # If set in environment, set to variable.
 [ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"

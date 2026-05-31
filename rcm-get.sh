@@ -86,7 +86,6 @@ unset _n
 [ -n "$quiet" ] && verbose=0
 # The default of verbose is debug.
 [ -z "$verbose" ] && verbose=3
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
 [[ "$verbose" -gt 0 ]] && loud=1

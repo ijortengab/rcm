@@ -70,7 +70,6 @@ case "$command" in
 esac
 
 # Define variables and constants.
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 
 # Functions.
 usage() {

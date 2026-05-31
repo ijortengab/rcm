@@ -88,7 +88,6 @@ BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 [ -n "$quiet" ] && verbose=0
 # The default of verbose is debug.
 [ -z "$verbose" ] && verbose=3
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 quiet=; loud=; louder=; debug=;
 [[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=

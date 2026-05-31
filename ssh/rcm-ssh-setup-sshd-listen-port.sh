@@ -28,7 +28,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
 SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
 SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
