@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -30,9 +29,6 @@ quiet=; loud=; louder=; debug=;
 
 # Functions. Help and Version.
 usage() {
-    title Rapid Construct Massive
-    _ 'List the available extension to be executed.'; _.
-    _.
 cat << EOF
 Usage: rcm-list <command> [options]
 

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -26,11 +25,8 @@ unset _new_arguments
 
 # Define variables and constants.
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Ubuntu 24.04 Setup Server
-    _ 'Variation '; yellow Basic; _.
-    _.
     cat << 'EOF'
 Usage: rcm-ubuntu-24.04-setup-basic.sh [options]
 
@@ -59,8 +55,6 @@ EOF
 # Title.
 title rcm-ubuntu-24.04-setup-basic.sh
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

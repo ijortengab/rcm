@@ -8,8 +8,6 @@
 #
 # Command to download: `wget git.io/rcm`
 #
-
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -91,9 +89,6 @@ quiet=; loud=; louder=; debug=;
 
 # Functions. Help and Version.
 usage() {
-    title Rapid Construct Massive
-    _ 'HTTP Get System'; _.
-    _.
 cat << EOF
 Usage: rcm-get [options]
        rcm-get <url> [save-as] [options]

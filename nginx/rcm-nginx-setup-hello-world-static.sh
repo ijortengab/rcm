@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -22,11 +21,8 @@ unset _new_arguments
 
 # Define variables and constants.
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Nginx Setup
-    _ 'Variation '; yellow Hello World Static; _.
-    _.
     cat << 'EOF'
 Usage: rcm-nginx-setup-hello-world-static [options]
 
@@ -55,8 +51,6 @@ EOF
 # Title.
 title rcm-nginx-setup-hello-world-static
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

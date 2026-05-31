@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -30,11 +29,8 @@ SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
 SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
 RCM_CONF=${RCM_CONF:=rcm.conf}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM SSH Setup
-    _ 'Variation '; yellow SSHD Listen Port; _.
-    _.
     cat << EOF
 Usage: rcm-ssh-setup-sshd-listen-port [options]
 
@@ -76,8 +72,6 @@ EOF
 # Title.
 title rcm-ssh-setup-sshd-listen-port
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

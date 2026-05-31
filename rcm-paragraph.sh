@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -68,11 +67,8 @@ esac
 
 # Define variables and constants.
 
-# Functions.
+# Usage Functions.
 usage() {
-    title Rapid Construct Massive
-    _ 'Paragraph Formatter'; _.
-    _.
     cat << EOF
 Usage: rcm-paragraph <command> [options]
 

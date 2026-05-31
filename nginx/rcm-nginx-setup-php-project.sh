@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -48,11 +47,8 @@ unset _new_arguments
 PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Nginx Setup
-    _ 'Variation '; yellow PHP-FPM Project; _.
-    _.
     # Populate variable $single_line and $multi_line.
     unset count
     declare -i count
@@ -487,8 +483,6 @@ fi
 # Title.
 title rcm-nginx-setup-php-project
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

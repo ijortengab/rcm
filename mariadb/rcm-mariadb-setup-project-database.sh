@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -28,11 +27,8 @@ unset _new_arguments
 
 # Define variables and constants.
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM MariaDB Setup Project Database
-    _ 'Variation '; yellow Default; _.
-    _.
     cat << 'EOF'
 Usage: rcm-mariadb-setup-project-database [options]
 
@@ -76,8 +72,6 @@ EOF
 # Title.
 title rcm-mariadb-setup-project-database
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -80,11 +79,8 @@ fi
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM PHP-FPM Setup Project Config
-    _ 'Variation '; yellow Default; _.
-    _.
     nginx_user=
     conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
     if [ -f "$conf_nginx" ];then
@@ -204,8 +200,6 @@ fi
 # Title.
 title rcm-php-fpm-setup-project-config
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

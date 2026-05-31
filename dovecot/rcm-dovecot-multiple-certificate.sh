@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -31,11 +30,8 @@ unset _new_arguments
 DOVECOT_CONFIG_DIR=${DOVECOT_CONFIG_DIR:=/etc/dovecot}
 DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovecot.conf}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Dovecot Multiple Certificate
-    _ 'Variation '; yellow ISPConfig; _, . ; _.
-    _.
     cat << EOF
 Usage: rcm-dovecot-multiple-certificate [options]
 
@@ -69,8 +65,6 @@ EOF
 # Title.
 title rcm-dovecot-multiple-certificate
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -22,9 +21,6 @@ unset _new_arguments
 
 # Functions. Help and Version.
 usage() {
-    title RCM System RAM Swap
-    _ 'Variation '; yellow 4G; _.
-    _.
 cat << EOF
 Usage: rcm-system-ram-swap-4gb [options]
 
@@ -45,8 +41,6 @@ EOF
 # Title.
 title rcm-system-ram-swap-4gb
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

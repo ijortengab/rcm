@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -27,11 +26,8 @@ ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM RoundCube Auto-Installer
-    _ 'Variation '; yellow Nginx; _.
-    _.
     cat << EOF
 Usage: rcm-roundcube-autoinstaller-nginx [options]
 
@@ -72,8 +68,6 @@ EOF
 # Title.
 title rcm-roundcube-autoinstaller-nginx
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

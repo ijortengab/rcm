@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -22,11 +21,8 @@ unset _new_arguments
 
 # Define variables and constants.
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM PHP Setup
-    _ 'Variation '; yellow Adjust CLI Version; _.
-    _.
     cat << 'EOF'
 Usage: rcm-php-setup-adjust-cli-version [options]
 
@@ -51,8 +47,6 @@ EOF
 # Title.
 title rcm-php-setup-adjust-cli-version
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

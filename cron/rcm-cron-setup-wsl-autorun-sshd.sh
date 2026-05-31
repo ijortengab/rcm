@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -21,11 +20,8 @@ unset _new_arguments
 # Define variables and constants.
 BASENAME=${BASENAME:=host-trigger-wsl-autorun-sshd}
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Cron Setup
-    _ 'Variation '; yellow WSL Autorun SSHD; _.
-    _.
     cat << EOF
 Usage: rcm-cron-setup-wsl-autorun-sshd
 
@@ -53,8 +49,6 @@ EOF
 # Title.
 title rcm-cron-setup-wsl-autorun-sshd
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do

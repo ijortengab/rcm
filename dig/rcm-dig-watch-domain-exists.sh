@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Common Functions.
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
@@ -34,11 +33,8 @@ quiet=; loud=; louder=; debug=;
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
-# Functions.
+# Usage Functions.
 usage() {
-    title RCM Dig Watch
-    _ 'Variation '; yellow Domain Exists; _.
-    _.
     cat << 'EOF'
 Usage: rcm-dig-watch-domain-exists [command] [options]
 
@@ -68,8 +64,6 @@ EOF
 # Title.
 title rcm-dig-watch-domain-exists
 ____
-
-[ "$EUID" -ne 0 ] && { error This script needs to be run with superuser privileges.; x; }
 
 # Dependency.
 while IFS= read -r line; do
