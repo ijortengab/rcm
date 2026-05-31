@@ -1,10 +1,7 @@
 #!/bin/bash
 
 # Common Functions.
-printVersion() {
-    echo '0.18.0-alpha.6'
-}
-RCM_VERSION=`printVersion`
+RCM_EXTENSION_VERSION=0.18.0-alpha.6
 
 source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
 
@@ -104,7 +101,7 @@ EOF
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }
-[ -n "$version" ] && { printVersion; exit 1; }
+[ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
 # Title.
 title rcm-mariadb-assign-grant-all
