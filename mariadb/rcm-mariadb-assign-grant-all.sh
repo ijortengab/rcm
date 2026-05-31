@@ -35,7 +35,6 @@ unset _new_arguments
 usage() {
     title RCM MariaDB Assign
     _ 'Variation '; yellow Grant All; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     # Label for --db-name.
     unset count

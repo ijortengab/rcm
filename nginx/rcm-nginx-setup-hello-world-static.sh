@@ -29,7 +29,6 @@ unset _new_arguments
 usage() {
     title RCM Nginx Setup
     _ 'Variation '; yellow Hello World Static; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-nginx-setup-hello-world-static [options]

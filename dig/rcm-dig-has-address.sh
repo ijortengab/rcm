@@ -38,7 +38,6 @@ fi
 usage() {
     title RCM Dig Has Address
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-dig-has-address [options]

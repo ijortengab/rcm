@@ -35,7 +35,6 @@ unset _new_arguments
 usage() {
     title RCM MariaDB Setup Project Database
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-mariadb-setup-project-database [options]

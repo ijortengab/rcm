@@ -33,7 +33,6 @@ unset _new_arguments
 usage() {
     title RCM Debian 11 Setup Server
     _ 'Variation '; yellow Basic; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-debian-11-setup-basic [options]

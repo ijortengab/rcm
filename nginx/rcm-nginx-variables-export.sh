@@ -79,7 +79,6 @@ esac
 usage() {
     title ISPConfig Setup
     _ 'Mode '; yellow init; _, .; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-nginx-variables-export [command] [options]

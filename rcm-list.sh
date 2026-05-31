@@ -35,7 +35,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title Rapid Construct Massive
     _ 'List the available extension to be executed.'; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
 Usage: rcm-list <command> [options]

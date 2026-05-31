@@ -101,7 +101,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title Rapid Construct Massive
     _ 'Updating System'; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
 Usage: rcm-update [options]

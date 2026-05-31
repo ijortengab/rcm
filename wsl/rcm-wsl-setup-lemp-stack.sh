@@ -29,7 +29,6 @@ unset _new_arguments
 usage() {
     title RCM WSL Setup
     _ 'Variation '; yellow LEMP Stack; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     unset count
     declare -i count

@@ -50,7 +50,6 @@ fi
 usage() {
     title RCM Nginx Virtual Host Autocreate
     _ 'Variation '; yellow PHP General; _.
-    _ 'Version '; yellow `printVersion`; _.
     cat << 'EOF'
 Usage: rcm-nginx-virtual-host-autocreate-php [options]
 

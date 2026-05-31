@@ -37,7 +37,6 @@ RCM_CONF=${RCM_CONF:=rcm.conf}
 usage() {
     title RCM SSH Setup
     _ 'Variation '; yellow SSHD Listen Port; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ssh-setup-sshd-listen-port [options]

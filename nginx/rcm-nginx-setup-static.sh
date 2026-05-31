@@ -33,7 +33,6 @@ unset _new_arguments
 usage() {
     title RCM Nginx Setup
     _ 'Variation '; yellow Static; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-nginx-setup-static [options]

@@ -27,7 +27,6 @@ unset _new_arguments
 usage() {
     title RCM Nginx Reload
     _ 'Variation '; yellow PHP Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     cat << 'EOF'
 Usage: rcm-nginx-reload [options]
 

@@ -29,7 +29,6 @@ unset _new_arguments
 usage() {
     title RCM Postfix Auto-Installer
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-postfix-apt [options]

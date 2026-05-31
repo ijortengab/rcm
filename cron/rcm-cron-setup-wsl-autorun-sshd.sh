@@ -28,7 +28,6 @@ BASENAME=${BASENAME:=host-trigger-wsl-autorun-sshd}
 usage() {
     title RCM Cron Setup
     _ 'Variation '; yellow WSL Autorun SSHD; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-cron-setup-wsl-autorun-sshd

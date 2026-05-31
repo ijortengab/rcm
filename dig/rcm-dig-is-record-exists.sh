@@ -62,7 +62,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title RCM Dig Is Record Exists
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-dig-is-record-exists [command] [options]

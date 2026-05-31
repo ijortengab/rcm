@@ -34,7 +34,6 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 usage() {
     title RCM RoundCube Auto-Installer
     _ 'Variation '; yellow Nginx; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-roundcube-autoinstaller-nginx [options]

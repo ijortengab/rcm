@@ -55,7 +55,6 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 usage() {
     title RCM Nginx Setup
     _ 'Variation '; yellow PHP-FPM Project; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     # Populate variable $single_line and $multi_line.
     unset count

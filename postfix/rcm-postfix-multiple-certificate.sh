@@ -38,7 +38,6 @@ POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.
 usage() {
     title RCM Postfix Multiple Certificate
     _ 'Variation '; yellow Default; _, . ; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-postfix-multiple-certificate [options]

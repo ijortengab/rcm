@@ -29,7 +29,6 @@ unset _new_arguments
 usage() {
     title RCM MariaDB Database Autocreate
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-mariadb-database-autocreate [options]

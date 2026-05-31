@@ -27,7 +27,6 @@ unset _new_arguments
 usage() {
     title RCM MariaDB Auto-Installer
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-mariadb-apt [options]

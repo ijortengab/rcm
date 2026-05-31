@@ -96,7 +96,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title Rapid Construct Massive
     _ 'HTTP Get System'; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
 Usage: rcm-get [options]

@@ -32,7 +32,6 @@ BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
 usage() {
     title RCM Cron Setup
     _ 'Variation '; yellow WSL Port Forwarding; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-cron-setup-wsl-port-forwarding [options]

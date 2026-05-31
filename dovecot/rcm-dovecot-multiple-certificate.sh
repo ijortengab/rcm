@@ -38,7 +38,6 @@ DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovec
 usage() {
     title RCM Dovecot Multiple Certificate
     _ 'Variation '; yellow ISPConfig; _, . ; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-dovecot-multiple-certificate [options]

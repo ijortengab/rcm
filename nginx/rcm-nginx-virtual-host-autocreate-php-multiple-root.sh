@@ -56,7 +56,6 @@ fi
 usage() {
     title RCM Nginx Virtual Host Autocreate
     _ 'Variation '; yellow PHP Multiple Root; _.
-    _ 'Version '; yellow `printVersion`; _.
     cat << 'EOF'
 Usage: rcm-nginx-virtual-host-autocreate-php-multiple-root [options]
 

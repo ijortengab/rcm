@@ -29,7 +29,6 @@ unset _new_arguments
 usage() {
     title RCM PHP Setup
     _ 'Variation '; yellow Adjust CLI Version; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-php-setup-adjust-cli-version [options]

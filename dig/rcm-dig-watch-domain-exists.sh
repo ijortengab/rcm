@@ -41,7 +41,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title RCM Dig Watch
     _ 'Variation '; yellow Domain Exists; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-dig-watch-domain-exists [command] [options]

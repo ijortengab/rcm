@@ -34,7 +34,6 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 usage() {
     title RCM SSH Setup
     _ 'Variation '; yellow Open SSH Tunnel; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-ssh-setup-open-ssh-tunnel [options]

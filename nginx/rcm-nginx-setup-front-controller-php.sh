@@ -37,7 +37,6 @@ unset _new_arguments
 usage() {
     title RCM Nginx Setup
     _ 'Variation '; yellow PHP FPM; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-nginx-setup-front-controller-php [options]

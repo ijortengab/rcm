@@ -87,7 +87,6 @@ fi
 usage() {
     title RCM PHP-FPM Setup Project Config
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     nginx_user=
     conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`

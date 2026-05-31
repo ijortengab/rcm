@@ -32,7 +32,6 @@ unset _new_arguments
 usage() {
     title RCM Dig Is Name Exists
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-dig-is-name-exists [options]

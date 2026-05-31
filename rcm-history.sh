@@ -37,7 +37,6 @@ quiet=; loud=; louder=; debug=;
 usage() {
     title Rapid Construct Massive
     _ 'History of Options'; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
 Usage: rcm-history <command> [options]

@@ -27,7 +27,6 @@ unset _new_arguments
 usage() {
     title RCM System RAM Swap
     _ 'Variation '; yellow 4G; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
 cat << EOF
 Usage: rcm-system-ram-swap-4gb [options]

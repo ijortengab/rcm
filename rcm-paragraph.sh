@@ -75,7 +75,6 @@ esac
 usage() {
     title Rapid Construct Massive
     _ 'Paragraph Formatter'; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << EOF
 Usage: rcm-paragraph <command> [options]

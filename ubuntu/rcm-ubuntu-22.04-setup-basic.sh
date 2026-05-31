@@ -33,7 +33,6 @@ unset _new_arguments
 usage() {
     title RCM Ubuntu 22.04 Setup Server
     _ 'Variation '; yellow Basic; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-ubuntu-22.04-setup-basic [options]

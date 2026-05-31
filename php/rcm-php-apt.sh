@@ -31,7 +31,6 @@ unset _new_arguments
 usage() {
     title RCM PHP Auto-Installer
     _ 'Variation '; yellow Default; _.
-    _ 'Version '; yellow `printVersion`; _.
     _.
     cat << 'EOF'
 Usage: rcm-php-apt [options]
