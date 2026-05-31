@@ -1,8 +1,6 @@
 #!/bin/bash
 
 RCM_EXTENSION_VERSION=0.18.0-alpha.6
-
-source=$RCM_LIB/functions/common/echo.sh; [ -f "$source" ] && source "$source" || exit 1
 _,() { echo -n "$@" >&2; }
 _.() { echo >&2; }
 __() { echo -n "$INDENT" >&2; echo -n "# ${RCM_INDENT}" >&2; [ -n "$1" ] && echo "$@" >&2; }
@@ -99,6 +97,8 @@ RCM Config:
    --no-confirmation
 EOF
 }
+
+[ -f "${RCM_LIB}/require.sh" ] && source "${RCM_LIB}/require.sh" || { usage; exit 1; }
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 1; }
