@@ -28,7 +28,6 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
-RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
 SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
