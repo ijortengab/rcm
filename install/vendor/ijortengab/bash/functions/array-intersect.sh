@@ -40,3 +40,25 @@ ArrayIntersect() {
         _return=("${source[@]}")
     fi
 }
+array-intersect() {
+    local e
+    local source=("${!1}")
+    local reference=("${!2}")
+    _return=()
+    # inArray is alternative of ArraySearch.
+    inArray () {
+        local e match="$1"
+        shift
+        for e; do [[ "$e" == "$match" ]] && return 0; done
+        return 1
+    }
+    if [[ "${#reference[@]}" -gt 0 ]];then
+        for e in "${source[@]}";do
+            if inArray "$e" "${reference[@]}";then
+                _return+=("$e")
+            fi
+        done
+    else
+        _return=("${source[@]}")
+    fi
+}
