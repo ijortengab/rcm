@@ -14,8 +14,6 @@ Options:
         Delete history spesific for the script. Multiple.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -61,6 +59,8 @@ quiet=; loud=; louder=; debug=;
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
+
+# ------------------------------------------------------------------------------
 
 # Title.
 title rcm-history

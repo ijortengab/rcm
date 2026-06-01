@@ -127,6 +127,8 @@ quiet=; loud=; louder=; debug=;
 
 # Define variables and constants.
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-get
 ____

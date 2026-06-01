@@ -32,8 +32,6 @@ Options:
         Skip autocreate Unix user while config is created. Default to --with-autocreate-user.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -197,14 +195,13 @@ if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
     exit 0
 fi
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-php-fpm-setup-project-config
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 backupFile() {

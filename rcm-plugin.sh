@@ -63,8 +63,6 @@ Options for command execute:
         Set the interface.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help

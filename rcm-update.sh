@@ -283,6 +283,8 @@ find='[__DIR__]'
 replace="$__DIR__"
 BINARY_DIRECTORY="${BINARY_DIRECTORY/"$find"/"$replace"}"
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-update
 ____

@@ -10,8 +10,6 @@ Usage: rcm-nginx-variables-export [command] [options]
 Available commands: tls-certificate.
 
 Global Options.
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help

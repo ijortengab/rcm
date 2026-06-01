@@ -15,8 +15,6 @@ Options:
         Value available from command: rcm-dig-has-address(get-ipv4), or other.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -74,14 +72,13 @@ if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
     exit 0
 fi
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-dig-has-address
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Require, validate, and populate value.
 chapter Variable dump.

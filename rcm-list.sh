@@ -12,8 +12,6 @@ Options:
         List the script without interactive.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -108,6 +106,8 @@ ubuntu-24.04-setup-basic
 wsl-setup-lemp-stack
 RCM_LIST_INTERNAL
 }
+
+# ------------------------------------------------------------------------------
 
 # Title.
 title rcm-list

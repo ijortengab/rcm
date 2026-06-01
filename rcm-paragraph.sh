@@ -42,8 +42,6 @@ Options for command printed-per-n-lines:
         Set the input file if standard input is empty.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help

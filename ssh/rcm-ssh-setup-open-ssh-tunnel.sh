@@ -16,8 +16,6 @@ Options:
         Available value: cron, systemd.
 
 Global Options:
-   --fast
-        No delay every subtask.
    --version
         Print version of this script.
    --help
@@ -63,14 +61,13 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# ------------------------------------------------------------------------------
+
 # Title.
 title rcm-ssh-setup-open-ssh-tunnel
 ____
 
 # Dependency.
-while IFS= read -r line; do
-    [[ -z "$line" ]] || command -v `cut -d: -f1 <<< "${line}"` >/dev/null || { error Unable to proceed, command not found: '`'`cut -d: -f1 <<< "${line}"`'`'.; x; }
-done <<< `usage 2>/dev/null | sed -n '/^Dependency:/,$p' | sed -n '2,/^\s*$/p' | sed 's/^ *//g'`
 
 # Functions.
 link_symbolic() {
