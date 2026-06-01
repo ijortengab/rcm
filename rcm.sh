@@ -14,9 +14,12 @@ RCM_VERSION='0.19.0-alpha.1'
 RCM_LIB="${RCM_PREFIX}/lib/${RCM_VERSION}"
 
 if ! command -v rcm > /dev/null;then
-    echo -n "\e[95m"rcm; echo -n "\e[39m" command is; echo -n "\e[91m" not found; echo "\e[39m".
+    # Compatible with: bash and dash.
+    # Credit: https://stackoverflow.com/a/37351799
+    printf '%b' "\033[95;1m"rcm"\033[0m"' command is '"\033[91;1m"'not found'"\033[0m"."\n"
+
     if ! command -v wget > /dev/null;then
-        echo -n "\e[95m"wget; echo "\e[39m" command is not found.
+        printf '%b' "\033[95;1m"wget"\033[0m"' command is '"\033[91;1m"'not found'"\033[0m"."\n"
         echo Please install wget first.; exit 1
     fi
     echo -n Downloading...
@@ -56,34 +59,8 @@ if ! command -v rcm > /dev/null;then
     else
         echo Installed.
     fi
-    echo -n "\e[95m"rcm; echo -n "\e[39m" command is; echo -n "\e[92m" found; echo "\e[39m".
+    printf '%b' "\033[95;1m"rcm"\033[0m"' command is '"\033[92;1m"'found'"\033[0m"."\n"
 fi
 
-includes=(
-    "$RCM_LIB"/rcm-exec.sh
-    "$RCM_LIB"/functions/common/echo.sh
-    "$RCM_LIB"/functions/common/echo-wrap.sh
-    "$RCM_LIB"/functions/common/echo-wrap-color.sh
-    "$RCM_LIB"/functions/common/echo-wrap-list.sh
-    "$RCM_LIB"/functions/common/echo-wrap-multiline.sh
-    "$RCM_LIB"/functions/common/read-true.sh
-    "$RCM_LIB"/functions/common/read-false.sh
-    "$RCM_LIB"/functions/common/print-select-dialog.sh
-    "$RCM_LIB"/functions/common/print-select-other-dialog.sh
-    "$RCM_LIB"/functions/common/spinning-dot.sh
-    "$RCM_LIB"/functions/array/array.sh
-    "$RCM_LIB"/functions/array/array-search.sh
-    "$RCM_LIB"/functions/array/array-shift.sh
-    "$RCM_LIB"/functions/array/array-remove.sh
-    "$RCM_LIB"/functions/array/array-remove-all.sh
-    "$RCM_LIB"/functions/array/array-pop.sh
-    "$RCM_LIB"/functions/rcm/rcm-prompt.sh
-    "$RCM_LIB"/functions/rcm/rcm-prompt-options.sh
-    "$RCM_LIB"/functions/rcm/rcm-prompt-options-option.sh
-    "$RCM_LIB"/functions/rcm/rcm-yaml.sh
-)
-for each in "${includes[@]}"; do
-    [ -f "$each" ] || { echo Requires file: $each >&2; exit 1; }
-done
-
+[ -f "${RCM_LIB}/rcm-exec.sh" ] || { echo File is not found: rcm-exec.sh. >&2; exit 1; }
 source "${RCM_LIB}"/rcm-exec.sh
