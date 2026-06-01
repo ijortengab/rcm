@@ -63,8 +63,10 @@ if ! command -v rcm > /dev/null;then
     fi
     printf '%b' "\033[95;1m"rcm"\033[0m"' command is '"\033[92;1m"'found'"\033[0m"."\n" >&2
     echo -n Initialize... >&2
+    mv $RCM_LIB/vendor -T $RCM_LIB/vendor
     mkdir -p $RCM_LIB/vendor/$owner/$repository
     mv $RCM_LIB/functions -T $RCM_LIB/vendor/$owner/$repository/functions
+    printf "\r\033[K" >&2
     echo Initialized. >&2
 else
     [ -f "${RCM_LIB}/rcm-exec.sh" ] || { echo File is not found: rcm-exec.sh. >&2; exit 1; }
