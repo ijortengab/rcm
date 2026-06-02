@@ -1,5 +1,9 @@
 #!/bin/bash
 
+require vendor/ijortengab/rcm/functions/base/echo-wrap-list.sh
+require vendor/ijortengab/rcm/functions/base/echo-wrap-color.sh
+require vendor/ijortengab/bash/functions/array-search.sh
+
 print-select-dialog() {
     declare -i count
     declare -i new_line
