@@ -7,25 +7,6 @@ usage() {
     cat << EOF
 Usage: rcm-plugin <command> [options]
 
-Available commands: execute.
-
-Options for command execute:
-   --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
-   --table
-        File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
-   --table-temporary
-        File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
-   --name *
-        Set the plugin name.
-        Value available from command: rcm-plugin(helper list [--interface] [--table] [--table-temporary]), or others.
-   --interface *
-        Set the interface.
-
 Global Options:
    --version
         Print version of this script.
@@ -51,7 +32,7 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --[^-]*) shift ;;
-        execute|helper)
+        helper)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -68,42 +49,12 @@ unset _new_arguments
 if [ -n "$1" ];then
     command=
     case "$1" in
-        execute) command="$1"; shift ;;
         helper) command="$1"; shift ;;
     esac
     if [ -z "$command" ];then
         error Command unknown: '`'"$1"'`'.; x
     fi
 fi
-
-case "$command" in
-    execute)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --help) help=1; shift ;;
-                --fast) fast=1; shift ;;
-                --ignore-fail-on-empty-name) ignore_fail_on_empty_name=1; shift ;;
-                --interface=*) interface="${1#*=}"; shift ;;
-                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
-                --method=*) method="${1#*=}"; shift ;;
-                --method) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then method="$2"; shift; fi; shift ;;
-                --name=*) name="${1#*=}"; shift ;;
-                --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
-                --output-file=*) output_file="${1#*=}"; shift ;;
-                --output-file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then output_file="$2"; shift; fi; shift ;;
-                --table=*) table="${1#*=}"; shift ;;
-                --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
-                --table-temporary=*) table_temporary="${1#*=}"; shift ;;
-                --table-temporary) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table_temporary="$2"; shift; fi; shift ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
-        ;;
-esac
 
 # Define variables and constants.
 
@@ -135,135 +86,6 @@ quiet=; loud=; louder=; debug=;
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-command-execute() {
-    is_command_resolved() {
-        if [ -z "$resolve_dependencies" ];then
-            return 0
-        fi
-        if grep -q -F "$rcm_extension" <<< "$table_command_resolved";then
-            return 0
-        fi
-        return 1
-    }
-
-    title rcm-plugin::execute
-    ____
-
-    local find replace contents command
-
-    [ -n "$louder" ] && chapter Variable dump
-    if [ -z "$interface" ];then
-        error "Argument --interface required."; x
-    fi
-    [ -n "$louder" ] && code 'interface="'$interface'"'
-    if [[ "$interface" =~ [^a-z_] ]];then
-        error "Argument --interface is not valid."; x
-    fi
-    [ "$name" == - ] && name=
-    if [ -z "$name" ];then
-        if [ -n "$ignore_fail_on_empty_name" ];then
-            return 0
-        fi
-        error "Argument --name required."; x
-    fi
-    [ -n "$louder" ] && code 'name="'$name'"'
-    if [[ "$name" =~ [^a-z_] ]];then
-        error "Argument --name is not valid."; x
-    fi
-    if [ -z "$method" ];then
-        error "Argument --method required."; x
-    fi
-    [ -n "$louder" ] && code 'method="'$method'"'
-    if [[ "$method" =~ [^a-z_] ]];then
-        error "Argument --method is not valid."; x
-    fi
-    [ -n "$louder" ] && code 'output_file="'$output_file'"'
-    # If not set in argument, try load from environment.
-    local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
-    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
-    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table_temporary="${!parameter_table_temporary}"
-    [ -z "$table" ] && table="$parameter_table"
-    [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    # Use default value.
-    if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
-    fi
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    # Translate variable.
-    find='$HOME'; replace="$HOME"
-    [ -n "$table" ] && table="${table/"$find"/"$replace"}"
-    [ -n "$table_temporary" ] && table_temporary="${table_temporary/"$find"/"$replace"}"
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    if [ -f "$table_temporary" ] ;then
-        contents+=$'\n'
-        contents+=$(<"$table_temporary")
-    fi
-    if [ -f "$table" ] ;then
-        contents+=$'\n'
-        contents+=$(<"$table")
-    fi
-    if [ -n "$contents" ];then
-        command=$(echo "$contents" | grep ^"$name" | cut -d' ' -f2 | tail -1)
-        command_version=$(echo "$contents" | grep ^"$name" | cut -d' ' -f3 | tail -1)
-    fi
-    if [ -z "$command" ];then
-        error "The Command of \`plugin::${interface}-${name}\` is not defined in table."; x
-    fi
-    if ! command -v "$command" > /dev/null;then
-        error Command not found: '`'"$command"'`'.; x
-    fi
-
-    [ -n "$louder" ] && ____
-
-    rcm_extension="$command"
-
-    if ! is_command_resolved;then
-
-        chapter Resolve dependency for command '`'$command'`'.
-        ____
-
-        # Boolean export as 0 or 1. Must not leave empty string.
-        [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
-        # Other variable, export as is.
-        RCM_TABLE_DOWNLOADS="$table_downloads"
-        RCM_TABLE_DEPENDENCIES="$table_dependencies"
-        RCM_VERSION="$rcm_version"
-        RCM_VERBOSE="$verbose"
-
-        INDENT+="$RCM_INDENT" \
-        BINARY_DIRECTORY="$BINARY_DIRECTORY" \
-        RCM_FAST="$RCM_FAST" \
-        RCM_VERBOSE="$RCM_VERBOSE" \
-        RCM_TABLE_DOWNLOADS="$RCM_TABLE_DOWNLOADS" \
-        RCM_TABLE_DEPENDENCIES="$RCM_TABLE_DEPENDENCIES" \
-        RCM_VERSION="$RCM_VERSION" \
-        rcm-resolve "${command}:${command_version}" \
-            ; [ ! $? -eq 0 ] && x
-    fi
-
-    chapter Execute "${command}::plugin-${interface}-${name}-${method}()"
-    code "${command} plugin ${interface} ${name} ${method}"
-    ____
-
-    [ -n "$fast" ] && RCM_FAST=1 || RCM_FAST=0
-    export RCM_FAST="$RCM_FAST"
-    if [ -z "$output_file" ];then
-        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${command} plugin ${interface} ${name} ${method} \
-            ; [ ! $? -eq 0 ] && x
-    else
-        RCM_ENVIRONMENT_VARIABLES= RCM_PROMPT_CHAIN= INDENT+="    " ${command} plugin ${interface} ${name} ${method} \
-            > "$output_file" \
-            ; [ ! $? -eq 0 ] && { rm "$output_file"; x; }
-    fi
-}
 command-helper() {
     local which=$1; shift
     if [ "$which" == do-nothing ];then
@@ -333,37 +155,7 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # CSV=(
 # )
 # OPERAND=(
-# execute
 # helper
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --help
-# --ignore-fail-on-empty-name
-# )
-# VALUE=(
-# --interface
-# --name
-# --table
-# --table-temporary
-# --method
-# --output-file
-# )
-# MULTIVALUE=(
-# )
-# FLAG_VALUE=(
-# )
-# CSV=(
 # )
 # EOF
 # clear
