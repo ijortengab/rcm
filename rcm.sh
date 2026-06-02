@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RCM_EXTENSION_VERSION=0.10.0-alpha.6
+
 # Rapid Construct Massive
 #
 # (c) IjorTengab <ijortengab@systemix.id> <ijortengab@gmail.com>
@@ -63,9 +65,7 @@ if ! command -v rcm > /dev/null;then
     fi
     printf '%b' "\033[95;1m"rcm"\033[0m"' command is '"\033[92;1m"'found'"\033[0m"."\n" >&2
     echo -n Initialize... >&2
-    mv $RCM_LIB/vendor -T $RCM_LIB/vendor
-    mkdir -p $RCM_LIB/vendor/$owner/$repository
-    mv $RCM_LIB/functions -T $RCM_LIB/vendor/$owner/$repository/functions
+    rcm init
     printf "\r\033[K" >&2
     echo Initialized. >&2
 else
