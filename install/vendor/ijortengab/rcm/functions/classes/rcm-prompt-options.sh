@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source "$RCM_LIB"/functions/rcm/rcm-yaml.sh
-source "$RCM_LIB"/functions/rcm/rcm-prompt-options-option.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-yaml.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-prompt-options-option.sh
 
 rcm-prompt-options() {
     # Required Global variable.
