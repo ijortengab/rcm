@@ -7,27 +7,7 @@ usage() {
     cat << EOF
 Usage: rcm-plugin <command> [options]
 
-Available commands: add, list, execute.
-
-Options for command add:
-   --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
-   --name *
-        Set the plugin name.
-   --command *
-        Command of plugin to execute.
-   --version *
-        Command version.
-   --table
-        File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
-   --temporary ^
-        Set as temporary additional.
-   --table-temporary
-        File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion [--temporary] [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
+Available commands: list, execute.
 
 Options for command list:
    --interface *
@@ -83,7 +63,7 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --[^-]*) shift ;;
-        add|list|execute|helper)
+        list|execute|helper)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -100,7 +80,6 @@ unset _new_arguments
 if [ -n "$1" ];then
     command=
     case "$1" in
-        add) command="$1"; shift ;;
         list) command="$1"; shift ;;
         execute) command="$1"; shift ;;
         helper) command="$1"; shift ;;
@@ -111,32 +90,6 @@ if [ -n "$1" ];then
 fi
 
 case "$command" in
-    add)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --help) help=1; shift ;;
-                --command=*) add_command="${1#*=}"; shift ;;
-                --command) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then add_command="$2"; shift; fi; shift ;;
-                --fast) fast=1; shift ;;
-                --interface=*) interface="${1#*=}"; shift ;;
-                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
-                --name=*) name="${1#*=}"; shift ;;
-                --name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name="$2"; shift; fi; shift ;;
-                --table=*) table="${1#*=}"; shift ;;
-                --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
-                --table-temporary=*) table_temporary="${1#*=}"; shift ;;
-                --table-temporary) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table_temporary="$2"; shift; fi; shift ;;
-                --temporary) temporary=1; shift ;;
-                --version=*) add_version="${1#*=}"; shift ;;
-                --version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then add_version="$2"; shift; fi; shift ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
-        ;;
     list)
         _new_arguments=()
         while [[ $# -gt 0 ]]; do
@@ -214,96 +167,6 @@ quiet=; loud=; louder=; debug=;
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-command-add() {
-    local command version
-
-    title rcm-plugin::add
-    ____
-
-    [ -n "$louder" ] && chapter Variable dump
-    if [ -z "$interface" ];then
-        error "Argument --interface required."; x
-    fi
-    [ -n "$louder" ] && code 'interface="'$interface'"'
-    # Interface, Name, dan Method digabung menjadi function
-    # dengan string dash.
-    # Oleh karena itu jangan ada dash pada ketiga entity tersebut.
-    if [[ "$interface" =~ [^a-z_] ]];then
-        error "Argument --interface is not valid."; x
-    fi
-    if [ -z "$name" ];then
-        error "Argument --name required."; x
-    fi
-    [ -n "$louder" ] && code 'name="'$name'"'
-    if [[ "$name" =~ [^a-z_] ]];then
-        error "Argument --name is not valid."; x
-    fi
-    if [ -z "$add_command" ];then
-        error "Argument --command required."; x
-    fi
-    command="$add_command"
-    [ -n "$louder" ] && code 'command="'$command'"'
-    if [ -z "$add_version" ];then
-        error "Argument --version required."; x
-    fi
-    version="$add_version"
-    [ -n "$louder" ] && code 'version="'$version'"'
-    [ -n "$louder" ] && code 'temporary="'$temporary'"'
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    # If not set in argument, try load from environment.
-    local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
-    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
-    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table_temporary="${!parameter_table_temporary}"
-    [ -z "$table" ] && table="$parameter_table"
-    [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    # Use default value.
-    if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
-    fi
-    if [ -n "$temporary" ];then
-        if [ -z "$table_temporary" ];then
-            mkdir -p "${HOME}/.cache/rcm"
-            table_temporary=$(mktemp -p ${HOME}/.cache/rcm -t rcm.plugin.table.${interface}.XXXXXX)
-        fi
-    fi
-    [ -n "$louder" ] && code 'table="'$table'"'
-    [ -n "$louder" ] && code 'table_temporary="'$table_temporary'"'
-    [ -n "$louder" ] && ____
-
-    chapter Add to table.
-    local table_lookup=
-    if [ -n "$temporary" ];then
-        table_lookup="$table_temporary"
-    else
-        table_lookup="$table"
-    fi
-    local line
-    if [ -f "$table_lookup" ];then
-        line=$(grep -n -F "${name} ${command} ${version}" "$table_lookup")
-    fi
-    if [ -z "$line" ];then
-        local table_dirname=$(dirname "$table_lookup")
-        mkdir -p "$table_dirname"
-        echo "${name} ${command} ${version}" >> "$table_lookup"
-        success Added.
-    else
-        __ Already added.
-    fi
-    ____
-
-    if [ -n "$temporary" ];then
-        echo "RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY=${table_temporary}"
-    else
-        echo "RCM_PLUGIN_${interface_uppercase}_TABLE=${table}"
-    fi
-}
 command-list() {
     if [ -z "$interface" ];then
         error "Argument --interface required."; x
@@ -537,39 +400,9 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # CSV=(
 # )
 # OPERAND=(
-# add
 # list
 # execute
 # helper
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --help
-# --temporary
-# )
-# VALUE=(
-# --interface
-# --name
-# --table
-# --table-temporary
-# )
-# MULTIVALUE=(
-# )
-# FLAG_VALUE=(
-# )
-# CSV=(
-    # 'long:--command,type:value,parameter:add_command'
-    # 'long:--version,type:value,parameter:add_version'
 # )
 # EOF
 # clear
