@@ -7,11 +7,7 @@ usage() {
     cat << EOF
 Usage: rcm-plugin <command> [options]
 
-Available commands: add, list, execute, init.
-
-Options for command init:
-   --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
+Available commands: add, list, execute.
 
 Options for command add:
    --interface *
@@ -87,7 +83,7 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --[^-]*) shift ;;
-        add|list|execute|helper|init)
+        add|list|execute|helper)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -108,7 +104,6 @@ if [ -n "$1" ];then
         list) command="$1"; shift ;;
         execute) command="$1"; shift ;;
         helper) command="$1"; shift ;;
-        init) command="$1"; shift ;;
     esac
     if [ -z "$command" ];then
         error Command unknown: '`'"$1"'`'.; x
@@ -187,22 +182,6 @@ case "$command" in
         set -- "${_new_arguments[@]}"
         unset _new_arguments
         ;;
-    init)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --help) help=1; shift ;;
-                --fast) fast=1; shift ;;
-                --interface=*) interface="${1#*=}"; shift ;;
-                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
-                --table=*) table="${1#*=}"; shift ;;
-                --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
 esac
 
 # Define variables and constants.
@@ -488,34 +467,6 @@ command-execute() {
             ; [ ! $? -eq 0 ] && { rm "$output_file"; x; }
     fi
 }
-command-init() {
-
-    title rcm-plugin::init
-    ____
-
-    [ -n "$louder" ] && chapter Variable dump
-    if [ -z "$interface" ];then
-        error "Argument --interface required."; x
-    fi
-    [ -n "$louder" ] && code 'interface="'$interface'"'
-    if [[ "$interface" =~ [^a-z_] ]];then
-        error "Argument --interface is not valid."; x
-    fi
-    local interface_uppercase=${interface^^}
-
-    # If not set in argument, try load from environment.
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
-    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table="${!parameter_table}"
-    [ -z "$table" ] && table="$parameter_table"
-    # Use default value.
-    if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
-    fi
-    [ -n "$louder" ] && ____
-
-    echo "RCM_PLUGIN_${interface_uppercase}_TABLE=${table}"
-}
 command-helper() {
     local which=$1; shift
     if [ "$which" == do-nothing ];then
@@ -590,7 +541,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # list
 # execute
 # helper
-# init
 # )
 # EOF
 # clear
@@ -668,30 +618,6 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # --table-temporary
 # --method
 # --output-file
-# )
-# MULTIVALUE=(
-# )
-# FLAG_VALUE=(
-# )
-# CSV=(
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --help
-# )
-# VALUE=(
-# --interface
-# --table
 # )
 # MULTIVALUE=(
 # )
