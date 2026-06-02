@@ -158,6 +158,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 
 # Define variables and constants.
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
+RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 tempfile=
 exit_code=0
 
