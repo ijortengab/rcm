@@ -1,7 +1,5 @@
 #!/bin/bash
 
-RCM_EXTENSION_VERSION=0.10.0-alpha.6
-
 # Rapid Construct Massive
 #
 # (c) IjorTengab <ijortengab@systemix.id> <ijortengab@gmail.com>
@@ -12,7 +10,7 @@ RCM_EXTENSION_VERSION=0.10.0-alpha.6
 #
 
 RCM_PREFIX=${RCM_PREFIX:=/usr/local/rcm}
-RCM_VERSION='0.19.0-alpha.4'
+RCM_VERSION='0.19.0-alpha.5'
 RCM_LIB="${RCM_PREFIX}/lib/${RCM_VERSION}"
 GITHUB_OWNER=ijortengab
 GITHUB_REPOSITORY=rcm
