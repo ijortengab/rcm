@@ -63,6 +63,7 @@ if ! command -v rcm > /dev/null;then
     fi
     printf '%b' "\033[95;1m"rcm"\033[0m"' command is '"\033[92;1m"'found'"\033[0m"."\n" >&2
     echo -n Initialize... >&2
+    mkdir -p "${RCM_LIB}/interfaces"
     rcm init
     printf "\r\033[K" >&2
     echo Initialized. >&2
