@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "${RCM_LIB}"/functions/rcm/rcm-prompt-options.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-prompt-options.sh
 
 rcm-prompt() {
     # Local variable as property.
