@@ -7,19 +7,7 @@ usage() {
     cat << EOF
 Usage: rcm-plugin <command> [options]
 
-Available commands: list, execute.
-
-Options for command list:
-   --interface *
-        Set the plugin category. Value available from command: rcm-plugin(helper interface-available), or other.
-   --table
-        File table to store plugin information.
-        Default value is \$HOME/.config/rcm/rcm.plugin.table.[--interface]"
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE.
-   --table-temporary
-        File table to temporary store plugin information.
-        Value available from command: rcm-plugin(helper temporary-suggestion 1 [--interface]), or others.
-        Prepopulate value from variable RCM_PLUGIN_[--interface^^]_TABLE_TEMPORARY.
+Available commands: execute.
 
 Options for command execute:
    --interface *
@@ -63,7 +51,7 @@ while [[ $# -gt 0 ]]; do
         --help) help=1; shift ;;
         --version) version=1; shift ;;
         --[^-]*) shift ;;
-        list|execute|helper)
+        execute|helper)
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     *) _new_arguments+=("$1"); shift ;;
@@ -80,7 +68,6 @@ unset _new_arguments
 if [ -n "$1" ];then
     command=
     case "$1" in
-        list) command="$1"; shift ;;
         execute) command="$1"; shift ;;
         helper) command="$1"; shift ;;
     esac
@@ -90,25 +77,6 @@ if [ -n "$1" ];then
 fi
 
 case "$command" in
-    list)
-        _new_arguments=()
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --help) help=1; shift ;;
-                --fast) fast=1; shift ;;
-                --interface=*) interface="${1#*=}"; shift ;;
-                --interface) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then interface="$2"; shift; fi; shift ;;
-                --table=*) table="${1#*=}"; shift ;;
-                --table) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table="$2"; shift; fi; shift ;;
-                --table-temporary=*) table_temporary="${1#*=}"; shift ;;
-                --table-temporary) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then table_temporary="$2"; shift; fi; shift ;;
-                --[^-]*) shift ;;
-                *) _new_arguments+=("$1"); shift ;;
-            esac
-        done
-        set -- "${_new_arguments[@]}"
-        unset _new_arguments
-        ;;
     execute)
         _new_arguments=()
         while [[ $# -gt 0 ]]; do
@@ -167,40 +135,6 @@ quiet=; loud=; louder=; debug=;
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-command-list() {
-    if [ -z "$interface" ];then
-        error "Argument --interface required."; x
-    fi
-    if [[ "$interface" =~ [^a-z_] ]];then
-        error "Argument --interface is not valid."; x
-    fi
-
-    # If not set in argument, try load from environment.
-    local interface_uppercase=${interface^^}
-    local parameter_table="RCM_PLUGIN_${interface_uppercase}_TABLE"
-    parameter_table=$(echo "$parameter_table"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table="${!parameter_table}"
-    local parameter_table_temporary="RCM_PLUGIN_${interface_uppercase}_TABLE_TEMPORARY"
-    parameter_table_temporary=$(echo "$parameter_table_temporary"| sed 's|[^A-Z]|_|g' | sed -E 's|_+|_|')
-    parameter_table_temporary="${!parameter_table_temporary}"
-    [ -z "$table" ] && table="$parameter_table"
-    [ -z "$table_temporary" ] && table_temporary="$parameter_table_temporary"
-    # Use default value.
-    if [ -z "$table" ];then
-        table="${HOME}/.config/rcm/rcm.plugin.table.${interface}"
-    fi
-    local contents=
-    if [ -f "$table_temporary" ] ;then
-        contents+=$'\n'
-        contents+=$(cut -d' ' -f1 < "$table_temporary")
-    fi
-    if [ -f "$table" ] ;then
-        # Filter duplikat.
-        contents+=$'\n'
-        contents+=$(cut -d' ' -f1 <"$table" | sort -u)
-    fi
-    echo "$contents" | sed '/^[[:space:]]*$/d'
-}
 command-execute() {
     is_command_resolved() {
         if [ -z "$resolve_dependencies" ];then
@@ -362,7 +296,6 @@ helper-list() {
     local category=$1
     local table=$2; [ "$table" == - ] && table=
     local table_temporary=$3; [ "$table_temporary" == - ] && table_temporary=
-    command-list
 }
 
 # Execute command.
@@ -400,34 +333,8 @@ _ Try; blue ' 'rcm-plugin; magenta ' '--help; _, ' 'for more information.; _.
 # CSV=(
 # )
 # OPERAND=(
-# list
 # execute
 # helper
-# )
-# EOF
-# clear
-
-# parse-options.sh \
-# --without-end-options-double-dash \
-# --compact \
-# --clean \
-# --no-hash-bang \
-# --no-original-arguments \
-# --no-error-invalid-options \
-# --no-error-require-arguments << EOF | clip
-# FLAG=(
-# --help
-# )
-# VALUE=(
-# --interface
-# --table
-# --table-temporary
-# )
-# MULTIVALUE=(
-# )
-# FLAG_VALUE=(
-# )
-# CSV=(
 # )
 # EOF
 # clear
