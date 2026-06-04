@@ -15,7 +15,7 @@ EOF
 
 # Require.
 require vendor/ijortengab/rcm/functions/base/print-select-dialog.sh
-require vendor/ijortengab/rcm/functions/base/array-search.sh
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # ------------------------------------------------------------------------------
 
