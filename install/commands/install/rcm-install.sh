@@ -79,6 +79,7 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-wget.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # ------------------------------------------------------------------------------
 
@@ -202,6 +203,15 @@ if [ -n "$found" ];then
         code cp -r "${source}/${line}" -T "${target}/${line}"
         cp -r "${source}/${line}" -T "${target}/${line}"; [ $? -eq 0 ] || x
     done <<< `ls -1 "$source"`
+fi
+____
+
+chapter Memeriksa file '`'require.sh'`'.
+path="${cache_directory}/rcm/install/require.sh"
+code 'path="'$path'"'
+rcm-file "$path" isExists
+if [ -n "$found" ];then
+    include "$path"
 fi
 ____
 
