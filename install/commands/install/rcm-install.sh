@@ -206,14 +206,24 @@ if [ -n "$found" ];then
 fi
 ____
 
-chapter Memeriksa file '`'require.sh'`'.
-path="${cache_directory}/rcm/install/require.sh"
+chapter Memeriksa file '`'require.txt'`'.
+path="${cache_directory}/rcm/install/require.txt"
 code 'path="'$path'"'
 rcm-file "$path" isExists
-if [ -n "$found" ];then
-    include "$path"
-fi
 ____
+
+if [ -n "$found" ];then
+    while read line; do
+        line=$(echo "$line" | sed 's/^ *//g')
+        if [ -z "$line" ];then
+            continue
+        fi
+        if [[ "$line" =~ ^# ]];then
+            continue
+        fi
+        rcm require $line
+    done < "$path"
+fi
 
 exit 0
 
