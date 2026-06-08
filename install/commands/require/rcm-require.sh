@@ -54,8 +54,11 @@ code 'url="'$url'"'
 ____
 
 INDENT+="    " \
-rcm install $isfast \
-    --root="$root" \
+rcm install \
     --url="$url" \
     --extension-version="$package_version" \
     ; [ ! $? -eq 0 ] && x
+
+cat << EOF >> "${RCM_LIB}/require.txt"
+$package $package_version
+EOF
