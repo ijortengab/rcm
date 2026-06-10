@@ -5,26 +5,25 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.7
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-dig-is-name-exists [options]
+Usage: rcm dig get-info ns [options]
 
 Options:
-   --domain *
+   --domain=DOMAIN
         Domain name to be checked.
-   --name-server
-        Set the Name server. Default value is - (dash). Available values: [1], [2], or other.
+   --name-server=[NAMESERVER]
+        Set the Name server. Available values: [1], [2], or other.
         [1]: 8.8.8.8
         [2]: 1.1.1.1
+
+Other options:
+   --reverse
+        Reverse the result.
 
 Global Options:
    --version
         Print version of this script.
    --help
         Show this help.
-   --reverse
-        Reverse the result.
-
-Dependency:
-   dig
 EOF
 }
 
@@ -57,10 +56,11 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-dig-is-name-exists
+title rcm dig get-info ns
 ____
 
 # Dependency.
+require command dig
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -74,7 +74,7 @@ if [[ "$name_server" == - ]];then
 fi
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
-tempfile=$(mktemp -p /dev/shm -t rcm-dig-is-name-exists.XXXXXX)
+tempfile=$(mktemp -p /dev/shm -t rcm-dig-get-info-ns.XXXXXX)
 domain_dot="${domain}."
 domain_dot_escape=${domain_dot//\./\\.}
 ____
