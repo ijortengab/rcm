@@ -159,6 +159,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 # Define variables and constants.
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 tempfile=
 exit_code=0
 
@@ -527,8 +528,13 @@ done
 # Boolean export as 0 or 1. Must not leave empty string.
 export RCM_FAST=$([ -n "$fast" ] && echo 1 || echo 0)
 export RCM_VERBOSE="$verbose"
+export RCM_QUIET="$RCM_QUIET"
+export RCM_LOUD="$RCM_LOUD"
+export RCM_LOUDER="$RCM_LOUDER"
+export RCM_DEBUG="$RCM_DEBUG"
 export RCM_LIB="$RCM_LIB"
 export RCM_INDENT="$RCM_INDENT"
+export RCM_DELAY="$RCM_DELAY"
 if [ -z "$RCM_MAIN_PID" ];then
     RCM_MAIN_PID=$$
     export RCM_MAIN_PID="$RCM_MAIN_PID"
