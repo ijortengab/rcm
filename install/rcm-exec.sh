@@ -229,7 +229,7 @@ do-execute() {
     if [ -n "$is_dialog_printed" ];then
         ____
     fi
-    set -- "${RCM_ARGUMENT_PASS[@]}"
+    set -- "${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}"
     if [ -n "$timer" ];then
         chapter Timer Start.
         _ Begin: $(date +%Y%m%d-%H%M%S); _.
