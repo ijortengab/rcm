@@ -11,12 +11,9 @@ Options:
    --domain *
         Domain name to be checked.
    --type
-        Available value: cname, mx, txt.
+        Available value: mx, txt.
    --hostname
         Set the hostname.
-   --alias-of
-        Set the target hostname of alias.
-        If omit, it will set to domain.
    --mail-provider
         Set the Mail Provider of MX record.
    --value
@@ -51,8 +48,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --alias-of=*) alias_of="${1#*=}"; shift ;;
-        --alias-of) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then alias_of="$2"; shift; fi; shift ;;
         --domain=*) domain="${1#*=}"; shift ;;
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
@@ -174,9 +169,9 @@ if [ -z "$type" ];then
     error "Argument --type required."; x
 else
     case "$type" in
-        cname|txt|mx) ;;
+        txt|mx) ;;
         *) error "Argument --type is not valid.";
-           _ 'Available value: '; yellow cname; _, ', '; yellow mx; _, ', '; yellow txt; _, '.'; _.
+           _ 'Available value: '; yellow mx; _, ', '; yellow txt; _, '.'; _.
            x
     esac
 fi
@@ -186,11 +181,6 @@ case "$type" in
     mx)
         if [ -z "$mail_provider" ];then
             error "Argument --mail-provider required"; x
-        fi
-        ;;
-    cname)
-        if [ -z "$hostname" ];then
-            error "Argument --hostname required"; x
         fi
         ;;
     txt)
@@ -219,24 +209,6 @@ if [ -z "$name_exists_sure" ];then
 fi
 
 record_found=
-if [[ "$type" == cname ]];then
-    data='@'
-    datadot='@'
-    [ -n "$alias_of" ] && {
-        data="$alias_of"
-        datadot="$data".
-    }
-    [ -n "$alias_of" ] && alias_to="$alias_of" || alias_to="$domain"
-    [[ "$hostname" == @ ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
-    chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
-    if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
-        record_found=1
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" alias to "'`'"${alias_to}"'`'" FOUND${label_name_server}."
-    else
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" alias to "'`'"${alias_to}"'`'" NOT FOUND${label_name_server}."
-    fi
-    ____
-fi
 if [[ "$type" == mx ]];then
     data="* $mail_provider"
     [ -z "$hostname" ] && hostname=@
@@ -307,7 +279,6 @@ exit 0
 # --domain
 # --type
 # --hostname
-# --alias-of
 # --mail-provider
 # --value
 # --label
