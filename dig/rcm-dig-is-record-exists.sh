@@ -11,9 +11,7 @@ Options:
    --domain *
         Domain name to be checked.
    --type
-        Available value: a, cname, mx, txt.
-   --ip-address
-        Set the IP Address of A record.
+        Available value: cname, mx, txt.
    --hostname
         Set the hostname.
    --alias-of
@@ -59,8 +57,6 @@ while [[ $# -gt 0 ]]; do
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
-        --ip-address=*) ip_address="${1#*=}"; shift ;;
-        --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --label=*) label="${1#*=}"; shift ;;
         --label) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then label="$2"; shift; fi; shift ;;
         --mail-provider=*) mail_provider="${1#*=}"; shift ;;
@@ -178,20 +174,15 @@ if [ -z "$type" ];then
     error "Argument --type required."; x
 else
     case "$type" in
-        a|cname|txt|mx) ;;
+        cname|txt|mx) ;;
         *) error "Argument --type is not valid.";
-           _ 'Available value: '; yellow a; _, ', '; yellow cname; _, ', '; yellow mx; _, ', '; yellow txt; _, '.'; _.
+           _ 'Available value: '; yellow cname; _, ', '; yellow mx; _, ', '; yellow txt; _, '.'; _.
            x
     esac
 fi
 [ -n "$debug" ] && code 'type="'$type'"'
 type_uppercase=${type^^}
 case "$type" in
-    a)
-        if [ -z "$ip_address" ];then
-            error "Argument --ip-address required"; x
-        fi
-        ;;
     mx)
         if [ -z "$mail_provider" ];then
             error "Argument --mail-provider required"; x
@@ -212,7 +203,6 @@ case "$type" in
         ;;
 esac
 [ -n "$debug" ] && code 'type_uppercase="'$type_uppercase'"'
-[ -n "$debug" ] && code 'ip_address="'$ip_address'"'
 [ -n "$debug" ] && code 'hostname="'$hostname'"'
 [ -n "$debug" ] && code 'mail_provider="'$mail_provider'"'
 [ -n "$debug" ] && code 'value="'$value'"'
@@ -229,19 +219,6 @@ if [ -z "$name_exists_sure" ];then
 fi
 
 record_found=
-if [[ "$type" == a ]];then
-    data="$ip_address"
-    [ -z "$hostname" ] && hostname=@
-    [[ "$hostname" == '@' ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
-    chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
-    if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
-        record_found=1
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" point to IP "'`'"${ip_address}"'`'" FOUND${label_name_server}."
-    else
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" point to IP "'`'"${ip_address}"'`'" NOT FOUND${label_name_server}."
-    fi
-    ____
-fi
 if [[ "$type" == cname ]];then
     data='@'
     datadot='@'
@@ -328,7 +305,6 @@ exit 0
 # )
 # VALUE=(
 # --domain
-# --ip-address
 # --type
 # --hostname
 # --alias-of
