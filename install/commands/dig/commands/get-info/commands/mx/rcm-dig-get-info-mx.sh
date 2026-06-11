@@ -5,20 +5,19 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.7
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-dig-is-record-exists [command] [options]
+Usage: rcm dig get-info mx [options] [mail-provider]
+
+mail-provider
+    Set the Mail Provider of MX record to be match.
 
 Options:
-   --domain *
+   --domain=DOMAIN
         Domain name to be checked.
-   --type
-        Available value: txt.
-   --hostname
+   --hostname=[HOSTNAME]
         Set the hostname.
-   --value
-        Set the value of TXT record.
-   --label
-        Set the summarize value of TXT record. Just for notification.
-   --name-server
+
+Other options:
+   --name-server=[DNS]
         Set the Name server. Default value is - (dash). Available values: [1], [2], or other.
         [1]: 8.8.8.8
         [2]: 1.1.1.1
@@ -50,16 +49,10 @@ while [[ $# -gt 0 ]]; do
         --domain) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then domain="$2"; shift; fi; shift ;;
         --hostname=*) hostname="${1#*=}"; shift ;;
         --hostname) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then hostname="$2"; shift; fi; shift ;;
-        --label=*) label="${1#*=}"; shift ;;
-        --label) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then label="$2"; shift; fi; shift ;;
         --name-exists-sure) name_exists_sure=1; shift ;;
         --name-server=*) name_server="${1#*=}"; shift ;;
         --name-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then name_server="$2"; shift; fi; shift ;;
         --reverse) reverse=1; shift ;;
-        --type=*) type="${1#*=}"; shift ;;
-        --type) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then type="$2"; shift; fi; shift ;;
-        --value=*) value="${1#*=}"; shift ;;
-        --value) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then value="$2"; shift; fi; shift ;;
         --with-color) colorize=1; shift ;;
         --without-color) colorize=0; shift ;;
         --[^-]*) shift ;;
@@ -72,17 +65,13 @@ unset _new_arguments
 # Define variables and constants.
 
 # If set in environment, set to variable.
-[ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"
+[ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
+[ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
+[ -n "$RCM_LOUDER" ] && louder="$RCM_LOUDER"
+[ -n "$RCM_DEBUG" ] && debug="$RCM_DEBUG"
 
 # Boolean default to TRUE.
 [ -z "$colorize" ] && colorize=1; [ "$colorize" == 0 ] && colorize=
-
-# Verbosity.
-quiet=; loud=; louder=; debug=;
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
@@ -91,10 +80,11 @@ quiet=; loud=; louder=; debug=;
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-dig-is-record-exists
+title rcm dig get-info mx
 ____
 
 # Dependency.
+require command dig
 
 # Functions.
 # Global Used: add_name_server, tempfile.
@@ -114,42 +104,18 @@ isRecordExist() {
     name_dot_escape=${name_dot//\./\\.}
     stdout=$(<"$tempfile")
     [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
-    case "$type" in
-        TXT)
-            if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" <<< "$stdout";then
-                echo "$stdout" | grep -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" > "$tempfile"
-                stdout=$(<"$tempfile")
-                php=$(cat <<-'EOF'
-$data = $_SERVER['argv'][1];
-echo '"'.implode('" "', str_split($data, 255)).'"';
-EOF
-                )
-                data=$(php -r "$php" "$data" )
-                if grep -q -F "$data" <<< "$stdout";then
-                    return 0
-                else
-                    return 1
-                fi
-            else
-                return 1
-            fi
-            ;;
-        *)
-            data_escape=${data//\./\\.}
-            data_escape=${data_escape//\*/\.*}
-            data_escape=${data_escape//\ /\\ }
-            code grep -E --ignore-case "'"^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'"$data_escape""'"
-            if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'"$data_escape" <<< "$stdout";then
-                return 0
-            fi
-            return 1
-            ;;
-    esac
+    data_escape=${data//\./\\.}
+    data_escape=${data_escape//\*/\.*}
+    data_escape=${data_escape//\ /\\ }
+    code grep -E --ignore-case "'"^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'"$data_escape""'"
+    if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'"$data_escape" <<< "$stdout";then
+        return 0
+    fi
+    return 1
 }
 
 # Require, validate, and populate value.
 [ -n "$debug" ] && chapter Variable dump.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
@@ -161,56 +127,47 @@ fi
 [ -n "$name_server" ] && option_name_server=' --name-server='"$name_server" || option_name_server=''
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
-if [ -z "$type" ];then
-    error "Argument --type required."; x
-else
-    case "$type" in
-        txt) ;;
-        *) error "Argument --type is not valid.";
-           _ 'Available value: '; yellow txt; _, '.'; _.
-           x
-    esac
-fi
+type=mx
 [ -n "$debug" ] && code 'type="'$type'"'
 type_uppercase=${type^^}
-case "$type" in
-    txt)
-        if [ -z "$hostname" ];then
-            error "Argument --hostname required"; x
-        fi
-        if [ -z "$value" ];then
-            error "Argument --value required"; x
-        fi
-        ;;
-esac
+mail_provider=
+if [ -n "$1" ];then
+    mail_provider="$1"
+fi
+
 [ -n "$debug" ] && code 'type_uppercase="'$type_uppercase'"'
 [ -n "$debug" ] && code 'hostname="'$hostname'"'
-[ -n "$debug" ] && code 'value="'$value'"'
-[ -n "$debug" ] && code 'label="'$label'"'
+[ -n "$debug" ] && code 'mail_provider="'$mail_provider'"'
 [ -n "$debug" ] && code 'colorize="'$colorize'"'
 [ -n "$debug" ] && ____
 
 if [ -z "$name_exists_sure" ];then
     INDENT+="    " \
-    rcm-dig-is-name-exists $isfast \
+    rcm dig get-info ns \
         --domain="$domain" \
         $option_name_server \
         ; [ ! $? -eq 0 ] && x
 fi
 
-record_found=
-if [[ "$type" == txt ]];then
-    data="$value"
-    [[ "$hostname" == '@' ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
-    chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
-    if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
-        record_found=1
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${label}"'`'" FOUND${label_name_server}."
-    else
-        log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" about "'`'"${label}"'`'" NOT FOUND${label_name_server}."
-    fi
-    ____
+[ -z "$hostname" ] && hostname=@
+[[ "$hostname" == '@' ]] && fqdn_string="$domain" || fqdn_string="${hostname}.${domain}"
+
+if [ -z "$mail_provider" ];then
+    code dig MX "$fqdn_string" $add_name_server +short
+    dig MX "$fqdn_string" $add_name_server +short
+    exit 0
 fi
+
+record_found=
+data="* $mail_provider"
+chapter Query "$type_uppercase" Record for FQDN '`'${fqdn_string}'`'
+if isRecordExist "$type_uppercase" "$domain" "$fqdn_string" "$data" "$mktemp";then
+    record_found=1
+    log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" handled by "'`'"${mail_provider}"'`'" FOUND${label_name_server}."
+else
+    log="${type_uppercase} Record of "'`'"${fqdn_string}"'`'" handled by "'`'"${mail_provider}"'`'" NOT FOUND${label_name_server}."
+fi
+____
 
 chapter Result
 rm "$tempfile"
@@ -253,10 +210,7 @@ exit 0
 # )
 # VALUE=(
 # --domain
-# --type
 # --hostname
-# --value
-# --label
 # --name-server
 # )
 # FLAG_VALUE=(
