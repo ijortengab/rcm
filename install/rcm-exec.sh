@@ -230,7 +230,9 @@ do-execute() {
     if [ -n "$is_dialog_printed" ];then
         ____
     fi
-    set -- "${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}"
+
+    set -- "${RCM_ARGUMENT_PASS[@]}"
+
     if [ -n "$timer" ];then
         chapter Timer Start.
         _ Begin: $(date +%Y%m%d-%H%M%S); _.
@@ -299,6 +301,7 @@ do-interactive() {
         ____
 
         if [ -n "$autoyes" ];then
+            RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}")
             do-execute
             break
         fi
@@ -308,6 +311,7 @@ do-interactive() {
         if [ -z "$RCM_BOOLEAN" ];then
             break
         fi
+        RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}")
         do-execute
         break
     done
