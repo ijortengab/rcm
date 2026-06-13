@@ -5,12 +5,12 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.7
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-dig-watch-domain-exists [command] [options]
+Usage: rcm dig get-info domain [options]
 
 Options:
-   --domain *
+   --domain=DOMAIN
         Domain name to be checked.
-   --waiting-time
+   --waiting-time=[SECOND]
         Time to waiting until next check. Default to 60.
 
 Global Options:
@@ -18,9 +18,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   rcm-dig-is-record-exists
 EOF
 }
 
@@ -46,59 +43,34 @@ unset _new_arguments
 # Define variables and constants.
 
 # If set in environment, set to variable.
-[ -n "$RCM_VERBOSE" ] && verbose="$RCM_VERBOSE"
-
-# Verbosity.
-quiet=; loud=; louder=; debug=;
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
+[ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
+[ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
+[ -n "$RCM_LOUDER" ] && louder="$RCM_LOUDER"
+[ -n "$RCM_DEBUG" ] && debug="$RCM_DEBUG"
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-dig-watch-domain-exists
+title rcm dig get-info domain
 ____
 
 # Dependency.
-
-# Functions.
-# Global Used: add_name_server, tempfile.
-sleepExtended() {
-    local countdown=$1
-    local width=$2
-    if [ -z "$width" ];then
-        width=80
-    fi
-    if [ "$countdown" -gt 0 ];then
-        dikali10=$((countdown*10))
-        _dikali10=$dikali10
-        _dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-        printf "\r\033[K" >&2
-        e; printf %"$_dotLength"s | tr " " "." >&2
-        printf "\r"
-        while [ "$_dikali10" -ge 0 ]; do
-            dotLength=$(( ( width * _dikali10 ) / dikali10 ))
-            if [[ ! "$dotLength" == "$_dotLength" ]];then
-                _dotLength="$dotLength"
-                printf "\r\033[K" >&2
-                e; printf %"$dotLength"s | tr " " "." >&2
-                printf "\r"
-            fi
-            _dikali10=$((_dikali10 - 1))
-            sleep .1
-        done
-    fi
-}
+require rcm dig get-info a
+require rcm dig get-info cname
 
 # Requirement, validate, and populate value.
 [ -n "$debug" ] && chapter Variable dump.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
+if [ -z "$domain" ];then
+    error "Argument --domain required."; x
+fi
+[ -n "$debug" ] && code 'domain="'$domain'"'
 if [ -z "$waiting_time" ];then
     waiting_time=60
 fi
@@ -108,7 +80,7 @@ fi
 [ -n "$debug" ] && code 'waiting_time="'$waiting_time'"'
 [ -n "$debug" ] && ____
 
-chapter Watch   ing Begin
+chapter Watching Begin
 __ Make sure the DNS Record '(A or CNAME)' of '`'$domain'`' is exist.
 finish=
 _ Begin: $(date +%Y%m%d-%H%M%S); _.
@@ -119,20 +91,19 @@ until [ -n "$finish" ];do
     _finish=""
 
     INDENT+="    " \
-    rcm-dig-is-record-exists $isfast --name-exists-sure \
+    rcm dig get-info a --name-exists-sure \
         --without-color \
         --domain="$domain" \
-        --type=a \
-        --ip-address="*" \
+        '*' \
         ; [ $? -eq 0 ] && _finish+="1"
 
     INDENT+="    " \
-    rcm-dig-is-record-exists $isfast --name-exists-sure \
+    rcm dig get-info cname --name-exists-sure \
         --without-color \
         --domain="$domain" \
         --type=cname \
         --hostname="@" \
-        --alias-of="*" \
+        '*' \
         ; [ $? -eq 0 ] && _finish+="1"
 
     if [[ "$_finish" =~ 1 ]];then
@@ -149,7 +120,7 @@ until [ -n "$finish" ];do
     else
         error There are not exist DNS Record of '`'$domain'`' '(neither A nor CNAME)'.
         _ We are still waiting.; _.
-        sleepExtended $waiting_time
+        sleep-extended $waiting_time
     fi
 done
 
