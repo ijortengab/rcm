@@ -5,14 +5,11 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.7
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-dig-has-address [options]
+Usage: rcm dig get-info ip-address [options]
 
 Options:
-   --fqdn *
+   --fqdn=FQDN
         Fully Qualified Domain Name to be checked.
-   --ip-address *
-        Set the IP Address. Used to verify A record in DNS.
-        Value available from command: rcm-dig-has-address(get-ipv4), or other.
 
 Global Options:
    --version
@@ -33,10 +30,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --fqdn=*) fqdn="${1#*=}"; shift ;;
-        --fqdn) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fqdn="$2"; shift; fi; shift ;;
-        --ip-address=*) ip_address="${1#*=}"; shift ;;
-        --ip-address) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then ip_address="$2"; shift; fi; shift ;;
         --reverse) reverse=1; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
@@ -57,7 +50,8 @@ fi
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-command-get-ipv4() {
+# Functions.
+get-ipv4() {
     _ip=`wget -T 3 -t 1 -4qO- "http://ip1.dynupdate.no-ip.com/"`
     if [ -n "$_ip" ];then
         echo "$_ip"
@@ -66,36 +60,49 @@ command-get-ipv4() {
     fi
 }
 
-# Execute command.
-if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
-    command-${command} "$@"
-    exit 0
-fi
+# Require.
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-dig-has-address
+title rcm dig get-info ip-address
 ____
 
 # Dependency.
+require command wget
+require command host
 
 # Require, validate, and populate value.
-chapter Variable dump.
-if [ -z "$fqdn" ];then
-    error "Argument --fqdn required."; x
+fqdn=
+if [ -n "$1" ];then
+    fqdn="$1"
 fi
+ip_address=
+if [ -n "$2" ];then
+    ip_address="$2"
+fi
+if [ -z "$fqdn" ];then
+    get-ipv4
+    exit 0
+fi
+code 'fqdn="'$fqdn'"'
+code 'ip_address="'$ip_address'"'
 if [ -z "$ip_address" ];then
+    code rcm dig get-info a --domain="$fqdn"
+    rcm dig get-info a --domain="$fqdn"
+    exit 0
     error "Argument --ip-address required."; x
 fi
+
+chapter Variable dump.
 fqdn_raw="$fqdn"
 code 'fqdn_raw="'$fqdn_raw'"'
 code 'fqdn="'$fqdn'"'
 code 'ip_address="'$ip_address'"'
-tempfile=$(mktemp -p /dev/shm -t rcm-dig-has-address.XXXXXX)
+tempfile=$(mktemp -p /dev/shm -t rcm-dig-get-info-ip-address.XXXXXX)
 ____
 
-chapter Mengecek IP Address FQDN '`'$fqdn'`'
 code host -t A $fqdn
 host -t A "$fqdn" > "$tempfile"
 while IFS= read line; do e "$line"; _.; done < "$tempfile"
@@ -103,6 +110,7 @@ stdout=$(<"$tempfile")
 found=
 code found="$found"
 code fqdn="$fqdn"
+address=()
 while read line; do
     _ "$line"; _.
     __ Try
@@ -117,41 +125,25 @@ while read line; do
         __; magenta fqdn="$fqdn"; _.
     else
         __ Try
-        data="${fqdn} has address ${ip_address}"
+        data="${fqdn} has address "
         data_escape=${data//\./\\.}
         __; magenta grep -E --ignore-case "'""^${data_escape}""'"; _.
         if grep -q -E --ignore-case "^${data_escape}" <<< "$line";then
-            found=1
-            __; magenta found="$found"; _.
             __ Get Address
-            data="${fqdn} has address "
-            data_escape=${data//\./\\.}
             __; magenta sed -E '"'"s|^${data_escape}(.*)$|\1|"'"'; _.
-            address=$(echo "$line"| sed -E "s|^${data_escape}(.*)$|\1|")
-            __; magenta address="$address"; _.
-            break
-        else
-            __ Try
-            data="${fqdn} has address "
-            data_escape=${data//\./\\.}
-            __; magenta grep -E --ignore-case "'""^${data_escape}""'"; _.
-            if grep -q -E --ignore-case "^${data_escape}" <<< "$line";then
-                found=2
-                __; magenta found="$found"; _.
-                __ Get Address
-                __; magenta sed -E '"'"s|^${data_escape}(.*)$|\1|"'"'; _.
-                address=$(echo "$line"| sed -E "s|^${data_escape}(.*)$|\1|")
-                __; magenta address="$address"; _.
-                break
-            fi
+            address+=($(echo "$line"| sed -E "s|^${data_escape}(.*)$|\1|"))
         fi
     fi
 done <<< "$stdout"
 ____
 
+if ArraySearch "$ip_address" address[@];then
+    found=1
+fi
+
 chapter Result
 rm "$tempfile"
-if [ "$found" == 1 ];then
+if [ -n "$found" ];then
     result='success'
     if [ -n "$reverse" ];then
         result='error'
@@ -163,8 +155,10 @@ else
         result='success'
     fi
     $result FQDN "$fqdn_raw" has not address "$ip_address".
-    if [ "$found" == 2 ];then
-        _ FQDN "$fqdn_raw" has address "$address".; _.
+    if [ "${#address[@]}" -gt 0 ];then
+        for each in "${address[@]}";do
+            _ FQDN "$fqdn_raw" has address "$each".; _.
+        done
     fi
 fi
 
@@ -187,8 +181,6 @@ exit 0
 # --reverse
 # )
 # VALUE=(
-# --fqdn
-# --ip-address
 # )
 # FLAG_VALUE=(
 # )
