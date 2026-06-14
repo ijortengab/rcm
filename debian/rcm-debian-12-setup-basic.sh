@@ -8,8 +8,6 @@ usage() {
 Usage: rcm-debian-12-setup-basic [options]
 
 Options:
-   --timezone
-        Set the timezone of this machine. Available values: Asia/Jakarta, or other.
    --without-update-system ^
         Skip execute update system. Default to --with-update-system.
    --without-upgrade-system ^
@@ -31,8 +29,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --timezone=*) timezone="${1#*=}"; shift ;;
-        --timezone) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then timezone="$2"; shift; fi; shift ;;
         --with-update-system) update_system=1; shift ;;
         --without-update-system) update_system=0; shift ;;
         --with-upgrade-system) upgrade_system=1; shift ;;
@@ -197,43 +193,6 @@ EOF
         ;;
     *) error OS "$ID" not supported; x;
 esac
-code 'timezone="'$timezone'"'
-if [ -n "$timezone" ];then
-    if [ ! -f /usr/share/zoneinfo/$timezone ];then
-        __ Timezone is not valid.
-        timezone=
-        code 'timezone="'$timezone'"'
-    fi
-fi
-____
-
-adjust=
-if [ -n "$timezone" ];then
-    chapter Mengecek timezone.
-    current_timezone=$(realpath /etc/localtime | cut -d/ -f5,6)
-    if [[ "$current_timezone" == "$timezone" ]];then
-        __ Timezone is match: ${current_timezone}
-    else
-        __ Timezone is different: ${current_timezone}
-        adjust=1
-    fi
-    ____
-fi
-
-if [[ -n "$adjust" ]];then
-    chapter Adjust timezone.
-    __ Backup file '`'/etc/localtime'`'
-    backupFile move /etc/localtime
-    __; magenta ln -s /usr/share/zoneinfo/$timezone /etc/localtime; _.
-    ln -s /usr/share/zoneinfo/$timezone /etc/localtime
-    current_timezone=$(realpath /etc/localtime | cut -d/ -f5,6)
-    if [[ "$current_timezone" == "$timezone" ]];then
-        __; green Timezone is match: ${current_timezone}; _.
-    else
-        __; red Timezone is different: ${current_timezone}; x
-    fi
-    ____
-fi
 
 chapter Update Repository
 path=/etc/apt/sources.list
@@ -287,7 +246,6 @@ exit 0
 # --help
 # )
 # VALUE=(
-# --timezone
 # )
 # FLAG_VALUE=(
 # )
