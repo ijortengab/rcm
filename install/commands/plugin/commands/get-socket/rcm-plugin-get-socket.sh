@@ -40,12 +40,13 @@ command="rcm plugin get-socket"
 if [ -n "$1" ];then
     value="$1"; shift
     if ! ArraySearch "$value" list[@];then
+        code "${command} ${value}"
         error The interface of plugin is unknown: '`'"$value"'`'.; x
     fi
     unset _return
     command+=" ${value}"
-    extension=$value
-    extension_chain+=("$extension")
+    interface=$value
+    extension_chain+=("$interface")
     value=
 else
     if [ -z "$is_intro_printed" ];then
@@ -62,12 +63,12 @@ else
     command+=" ${value}"
     _; _.
     _; _, Execute' '; magenta $command; _.
-    extension=$value
-    extension_chain+=("$extension")
+    interface=$value
+    extension_chain+=("$interface")
     value=
 fi
 
-prefix+=/"$extension"
+prefix+=/"$interface"
 list=(`ls "$prefix/implements"`)
 is_required=1
 parameter=plugin
@@ -76,12 +77,13 @@ parameter_plural=plugins
 if [ -n "$1" ];then
     value="$1"; shift
     if ! ArraySearch "$value" list[@];then
-        error The plugin name is not implement $extension interface: '`'"$value"'`'.; x
+        code "${command} ${value}"
+        error The plugin name is not implement $interface interface: '`'"$value"'`'.; x
     fi
     unset _return
     command+=" ${value}"
-    extension=$value
-    extension_chain+=("$extension")
+    plugin_name=$value
+    extension_chain+=("$plugin_name")
     value=
 else
     _; _.
@@ -90,12 +92,12 @@ else
     command+=" ${value}"
     _; _.
     _; _, Execute' '; magenta $command; _.
-    extension=$value
-    extension_chain+=("$extension")
+    plugin_name=$value
+    extension_chain+=("$plugin_name")
     value=
 fi
 
-prefix+=/implements/"$extension"
+prefix+=/implements/"$plugin_name"
 list=(`ls "$prefix/methods"`)
 is_required=1
 parameter=method
@@ -104,12 +106,13 @@ parameter_plural=methods
 if [ -n "$1" ];then
     value="$1"; shift
     if ! ArraySearch "$value" list[@];then
-        error The method name is unknown: '`'"$value"'`'.; x
+        code "${command} ${value}"
+        error The plugin '`'"$plugin_name"'`' that implements '`'"$interface"'`' interface does not have method: '`'"$value"'`'.; x
     fi
     unset _return
     command+=" ${value}"
-    extension=$value
-    extension_chain+=("$extension")
+    method_name=$value
+    extension_chain+=("$method_name")
     value=
 else
     _; _.
@@ -118,12 +121,12 @@ else
     command+=" ${value}"
     _; _.
     _; _, Execute' '; magenta $command; _.
-    extension=$value
-    extension_chain+=("$extension")
+    method_name=$value
+    extension_chain+=("$method_name")
     value=
 fi
 
-prefix+=/methods/$extension
+prefix+=/methods/$method_name
 
 if [ -z "$is_intro_printed" ];then
     title "$command"
