@@ -21,6 +21,9 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 ----() { echo -n "$RCM_INDENT"; }
 
 require() {
+    if [ -z "$1" ];then
+        return 1
+    fi
     if [ "$1" == command ];then
         command -v "$2" >/dev/null || { error Unable to proceed, command not found: '`'"$2"'`'.; x; }
         return 0
@@ -28,16 +31,18 @@ require() {
     if [ "$1" == rcm ];then
         local prefix="$RCM_LIB"
         local command_file_sh="rcm"
+        local command="rcm"
         shift
         while [[ $# -gt 0 ]]; do
             prefix+='/commands/'$1
             command_file_sh+="-${1}"
+            command+=" ${1}"
             shift
         done
         command_file_sh+='.sh'
         OLDPATH="$PATH"
         PATH="$prefix":"$PATH"
-        command -v "$command_file_sh" >/dev/null || { red "Unable to proceed, $command_file_sh command not found."; x; }
+        command -v "$command_file_sh" >/dev/null || { code $command; error "Unable to proceed, $command_file_sh command not found."; x; }
         PATH="$OLDPATH"
         return 0
     fi
@@ -48,14 +53,19 @@ require() {
     local basename=$(basename "$filename")
     local dirname=$(dirname "$filename")
     if [ ! -f "$filename" ];then
-        e Require:' '; magenta "${filename}"; _, '.'; _.
-        red 'Process terminated.'; _, ' File is not found: '; yellow "$basename"; _, .; x
+        code "${filename}"
+        _ 'File is not found: '; yellow "$basename"; _, .; red ' Process terminated.'; x
     fi
     . "$filename"
 }
 
 include() {
     local filename="$1"
+    if [ -z "$filename" ];then
+        e Error 'include()' function: require argument:' '; magenta "<filename>"; _, '. ';
+        red 'Process terminated.'; x
+    fi
+
     INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
     if [ ! -f "$filename" ];then
         e Require:' '; magenta "${filename}"; _, '.'; _.
