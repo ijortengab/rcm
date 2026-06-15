@@ -6,8 +6,8 @@ include `rcm plugin get-socket os-setup ubuntu init`
 require command find-string
 
 chapter Update Repository
-update_system="RCM_DO_UPDATE_SYSTEM"
-upgrade_system="RCM_DO_UPGRADE_SYSTEM"
+update_system="$RCM_DO_UPDATE_SYSTEM"
+upgrade_system="$RCM_DO_UPGRADE_SYSTEM"
 
 repository_required=$(cat <<EOF
 deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
