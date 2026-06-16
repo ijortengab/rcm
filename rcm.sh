@@ -54,6 +54,9 @@ if ! command -v rcm > /dev/null;then
     mv "$found_directory_extracted/install" -T "$RCM_LIB"
     chmod a+x "$found_directory_extracted/rcm.sh"
     mv "$found_directory_extracted/rcm.sh" /usr/local/bin/rcm
+    mv "$found_directory_extracted/vendor" -T "${RCM_LIB}/vendor"
+    mkdir -p "${RCM_LIB}/vendor/${GITHUB_OWNER}/${GITHUB_REPOSITORY}"
+    mv "$found_directory_extracted" -T "${RCM_LIB}/vendor/${GITHUB_OWNER}/${GITHUB_REPOSITORY}"
     printf "\r\033[K" >&2
     if ! command -v rcm > /dev/null;then
         echo Failed to install. >&2
