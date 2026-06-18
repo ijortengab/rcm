@@ -1,6 +1,6 @@
 #!/bin/bash
 
-include `rcm plugin get-socket os-setup debian init`
+include `rcm plugin run-parent-method os-setup debian init`
 
 # Dependency.
 require command find-string

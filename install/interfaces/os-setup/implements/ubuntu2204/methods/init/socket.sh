@@ -1,6 +1,6 @@
 #!/bin/bash
 
-include `rcm plugin get-socket os-setup ubuntu init`
+include `rcm plugin run-parent-method os-setup ubuntu init`
 
 # Dependency.
 require command find-string

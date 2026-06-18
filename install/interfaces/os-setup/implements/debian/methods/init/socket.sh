@@ -1,6 +1,6 @@
 #!/bin/bash
 
-include `rcm plugin get-socket os-setup base init`
+include `rcm plugin run-parent-method os-setup base init`
 
 chapter Mengecek timezone.
 timezone="$RCM_OS_TIMEZONE"

@@ -92,7 +92,7 @@ debconf-set-selections <<< "postfix postfix/main_mailer_type string '${main_mail
 
 apt-install postfix postfix-doc
 
-include `rcm plugin get-socket postfix/dbms $dbms init`
+include `rcm plugin run-method postfix/dbms $dbms init`
 
 # Wajib exit 0 jika success.
 exit 0

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # mariadb extend mysql
-include `rcm plugin get-socket dovecot/dbms mysql init`
+include `rcm plugin run-parent-method dovecot/dbms mysql init`
