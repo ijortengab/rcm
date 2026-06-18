@@ -206,6 +206,23 @@ if [ -n "$found" ];then
 fi
 ____
 
+chapter Memeriksa direktori lainnya.
+target="${RCM_LIB}/vendor/$github_owner_repo"
+code 'target="'$target'"'
+mkdir -p "$target"
+source="${cache_directory}"
+while IFS= read -r line; do
+    if [ -z "$line" ];then
+        continue
+    fi
+    if [[ "$line" == rcm ]];then
+        continue
+    fi
+    code cp -r "${source}/${line}" -T "${target}/${line}"
+    cp -r "${source}/${line}" -T "${target}/${line}"; [ $? -eq 0 ] || x
+done <<< `ls -1 "$source"`
+____
+
 chapter Memeriksa file '`'require.txt'`'.
 path="${cache_directory}/rcm/install/require.txt"
 code 'path="'$path'"'
