@@ -13,6 +13,26 @@ EOF
 # Prevent scripts from being executed directly.
 [ -f "${RCM_LIB}/require.sh" ] && source "${RCM_LIB}/require.sh" || { usage >&2; exit 1; }
 
+_new_arguments=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help) help=1; shift ;;
+        --version) version=1; shift ;;
+        --hide-title) hide_title=1; shift ;;
+        --) shift
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    *) _new_arguments+=("$1"); shift ;;
+                esac
+            done
+            ;;
+        --[^-]*) shift ;;
+        *) _new_arguments+=("$1"); shift ;;
+    esac
+done
+set -- "${_new_arguments[@]}"
+unset _new_arguments
+
 # Require.
 require vendor/ijortengab/rcm/functions/base/print-select-dialog.sh
 require vendor/ijortengab/bash/functions/array-search.sh
@@ -25,7 +45,7 @@ list=()
 is_required=1
 parameter=interface
 parameter_plural=interfaces
-is_intro_printed=
+is_title_printed=
 
 while IFS= read -r each;do
     find="${prefix}/"; replace=
@@ -49,14 +69,11 @@ if [ -n "$1" ];then
     extension_chain+=("$interface")
     value=
 else
-    if [ -z "$is_intro_printed" ];then
+    title "$command"
+    ____
 
-        title "$command"
-        ____
-
-        chapter Prepare argument for command '`'$command'`'.
-        is_intro_printed=1
-    fi
+    chapter Prepare argument for command '`'$command'`'.
+    is_title_printed=1
     _; _.
     _ Select available interface of plugin.; _.
     print-select-dialog list[@] "$parameter" "$parameter_plural"
@@ -128,11 +145,40 @@ fi
 
 prefix+=/methods/$method_name
 
-if [ -z "$is_intro_printed" ];then
-    title "$command"
-    ____
+if [ -z "$is_title_printed" ];then
+    if [ -z "$hide_title" ];then
+        title "$command"
+        ____
+    fi
 fi
 
 echo "$prefix/socket.sh"
 
 exit 0
+
+# parse-options.sh \
+# --with-end-options-double-dash \
+# --with-end-options-specific-operand \
+# --compact \
+# --clean \
+# --no-hash-bang \
+# --no-original-arguments \
+# --no-error-invalid-options \
+# --no-error-require-arguments << EOF | clip
+# FLAG=(
+# --version
+# --help
+# --hide-title
+# )
+# VALUE=(
+# )
+# MULTIVALUE=(
+# )
+# FLAG_VALUE=(
+# )
+# CSV=(
+# )
+# OPERAND=(
+# )
+# EOF
+# clear
