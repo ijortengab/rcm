@@ -8,7 +8,7 @@
 #
 # Command to download: `wget git.io/rcm`
 #
-RCM_EXTENSION_VERSION=0.19.0-alpha.9
+RCM_EXTENSION_VERSION=0.19.0-alpha.10
 
 # Usage Functions.
 usage() {
