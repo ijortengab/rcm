@@ -257,6 +257,22 @@ rcm-prompt-options-option() {
                 fi
                 break
             fi
+            match=`echo "$found" | grep -i -o -E 'Conditional: Bypass if --[^-_\[\=0-9\.][^\[\=\.]+ is not added\.' | sed -E 's/^Conditional: Bypass if (.*) is not added./\1/i'`
+            if [ -n "$match" ];then
+                if ! is-added "$match";then
+                    conditional="$found"
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then set conditional bypass 1
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    RCM_YAML+='  conditional:'$'\n'
+                    RCM_YAML+='    bypass: 1'$'\n'
+                    # Lalu beri set sebagai variable sehingga tidak perlu get lagi.
+                    yaml_conditional_bypass=1
+                fi
+                break
+            fi
             break
         done
     }
@@ -281,6 +297,33 @@ rcm-prompt-options-option() {
             value)
                 array value; value="$_return_value"
                 if [ -n "$value" ];then
+                    return 0
+                else
+                    return 1
+                fi
+        esac
+    }
+
+    is-added() {
+        if [ -z "$1" ];then
+            error 'Argument <parameter> is required'; x
+        fi
+        local parameter="$1"
+        local type
+        local flag
+        # Cara dibawah ini simple, tapi lambat.
+        # ```
+        #     rcm-yaml find parameter "${parameter}" then get type
+        # ```
+        # Alternative adalah, langsung populate variable array.
+        rcm-yaml find parameter "${parameter}"
+        # Lalu ambil property `type` via array function.
+        array type; type="$_return_value"
+        # Begitu juga dengan property `flag`, via array function.
+        case "$type" in
+            flag)
+                array flag; flag="$_return_value"
+                if [ -n "$flag" ];then
                     return 0
                 else
                     return 1
