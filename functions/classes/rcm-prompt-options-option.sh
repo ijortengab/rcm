@@ -238,11 +238,12 @@ rcm-prompt-options-option() {
     parse-conditional() {
         # global conditional
         local found="$1"
+        local match
         description=`echo "$description" | sed -E 's/ *'"${found}"'//i'`
         while true; do
             match=`echo "$found" | grep -i -o -E 'Conditional: Bypass if --[^-_\[\=0-9\.][^\[\=\.]+ has no value\.' | sed -E 's/^Conditional: Bypass if (.*) has no value./\1/i'`
             if [ -n "$match" ];then
-                if ! has-value "${match}";then
+                if ! has-value "$match";then
                     conditional="$found"
                     # Cara dibawah ini simple, tapi lambat.
                     # ```
@@ -266,6 +267,7 @@ rcm-prompt-options-option() {
         fi
         local parameter="$1"
         local type
+        local value
         # Cara dibawah ini simple, tapi lambat.
         # ```
         #     rcm-yaml find parameter "${parameter}" then get type
@@ -491,22 +493,6 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
 
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
@@ -570,6 +556,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                 while read line; do
                     find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -678,22 +682,6 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
 
             # Bypass.
             if [ -z "$is_required" ];then
@@ -756,6 +744,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             while true; do
                 find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
                 if [ -n "$find" ];then
@@ -931,22 +937,6 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
 
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
@@ -1047,6 +1037,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             while true; do
                 find=`echo "$description" | grep -i -o -E 'Prepopulate value from variable:? [^\.]+\.'| sed -n -E 's/^Prepopulate value from variable:? ([^\.]+)\.$/\1/ip'`
                 if [ -n "$find" ];then
@@ -1203,22 +1211,6 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
 
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
@@ -1290,6 +1282,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             if [ -n "$RCM_ARGUMENT_PLACEHOLDERS" ];then
                 while read line; do
                     find=$(echo ${line} | sed -E 's|^([^:]+):.*|\1|' | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')
@@ -1437,22 +1447,6 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
 
             # Bypass.
             if [ -z "$is_required" ];then
@@ -1559,6 +1553,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             while true; do
                 find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
                 if [ -n "$find" ];then
@@ -1752,22 +1764,7 @@ rcm-prompt-options-option() {
             if [ -n "$bypass_dialog" ];then
                 break
             fi
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
-            #     yaml_conditional_bypass="$_return_value"
-            # ```
-            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
-            # definisikan diatas.
-            if [ -n "$yaml_conditional_bypass" ];then
-                _; _.
-                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
-                if [ -n "$conditional" ];then
-                    _; _.
-                    echo-wrap "$conditional"
-                fi
-                break
-            fi
+
             # Bypass.
             # Cara dibawah ini simple, tapi lambat.
             # ```
@@ -1854,6 +1851,24 @@ rcm-prompt-options-option() {
                 fi
                 break
             done
+
+            # Cara dibawah ini simple, tapi lambat.
+            # ```
+            #     rcm-yaml find parameter "${parameter}" then get conditional bypass
+            #     yaml_conditional_bypass="$_return_value"
+            # ```
+            # Gunakan saja variable $yaml_conditional_bypass yang sudah kita
+            # definisikan diatas.
+            if [ -n "$yaml_conditional_bypass" ];then
+                _; _.
+                echo-wrap-color "Argument <magenta>${parameter}</magenta> skip by conditional." yellow
+                if [ -n "$conditional" ];then
+                    _; _.
+                    echo-wrap "$conditional"
+                fi
+                break
+            fi
+
             while true; do
                 find=`echo "$description" | grep -i -o -E 'Available values?:[^\.]+\.'| sed -n -E 's/^Available values?: ([^\.]+)\.$/\1/ip'`
                 if [ -n "$find" ];then
