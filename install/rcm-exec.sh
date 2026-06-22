@@ -7,9 +7,13 @@ usage() {
     _ 'URL '; yellow git.io/rcm; _.
     _.
 cat << EOF
-Usage: rcm [options]
-       rcm <extension> [options]
-       rcm [options] <extension> [options]
+Usage: rcm [rcm's options] [?]
+       rcm <extension> [extension's options] [?]
+       rcm [rcm's options] <extension> [extension's options] [?]
+       rcm [rcm's options] <extension> [command]... [command's options] [?]
+
+[?]: If you put question mark at last of command, it is means shortcut of rcm's
+     --interactive option.
 
 Options:
    --version
@@ -29,7 +33,6 @@ Options:
         Multiple -v options increase the verbosity.
         The maximum is 3.
 EOF
-    exit $exit_code
 }
 
 # Prevent scripts from being executed directly.
@@ -416,6 +419,9 @@ build-options() {
 intro() {
     usage >/dev/null | head -3
     _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
+    if [ -z "$interactive" ];then
+        x
+    fi
     e; _.
     _ Do you want to list available command?; _.
     read-true
@@ -425,6 +431,11 @@ intro() {
     ____
 }
 
+if [[ "$1" == ? && -z "$2" ]];then
+    # The last.
+    interactive=1
+    shift
+fi
 if [ $# -eq 0 ];then
     intro
 fi
@@ -452,6 +463,14 @@ until [[ ! -d "$prefix/commands" ]];do
         unset _return
         command+=" ${value}"
     else
+        if [ -z "$interactive" ];then
+            chapter There are available subcommand for command '`'$command'`'.
+            ____
+            for each in "${list[@]}";do
+                echo "$each"
+            done
+            x
+        fi
         if [ -z "$is_intro_printed" ];then
 
             title rcm
@@ -469,9 +488,16 @@ until [[ ! -d "$prefix/commands" ]];do
         build-options
         _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
     fi
+
     prefix+=/commands/$value
     RCM_EXTENSION_CHAIN+=("$value")
     value=
+
+    if [[ "$1" == ? && -z "$2" ]];then
+        # The last.
+        interactive=1
+        shift
+    fi
 done
 if [ -n "$is_dialog_printed" ];then
     while true; do
