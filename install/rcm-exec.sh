@@ -210,7 +210,9 @@ build-command-non-interactive() {
 
 do-prompt() {
 
-    RCM_CONTENTS=`$command_file_sh --help 2>/dev/null`
+    set -- "${RCM_ARGUMENT_PASS[@]}"
+
+    RCM_CONTENTS=`$command_file_sh "$@" --help 2>/dev/null`
 
     require vendor/ijortengab/rcm/functions/classes/rcm-prompt.sh
     backup_storage=$HOME'/.cache/rcm/rcm.'$command_file'.bak'
@@ -572,6 +574,7 @@ fi
 
 while true; do
     if [ -n "$prompt" ];then
+        RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}")
         do-prompt
         break
     fi
