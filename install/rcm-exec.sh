@@ -392,6 +392,7 @@ parse-prompt-yaml() {
                     ;;
             esac
         done
+        RCM_ARGUMENT_PASS=("${RCM_ARGUMENT_PASS[@]}" "${RCM_PREPOPULATE_ARGUMENTS[@]}")
     else
         RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}")
     fi
