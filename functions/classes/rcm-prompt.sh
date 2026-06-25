@@ -13,6 +13,8 @@ rcm-prompt() {
     local indent
     local default_indent='  '
     local each
+    local usage_string usage_array
+    local command_chain
 
     build-command() {
         local each
@@ -269,16 +271,39 @@ rcm-prompt() {
         parse-to-execute "$label" "$list_to_execute"
     fi
 
-    indent=''
-    for each in "${RCM_EXTENSION_CHAIN[@]}"; do
-        RCM_PROMPT_YAML+="${indent}${each}:"$'\n'
-        indent+="$default_indent"
-    done
-    while IFS= read -r line; do
-        if [ -n "$line" ];then
-            RCM_PROMPT_YAML+="${indent}${line}"$'\n'
+    usage_string=`echo "$contents" | grep -i -o -E '^ *Usage *?: *(.+) *$' | sed -E 's/^ *Usage *?: *rcm *(.+) *$/\1/i'`
+    command_chain=()
+    usage_array=()
+    if [ -n "$usage_string" ];then
+        read -ra usage_array -d '' <<< "$usage_string"
+        usage_array_valid=()
+        for each in "${usage_array[@]}";do
+            if grep -q -E -- '[^-_\[\=0-9\.<]' <<< ${each:0:1};then
+                usage_array_valid+=("$each")
+            else
+                break
+            fi
+        done
+        if [ ${#usage_array_valid[@]} -gt 0 ];then
+            command_chain=("${usage_array_valid[@]}")
         fi
-    done <<< "$RCM_YAML"
+    fi
+    if [ ${#command_chain[@]} -eq 0 ];then
+        command_chain=("${RCM_EXTENSION_CHAIN[@]}")
+    fi
+
+    if [ -n "$RCM_YAML" ];then
+        indent=''
+        for each in "${command_chain[@]}"; do
+            RCM_PROMPT_YAML+="${indent}${each}:"$'\n'
+            indent+="$default_indent"
+        done
+        while IFS= read -r line; do
+            if [ -n "$line" ];then
+                RCM_PROMPT_YAML+="${indent}${line}"$'\n'
+            fi
+        done <<< "$RCM_YAML"
+    fi
 
     # Append informasi array RCM_ARGUMENT_PREVIEW pada global variable
     # RCM_PROMPT_YAML agar bisa di gabung dengan parent.
