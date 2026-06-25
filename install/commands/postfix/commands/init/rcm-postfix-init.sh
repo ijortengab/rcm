@@ -15,7 +15,8 @@ Options:
         Available values: [1].
         [1]: Internet site
   --mailname=FQDN
-        The Fully Qualified Domain Name (FQDN) of the mail server (e.g., mail.example.com).
+        The Fully Qualified Domain Name (FQDN) of the mail server (e.g., smtp.example.com).
+        Value available from command: hostname(-f), or other.
    --dbms=DB
         Select database management system to store the data.
         Values available from command: rcm(plugin list postfix/dbms).
