@@ -152,7 +152,13 @@ if [ -z "$is_title_printed" ];then
     fi
 fi
 
-echo "$prefix/socket.sh"
+if [ -n "$help" ];then
+    if [ -f "$prefix/help.txt" ];then
+        cat "$prefix/help.txt"
+    fi
+else
+    echo "$prefix/socket.sh"
+fi
 
 exit 0
 
