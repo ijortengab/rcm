@@ -10,6 +10,8 @@ rcm-yaml() {
     local value
     local count below
     local default_indent='  '
+    local part_1 part_2 part_3
+    local array
 
     # Command.
     if [ -n "$1" ];then
@@ -18,6 +20,7 @@ rcm-yaml() {
             init) command="$1"; shift ;;
             find) command="$1"; shift ;;
             column) command="$1"; shift ;;
+            append) command="$1"; shift ;;
         esac
         if [ -z "$command" ];then
             error Command unknown: '`'"$1"'`'.; x
@@ -153,6 +156,12 @@ rcm-yaml() {
                 error The '`'"action-${action}"'`' function is not defined yet.; x
             fi
         fi
+    }
+
+    command-append() {
+        part_1="$RCM_YAML"
+        array="$1"; shift
+        rebuild
     }
 
     # Reference: https://www.php.net/manual/en/function.array-column.php
