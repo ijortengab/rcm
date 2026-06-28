@@ -1,0 +1,8 @@
+Usage: rcm dovecot init
+
+Auto Install Dovecot with default version.
+
+Options:
+   --dbms=DB
+        Select database management system to store the data.
+        Values available from command: rcm(plugin list dovecot/dbms).
