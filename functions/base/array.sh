@@ -138,7 +138,7 @@ array() {
                     if [ ${#args[@]} -gt 0 ];then
                         recursive-get-value "$yaml_child" "${args[@]}"
                     else
-                        yaml_child_to_parent="$yaml_child"
+                        yaml_child_to_parent+="$yaml_child"
                         parse_as_array_to_parent="$parse_as_array"
                     fi
                 done <<< "$found"
