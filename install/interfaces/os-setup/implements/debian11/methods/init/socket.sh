@@ -8,13 +8,25 @@ require command find-string
 chapter Update Repository
 update_system="$RCM_DO_UPDATE_SYSTEM"
 upgrade_system="$RCM_DO_UPGRADE_SYSTEM"
-repository_required=$(cat <<EOF
+repository_required_first=$(cat <<EOF
 deb http://deb.debian.org/debian bullseye main
 deb-src http://deb.debian.org/debian bullseye main
 deb http://security.debian.org/debian-security bullseye-security main
 deb-src http://security.debian.org/debian-security bullseye-security main
 deb http://deb.debian.org/debian bullseye-updates main
 deb-src http://deb.debian.org/debian bullseye-updates main
+EOF
+)
+
+repository_required=$(cat <<EOF
+deb http://archive.debian.org/debian bullseye main contrib non-free
+deb-src http://archive.debian.org/debian bullseye main contrib non-free
+deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+deb-src http://security.debian.org/debian-security bullseye-security main contrib non-free
+deb http://archive.debian.org/debian bullseye-updates main contrib non-free
+deb-src http://archive.debian.org/debian bullseye-updates main contrib non-free
+deb http://archive.debian.org/debian bullseye-backports main contrib non-free
+deb-src http://archive.debian.org/debian bullseye-backports main contrib non-free
 EOF
 )
 path=/etc/apt/sources.list
