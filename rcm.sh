@@ -10,7 +10,7 @@
 #
 
 RCM_PREFIX=${RCM_PREFIX:=/usr/local/rcm}
-RCM_VERSION='0.19.0-alpha.10'
+RCM_VERSION='0.19.0-alpha.11'
 RCM_LIB="${RCM_PREFIX}/lib/${RCM_VERSION}"
 GITHUB_OWNER=ijortengab
 GITHUB_REPOSITORY=rcm
