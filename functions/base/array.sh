@@ -1,9 +1,9 @@
 #!/bin/bash
 
-array() {
+require vendor/ijortengab/bash/functions/array-pop.sh
+require vendor/ijortengab/bash/functions/array-shift.sh
 
-    [[ $(type -t array-pop) == function ]] || { echo The array-pop function is required. >&2; exit 1; }
-    [[ $(type -t array-shift) == function ]] || { echo The array-shift function is required. >&2; exit 1; }
+array() {
 
     # global array
     local args=()
