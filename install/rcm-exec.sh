@@ -503,6 +503,42 @@ until [[ ! -d "$prefix/commands" ]];do
     fi
 done
 
+if [[ $# -gt 0 ]]; then
+    # The last.
+    last=$#
+    if [[ ${!last} == '?' ]]; then
+        interactive=1
+        _new_arguments=()
+        while [[ $# -gt 0 ]]; do
+            if [[ "$1" == '?' && -z "$2" ]];then
+                # The last.
+                shift
+            else
+                _new_arguments+=("$1"); shift
+            fi
+
+        done
+        set -- "${_new_arguments[@]}"
+        unset _new_arguments
+    fi
+fi
+
+if [ -n "$interactive" ];then
+    _; _.
+    interactive=
+    build-options
+    _; _, Do you want to execute' '; magenta ${command/rcm/rcm ${rcm_options}} "$@" --help; _, ' 'instead?; _.
+    read-false
+    if [ -n "$RCM_BOOLEAN" ];then
+        set -- "$@" --help
+    else
+        interactive=1
+        build-options
+        _; _.
+        _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
+    fi
+fi
+
 # Populate $command_file and $command_file_sh
 command_file="rcm"
 for each in "${RCM_EXTENSION_CHAIN[@]}"; do
