@@ -453,8 +453,8 @@ RCM_EXTENSION_CHAIN=()
 command="rcm"
 is_intro_printed=
 is_required=1
-parameter=command
-parameter_plural=commands
+parameter=argument
+parameter_plural=arguments
 is_dialog_printed=
 until [[ ! -d "$prefix/commands" ]];do
     list=(`ls "$prefix/commands"`)
@@ -467,7 +467,7 @@ until [[ ! -d "$prefix/commands" ]];do
         command+=" ${value}"
     else
         if [ -z "$interactive" ];then
-            chapter There are available subcommand for command '`'$command'`'.
+            chapter There are available argument for command '`'$command'`'.
             ____
             for each in "${list[@]}";do
                 echo "$each"
@@ -483,7 +483,7 @@ until [[ ! -d "$prefix/commands" ]];do
             is_intro_printed=1
         fi
         _; _.
-        _ Select available command to execute.; _.
+        _ Select available argument to execute.; _.
         print-select-dialog list[@] "$parameter" "$parameter_plural"
         is_dialog_printed=1
         _; _.
