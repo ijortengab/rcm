@@ -1,3 +1,5 @@
+#!/bin/bash
 
-
-return 0
+INDENT+="$RCM_INDENT" \
+rcm amavis init \
+    ; [ ! $? -eq 0 ] && x
