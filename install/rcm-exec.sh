@@ -434,7 +434,7 @@ intro() {
     ____
 }
 
-if [[ "$1" == ? && -z "$2" ]];then
+if [[ "$1" == '?' && -z "$2" ]];then
     # The last.
     interactive=1
     shift
@@ -496,7 +496,7 @@ until [[ ! -d "$prefix/commands" ]];do
     RCM_EXTENSION_CHAIN+=("$value")
     value=
 
-    if [[ "$1" == ? && -z "$2" ]];then
+    if [[ "$1" == '?' && -z "$2" ]];then
         # The last.
         interactive=1
         shift
