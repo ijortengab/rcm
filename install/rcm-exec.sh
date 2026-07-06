@@ -502,30 +502,6 @@ until [[ ! -d "$prefix/commands" ]];do
         shift
     fi
 done
-if [ -n "$is_dialog_printed" ];then
-    while true; do
-        if [ -n "$prompt" ];then
-            break
-        fi
-        if [ -n "$config" ];then
-            break
-        fi
-        if [ -z "$interactive" ];then
-            _; _.
-            _ Do you want to enable --interactive option?; _.
-            read-true
-            if [ -n "$RCM_BOOLEAN" ];then
-                interactive=1
-                build-options
-                _; _.
-                _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
-
-            fi
-            break
-        fi
-        break
-    done
-fi
 
 # Populate $command_file and $command_file_sh
 command_file="rcm"
