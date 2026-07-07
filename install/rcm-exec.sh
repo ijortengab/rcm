@@ -419,28 +419,27 @@ build-options() {
 
 }
 
-intro() {
-    usage >/dev/null | head -3
-    _ Try; blue ' 'rcm; magenta ' '--help; _, ' 'for more information.; _.
-    if [ -z "$interactive" ];then
-        x
-    fi
-    e; _.
-    _ Do you want to list available command?; _.
-    read-true
-    if [ -z "$RCM_BOOLEAN" ];then
-        x
-    fi
-    ____
-}
-
 if [[ "$1" == '?' && -z "$2" ]];then
     # The last.
     interactive=1
     shift
 fi
+
 if [ $# -eq 0 ];then
-    intro
+    if [ -n "$interactive" ];then
+        e; _.
+        _ Do you want to list available command?; _.
+        read-true
+        if [ -z "$RCM_BOOLEAN" ];then
+            x
+        fi
+        ____
+
+    else
+        usage >/dev/null | head -3
+        _ Try' '; blue rcm' '; magenta '? '; _, for getting started, or' '; blue rcm' '; magenta --help' '; _, for more information.; _.
+        x
+    fi
 fi
 
 # Requirement, validate, and populate value.
