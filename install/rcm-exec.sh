@@ -467,8 +467,13 @@ until [[ ! -d "$prefix/commands" ]];do
         command+=" ${value}"
     else
         if [ -z "$interactive" ];then
+            if [ -f "$prefix/help.sh" ];then
+                source "$prefix/help.sh"
+                x
+            fi
             chapter There are available argument for command '`'$command'`'.
             ____
+
             for each in "${list[@]}";do
                 echo "$each"
             done
@@ -501,6 +506,7 @@ until [[ ! -d "$prefix/commands" ]];do
         interactive=1
         shift
     fi
+
 done
 
 if [[ $# -gt 0 ]]; then
