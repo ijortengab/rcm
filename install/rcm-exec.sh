@@ -163,6 +163,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
 RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
+question_mark=
 tempfile=
 exit_code=0
 
@@ -422,6 +423,7 @@ build-options() {
 if [[ "$1" == '?' && -z "$2" ]];then
     # The last.
     interactive=1
+    question_mark=1
     shift
 fi
 
@@ -437,7 +439,9 @@ if [ $# -eq 0 ];then
 
     else
         usage >/dev/null | head -3
-        _ Try' '; blue rcm' '; magenta '? '; _, for getting started, or' '; blue rcm' '; magenta --help' '; _, for more information.; _.
+        _ Try:; _.
+        _; blue rcm' '; magenta '? '; _, for getting started, or; _.
+        _; blue rcm' '; magenta --help' '; _, for more information.; _.
         x
     fi
 fi
@@ -503,6 +507,7 @@ until [[ ! -d "$prefix/commands" ]];do
     if [[ "$1" == '?' && -z "$2" ]];then
         # The last.
         interactive=1
+        question_mark=1
         shift
     fi
 
@@ -513,6 +518,7 @@ if [[ $# -gt 0 ]]; then
     last=$#
     if [[ ${!last} == '?' ]]; then
         interactive=1
+        question_mark=1
         _new_arguments=()
         while [[ $# -gt 0 ]]; do
             if [[ "$1" == '?' && -z "$2" ]];then
@@ -528,7 +534,7 @@ if [[ $# -gt 0 ]]; then
     fi
 fi
 
-if [ -n "$interactive" ];then
+if [ -n "$question_mark" ];then
     _; _.
     interactive=
     build-options
