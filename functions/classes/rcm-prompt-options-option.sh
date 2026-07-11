@@ -316,7 +316,8 @@ rcm-prompt-options-option() {
         #     rcm-yaml find parameter "${parameter}" then get type
         # ```
         # Alternative adalah, langsung populate variable array.
-        rcm-yaml find parameter "${parameter}"
+        rcm-yaml find parameter "${parameter}" then export
+        array="$_return_value"
         # Lalu ambil property `type` via array function.
         array type; type="$_return_value"
         # Begitu juga dengan property `flag`, via array function.
