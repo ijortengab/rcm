@@ -16,7 +16,6 @@ EOF
 # Prevent scripts from being executed directly.
 [ -f "${RCM_LIB}/require.sh" ] && source "${RCM_LIB}/require.sh" || { usage >&2; exit 1; }
 
-
 # ------------------------------------------------------------------------------
 
 # Title.
