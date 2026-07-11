@@ -428,16 +428,7 @@ if [[ "$1" == '?' && -z "$2" ]];then
 fi
 
 if [ $# -eq 0 ];then
-    if [ -n "$interactive" ];then
-        e; _.
-        _ Do you want to list available command?; _.
-        read-true
-        if [ -z "$RCM_BOOLEAN" ];then
-            x
-        fi
-        ____
-
-    else
+    if [ -z "$interactive" ];then
         usage >/dev/null | head -3
         _ Try:; _.
         _; blue rcm' '; magenta '? '; _, for getting started, or; _.
