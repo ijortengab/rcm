@@ -1,6 +1,7 @@
 #!/bin/bash
 
 rcm-yaml() {
+    # global _return_value
 
     # Required Global Function.
     [[ $(type -t array) == function ]] || { error "The array function is required."; x; }
@@ -71,6 +72,10 @@ rcm-yaml() {
         rebuild
     }
 
+    action-export() {
+        _return_value="$array"
+    }
+
     rebuild() {
         if [[ "${array:(-1)}" == $'\n' ]];then
             array="${array::(-1)}"
@@ -112,6 +117,7 @@ rcm-yaml() {
         # global part_2
         # global part_3
         # global array
+        # global _return_value
         local key="$1"; shift
         local parameter="$1"; shift
         local count find found below each
