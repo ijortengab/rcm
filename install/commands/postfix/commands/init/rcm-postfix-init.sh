@@ -116,6 +116,8 @@ if [ -n "$public_domain" ];then
 
     RCM_FQDN=$(</etc/mailname)
 
+    include `rcm plugin run-method acme-client $acme_client init`
+
     include `rcm plugin run-method acme-client $acme_client obtain`
 
 fi
