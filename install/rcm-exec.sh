@@ -13,7 +13,7 @@ Usage: rcm [rcm's options] [?]
        rcm [rcm's options] <extension> [command]... [command's options] [?]
 
 [?]: If you put question mark at last of command, it is means shortcut of rcm's
-     --interactive option.
+     --interactive option and also provide ability to view the help.
 
 Options:
    --version
@@ -527,18 +527,37 @@ fi
 
 if [ -n "$question_mark" ];then
     _; _.
+    _; _, There are no more arguments available.; _.
+    build-options
+    _; _.
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow C; _, 'ontinue. Execute '; magenta ${command/rcm/rcm ${rcm_options}} "$@"; _.
     interactive=
     build-options
-    _; _, Do you want to execute' '; magenta ${command/rcm/rcm ${rcm_options}} "$@" --help; _, ' 'instead?; _.
-    read-false
-    if [ -n "$RCM_BOOLEAN" ];then
-        set -- "$@" --help
-    else
-        interactive=1
-        build-options
-        _; _.
-        _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
-    fi
+    __;  _, '['; yellow H; _, ']'; _, ' 'View' '; yellow H; _, 'elp instead. Execute '; magenta ${command/rcm/rcm ${rcm_options}} "$@" --help; _.
+    RCM_SWITCH=
+    _; _.
+    __ Press the yellow key to select.
+    while true; do
+        __; read -rsn 1 -p "Select: " char
+        if [ -z "$char" ];then
+            char=c
+        fi
+        case $char in
+            c|C) echo "$char" >&2; RCM_SWITCH=c; break;;
+            h|H) echo "$char" >&2; RCM_SWITCH=h;break ;;
+            *) echo >&2
+        esac
+    done
+    case "$RCM_SWITCH" in
+        c)
+            interactive=1
+            build-options
+            _; _.
+            _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
+            ;;
+        h)
+            set -- "$@" --help
+    esac
 fi
 
 # Populate $command_file and $command_file_sh
