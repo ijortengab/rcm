@@ -140,6 +140,7 @@ require vendor/ijortengab/bash/functions/array-shift.sh
 require vendor/ijortengab/bash/functions/array-remove.sh
 require vendor/ijortengab/bash/functions/array-remove-all.sh
 require vendor/ijortengab/bash/functions/array-pop.sh
+require vendor/ijortengab/bash/functions/array-diff.sh
 
 # ------------------------------------------------------------------------------
 
@@ -307,6 +308,9 @@ do-interactive() {
         ____
 
         if [ -n "$autoyes" ];then
+            ArrayDiff RCM_PREPOPULATE_ARGUMENTS[@] RCM_ARGUMENT_PASS[@]
+            RCM_PREPOPULATE_ARGUMENTS=("${_return[@]}")
+
             RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}")
             do-execute
             break
@@ -317,6 +321,10 @@ do-interactive() {
         if [ -z "$RCM_BOOLEAN" ];then
             break
         fi
+
+        ArrayDiff RCM_PREPOPULATE_ARGUMENTS[@] RCM_ARGUMENT_PASS[@]
+        RCM_PREPOPULATE_ARGUMENTS=("${_return[@]}")
+
         RCM_ARGUMENT_PASS=("${RCM_PREPOPULATE_ARGUMENTS[@]}" "${RCM_ARGUMENT_PASS[@]}")
         do-execute
         break
