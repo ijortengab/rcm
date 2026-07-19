@@ -420,6 +420,11 @@ build-options() {
 
 }
 
+if [[ "${#1}" == 1 && -z "$2" && -f "$1" ]];then
+    # Shell expansion for character "question" (?).
+    set -- '?'
+fi
+
 if [[ "$1" == '?' && -z "$2" ]];then
     # The last.
     interactive=1
@@ -495,6 +500,11 @@ until [[ ! -d "$prefix/commands" ]];do
     RCM_EXTENSION_CHAIN+=("$value")
     value=
 
+    if [[ "${#1}" == 1 && -z "$2" && -f "$1" ]];then
+        # Shell expansion for character "question" (?).
+        set -- '?'
+    fi
+
     if [[ "$1" == '?' && -z "$2" ]];then
         # The last.
         interactive=1
@@ -504,21 +514,31 @@ until [[ ! -d "$prefix/commands" ]];do
 
 done
 
+# Jika masih terdapat operand dari command.
 if [[ $# -gt 0 ]]; then
     # The last.
     last=$#
-    if [[ ${!last} == '?' ]]; then
+    last="${!last}"
+    if [[ "${#last}" == 1 && -f "$last" ]];then
+        # Shell expansion for character "question" (?).
+        last='?'
+    fi
+
+    if [[ "$last" == '?' ]]; then
         interactive=1
         question_mark=1
         _new_arguments=()
         while [[ $# -gt 0 ]]; do
+            if [[ "${#1}" == 1 && -z "$2" && -f "$1" ]];then
+                # Shell expansion for character "question" (?).
+                set -- '?'
+            fi
             if [[ "$1" == '?' && -z "$2" ]];then
                 # The last.
                 shift
             else
                 _new_arguments+=("$1"); shift
             fi
-
         done
         set -- "${_new_arguments[@]}"
         unset _new_arguments
