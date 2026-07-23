@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-composer-autoinstaller [options]
+Usage: rcm composer init [options]
 
 Global Options.
    --version
@@ -39,7 +39,7 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-composer-autoinstaller
+title rcm composer init
 ____
 
 # Dependency.
