@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-cron-setup-wsl-autorun-crond
+Usage: rcm cygwin setup wsl autorun crond
 
 Global Options:
    --version
@@ -47,7 +47,7 @@ BASENAME=${BASENAME:=host-trigger-wsl-autorun-crond}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-cron-setup-wsl-autorun-crond
+title rcm cygwin setup wsl autorun crond
 ____
 
 # Dependency.
