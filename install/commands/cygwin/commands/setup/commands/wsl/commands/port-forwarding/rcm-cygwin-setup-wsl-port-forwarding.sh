@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-cron-setup-wsl-port-forwarding [options]
+Usage: rcm cygwin setup wsl port-forwarding [options]
 
 Options:
    --host-port *
@@ -57,7 +57,7 @@ BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-cron-setup-wsl-port-forwarding
+title rcm cygwin setup wsl port-forwarding
 ____
 
 # Dependency.
