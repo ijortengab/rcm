@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-ssh-setup-open-ssh-tunnel [options]
+Usage: rcm ssh setup tunnel [options]
 
 Options:
    --pattern *
@@ -64,7 +64,7 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-ssh-setup-open-ssh-tunnel
+title rcm ssh setup tunnel
 ____
 
 # Dependency.
