@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-ssh-setup-sshd-listen-port [options]
+Usage: rcm ssh adjust port [options]
 
 Options:
    --config-file
@@ -70,7 +70,7 @@ RCM_CONF=${RCM_CONF:=rcm.conf}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-ssh-setup-sshd-listen-port
+title rcm ssh adjust port
 ____
 
 # Dependency.
