@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-postfix-multiple-certificate [options]
+Usage: rcm postfix add certificate [options]
 
 Reference:
  - https://serverfault.com/questions/928926/postfix-multi-domains-and-multi-certs-on-one-ip
@@ -13,13 +13,13 @@ Reference:
  - https://www.postfix.org/announcements/postfix-3.4.0.html
 
 Options:
-   --fqdn *
+   --fqdn=FQDN
         The FQDN of certificate to be added.
-   --ssl-cert *
+   --ssl-cert=CERT
         Fullpath of SSL Certificate chain.
-   --ssl-key *
+   --ssl-key=KEY
         Fullpath of SSL Certificate private key.
-   --additional-config-file *
+   --additional-config-file=FILE
         Extra file to store the list of FQDN.
 
 Global Options:
@@ -76,7 +76,7 @@ POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-postfix-multiple-certificate
+title rcm postfix add certificate
 ____
 
 # Dependency.
@@ -216,8 +216,8 @@ code 'ssl_key="'$ssl_key'"'
 [ -f "$ssl_cert" ] || fileMustExists "$ssl_cert"
 [ -f "$ssl_key" ] || fileMustExists "$ssl_key"
 # Exit code sama-sama bernilai 0 pada unknown parameter, sehingga perlu kita gunakan output.
-tempfile_error=$(mktemp -p /dev/shm -t rcm-postfix-multiple-certificate.XXXXXX)
-tempfile_output=$(mktemp -p /dev/shm -t rcm-postfix-multiple-certificate.XXXXXX)
+tempfile_error=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
+tempfile_output=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
 ____
 
 restart=
