@@ -27,7 +27,7 @@ usage() {
     fi
 
     cat << EOF
-Usage: rcm-wsl-setup-lemp-stack [options]
+Usage: rcm wsl run lemp-stack [options]
 
 Options:
    --php-version *
@@ -72,7 +72,7 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-wsl-setup-lemp-stack
+title rcm wsl run lemp-stack
 ____
 
 # Dependency.
