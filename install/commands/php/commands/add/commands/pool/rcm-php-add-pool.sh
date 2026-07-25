@@ -11,7 +11,7 @@ usage() {
     fi
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
-Usage: rcm-php-fpm-setup-project-config [options]
+Usage: rcm php add pool [options]
 
 Options:
    --php-version *
@@ -89,7 +89,7 @@ fi
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-php-fpm-setup-project-config
+title rcm php add pool
 ____
 
 # Dependency.
