@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-phpmyadmin-autoinstaller-nginx [options]
+Usage: rcm phpmyadmin init [options]
 
 Options:
    --php-version *
@@ -65,7 +65,7 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-phpmyadmin-autoinstaller-nginx
+title rcm phpmyadmin init
 ____
 
 # Dependency.
@@ -709,7 +709,7 @@ chapter Mengecek HTTP Response Code.
 i=0
 code=
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-phpmyadmin-autoinstaller-nginx.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-phpmyadmin-init.XXXXXX)
 fi
 until [ $i -eq 10 ];do
     __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"' -H '"'Host: $PHPMYADMIN_FQDN_LOCALHOST'"'; _.
