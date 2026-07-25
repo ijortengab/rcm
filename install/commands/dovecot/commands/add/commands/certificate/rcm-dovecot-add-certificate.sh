@@ -5,11 +5,17 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-dovecot-multiple-certificate [options]
+Usage: rcm dovecot add certificate [options]
 
 Options:
-   --domain *
-        Add domain.
+   --fqdn=FQDN
+        Set the Fully Qualified Domain Name.
+   --ssl-cert=CERT
+        Set the SSL/TLS Certificate.
+   --ssl-key=KEY
+        Set the SSL/TLS Certificate Key.
+   --additional-config-file=FILE
+        Set the additional config filename.
 
 Global Options:
    --version
@@ -63,7 +69,7 @@ DOVECOT_CONFIG_FILE_MAIN=${DOVECOT_CONFIG_FILE_MAIN:=${DOVECOT_CONFIG_DIR}/dovec
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-dovecot-multiple-certificate
+title rcm dovecot add certificate
 ____
 
 # Dependency.
