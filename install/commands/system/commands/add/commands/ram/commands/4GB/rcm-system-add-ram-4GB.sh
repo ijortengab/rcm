@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << EOF
-Usage: rcm-system-ram-swap-4gb [options]
+Usage: rcm system add ram 4GB [options]
 
 Global Options:
    --version
@@ -39,7 +39,7 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-system-ram-swap-4gb
+title rcm system add ram 4GB
 ____
 
 # Dependency.
