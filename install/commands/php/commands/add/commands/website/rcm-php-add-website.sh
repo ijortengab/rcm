@@ -37,7 +37,7 @@ usage() {
     [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     [ -n "$users" ] && users=" Available values:${nginx_user}${users}."
     cat << EOF
-Usage: rcm-nginx-setup-php-project [options]
+Usage: rcm php add website [options]
 
 Options:
    --url *
@@ -53,7 +53,7 @@ Options:
    --php-fpm-section *
         Set the PHP-FPM section.
         Create new PHP FPM section with \`rcm php-fpm-setup-project-config\`.
-        Values available from command: rcm-nginx-setup-php-project(section-suggestion [--php-version] [--php-fpm-user]).
+        Values available from command: rcm (php list pool [--php-version] [--php-fpm-user]).
    --root
         Set the web root pointing the URL. If empty, it will use the default value of
         \`--prefix\` and \`--container\`.
@@ -447,7 +447,7 @@ isFileExists() {
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-nginx-setup-php-project
+title rcm php add website
 ____
 
 # Dependency.
@@ -829,7 +829,7 @@ code 'fastcgi_pass="'$fastcgi_pass'"'
 ____
 
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-php-project.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-php-add-website.XXXXXX)
 fi
 
 chapter Mengecek '$PATH'.
@@ -925,7 +925,7 @@ fi
 i=0
 code=
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-php-project.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-php-add-website.XXXXXX)
 fi
 until [ $i -eq 10 ];do
     __; magenta curl"$_k" -o /dev/null -s -w '"'%{http_code}\\n'"' '"'"${url_scheme}://127.0.0.1:${url_port}${url_path_clean_trailing}/${filename}"'"' -H '"'Host: $url_host'"'; _.
