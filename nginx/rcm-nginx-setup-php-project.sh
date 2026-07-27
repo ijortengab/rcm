@@ -164,15 +164,6 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Command.
-command="$1"; shift
-if [ -n "$command" ];then
-    case "$command" in
-        --|get-root|section-suggestion) ;;
-        *) echo -e "\e[91m""Command ${command} is unknown.""\e[39m"; exit 1
-    esac
-fi
-
 # Functions.
 Rcm_parse_url() {
     # Reset
@@ -452,31 +443,6 @@ isFileExists() {
         notfound=1
     fi
 }
-command-section-suggestion() {
-    local php_version=$1
-    local php_fpm_user=$2
-    if [ -z "$php_version" ];then
-        error PHP Version is required.; x
-    fi
-    # echo php_version "$php_version"
-    # echo php_fpm_user "$php_fpm_user"
-
-    find='[php-version]'
-    replace="$php_version"
-    PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
-    if [ ! -d "$PHP_FPM_POOL_DIRECTORY" ];then
-        error PHP Version is not exists in system.; x
-    fi
-    while read file; do
-        grep -h -E '^\s*\[[^]]+]\s*$' "$file" | sed -E 's,\[(.*)\],\1,' | sort
-    done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
-}
-
-# Execute command.
-if [[ -n "$command" && $(type -t "command-${command}") == function ]];then
-    command-${command} "$@"
-    exit 0
-fi
 
 # ------------------------------------------------------------------------------
 
