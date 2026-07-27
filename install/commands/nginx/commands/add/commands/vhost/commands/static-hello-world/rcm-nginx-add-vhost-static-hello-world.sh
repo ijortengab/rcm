@@ -5,10 +5,10 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-nginx-setup-hello-world-static [options]
+Usage: rcm nginx add vhost static-hello-world [options]
 
 Options:
-   --domain *
+   --domain=DOMAIN
         Set the domain name.
 
 Global Options:
@@ -49,7 +49,7 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-nginx-setup-hello-world-static
+title rcm nginx add vhost static-hello-world
 ____
 
 # Dependency.
@@ -170,7 +170,7 @@ chapter Mengecek HTTP Response Code.
 i=0
 code=
 if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-setup-hello-world-static.XXXXXX)
+    tempfile=$(mktemp -p /dev/shm -t rcm-nginx-add-vhost-static-hello-world.XXXXXX)
 fi
 until [ $i -eq 10 ];do
     __; magenta curl -o /dev/null -s -w '"'%{http_code}\\n'"' '"'http://127.0.0.1'"' -H '"'Host: $domain'"'; _.
