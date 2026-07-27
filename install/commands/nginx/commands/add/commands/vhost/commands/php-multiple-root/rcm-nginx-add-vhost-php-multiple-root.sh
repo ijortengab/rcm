@@ -5,7 +5,7 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-nginx-virtual-host-autocreate-php-multiple-root [options]
+Usage: rcm nginx add vhost php-multiple-root [options]
 
 Options:
    --url *
@@ -94,7 +94,7 @@ fi
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-nginx-virtual-host-autocreate-php-multiple-root
+title rcm nginx add vhost php-multiple-root
 ____
 
 # Dependency.
