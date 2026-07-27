@@ -5,18 +5,18 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-nginx-setup-front-controller-php [options]
+Usage: rcm nginx add vhost php-front-controller [options]
 
 Options:
-   --filename *
+   --filename=FILE
         Set the filename to created inside /etc/nginx/sites-available directory.
-   --root *
+   --root=DIR
         Set the value of root directive.
-   --php-version
+   --php-version=[PHP]
         Set the version of PHP FPM.
-   --front-controller *
+   --front-controller=PHP
         Set the PHP script as front controller.
-   --server-name *
+   --server-name=SERVER...
         Set the value of server_name directive. Multivalue.
 
 Global Options:
@@ -64,7 +64,7 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-nginx-setup-front-controller-php
+title rcm nginx add vhost php-front-controller
 ____
 
 # Dependency.
