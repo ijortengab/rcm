@@ -5,14 +5,14 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 # Usage Functions.
 usage() {
     cat << 'EOF'
-Usage: rcm-nginx-setup-static [options]
+Usage: rcm nginx add vhost static-default [options]
 
 Options:
-   --filename *
+   --filename=FILE
         Set the filename to created inside /etc/nginx/sites-available directory.
-   --root *
+   --root=DIR
         Set the value of root directive.
-   --server-name *
+   --server-name=NAME...
         Set the value of server_name directive. Multivalue.
 
 Global Options:
@@ -20,9 +20,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   nginx
 EOF
 }
 
@@ -56,10 +53,11 @@ unset _new_arguments
 # ------------------------------------------------------------------------------
 
 # Title.
-title rcm-nginx-setup-static
+title rcm nginx add vhost static-default
 ____
 
 # Dependency.
+require command nginx
 
 # Functions.
 backupFile() {
