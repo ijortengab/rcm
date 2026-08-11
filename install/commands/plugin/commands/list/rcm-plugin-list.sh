@@ -32,7 +32,7 @@ while IFS= read -r each;do
     find=/implements; replace=
     each="${each/%$find/$replace}"
     list+=("$each")
-done <<< `find "$prefix" -type d -iname implements`
+done <<< `find -L "$prefix" -type d -iname implements`
 
 command="rcm plugin list"
 if [ -n "$1" ];then
