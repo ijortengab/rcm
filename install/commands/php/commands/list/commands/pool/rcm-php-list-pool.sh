@@ -17,6 +17,10 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --php-fpm-user=*) php_fpm_user="${1#*=}"; shift ;;
+        --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_fpm_user="$2"; shift; fi; shift ;;
+        --php-version=*) php_version="${1#*=}"; shift ;;
+        --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -25,10 +29,14 @@ set -- "${_new_arguments[@]}"
 unset _new_arguments
 
 # Define variables and constants.
+PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
+
+# Require.
+require vendor/ijortengab/rcm/functions/utility/php-pool.sh
 
 # ------------------------------------------------------------------------------
 
@@ -37,32 +45,57 @@ title rcm php list pool
 ____
 
 # Dependency.
+require command php
 
 # Functions.
 
+# Mapping operand to value of options.
+chapter Mapping operand as value of options.
+if [ -n "$1" ];then
+    code --php-version=$1
+    php_version="$1"; shift
+fi
+if [ -n "$1" ];then
+    code --php-fpm-user=$1
+    php_fpm_user=$1; shift
+fi
+
+____
+
 # Require, validate, and populate value.
+chapter Variable dump.
+if [ -z "$php_version" ];then
+    error "Argument --php-version required."; x
+fi
+code 'php_version="'$php_version'"'
+code 'php_fpm_user="'$php_fpm_user'"'
+____
 
-command-section-suggestion() {
-    local php_version=$1
-    local php_fpm_user=$2
-    if [ -z "$php_version" ];then
-        error PHP s Version is required.; x
-    fi
-    # echo php_version "$php_version"
-    # echo php_fpm_user "$php_fpm_user"
-
+if [ "$EUID" -ne 0 ];then
     find='[php-version]'
     replace="$php_version"
     PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
     if [ ! -d "$PHP_FPM_POOL_DIRECTORY" ];then
         error PHP Version is not exists in system.; x
     fi
-    while read file; do
-        grep -h -E '^\s*\[[^]]+]\s*$' "$file" | sed -E 's,\[(.*)\],\1,' | sort
-    done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
-}
+    if [ -n "$php_fpm_user" ];then
+        contents=
 
-command-${command} "$@"
+        while read file; do
+            contents+=$(cat - < "$file")
+            contents+=$'\n'
+        done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
+        echo "$contents" | php-pool list $php_fpm_user
+    else
+        while read file; do
+            grep -h -E '^\s*\[[^]]+]\s*$' "$file" | sed -E 's,\[(.*)\],\1,' | sort
+        done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
+    fi
+else
+    # Dependency.
+    require command php-fpm$php_version
+    php-fpm$php_version -tt 2>&1 | sed -E 's/.*NOTICE:[[:blank:]]+//' | sed '$d' | php-pool list $php_fpm_user
+fi
 
 exit 0
 
@@ -79,6 +112,8 @@ exit 0
 # --help
 # )
 # VALUE=(
+# --php-version
+# --php-fpm-user
 # )
 # MULTIVALUE=(
 # )
