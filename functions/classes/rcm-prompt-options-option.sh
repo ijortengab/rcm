@@ -350,7 +350,7 @@ rcm-prompt-options-option() {
                 _; _.
                 [ -n "$arguments" ] && arguments=' '"$arguments"
                 echo-wrap-color "Value available from command: <magenta>${command}${arguments}</magenta>"
-                mktemp="$(${command}${arguments})"
+                mktemp="$(${command}${arguments} 2>/dev/null)"
                 while read line;do
                     [ -n "$line" ] && available_values+=("$line")
                 done <<< "$mktemp"
