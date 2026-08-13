@@ -59,7 +59,6 @@ if [ -n "$1" ];then
     code --php-fpm-user=$1
     php_fpm_user=$1; shift
 fi
-
 ____
 
 # Require, validate, and populate value.
@@ -78,23 +77,23 @@ if [ "$EUID" -ne 0 ];then
     if [ ! -d "$PHP_FPM_POOL_DIRECTORY" ];then
         error PHP Version is not exists in system.; x
     fi
+    contents=
+    while read file; do
+        contents+=$(cat - < "$file")
+        contents+=$'\n'
+    done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
     if [ -n "$php_fpm_user" ];then
-        contents=
-
-        while read file; do
-            contents+=$(cat - < "$file")
-            contents+=$'\n'
-        done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
-        echo "$contents" | php-pool list $php_fpm_user
+        echo "$contents" | php-pool list $php_fpm_user \
+        ; [ ! $? -eq 0 ] && x
     else
-        while read file; do
-            grep -h -E '^\s*\[[^]]+]\s*$' "$file" | sed -E 's,\[(.*)\],\1,' | sort
-        done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
+        echo "$contents" | php-pool list \
+        ; [ ! $? -eq 0 ] && x
     fi
 else
     # Dependency.
     require command php-fpm$php_version
-    php-fpm$php_version -tt 2>&1 | sed -E 's/.*NOTICE:[[:blank:]]+//' | sed '$d' | php-pool list $php_fpm_user
+    php-fpm$php_version -tt 2>&1 | sed -E 's/.*NOTICE:[[:blank:]]+//' | sed '$d' | php-pool list $php_fpm_user \
+    ; [ ! $? -eq 0 ] && x
 fi
 
 exit 0
