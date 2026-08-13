@@ -162,7 +162,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 
 # Define variables and constants.
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+RCM_INDENT='    '; command -v tput &>/dev/null  && [[ -n "$(tput cols)" ]] && [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 question_mark=
 tempfile=
@@ -521,6 +521,12 @@ until [[ ! -d "$prefix/commands" ]];do
     fi
 
 done
+if [ -z "$interactive" ];then
+    if [ -f "$prefix/help.sh" ];then
+        source "$prefix/help.sh"
+        x
+    fi
+fi
 
 # Jika masih terdapat operand dari command.
 if [[ $# -gt 0 ]]; then
