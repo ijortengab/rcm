@@ -54,6 +54,9 @@ BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -61,32 +64,6 @@ title rcm cygwin setup wsl port-forwarding
 ____
 
 # Dependency.
-
-# Functions.
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -128,20 +105,20 @@ fi
 
 filename_string="/var/log/${basename_string}.log"
 chapter Mengecek file log '`'$filename_string'`'
-isFileExists "$filename_string"
+rcm-file "$filename_string" isExists
 if [ -n "$notfound" ];then
     __ Membuat file.
     touch "$filename_string"
-    fileMustExists "$filename_string"
+    rcm-file "$filename_string" mustExists
 fi
 ____
 
 filename_string="/usr/local/${basename_string}.sh"
 chapter Mengecek shell script '`'$filename_string'`'
-isFileExists "$filename_string"
+rcm-file "$filename_string" isExists
 if [ -n "$notfound" ];then
     __ Membuat file.
-    mkdir -p $(dirname "$filename_string")
+    mkdir -p "${filename_string%/*}"
     touch "$filename_string"
     chmod a+x "$filename_string"
     string=$(cat << 'EOF'
@@ -198,7 +175,7 @@ EOF
     )
     string=$(sed -e "s,__HOST_PORT__,$host_port," -e "s,__GUEST_PORT__,$guest_port," <<< "$string" )
     echo "$string" > "$filename_string"
-    fileMustExists "$filename_string"
+    rcm-file "$filename_string" mustExists
 fi
 ____
 
