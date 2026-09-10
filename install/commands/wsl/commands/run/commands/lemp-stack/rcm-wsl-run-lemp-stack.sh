@@ -69,6 +69,9 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -78,25 +81,11 @@ ____
 # Dependency.
 
 # Functions.
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
 makeSureRunning() {
     local service="$1"
     chapter Memeriksa apakah daemon "$service" is running
     __ Memeriksa System V script '`'/etc/init.d/"$service"'`'
-    isFileExists /etc/init.d/"$service"
+    rcm-file "/etc/init.d/${service}" isExists
     if [ -n "$notfound" ];then
         __; red File '`'/etc/init.d/"$service"'`' tidak ditemukan.; x
     fi
