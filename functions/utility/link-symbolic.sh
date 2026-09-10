@@ -1,5 +1,8 @@
 #!/bin/bash
 
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
+
 link-symbolic() {
     local source="$1"
     local target="$2"
@@ -23,10 +26,10 @@ link-symbolic() {
             __; magenta readlink "$target"; _.
             _ $_readlink; _.
             if [[ "$_readlink" =~ ^[^/\.] ]];then
-                local target_parent=$(dirname "$target")
+                local target_parent="${target%/*}"
                 local _dereference="${target_parent}/${_readlink}"
             elif [[ "$_readlink" =~ ^[\.] ]];then
-                local target_parent=$(dirname "$target")
+                local target_parent="${target%/*}"
                 local _dereference="${target_parent}/${_readlink}"
                 _dereference=$(realpath -s "$_dereference")
             else
@@ -55,7 +58,7 @@ link-symbolic() {
     fi
     if [ -n "$create" ];then
         __ Membuat symbolic link: '`'$target'`'.
-        local target_parent=$(dirname "$target")
+        local target_parent="${target%/*}"
         code mkdir -p "$target_parent"
         mkdir -p "$target_parent"
         if [ -z "$source_mode" ];then
