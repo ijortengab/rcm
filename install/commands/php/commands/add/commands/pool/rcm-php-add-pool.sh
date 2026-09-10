@@ -86,6 +86,10 @@ fi
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -93,51 +97,6 @@ title rcm php add pool
 ____
 
 # Dependency.
-
-# Functions.
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
@@ -392,7 +351,7 @@ if [ -n "$found" ];then
         chapter Mengecek informasi file config.
         path="$found_file"
         code path='"'$path'"'
-        filename="$(basename "$found_file")"
+        filename="${found_file##*/}"
         reference="$(php -r "$php" serialized_ini_string <<< "$config_lines")"
         is_different=
         if php -r "$php" is_different "$path" "$reference";then
@@ -406,7 +365,7 @@ if [ -n "$found" ];then
         if [ -n "$is_different" ];then
             chapter Memodifikasi file '`'$filename'`'.
             __ Backup file "$filename"
-            backupFile copy "$path"
+            backup-file copy "$path"
             php -r "$php" save "$path" "$reference" "$section_name"
             if php -r "$php" is_different "$path" "$reference";then
                 __; red Modifikasi file '`'$filename'`' gagal.; x
@@ -446,11 +405,11 @@ else
     code 'config_file="'$config_file'"'
     if [ -f "$config_file" ];then
         __ Backup file "$config_file".
-        backupFile move "$config_file"
+        backup-file move "$config_file"
     fi
     __ Membuat file '`'"$config_file"'`'.
     php -r "$php" create "$config_file" "$section_name" "$default_config" "$additional_config"
-    fileMustExists "$config_file"
+    rcm-file "$config_file" mustExists
     found_file="$config_file"
     restart=1
     ____
