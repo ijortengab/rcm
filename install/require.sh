@@ -50,15 +50,18 @@ require() {
     if [[ ! "${filename:0:1}" == / ]];then
         filename="${RCM_LIB}/${filename}"
     fi
-    local basename=$(basename "$filename")
-    local dirname=$(dirname "$filename")
+    # local basename=$(basename "$filename")
+    # local dirname=$(dirname "$filename")
+    local basename="${filename##*/}"
+    local dirname=${filename%/*}
+
     if [ ! -f "$filename" ];then
         code "${filename}"
         _ 'File is not found: '; yellow "$basename"; _, .; red ' Process terminated.'; x
     fi
     # Create global variable.
     __FILE__="$filename"
-    __DIR__=$(dirname "$filename")
+    __DIR__="$dirname"
     . "$filename"
 }
 
