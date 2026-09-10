@@ -160,7 +160,7 @@ if [ ! -d "$cache_directory" ];then
         rm -rf "$tempdir"
         x
     fi
-    mkdir -p $(dirname "$cache_directory");
+    mkdir -p "${cache_directory%/*}"
     mv $(realpath "$found_directory_extracted") "$cache_directory"
     # Cleaning.
     cd - >/dev/null
