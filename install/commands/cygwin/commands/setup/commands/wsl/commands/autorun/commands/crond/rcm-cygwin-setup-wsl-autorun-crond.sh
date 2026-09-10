@@ -44,6 +44,9 @@ BASENAME=${BASENAME:=host-trigger-wsl-autorun-crond}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -51,32 +54,6 @@ title rcm cygwin setup wsl autorun crond
 ____
 
 # Dependency.
-
-# Functions.
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -90,20 +67,20 @@ ____
 
 filename_string="/var/log/${BASENAME}.log"
 chapter Mengecek file log '`'$filename_string'`'
-isFileExists "$filename_string"
+rcm-file "$filename_string" isExists
 if [ -n "$notfound" ];then
     __ Membuat file.
     touch "$filename_string"
-    fileMustExists "$filename_string"
+    rcm-file "$filename_string" mustExists
 fi
 ____
 
 filename_string="/usr/local/${BASENAME}.sh"
 chapter Mengecek shell script '`'$filename_string'`'
-isFileExists "$filename_string"
+rcm-file "$filename_string" isExists
 if [ -n "$notfound" ];then
     __ Membuat file.
-    mkdir -p $(dirname "$filename_string")
+    mkdir -p "${filename_string%/*}"
     touch "$filename_string"
     chmod a+x "$filename_string"
     cat << 'EOF' > "$filename_string"
@@ -138,7 +115,7 @@ hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (
 runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
 echo -n Duration: $runtime; if [ $duration -gt 60 ];then echo -n " (${duration} seconds)"; fi; echo -n '.'; echo
 EOF
-    fileMustExists "$filename_string"
+    rcm-file "$filename_string" mustExists
 fi
 ____
 
