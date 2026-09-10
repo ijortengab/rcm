@@ -73,6 +73,11 @@ POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/utility/find-string.sh
+require vendor/ijortengab/bash/functions/array-diff.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -82,83 +87,6 @@ ____
 # Dependency.
 
 # Functions.
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-findString() {
-    # global debug
-    # global find_quoted
-    # $find_quoted agar bisa di gunakan oleh sed.
-    local find="$1" string path="$2" tempfile="$3" deletetempfile
-    if [ -z "$tempfile" ];then
-        tempfile=$(mktemp -p /dev/shm)
-        deletetempfile=1
-    fi
-    _; _, Memeriksa baris dengan kalimat: '`'$find'`'.;_.
-    find_quoted="$find"
-    find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
-    find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")
-    find_quoted=$(sed "s/\*/\\\*/g" <<< "$find_quoted")
-    find_quoted=$(sed "s/;$/\\\s\*;/g" <<< "$find_quoted")
-    if [[ ! "${find_quoted:0:1}" == '^' ]];then
-        find_quoted="^\s*${find_quoted}"
-    fi
-    _; magenta grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'; _.
-    if grep -E "${find_quoted}" "$path" > "$tempfile";then
-        string="$(< "$tempfile")"
-        while read -r line; do e "$line"; _.; done <<< "$string"
-        __ Baris ditemukan.
-        [ -n "$deletetempfile" ] && rm "$tempfile"
-        return 0
-    else
-        __ Baris tidak ditemukan.
-        [ -n "$deletetempfile" ] && rm "$tempfile"
-        return 1
-    fi
-}
-ArrayDiff() {
-    local e
-    local source=("${!1}")
-    local reference=("${!2}")
-    _return=()
-    # inArray is alternative of ArraySearch.
-    inArray () {
-        local e match="$1"
-        shift
-        for e; do [[ "$e" == "$match" ]] && return 0; done
-        return 1
-    }
-    if [[ "${#reference[@]}" -gt 0 ]];then
-        for e in "${source[@]}";do
-            if ! inArray "$e" "${reference[@]}";then
-                _return+=("$e")
-            fi
-        done
-    else
-        _return=("${source[@]}")
-    fi
-}
 verifyKey() {
     local key=$1
     local output=$2
@@ -169,7 +97,7 @@ verifyKey() {
                 IFS=',' read -ra _array <<< "$value"
                 array=(); for each in "${_array[@]}"; do array+=($each); done # Trim whitespace.
                 references=("${POSTFIX_CONFIG_DIR}/smtpd.key" "${POSTFIX_CONFIG_DIR}/smtpd.cert")
-                ArrayDiff references[@] array[@]
+                array-diff references[@] array[@]
                 if [ "${#_return[@]}" -eq 0 ];then
                     return 0
                 fi
@@ -185,7 +113,7 @@ verifyKey() {
             read -ra _array -d '' <<< "$value"
             array=(); for each in "${_array[@]}"; do array+=($each); done # Trim whitespace.
             references=($ssl_key $ssl_cert)
-            ArrayDiff references[@] array[@]
+            array-diff references[@] array[@]
             if [ "${#_return[@]}" -eq 0 ];then
                 return 0
             fi
@@ -213,8 +141,8 @@ if [ -z "$ssl_key" ];then
     error "Argument --ssl-key required."; x
 fi
 code 'ssl_key="'$ssl_key'"'
-[ -f "$ssl_cert" ] || fileMustExists "$ssl_cert"
-[ -f "$ssl_key" ] || fileMustExists "$ssl_key"
+rcm-file "$ssl_cert" terminateIfNotExists
+rcm-file "$ssl_key" terminateIfNotExists
 # Exit code sama-sama bernilai 0 pada unknown parameter, sehingga perlu kita gunakan output.
 tempfile_error=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
 tempfile_output=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
@@ -243,10 +171,9 @@ done
 
 key=smtpd_tls_chain_files
 chapter Memastikan key '`'$key'`' enabled.
-path="${POSTFIX_CONFIG_DIR}/smtpd.key"
-[ -f $path ] || fileMustExists $path
-path="${POSTFIX_CONFIG_DIR}/smtpd.cert"
-[ -f $path ] || fileMustExists $path
+rcm-file "${POSTFIX_CONFIG_DIR}/smtpd.key" terminateIfNotExists
+rcm-file "${POSTFIX_CONFIG_DIR}/smtpd.cert" terminateIfNotExists
+
 postconf -n $key 2> $tempfile_error > $tempfile_output
 error="$(<"$tempfile_error")"
 if [ -n "$error" ];then
@@ -324,10 +251,10 @@ fi
 ____
 
 path="${additional_config_file}"
-filename=$(basename "$path")
+filename="${path##*/}"
 chapter Mengecek file '`'$filename'`'.
 code path='"'$path'"'
-isFileExists "$path"
+rcm-file "$path" isExists
 ____
 
 # Saat ini tidak support untuk format multiline. Contoh:
@@ -341,7 +268,7 @@ ____
 if [ -n "$found" ];then
     chapter Mengecek fqdn '`'$fqdn'`'.
     code path='"'$path'"'
-	if findString "^${fqdn} " "$path" "$tempfile_output";then
+	if find-string "^${fqdn} " "$path" "$tempfile_output";then
         __ Verifikasi.
         if verifyKey - "$(<"$tempfile_output")";then
             __ Key ditemukan, dan value cocok.
@@ -359,14 +286,14 @@ if [ -n "$found" ];then
 fi
 if [ -n "$notfound" ];then
     chapter Menambah FQDN '`'$fqdn'`' ke file '`'$filename'`'.
-    dirname=$(dirname "$path")
+    dirname="${path%/*}"
     code mkdir -p '"'$dirname'"'
     mkdir -p "$dirname"
     cat << EOF >> "$path"
 ${fqdn} ${ssl_key} ${ssl_cert}
 EOF
 	__ Melakukan verifikasi.
-	if ! findString "${fqdn} ${ssl_key} ${ssl_cert}" "$path";then
+	if ! find-string "${fqdn} ${ssl_key} ${ssl_cert}" "$path";then
         error Gagal menambahkan.; rm $tempfile_error; rm $tempfile_output; x
 	fi
 	__; green Berhasil ditambahkan; _.
