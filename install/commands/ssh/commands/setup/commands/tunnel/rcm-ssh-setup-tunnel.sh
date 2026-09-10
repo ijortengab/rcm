@@ -61,6 +61,10 @@ PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -70,155 +74,6 @@ ____
 # Dependency.
 
 # Functions.
-link_symbolic() {
-    local source="$1"
-    local target="$2"
-    local sudo="$3"
-    local source_mode="$4"
-    local create
-    [ "$sudo" == - ] && sudo=
-    [ "$source_mode" == absolute ] || source_mode=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
-    chapter Membuat symbolic link.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
-    if [ -f "$target" ];then
-        if [ -h "$target" ];then
-            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
-            local _readlink=$(readlink "$target")
-            __; magenta readlink "$target"; _.
-            _ $_readlink; _.
-            if [[ "$_readlink" =~ ^[^/\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-            elif [[ "$_readlink" =~ ^[\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-                _dereference=$(realpath -s "$_dereference")
-            else
-                _dereference="$_readlink"
-            fi
-            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
-            if [[ "$source" == "$_dereference" ]];then
-                _, merujuk.; _.
-            else
-                _, tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
-        else
-            __ Melakukan backup regular file: '`'"$target"'`'.
-            backupFile move "$target"
-            create=1
-        fi
-    elif [ -d "$target" ];then
-        __ Melakukan backup direktori: '`'"$target"'`'.
-        backupDir "$target"
-        create=1
-    else
-        create=1
-    fi
-    if [ -n "$create" ];then
-        __ Membuat symbolic link: '`'$target'`'.
-        local target_parent=$(dirname "$target")
-        code mkdir -p "$target_parent"
-        mkdir -p "$target_parent"
-        if [ -z "$source_mode" ];then
-            source=$(realpath -s --relative-to="$target_parent" "$source")
-        fi
-        if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
-            sudo -u "$sudo" ln -s "$source" "$target"
-        else
-            code ln -s '"'$source'"' '"'$target'"'
-            ln -s "$source" "$target"
-        fi
-        if [ $? -eq 0 ];then
-            __; green Symbolic link berhasil dibuat.; _.
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    fi
-    ____
-}
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-backupDir() {
-    local oldpath="$1" i newpath
-    # Trim trailing slash.
-    oldpath=$(echo "$oldpath" | sed -E 's|/+$||g')
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -e "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -e "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    mv "$oldpath" "$newpath"
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 vercomp() {
     # https://www.google.com/search?q=bash+compare+version
     # https://stackoverflow.com/a/4025065
@@ -303,7 +158,7 @@ ____
 
 filename_string="${prefix_directory}/${pattern}.sh"
 shell_script="$filename_string"
-link_symbolic "$full_path" "$shell_script"
+link-symbolic "$full_path" "$shell_script"
 
 if [[ "$autorun" == cron && -n "$is_cygwin" ]];then
     ## Cron pada Cygwin hanya memberikan informasi PATH sbb:
@@ -352,11 +207,11 @@ if [[ "$autorun" == cron ]];then
         filename_string="${prefix_directory}/${pattern}.log"
     fi
     chapter Mengecek file log '`'$filename_string'`'
-    isFileExists "$filename_string"
+    rcm-file "$filename_string" isExists
     if [ -n "$notfound" ];then
         __ Membuat file.
         touch "$filename_string"
-        fileMustExists "$filename_string"
+        rcm-file "$filename_string" mustExists
     fi
     ____
 
@@ -404,7 +259,7 @@ if [[ "$autorun" == systemd ]];then
     service_name="${service_name//./--}"
     filename_string="/etc/systemd/system/${service_name}.service"
     chapter Mengecek file service '`'$filename_string'`'
-    isFileExists "$filename_string"
+    rcm-file "$filename_string" isExists
     if [ -n "$notfound" ];then
         __ Membuat file.
         string=$(cat << 'EOF'
@@ -420,7 +275,7 @@ EOF
         )
         string=$(sed "s|__SHELL_SCRIPT__|$shell_script|" <<< "$string")
         echo "$string" > "$filename_string"
-        fileMustExists "$filename_string"
+        rcm-file "$filename_string" mustExists
     fi
     ____
 
