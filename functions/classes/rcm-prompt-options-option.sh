@@ -668,7 +668,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for flag.
         if [ -n "$yaml_flag" ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             echo "${parameter}" >> "$backup_storage"
         fi
     }
@@ -912,7 +912,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for value.
         if [ -n "$value" ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             echo "${parameter}=${value}" >> "$backup_storage"
         fi
 
@@ -1189,7 +1189,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for flag or value.
         if [ -n "$yaml_flag" ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             if [ -n "$value" ];then
                 echo "${parameter}=${value}" >> "$backup_storage"
             else
@@ -1420,7 +1420,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for increment.
         if [ -n "$yaml_count" ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             echo "${parameter}=${count}" >> "$backup_storage"
         fi
     }
@@ -1724,7 +1724,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for value.
         if [ "${#yaml_values[@]}" -gt 0 ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             for value in "${yaml_values[@]}"; do
                 [[ "$value" =~ ' ' ]] && value="'$value'"
                 echo "${parameter}=${value}" >> "$backup_storage"
@@ -2127,7 +2127,7 @@ rcm-prompt-options-option() {
 
         # Backup to text file for flag.
         if [ -n "$yaml_flag" ];then
-            mkdir -p $(dirname "$backup_storage")
+            mkdir -p "${backup_storage%/*}"
             if [ "${#yaml_values[@]}" -gt 0 ];then
                 for value in "${yaml_values[@]}"; do
                     [[ "$value" =~ ' ' ]] && value="'$value'"
