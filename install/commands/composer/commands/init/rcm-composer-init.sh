@@ -136,6 +136,16 @@ if [ -n "$notfound" ];then
     ____
 fi
 
+if command -v composer >/dev/null;then
+    if [ "$EUID" -eq 0 ];then
+        code sudo -u nobody composer --version
+        sudo -u nobody composer --version
+    else
+        code composer --version
+        composer --version
+    fi
+fi
+
 exit 0
 
 # parse-options.sh \
