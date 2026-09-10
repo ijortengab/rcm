@@ -67,6 +67,9 @@ RCM_CONF=${RCM_CONF:=rcm.conf}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -74,18 +77,6 @@ title rcm ssh adjust port
 ____
 
 # Dependency.
-
-# Functions.
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -103,7 +94,7 @@ code 'listen_port="'$listen_port'"'
 ____
 
 chapter Memeriksa file SSH Daemon Config.
-fileMustExists "$config_file"
+rcm-file "$config_file" mustExists
 ____
 
 string_added=
