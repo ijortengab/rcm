@@ -5,11 +5,12 @@ backup-file() {
     local oldpath="$2" i newpath
     local target_dir="$3"
     i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
+    dirname="${oldpath%/*}"
+    basename="${oldpath##*/}"
+
     if [ -n "$target_dir" ];then
         case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
+            parent) dirname="${dirname%/*}" ;;
             *) dirname="$target_dir"
         esac
     fi
