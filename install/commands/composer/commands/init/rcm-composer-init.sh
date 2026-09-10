@@ -116,9 +116,24 @@ if [ -n "$notfound" ];then
     fi
     ____
 
+    chapter Memeriksa direktori binary
+    __ Mengecek direktori "/usr/local/bin"
+    found=
+    if [ -w "/usr/local/bin" ];then
+        __ Writeable.
+        install_dir="/usr/local/bin"
+    else
+        __ Not writeable.
+        install_dir="$HOME/bin"
+        code mkdir -p '"'"$HOME/bin"'"'
+        mkdir -p "$HOME/bin"
+        PATH="$HOME/bin:$PATH"
+    fi
+    ____
+
     chapter Menginstall Composer
-    code php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-    if php composer-setup.php --install-dir=/usr/local/bin --filename=composer;then
+    code php composer-setup.php --install-dir='"'"$install_dir"'"' --filename=composer
+    if php composer-setup.php --install-dir="$install_dir" --filename=composer;then
         __; green Berhasil install Composer.; _.
     else
         __; red Failed install Composer.; x
