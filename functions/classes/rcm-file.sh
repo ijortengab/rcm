@@ -14,23 +14,23 @@ rcm-file() {
             found=
             notfound=
             if [ -f "$path" ];then
-                __ File '`'$(basename "$path")'`' ditemukan.
+                __ File '`'"${path##*/}"'`' ditemukan.
                 found=1
             else
-                __ File '`'$(basename "$path")'`' tidak ditemukan.
+                __ File '`'"${path##*/}"'`' tidak ditemukan.
                 notfound=1
             fi
             ;;
         mustExists)
             if [ -f "$path" ];then
-                __; green File '`'$(basename "$path")'`' ditemukan.; _.
+                __; green File '`'"${path##*/}"'`' ditemukan.; _.
             else
-                __; red File '`'$(basename "$path")'`' tidak ditemukan.; x
+                __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
             fi
             ;;
         terminateIfNotExists)
             if [ ! -f "$path" ];then
-                __; red File '`'$(basename "$path")'`' tidak ditemukan.; x
+                __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
             fi
             ;;
     esac
@@ -43,26 +43,28 @@ rcm-file() {
 # `fileMustExists "$file"` digantikan dengan `rcm-file "$file" mustExists`
 # ``
 # fileMustExists() {
+    # local path="$1"
     # global used:
     # global modified:
     # function used: __, success, error, x
-    # if [ -f "$1" ];then
-        # __; green File '`'$(basename "$1")'`' ditemukan.; _.
+    # if [ -f "$path" ];then
+        # __; green File '`'"${path##*/}"'`' ditemukan.; _.
     # else
-        # __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
+        # __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
     # fi
 # }
 # isFileExists() {
+    # local path="$1"
     # global used:
     # global modified: found, notfound
     # function used: __
     # found=
     # notfound=
-    # if [ -f "$1" ];then
-        # __ File '`'$(basename "$1")'`' ditemukan.
+    # if [ -f "$path" ];then
+        # __ File '`'"${path##*/}"'`' ditemukan.
         # found=1
     # else
-        # __ File '`'$(basename "$1")'`' tidak ditemukan.
+        # __ File '`'"${path##*/}"'`' tidak ditemukan.
         # notfound=1
     # fi
 # }
