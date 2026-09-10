@@ -61,6 +61,9 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -68,41 +71,6 @@ title rcm nginx add vhost php-front-controller
 ____
 
 # Dependency.
-
-# Functions.
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -162,7 +130,7 @@ if [ -n "$create_new" ];then
     chapter Membuat file konfigurasi $file_config.
     if [ -f "$file_config" ];then
         __ Backup file "$file_config".
-        backupFile move "$file_config"
+        backup-file move "$file_config"
     fi
     __ Membuat file "$file_config".
     cat <<'EOF' > "$file_config"
