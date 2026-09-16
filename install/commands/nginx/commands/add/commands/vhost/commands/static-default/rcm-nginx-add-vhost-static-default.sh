@@ -61,6 +61,7 @@ ____
 
 # Dependency.
 require command nginx
+require rcm nginx reload
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -107,6 +108,10 @@ ____
 
 if [ -n "$create_new" ];then
     chapter Membuat file konfigurasi $file_config.
+    parent_dir="${file_config%/*}"
+    if [ ! -w "$parent_dir" ];then
+        error Tidak bisa menulis direktori "$parent_dir".; x
+    fi
     if [ -f "$file_config" ];then
         __ Backup file "$file_config".
         backup-file move "$file_config"
@@ -148,17 +153,9 @@ EOF
     fi
     ____
 
-    chapter Reload nginx configuration.
-    __ Cleaning broken symbolic link.
-    code find /etc/nginx/sites-enabled -xtype l -delete -print
-    find /etc/nginx/sites-enabled -xtype l -delete -print
-    if nginx -t 2> /dev/null;then
-        code nginx -s reload
-        nginx -s reload; sleep .5
-    else
-        error Terjadi kesalahan konfigurasi nginx. Gagal reload nginx.; x
-    fi
-    ____
+    INDENT+="    " \
+    rcm nginx reload \
+        ; [ ! $? -eq 0 ] && x
 
     chapter Memeriksa ulang file konfigurasi.
     string="$root"
