@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 # Usage Functions.
 usage() {
@@ -147,19 +150,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
-require vendor/ijortengab/rcm/functions/utility/backup-file.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
 
 # ------------------------------------------------------------------------------
 
@@ -168,8 +161,10 @@ title rcm php add website
 ____
 
 # Dependency.
-
-# Functions.
+require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -13,11 +14,11 @@ EOF
 # Prevent scripts from being executed directly.
 [ -f "${RCM_LIB}/require.sh" ] && source "${RCM_LIB}/require.sh" || { usage >&2; exit 1; }
 
-# Require.
+# ------------------------------------------------------------------------------
+
+# Dependency.
 require vendor/ijortengab/rcm/functions/base/print-select-dialog.sh
 require vendor/ijortengab/bash/functions/array-search.sh
-
-# ------------------------------------------------------------------------------
 
 # Requirement, validate, and populate value.
 prefix="$RCM_LIB"/interfaces

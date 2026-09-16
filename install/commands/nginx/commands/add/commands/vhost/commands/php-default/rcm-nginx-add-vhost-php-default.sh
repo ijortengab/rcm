@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 # Usage Functions.
 usage() {
@@ -67,6 +69,14 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# ------------------------------------------------------------------------------
+
+# Title.
+title rcm nginx add vhost php-default
+____
+
+# Dependency.
+require rcm nginx reload
 require vendor/ijortengab/bash/functions/array-search.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-resolve-condition.sh
@@ -76,21 +86,6 @@ require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 require vendor/ijortengab/rcm/functions/utility/parse-url.sh
 require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
 require vendor/ijortengab/rcm/functions/nginx/rcm-nginx-grep.sh
-
-# ------------------------------------------------------------------------------
-
-# Title.
-title rcm nginx add vhost php-default
-____
-
-# Dependency.
-require rcm nginx reload
-
-# Define variables and constants.
-[ -z "$fast" ] && fast="$RCM_FAST"; [ "$fast" == 0 ] && fast=
-RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
-RCM_INDENT='    '; [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 validate-content() {
     local path="$1"

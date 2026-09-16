@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -33,11 +34,11 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Require.
+# ------------------------------------------------------------------------------
+
+# Dependency.
 require vendor/ijortengab/rcm/functions/base/print-select-dialog.sh
 require vendor/ijortengab/bash/functions/array-search.sh
-
-# ------------------------------------------------------------------------------
 
 # Requirement, validate, and populate value.
 prefix="$RCM_LIB"/interfaces

@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# Rapid Construct Massive
-#
-# (c) IjorTengab <ijortengab@systemix.id> <ijortengab@gmail.com>
-#
-# https://github.com/ijortengab/rcm
-#
-# Command to download: `wget git.io/rcm`
-#
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
 
 # Usage Functions.
 usage() {
@@ -65,27 +59,21 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-BINARY_DIRECTORY=${BINARY_DIRECTORY:=[__DIR__]}
-# If not set in argument, try load from environment.
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-# If set in environment, set to variable.
-[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-wget.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # ------------------------------------------------------------------------------
 
 # Title.
 title rcm install
 ____
+
+# Dependency.
+require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-wget.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Functions.
 # Mapping operand to value of options.
@@ -99,6 +87,11 @@ if [ -n "$1" ];then
     extension_version=$1; shift
 fi
 ____
+
+# If not set in argument, try load from environment.
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
+# If set in environment, set to variable.
+[ -n "$RCM_TABLE_DOWNLOADS" ] && table_downloads="$RCM_TABLE_DOWNLOADS"
 
 # Require, validate, and populate value.
 chapter Variable dump.

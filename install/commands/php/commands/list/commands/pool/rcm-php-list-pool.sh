@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 
 # Usage Functions.
 usage() {
@@ -28,15 +30,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/utility/php-pool.sh
 
 # ------------------------------------------------------------------------------
 
@@ -46,8 +42,7 @@ ____
 
 # Dependency.
 require command php
-
-# Functions.
+require vendor/ijortengab/rcm/functions/utility/php-pool.sh
 
 # Mapping operand to value of options.
 chapter Mapping operand as value of options.

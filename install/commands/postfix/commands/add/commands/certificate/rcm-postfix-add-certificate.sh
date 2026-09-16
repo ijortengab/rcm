@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
+POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.cf}
 
 # Usage Functions.
 usage() {
@@ -33,11 +36,6 @@ Environment Variables:
         Default to $POSTFIX_CONFIG_DIR
    POSTFIX_CONFIG_FILE_MAIN
         Default to $POSTFIX_CONFIG_FILE_MAIN
-
-Dependency:
-   postconf
-   postmap
-   systemctl
 EOF
 }
 
@@ -65,18 +63,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-POSTFIX_CONFIG_DIR=${POSTFIX_CONFIG_DIR:=/etc/postfix}
-POSTFIX_CONFIG_FILE_MAIN=${POSTFIX_CONFIG_FILE_MAIN:=${POSTFIX_CONFIG_DIR}/main.cf}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-require vendor/ijortengab/rcm/functions/utility/find-string.sh
-require vendor/ijortengab/bash/functions/array-diff.sh
 
 # ------------------------------------------------------------------------------
 
@@ -85,6 +74,12 @@ title rcm postfix add certificate
 ____
 
 # Dependency.
+require command postconf
+require command postmap
+require command systemctl
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/utility/find-string.sh
+require vendor/ijortengab/bash/functions/array-diff.sh
 
 # Functions.
 verifyKey() {

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -31,14 +32,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/utility/apt-install.sh
 
 # ------------------------------------------------------------------------------
 
@@ -47,6 +43,7 @@ title rcm amavis init
 ____
 
 # Dependency.
+require vendor/ijortengab/rcm/functions/utility/apt-install.sh
 
 # Requirement, validate, and populate value.
 chapter Variable dump.

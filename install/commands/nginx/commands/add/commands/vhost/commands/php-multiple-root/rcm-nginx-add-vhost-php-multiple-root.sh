@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
 
 # Usage Functions.
 usage() {
@@ -73,27 +75,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost alt}
-
-if [ -n "$RCM_VERBOSE" ];then
-    verbose="$RCM_VERBOSE"
-fi
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
-require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
-require vendor/ijortengab/rcm/functions/utility/backup-file.sh
-require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 
 # ------------------------------------------------------------------------------
 
@@ -103,6 +87,11 @@ ____
 
 # Dependency.
 require rcm nginx reload
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 
 # Functions.
 ArraySearch() {
@@ -510,6 +499,14 @@ validateContentRedirect() {
     fi
     return 0
 }
+
+if [ -n "$RCM_VERBOSE" ];then
+    verbose="$RCM_VERBOSE"
+fi
+[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
+[[ "$verbose" -gt 0 ]] && loud=1
+[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
+[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Require, validate, and populate value.
 chapter Variable dump.

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -38,8 +39,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-
 if [ -n "$1" ];then
     case "$1" in
         get-ipv4) command="$1"; shift ;;
@@ -60,9 +59,6 @@ get-ipv4() {
     fi
 }
 
-# Require.
-require vendor/ijortengab/bash/functions/array-search.sh
-
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -72,6 +68,7 @@ ____
 # Dependency.
 require command wget
 require command host
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # Require, validate, and populate value.
 fqdn=

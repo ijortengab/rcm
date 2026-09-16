@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -34,13 +35,13 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
-require command mysql
-
 # ------------------------------------------------------------------------------
 
 # Title.
 title rcm mariadb list database
 ____
+
+# Dependency.
+require command mysql
 
 mysql --silent --skip-column-names -e "show databases;"

@@ -1,6 +1,10 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Usage Functions.
 usage() {
@@ -26,12 +30,6 @@ Environment Variables:
         Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
         Default to $MARIADB_USERS_CONTAINER_MASTER
-
-Dependency:
-   mysql
-   php
-   curl
-   rcm-nginx-virtual-host-autocreate-php
 EOF
 }
 
@@ -54,22 +52,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-ROUNDCUBE_FQDN_LOCALHOST=${ROUNDCUBE_FQDN_LOCALHOST:=roundcube.localhost}
-MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
-MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/utility/backup-file.sh
-require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
-require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
-require vendor/ijortengab/rcm/functions/utility/link-symbolic-dir.sh
 
 # ------------------------------------------------------------------------------
 
@@ -78,6 +63,16 @@ title rcm roundcube init
 ____
 
 # Dependency.
+require command mysql
+require command php
+require command curl
+require rcm nginx add vhost php-default
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic-dir.sh
 
 # Functions.
 databaseCredentialRoundcube() {

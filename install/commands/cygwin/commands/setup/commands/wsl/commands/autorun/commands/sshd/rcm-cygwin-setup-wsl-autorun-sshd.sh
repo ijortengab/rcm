@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+BASENAME=${BASENAME:=host-trigger-wsl-autorun-sshd}
 
 # Usage Functions.
 usage() {
@@ -34,15 +36,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-BASENAME=${BASENAME:=host-trigger-wsl-autorun-sshd}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # ------------------------------------------------------------------------------
 
@@ -54,6 +50,7 @@ ____
 PATH="/cygdrive/c/Windows/system32:$PATH"
 require command crontab
 require command wsl
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.

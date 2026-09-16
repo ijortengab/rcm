@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
 
 # Usage Functions.
 usage() {
@@ -54,16 +56,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-PREFIX_DIRECTORY=${PREFIX_DIRECTORY:=/usr/local}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 
 # ------------------------------------------------------------------------------
 
@@ -72,6 +67,8 @@ title rcm ssh setup tunnel
 ____
 
 # Dependency.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 
 # Functions.
 vercomp() {

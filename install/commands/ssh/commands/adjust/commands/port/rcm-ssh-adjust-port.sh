@@ -1,6 +1,11 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
+SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
+SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
+RCM_CONF=${RCM_CONF:=rcm.conf}
 
 # Usage Functions.
 usage() {
@@ -30,9 +35,6 @@ Environment Variables:
         Default to $SSHD_CONFIG_DIRECTORY
    RCM_CONF
         Default to $RCM_CONF
-
-Dependency:
-   sshd
 EOF
 }
 
@@ -57,18 +59,9 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
-SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
-SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
-RCM_CONF=${RCM_CONF:=rcm.conf}
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
-
-# Require.
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # ------------------------------------------------------------------------------
 
@@ -77,6 +70,7 @@ title rcm ssh adjust port
 ____
 
 # Dependency.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.

@@ -1,6 +1,8 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 
 # Usage Functions.
 usage() {
@@ -38,9 +40,6 @@ Global Options:
 Environment Variables:
    PHP_FPM_POOL_DIRECTORY
         Default to $PHP_FPM_POOL_DIRECTORY
-
-Dependency:
-   nginx
 EOF
 }
 
@@ -71,9 +70,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
-
 if [ -n "$RCM_VERBOSE" ];then
     verbose="$RCM_VERBOSE"
 fi
@@ -86,10 +82,6 @@ fi
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
-require vendor/ijortengab/rcm/functions/utility/backup-file.sh
-require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
-
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -97,6 +89,9 @@ title rcm php add pool
 ____
 
 # Dependency.
+require command nginx
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Requirement, validate, and populate value.
 chapter Variable dump.

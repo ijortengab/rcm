@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -40,8 +41,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# Define variables and constants.
-
 # If set in environment, set to variable.
 [ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
 [ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
@@ -52,9 +51,6 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
-require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
-
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -64,6 +60,7 @@ ____
 # Dependency.
 require rcm dig get-info a
 require rcm dig get-info cname
+require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
 
 # Requirement, validate, and populate value.
 [ -n "$debug" ] && chapter Variable dump.

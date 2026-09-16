@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
@@ -38,16 +39,14 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
-# Require.
-require vendor/ijortengab/rcm/functions/utility/apt-install.sh
-
 # ------------------------------------------------------------------------------
 
 # Title.
 title rcm dovecot init
 ____
 
-# Define variables and constants.
+# Dependency.
+require vendor/ijortengab/rcm/functions/utility/apt-install.sh
 
 if [ -z "$dbms" ];then
     error "Argument --dbms is required."; exit 1

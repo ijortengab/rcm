@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
+MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
+MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 
 # Usage Functions.
 usage() {
@@ -25,9 +28,9 @@ Global Options.
 
 Environment Variables.
    MARIADB_PREFIX_MASTER
-        Default to /usr/local/share/mariadb
+        Default to $MARIADB_PREFIX_MASTER
    MARIADB_USERS_CONTAINER_MASTER
-        Default to users
+        Default to $MARIADB_USERS_CONTAINER_MASTER
 EOF
 }
 
@@ -54,8 +57,6 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
-
-# Define variables and constants.
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }

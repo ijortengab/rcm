@@ -1,6 +1,7 @@
 #!/bin/bash
 [ -f "$0" ] || { echo "Cannot run as dot command."; kill -INT $$; }
 
+# Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
