@@ -40,46 +40,43 @@ usage() {
 Usage: rcm php add website [options]
 
 Options:
-   --url *
+   --url=URL
         Set the URL. The value can be public or private domain, or URL.
         Example: \`example.org\`, \`example.org/path/to/drupal/\`, or \`https://sub.example.org:8080/\`.
         Special top level domain such us .local, .example, etc will pretend as private domain.
-   --php-version *
+   --web-server=HTTP
+        Select web server to build up virtual host.
+        Values available from command: rcm(plugin list web-server).
+   --php-version=PHP_VERSION
         Set the version of PHP FPM.${single_line}${multi_line}
-   --php-fpm-user
+   --php-fpm-user=[USER]
         Set the Unix user that used by PHP FPM.
         Default value is the user that used by web server (the common name is www-data).
-        If the user does not exists, it will be autocreate as reguler user.${users}
-   --php-fpm-section *
+        Values available from command: rcm(system list user regular), or others.
+        If the user does not exists, it will be autocreate as reguler user.
+   --php-fpm-section=SECTION
         Set the PHP-FPM section.
-        Create new PHP FPM section with \`rcm php-fpm-setup-project-config\`.
-        Values available from command: rcm (php list pool [--php-version] [--php-fpm-user]).
-   --root
-        Set the web root pointing the URL. If empty, it will use the default value of
-        \`--prefix\` and \`--container\`.
-   --index-php ^
+        The section must exists before.
+        Create new PHP FPM section with \`rcm php add pool\`.
+        Values available from command: rcm(php list pool [--php-version] [--php-fpm-user]).
+   --root=[DIR]
+        Set the web root pointing the URL.
+   --index-php[=CONTENT]
         Auto create index.php file.
         Can have value. The value is string that will be printed.
         Example: --index-php="Foo bar" will create contents \`<?= "Foo bar"; ?>\`.
 
 Other options (For expert only):
-   --prefix
-        Set prefix directory for project.
-        Default to home directory of --php-fpm-user. or /usr/local/share.
-   --container
-        Set the container directory for all projects.
-        Available value: public_html, or other.
-        Default to public_html --php-fpm-user is reguler user.
-   --phpinfo ^
+   --phpinfo
         Shortcut of \`--index-php=2\`.
         It will create index.php file with contents \`<?php phpinfo(); ?>\`.
-   --hello ^
+   --hello
         Shortcut of \`--index-php=3\`.
         It will create index.php file with contents \`<?= 'Hello World'; ?>\`.
-   --phpvariables ^
+   --phpvariables
         Shortcut of \`--index-php=4\`.
         It will create index.php file with contents \`<pre><?php print_r(\$_SERVER); ?></pre>\`.
-   --php-fpm-config
+   --php-fpm-config=[LINE]...
         Additional PHP-FPM Configuration inside pool directory.
         Available value: [1], [2], [3], [4], [5], [6], [7], or other.
         [1]: pm=ondemand
@@ -123,10 +120,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
-        --certificate-name=*) certificate_name="${1#*=}"; shift ;;
-        --certificate-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then certificate_name="$2"; shift; fi; shift ;;
-        --container=*) container="${1#*=}"; shift ;;
-        --container) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then container="$2"; shift; fi; shift ;;
         --hello) index_php=3; shift ;;
         --index-php=*) index_php="${1#*=}"; shift ;;
         --index-php) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then index_php="$2"; shift; else index_php=1; fi; shift ;;
@@ -141,14 +134,12 @@ while [[ $# -gt 0 ]]; do
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_fpm_user="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
-        --prefix=*) prefix="${1#*=}"; shift ;;
-        --prefix) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then prefix="$2"; shift; fi; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
         --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
-        --with-certbot-obtain) certbot_obtain=1; shift ;;
-        --without-certbot-obtain) certbot_obtain=0; shift ;;
+        --web-server=*) web_server="${1#*=}"; shift ;;
+        --web-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then web_server="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -164,6 +155,12 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -176,8 +173,6 @@ ____
 
 # Require, validate, and populate value.
 chapter Variable dump.
-[ -n "$fast" ] && isfast=' --fast' || isfast=''
-code no_auto_add_group="$no_auto_add_group"
 is_wsl=
 if [ -f /proc/sys/kernel/osrelease ];then
     read osrelease </proc/sys/kernel/osrelease
@@ -333,7 +328,7 @@ code 'root_parent="'$root_parent'"'
 ____
 
 chapter Mengecek direktori root parent '`'$root_parent'`'.
-isDirExists "$root_parent"
+rcm-dir "$root_parent" isExists
 ____
 
 if [ -n "$notfound" ];then
@@ -345,12 +340,12 @@ if [ -n "$notfound" ];then
         mkdir -p "$root_parent"
         chown $php_fpm_user:$php_fpm_user "$root_parent"
     }
-    dirMustExists "$root_parent"
+    rcm-dir "$root_parent" mustExists
     ____
 fi
 
 chapter Mengecek direktori root '`'$root'`'.
-isDirExists "$root"
+rcm-dir "$root" mustExists
 ____
 
 if [ -n "$notfound" ];then
@@ -362,7 +357,7 @@ if [ -n "$notfound" ];then
         mkdir -p "$root"
         chown $php_fpm_user:$php_fpm_user "$root"
     }
-    dirMustExists "$root"
+    rcm-dir "$root" mustExists
     ____
 fi
 
@@ -594,7 +589,6 @@ exit 0
 # --php-version
 # --php-fpm-user
 # --php-fpm-section
-# --certificate-name
 # --prefix
 # --container
 # --root
@@ -606,8 +600,6 @@ exit 0
 # --index-php
 # )
 # CSV=(
-    # 'long:--with-certbot-obtain,parameter:certbot_obtain'
-    # 'long:--without-certbot-obtain,parameter:certbot_obtain,flag_option:reverse'
     # 'long:--phpinfo,parameter:index_php,flag_option:true=2'
     # 'long:--hello,parameter:index_php,flag_option:true=3'
     # 'long:--phpvariables,parameter:index_php,flag_option:true=4'
