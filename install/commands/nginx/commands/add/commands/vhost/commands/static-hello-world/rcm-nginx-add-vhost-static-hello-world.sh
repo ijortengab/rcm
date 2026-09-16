@@ -16,10 +16,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   curl
-   rcm-nginx-setup-static
 EOF
 }
 
@@ -46,6 +42,10 @@ unset _new_arguments
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -53,51 +53,9 @@ title rcm nginx add vhost static-hello-world
 ____
 
 # Dependency.
-
-# Functions.
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
+require command nginx
+require command curl
+require rcm nginx add vhost static-default
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -113,12 +71,12 @@ root="/var/www/$domain/web"
 code root="$root"
 filename="$domain"
 code filename="$filename"
-server_name=("$domain")
-code server_name="${server_name[@]}"
+server_name="$domain"
+code server_name="$server_name"
 ____
 
 INDENT+="    " \
-rcm-nginx-setup-static $isfast \
+rcm nginx add vhost static-default \
     --root="$root" \
     --filename="$filename" \
     --server-name="$server_name" \
@@ -158,12 +116,12 @@ fi
 if [ -n "$notfound" ];then
     if [ -f "$path" ];then
         __ Backup file "$path".
-        backupFile move "$path"
+        backup-file move "$path"
     fi
     __ Membuat file '`'index.html'`'.
     echo Hello World > "$path"
 fi
-fileMustExists "$path"
+rcm-file "$path" mustExists
 ____
 
 chapter Mengecek HTTP Response Code.
