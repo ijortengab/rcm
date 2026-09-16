@@ -62,6 +62,14 @@ MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic-dir.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -72,271 +80,14 @@ ____
 
 # Functions.
 databaseCredentialPhpmyadmin() {
+    # global MARIADB_PREFIX_MASTER MARIADB_USERS_CONTAINER_MASTER db_user
+    local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
     local DB_USER DB_USER_PASSWORD
-    __ Memerlukan file '`'"${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"'`'
-    isFileExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
-    [ -n "$notfound" ] && fileMustExists "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    rcm-file "$path" terminateIfNotExists
     # Populate.
-    . "${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
+    . "$path"
     db_user=$DB_USER
     db_user_password=$DB_USER_PASSWORD
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-backupDir() {
-    local oldpath="$1" i newpath
-    # Trim trailing slash.
-    oldpath=$(echo "$oldpath" | sed -E 's|/+$||g')
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -e "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -e "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    mv "$oldpath" "$newpath"
-}
-dirMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -d "$1" ];then
-        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isDirExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -d "$1" ];then
-        __ Direktori '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-link_symbolic() {
-    local source="$1"
-    local target="$2"
-    local sudo="$3"
-    local source_mode="$4"
-    local create
-    [ "$sudo" == - ] && sudo=
-    [ "$source_mode" == absolute ] || source_mode=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
-    chapter Membuat symbolic link.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
-    if [ -f "$target" ];then
-        if [ -h "$target" ];then
-            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
-            local _readlink=$(readlink "$target")
-            __; magenta readlink "$target"; _.
-            _ $_readlink; _.
-            if [[ "$_readlink" =~ ^[^/\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-            elif [[ "$_readlink" =~ ^[\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-                _dereference=$(realpath -s "$_dereference")
-            else
-                _dereference="$_readlink"
-            fi
-            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
-            if [[ "$source" == "$_dereference" ]];then
-                _, merujuk.; _.
-            else
-                _, tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
-        else
-            __ Melakukan backup regular file: '`'"$target"'`'.
-            backupFile move "$target"
-            create=1
-        fi
-    elif [ -d "$target" ];then
-        __ Melakukan backup direktori: '`'"$target"'`'.
-        backupDir "$target"
-        create=1
-    else
-        create=1
-    fi
-    if [ -n "$create" ];then
-        __ Membuat symbolic link: '`'$target'`'.
-        local target_parent=$(dirname "$target")
-        code mkdir -p "$target_parent"
-        mkdir -p "$target_parent"
-        if [ -z "$source_mode" ];then
-            source=$(realpath -s --relative-to="$target_parent" "$source")
-        fi
-        if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
-            sudo -u "$sudo" ln -s "$source" "$target"
-        else
-            code ln -s '"'$source'"' '"'$target'"'
-            ln -s "$source" "$target"
-        fi
-        if [ $? -eq 0 ];then
-            __; green Symbolic link berhasil dibuat.; _.
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    fi
-    ____
-}
-link_symbolic_dir() {
-    local source="$1"
-    local target="$2"
-    local sudo="$3"
-    local source_mode="$4"
-    local create
-    # Trim trailing slash.
-    source=$(echo "$source" | sed -E 's|/+$||g')
-    target=$(echo "$target" | sed -E 's|/+$||g')
-    [ "$sudo" == - ] && sudo=
-    [ "$source_mode" == absolute ] || source_mode=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -d "$source" ] || { error Source exists but not directory: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
-    chapter Membuat symbolic link directory.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
-    if [ -d "$target" ];then
-        if [ -h "$target" ];then
-            __ Path target saat ini sudah merupakan directory symbolic link: '`'$target'`'
-            local _readlink=$(readlink "$target")
-            __; magenta readlink "$target"; _.
-            _ $_readlink; _.
-            if [[ "$_readlink" =~ ^[^/\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-            elif [[ "$_readlink" =~ ^[\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-                _dereference=$(realpath -s "$_dereference")
-            else
-                _dereference="$_readlink"
-            fi
-            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
-            if [[ "$source" == "$_dereference" ]];then
-                _, merujuk.; _.
-            else
-                _, tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
-        else
-            __ Melakukan backup regular direktori: '`'"$target"'`'.
-            backupDir "$target"
-            create=1
-        fi
-    elif [ -f "$target" ];then
-        __ Melakukan backup file: '`'"$target"'`'.
-        backupFile move "$target"
-        create=1
-    else
-        create=1
-    fi
-    if [ -n "$create" ];then
-        __ Membuat symbolic link: '`'$target'`'.
-        local target_parent=$(dirname "$target")
-        if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' mkdir -p '"'$target_parent'"'
-            sudo -u "$sudo" mkdir -p "$target_parent"
-        else
-            code mkdir -p "$target_parent"
-            mkdir -p "$target_parent"
-        fi
-        if [ -z "$source_mode" ];then
-            source=$(realpath -s --relative-to="$target_parent" "$source")
-        fi
-        if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
-            sudo -u "$sudo" ln -s "$source" "$target"
-        else
-            code ln -s '"'$source'"' '"'$target'"'
-            ln -s "$source" "$target"
-        fi
-        if [ $? -eq 0 ];then
-            __; green Symbolic link berhasil dibuat.; _.
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    fi
-    ____
 }
 
 # Requirement, validate, and populate value.
@@ -382,7 +133,7 @@ ____
 
 target_project_container="${prefix}/${project_container}"
 chapter Mengecek direktori project container '`'$target_project_container'`'.
-isDirExists "$target_project_container"
+rcm-dir "$target_project_container" isExists
 ____
 
 if [ -n "$notfound" ];then
@@ -391,7 +142,7 @@ if [ -n "$notfound" ];then
     code chown $php_fpm_user:$php_fpm_user '"'$target_project_container'"'
     mkdir -p "$target_project_container"
     chown $php_fpm_user:$php_fpm_user "$target_project_container"
-    dirMustExists "$target_project_container"
+    rcm-dir "$target_project_container" mustExists
     ____
 fi
 
@@ -456,7 +207,7 @@ fi
 
 chapter Mengecek file '`'composer.json'`' untuk project '`'phpmyadmin/phpmyadmin'`'
 path="${root_source}/composer.json"
-isFileExists "$path"
+rcm-file "$path" isExists
 ____
 
 if [ -n "$notfound" ];then
@@ -466,25 +217,25 @@ if [ -n "$notfound" ];then
     cd $root_source
     __ Mendownload PHPMyAdmin
     path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
-    isFileExists "$path"
+    rcm-file "$path" isExists
     if [ -n "$notfound" ];then
         sudo -u $php_fpm_user wget "https://files.phpmyadmin.net/phpMyAdmin/${phpmyadmin_version}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
-        fileMustExists "$path"
+        rcm-file "$path" mustExists
     fi
-    [ -f "$path" ] || fileMustExists "$path"
+    rcm-file "$path" terminateIfNotExists
     __ Extract File.
     path_tar_gz="$path"
     path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/composer.json"
-    isFileExists "$path"
+    rcm-file "$path" isExists
     if [ -n "$notfound" ];then
         code sudo -u $php_fpm_user tar xfz "$path_tar_gz"
         sudo -u $php_fpm_user tar xfz "$path_tar_gz"
-        fileMustExists "$path"
+        rcm-file "$path" mustExists
         __ Memindahkan hasil download ke parent.
         code sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
         sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
     fi
-    [ -f "$path" ] || fileMustExists "$path"
+    rcm-file "$path" terminateIfNotExists
     __ Memindahkan codebase.
     code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'*' -t '"'$root_source'"'
     code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'.[!.]*' -t '"'$root_source'"'
@@ -493,27 +244,27 @@ if [ -n "$notfound" ];then
     mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/".[!.]* -t "$root_source"
     rmdir "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages"
     path="${root_source}/composer.json"
-    fileMustExists "$path"
+    rcm-file "$path" mustExists
     cd - >/dev/null
     ____
 fi
-[ -f "$path" ] || fileMustExists "$path"
+rcm-file "$path" terminateIfNotExists
 
 source="$root_source"
 target="$root"
-link_symbolic_dir "$source" "$target" "$php_fpm_user"
+link-symbolic_dir "$source" "$target" "$php_fpm_user"
 
 chapter Mengecek file konfigurasi PHPMyAdmin.
 path="${root_source}/config.inc.php"
-isFileExists "$path"
+rcm-file "$path" isExists
 if [ -n "$notfound" ];then
     source="${root_source}/config.sample.inc.php"
-    fileMustExists "$source"
+    rcm-file "$source" mustExists
     code sudo -u $php_fpm_user cp "$source" "$path"
     sudo -u $php_fpm_user cp "$source" "$path"
-    fileMustExists "$path"
+    rcm-file "$path" mustExists
 fi
-[ -f "$path" ] || fileMustExists "$path"
+rcm-file "$path" terminateIfNotExists
 ____
 
 INDENT+="    " \
@@ -548,8 +299,7 @@ ____
 
 if [ -n "$notfound" ];then
     chapter PHPMyAdmin Import SQL
-    isFileExists "${root_source}/sql/create_tables.sql"
-    [ -n "$notfound" ] && fileMustExists "${root_source}/sql/create_tables.sql"
+    rcm-file "${root_source}/sql/create_tables.sql" terminateIfNotExists
     mysql \
         --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
         $db_name < "${root_source}/sql/create_tables.sql"
@@ -694,7 +444,7 @@ ____
 if [ -n "$is_different" ];then
     chapter Memodifikasi file '`'config.inc.php'`'.
     __ Backup file "$path"
-    backupFile copy "$path"
+    backup-file copy "$path"
     php -r "$php" save "$path" "$reference"
     if php -r "$php" is_different "$path" "$reference";then
         __; red Modifikasi file '`'config.inc.php'`' gagal.; x
