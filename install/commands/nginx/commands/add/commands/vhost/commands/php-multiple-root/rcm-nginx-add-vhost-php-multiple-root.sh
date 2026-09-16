@@ -8,25 +8,25 @@ usage() {
 Usage: rcm nginx add vhost php-multiple-root [options]
 
 Options:
-   --url *
+   --url=URL
         Set the URL.
-   --nginx-config-root *
+   --nginx-config-root=VALUE
         Set the NGINX config Root.
-   --web-root
+   --web-root=[DIR]
         Required if --url is empty of path component.
-   --fastcgi-pass *
+   --fastcgi-pass=VALUE
         Set the value of fastcgi_pass directive.
-   --nginx-config-dir *
+   --nginx-config-dir=DIR
         The value to include directive. Include file that contains location directive.
-   --nginx-config-file *
+   --nginx-config-file=FILE
         Additional value to include directive. Include file that contains location directive.
-   --without-nginx-reload ^
+   --without-nginx-reload
         Prevent auto reload nginx after add/edit file config.
         Default value is --with-nginx-reload.
-   --tls-certificate
+   --tls-certificate=[VALUE]
         Directive tls_certificate in nginx config.
         Populate value from variable TLS_CERTIFICATE.
-   --tls-certificate-key
+   --tls-certificate-key=[VALUE]
         Directive tls_certificate_key in nginx config.
         Populate value from variable TLS_CERTIFICATE_KEY.
 
@@ -35,9 +35,6 @@ Global Options.
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   rcm-nginx-reload
 EOF
 }
 
@@ -91,6 +88,13 @@ fi
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
 
+# Require.
+require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+
 # ------------------------------------------------------------------------------
 
 # Title.
@@ -98,6 +102,7 @@ title rcm nginx add vhost php-multiple-root
 ____
 
 # Dependency.
+require rcm nginx reload
 
 # Functions.
 ArraySearch() {
@@ -378,179 +383,6 @@ nginxGrep(){
     done
     return 1
 }
-backupFile() {
-    local mode="$1"
-    local oldpath="$2" i newpath
-    local target_dir="$3"
-    i=1
-    dirname=$(dirname "$oldpath")
-    basename=$(basename "$oldpath")
-    if [ -n "$target_dir" ];then
-        case "$target_dir" in
-            parent) dirname=$(dirname "$dirname") ;;
-            *) dirname="$target_dir"
-        esac
-    fi
-    [ -d "$dirname" ] || { echo 'Directory is not exists.' >&2; return 1; }
-    newpath="${dirname}/${basename}.${i}"
-    if [ -f "$newpath" ]; then
-        let i++
-        newpath="${dirname}/${basename}.${i}"
-        while [ -f "$newpath" ] ; do
-            let i++
-            newpath="${dirname}/${basename}.${i}"
-        done
-    fi
-    case $mode in
-        move)
-            mv "$oldpath" "$newpath" ;;
-        copy)
-            local user=$(stat -c "%U" "$oldpath")
-            local group=$(stat -c "%G" "$oldpath")
-            cp "$oldpath" "$newpath"
-            chown ${user}:${group} "$newpath"
-    esac
-}
-fileMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -f "$1" ];then
-        __; green File '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red File '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isFileExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -f "$1" ];then
-        __ File '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ File '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
-link_symbolic() {
-    local source="$1"
-    local target="$2"
-    local sudo="$3"
-    local source_mode="$4"
-    local create
-    [ "$sudo" == - ] && sudo=
-    [ "$source_mode" == absolute ] || source_mode=
-    [ -e "$source" ] || { error Source not exist: $source.; x; }
-    [ -f "$source" ] || { error Source exists but not file: $source.; x; }
-    [ -n "$target" ] || { error Target not defined.; x; }
-    [[ $(type -t backupFile) == function ]] || { error Function backupFile not found.; x; }
-    [[ $(type -t backupDir) == function ]] || { error Function backupDir not found.; x; }
-    chapter Membuat symbolic link.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
-    if [ -f "$target" ];then
-        if [ -h "$target" ];then
-            __ Path target saat ini sudah merupakan file symbolic link: '`'$target'`'
-            local _readlink=$(readlink "$target")
-            __; magenta readlink "$target"; _.
-            _ $_readlink; _.
-            if [[ "$_readlink" =~ ^[^/\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-            elif [[ "$_readlink" =~ ^[\.] ]];then
-                local target_parent=$(dirname "$target")
-                local _dereference="${target_parent}/${_readlink}"
-                _dereference=$(realpath -s "$_dereference")
-            else
-                _dereference="$_readlink"
-            fi
-            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
-            if [[ "$source" == "$_dereference" ]];then
-                _, merujuk.; _.
-            else
-                _, tidak merujuk.; _.
-                __ Melakukan backup.
-                backupFile move "$target"
-                create=1
-            fi
-        else
-            __ Melakukan backup regular file: '`'"$target"'`'.
-            backupFile move "$target"
-            create=1
-        fi
-    elif [ -d "$target" ];then
-        __ Melakukan backup direktori: '`'"$target"'`'.
-        backupDir "$target"
-        create=1
-    else
-        create=1
-    fi
-    if [ -n "$create" ];then
-        __ Membuat symbolic link: '`'$target'`'.
-        local target_parent=$(dirname "$target")
-        code mkdir -p "$target_parent"
-        mkdir -p "$target_parent"
-        if [ -z "$source_mode" ];then
-            source=$(realpath -s --relative-to="$target_parent" "$source")
-        fi
-        if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
-            sudo -u "$sudo" ln -s "$source" "$target"
-        else
-            code ln -s '"'$source'"' '"'$target'"'
-            ln -s "$source" "$target"
-        fi
-        if [ $? -eq 0 ];then
-            __; green Symbolic link berhasil dibuat.; _.
-        else
-            __; red Symbolic link gagal dibuat.; x
-        fi
-    fi
-    ____
-}
-backupDir() {
-    local oldpath="$1" i newpath
-    # Trim trailing slash.
-    oldpath=$(echo "$oldpath" | sed -E 's|/+$||g')
-    i=1
-    newpath="${oldpath}.${i}"
-    if [ -e "$newpath" ]; then
-        let i++
-        newpath="${oldpath}.${i}"
-        while [ -e "$newpath" ] ; do
-            let i++
-            newpath="${oldpath}.${i}"
-        done
-    fi
-    mv "$oldpath" "$newpath"
-}
-dirMustExists() {
-    # global used:
-    # global modified:
-    # function used: __, success, error, x
-    if [ -d "$1" ];then
-        __; green Direktori '`'$(basename "$1")'`' ditemukan.; _.
-    else
-        __; red Direktori '`'$(basename "$1")'`' tidak ditemukan.; x
-    fi
-}
-isDirExists() {
-    # global used:
-    # global modified: found, notfound
-    # function used: __
-    found=
-    notfound=
-    if [ -d "$1" ];then
-        __ Direktori '`'$(basename "$1")'`' ditemukan.
-        found=1
-    else
-        __ Direktori '`'$(basename "$1")'`' tidak ditemukan.
-        notfound=1
-    fi
-}
 findString() {
     # global debug
     # global find_quoted
@@ -678,120 +510,6 @@ validateContentRedirect() {
     fi
     return 0
 }
-Rcm_parse_url() {
-    # Reset
-    PHP_URL_SCHEME=
-    PHP_URL_HOST=
-    PHP_URL_PORT=
-    PHP_URL_USER=
-    PHP_URL_PASS=
-    PHP_URL_PATH=
-    PHP_URL_QUERY=
-    PHP_URL_FRAGMENT=
-    PHP_URL_SCHEME="$(echo "$1" | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
-    _PHP_URL_SCHEME_SLASH="${PHP_URL_SCHEME}://"
-    _PHP_URL_SCHEME_REVERSE="$(echo ${1/${_PHP_URL_SCHEME_SLASH}/})"
-    if grep -q '#' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_FRAGMENT=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d# -f1)
-    fi
-    if grep -q '\?' <<< "$_PHP_URL_SCHEME_REVERSE";then
-        PHP_URL_QUERY=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f2)
-        _PHP_URL_SCHEME_REVERSE=$(echo $_PHP_URL_SCHEME_REVERSE | cut -d? -f1)
-    fi
-    _PHP_URL_USER_PASS="$(echo $_PHP_URL_SCHEME_REVERSE | grep @ | cut -d@ -f1)"
-    PHP_URL_PASS=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f2`
-    if [ -n "$PHP_URL_PASS" ]; then
-        PHP_URL_USER=`echo $_PHP_URL_USER_PASS | grep : | cut -d: -f1`
-    else
-        PHP_URL_USER=$_PHP_URL_USER_PASS
-    fi
-    _PHP_URL_HOST_PORT="$(echo ${_PHP_URL_SCHEME_REVERSE/$_PHP_URL_USER_PASS@/} | cut -d/ -f1)"
-    PHP_URL_HOST="$(echo $_PHP_URL_HOST_PORT | sed -e 's,:.*,,g')"
-    if grep -q -E ':[0-9]+$' <<< "$_PHP_URL_HOST_PORT";then
-        PHP_URL_PORT="$(echo $_PHP_URL_HOST_PORT | sed -e 's,^.*:,:,g' -e 's,.*:\([0-9]*\).*,\1,g' -e 's,[^0-9],,g')"
-    fi
-    _PHP_URL_HOST_PORT_LENGTH=${#_PHP_URL_HOST_PORT}
-    _LENGTH="$_PHP_URL_HOST_PORT_LENGTH"
-    if [ -n "$_PHP_URL_USER_PASS" ];then
-        _PHP_URL_USER_PASS_LENGTH=${#_PHP_URL_USER_PASS}
-        _LENGTH=$((_LENGTH + 1 + _PHP_URL_USER_PASS_LENGTH))
-    fi
-    PHP_URL_PATH="${_PHP_URL_SCHEME_REVERSE:$_LENGTH}"
-
-    # Debug
-    # e '"$PHP_URL_SCHEME"' "$PHP_URL_SCHEME"; _.
-    # e '"$PHP_URL_HOST"' "$PHP_URL_HOST"; _.
-    # e '"$PHP_URL_PORT"' "$PHP_URL_PORT"; _.
-    # e '"$PHP_URL_USER"' "$PHP_URL_USER"; _.
-    # e '"$PHP_URL_PASS"' "$PHP_URL_PASS"; _.
-    # e '"$PHP_URL_PATH"' "$PHP_URL_PATH"; _.
-    # e '"$PHP_URL_QUERY"' "$PHP_URL_QUERY"; _.
-    # e '"$PHP_URL_FRAGMENT"' "$PHP_URL_FRAGMENT"; _.
-}
-urlCompleteComponent() {
-    local tld_special _url_port _tld _url_path_correct
-    [[ $(type -t Rcm_parse_url) == function ]] || { error Function Rcm_parse_url not found.; x; }
-    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
-    [[ -n "$url" ]] || { error Global variable url is not found or empty value.; x; }
-    [[ -n "$RCM_TLD_SPECIAL" ]] || { error Global variable RCM_TLD_SPECIAL is not found or empty value.; x; }
-    Rcm_parse_url "$url"
-    if [ -z "$PHP_URL_HOST" ];then
-        error Argument --url is not valid: '`'"$url"'`'.; x
-    fi
-    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
-    if [ -z "$PHP_URL_PORT" ];then
-        case "$url_scheme" in
-            http) url_port=80;;
-            https) url_port=443;;
-        esac
-    else
-        url_port="$PHP_URL_PORT"
-    fi
-    url_host="$PHP_URL_HOST"
-    url_path="$PHP_URL_PATH"
-    url_path_clean=
-    url_path_clean_trailing=
-    if [[ "$url_path" == '/' ]];then
-        url_path=
-    fi
-    if [ -n "$url_path" ];then
-        # Trim leading and trailing slash.
-        url_path_clean=$(echo "$url_path" | sed -E 's|(^/+\|/+$)||g')
-        url_path_clean_trailing=$(echo "$url_path" | sed -E 's|/+$||g')
-        # Must leading with slash.
-        # Karena akan digunakan pada nginx configuration.
-        _url_path_correct="/${url_path_clean}"
-        if [ ! "$url_path_clean_trailing" == "$_url_path_correct" ];then
-            error "Argument --url-path not valid."; x
-        fi
-    fi
-    _tld="${url_host##*.}"
-    # Explode by space.
-    read -ra tld_special -d '' <<< "$RCM_TLD_SPECIAL"
-    is_tld_special=
-    if ArraySearch "$_tld" tld_special[@];then
-        # Paksa menjadi http.
-        url_scheme=http
-        if [ -z "$PHP_URL_PORT" ];then
-            url_port=80
-        fi
-        is_tld_special=1
-    fi
-    _url_port=
-    if [ -n "$url_port" ];then
-        if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
-            _url_port=
-        elif [[ "$url_scheme" == http && "$url_port" == 80 ]];then
-            _url_port=
-        else
-            _url_port=":${url_port}"
-        fi
-    fi
-    # Modify variable url, auto add scheme.
-    # Modify variable url, auto trim trailing slash, auto add port.
-    url="${url_scheme}://${url_host}${_url_port}${url_path_clean_trailing}"
-}
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -799,7 +517,7 @@ if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
 code 'url="'$url'"'
-urlCompleteComponent
+url-complete-component
 code 'url="'$url'"'
 code 'url_scheme="'$url_scheme'"'
 code 'url_host="'$url_host'"'
@@ -807,6 +525,7 @@ code 'url_port="'$url_port'"'
 code 'url_path="'$url_path'"'
 code 'url_path_clean="'$url_path_clean'"'
 code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+
 if [ -z "$nginx_config_root" ];then
     error "Argument --nginx-config-root required."; x
 fi
@@ -826,13 +545,15 @@ if [ -z "$url_path" ];then
     if [ -z "$web_root" ];then
         error "Argument --web-root required."; x
     fi
-    slave_dirname="$(dirname "$nginx_config_file")"
-    slave_filename="$(basename "$nginx_config_file")"
+    slave_dirname="${nginx_config_file%/*}"
+    slave_filename="${nginx_config_file##*/}"
 else
     slave_dirname="$nginx_config_dir"
     slave_filename="${url_path_clean//\//.}"
 fi
-[ -d "$slave_dirname" ] || dirMustExists "$slave_dirname"
+code 'slave_filename="'$slave_filename'"'
+code 'slave_dirname="'$slave_dirname'"'
+rcm-dir "$slave_dirname" terminateIfNotExists
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
 master_include="${nginx_config_dir}/*"
@@ -844,18 +565,16 @@ else
 fi
 code 'master_filename="'$master_filename'"'
 code 'web_root="'$web_root'"'
-code 'slave_filename="'$slave_filename'"'
-code 'slave_dirname="'$slave_dirname'"'
 code 'fastcgi_pass="'$fastcgi_pass'"'
 code 'nginx_reload="'$nginx_reload'"'
 code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+# code 'tls_certificate="'$tls_certificate'"'
+# code 'tls_certificate_key="'$tls_certificate_key'"'
 # If not set in argument, try load from environment.
-[ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
-[ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+# [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
+# [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
+# code 'tls_certificate="'$tls_certificate'"'
+# code 'tls_certificate_key="'$tls_certificate_key'"'
 rcm_nginx_reload=
 tempfile=
 validate_existing_certificate=
@@ -869,13 +588,6 @@ if [[ "$url_scheme" == https ]];then
 fi
 ____
 
-path="/etc/nginx/sites-available/$master_filename"
-filename="$master_filename"
-chapter Mengecek nginx config file: '`'$filename'`'.
-code 'path="'$path'"'
-isFileExists "$path"
-____
-
 chapter Populate variable.
 if [[ "$url_scheme" == https ]];then
     ssl_certificate="$tls_certificate"
@@ -883,6 +595,14 @@ if [[ "$url_scheme" == https ]];then
 fi
 code 'ssl_certificate="'$ssl_certificate'"'
 code 'ssl_certificate_key="'$ssl_certificate_key'"'
+____
+
+path="/etc/nginx/sites-available/$master_filename"
+filename="$master_filename"
+chapter Mengecek nginx config file: '`'$filename'`'.
+code 'path="'$path'"'
+rcm-file "$path" isExists
+
 ____
 
 create_new=
@@ -897,8 +617,8 @@ fi
 
 if [[ -n "$create_new" && "$url_scheme" == https ]];then
     chapter Memeriksa certificate SSL.
-    [ -f "$ssl_certificate" ] || fileMustExists "$ssl_certificate"
-    [ -f "$ssl_certificate_key" ] || fileMustExists "$ssl_certificate_key"
+    rcm-file "$ssl_certificate" terminateIfNotExists
+    rcm-file "$ssl_certificate_key" terminateIfNotExists
     ____
 fi
 
@@ -909,7 +629,7 @@ if [ -n "$create_new" ];then
     code 'path="'$path'"'
     if [ -f "$path" ];then
         __ Backup file: '`'"$filename"'`'.
-        backupFile move "$path"
+        backup-file move "$path"
     fi
     __ Membuat file "$filename".
     cat <<'EOF' > "$path"
@@ -939,7 +659,7 @@ server {
     # error_page 497 301 =307 https://$host:$server_port$request_uri;
 }
 EOF
-    fileMustExists "$path"
+    rcm-file "$path" mustExists
     sed -i "s|__URL_HOST__|${url_host}|g" "$path"
     sed -i "s|__SSL_CERTIFICATE__|${ssl_certificate}|g" "$path"
     sed -i "s|__SSL_CERTIFICATE_KEY__|${ssl_certificate_key}|g" "$path"
@@ -980,7 +700,7 @@ fi
 path="/etc/nginx/sites-available/$master_filename"
 source="$path"
 target="/etc/nginx/sites-enabled/$master_filename"
-link_symbolic "$source" "$target"
+link-symbolic "$source" "$target"
 
 chapter Enable the line to include sub nginx config file: '`'$filename'`'.
 if [ -z "$url_path" ];then
@@ -1010,7 +730,7 @@ path="${slave_dirname}/${slave_filename}"
 filename="$slave_filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
 code 'path="'$path'"'
-isFileExists "$path"
+rcm-file "$path" isExists
 ____
 
 create_new=
@@ -1030,7 +750,7 @@ if [ -n "$create_new" ];then
     code 'path="'$path'"'
     if [ -f "$path" ];then
         __ Backup file: '`'"$filename"'`'.
-        backupFile move "$path" parent
+        backup-file move "$path" parent
     fi
     __ Membuat file "$filename".
     if [ -z "$url_path" ];then
@@ -1065,7 +785,7 @@ EOF
         sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
         sed -i "s|__NGINX_CONFIG_ROOT__|${nginx_config_root}|g" "$path"
     fi
-    fileMustExists "$path"
+    rcm-file "$path" mustExists
     ____
 
     chapter Memeriksa ulang konten.
@@ -1079,7 +799,8 @@ fi
 path="/etc/nginx/sites-available/${master_filename}-redirect"
 filename="${master_filename}-redirect"
 chapter Mengecek nginx config file: '`'$filename'`'.
-isFileExists "$path"
+code 'path="'$path'"'
+rcm-file "$path" isExists
 ____
 
 if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
@@ -1099,7 +820,7 @@ if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
         code 'path="'$path'"'
         if [ -f "$path" ];then
             __ Backup file: '`'"$filename"'`'.
-            backupFile move "$path"
+            backup-file move "$path"
         fi
         __ Membuat file "$filename".
         cat <<'EOF' > "$path"
@@ -1113,7 +834,7 @@ server {
     return 404;
 }
 EOF
-        fileMustExists "$path"
+        rcm-file "$path" mustExists
         sed -i "s|__URL_HOST__|${url_host}|g" "$path"
         ____
 
@@ -1127,13 +848,13 @@ EOF
     path="/etc/nginx/sites-available/${master_filename}-redirect"
     source="$path"
     target="/etc/nginx/sites-enabled/${master_filename}-redirect"
-    link_symbolic "$source" "$target"
+    link-symbolic "$source" "$target"
 else
     # Nginx reload agar symlink di sites-enabled auto hapus.
     if [ -n "$found" ];then
         chapter Menonaktifkan file config.
         __ Backup file: '`'"$filename"'`'.
-        backupFile move "$path"
+        backup-file move "$path"
         rcm_nginx_reload=1
         ____
     fi
@@ -1164,8 +885,8 @@ if [ -z "$nginx_reload" ];then
 fi
 
 if [ -n "$rcm_nginx_reload" ];then
-    INDENT+="    " \
-    rcm-nginx-reload \
+    INDENT+="$RCM_INDENT" \
+    rcm nginx reload \
         ; [ ! $? -eq 0 ] && x
 fi
 
