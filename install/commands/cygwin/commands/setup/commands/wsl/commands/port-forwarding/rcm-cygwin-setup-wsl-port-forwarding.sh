@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[ -f "$0" ] || { echo "Cannot run as dot command." >&2; kill -INT $$; }
+
 # Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
 BASENAME=${BASENAME:=host-port-[HOST_PORT]-forward-guest-port-[GUEST_PORT]}
@@ -124,6 +126,8 @@ if [ -n "$notfound" ];then
     chmod a+x "$filename_string"
     string=$(cat << 'EOF'
 #!/bin/bash
+
+[ -f "$0" ] || { echo "Cannot run as dot command." >&2; kill -INT $$; }
 echo $(date +%Y%m%d-%H%M%S) '[notice]' Begin trigger.
 begin=$SECONDS
 PATH="/cygdrive/c/Windows/system32:$PATH"
