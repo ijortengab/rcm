@@ -9,38 +9,6 @@ RCM_TLD_SPECIAL=${RCM_TLD_SPECIAL:=example test onion invalid local localhost al
 
 # Usage Functions.
 usage() {
-    # Populate variable $single_line and $multi_line.
-    unset count
-    declare -i count
-    count=0
-    single_line=
-    multi_line=
-    while read line;do
-        if [ -d /etc/php/$line/fpm ];then
-            if [ $count -gt 0 ];then
-                single_line+=", "
-            fi
-            count+=1
-            single_line+="[${count}]"
-            multi_line+=$'\n''        '"[${count}]: "${line}
-        fi
-    done <<< `ls /etc/php/`
-    if [ -n "$single_line" ];then
-        # single_line=" Available values: ${single_line}, or other."
-        single_line=" Available values: ${single_line}."
-    fi
-    if [ -n "$multi_line" ];then
-        multi_line="$multi_line"
-    fi
-    # Populate variable $users.
-    users=`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','`
-    nginx_user=
-    conf_nginx=`command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
-    if [ -f "$conf_nginx" ];then
-        nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
-    fi
-    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
-    [ -n "$users" ] && users=" Available values:${nginx_user}${users}."
     cat << EOF
 Usage: rcm php add website [options]
 
@@ -53,7 +21,8 @@ Options:
         Select web server to build up virtual host.
         Values available from command: rcm(plugin list web-server).
    --php-version=PHP_VERSION
-        Set the version of PHP FPM.${single_line}${multi_line}
+        Set the version of PHP FPM.
+        Values available from command: rcm(php list available --fpm).
    --php-fpm-user=[USER]
         Set the Unix user that used by PHP FPM.
         Default value is the user that used by web server (the common name is www-data).
