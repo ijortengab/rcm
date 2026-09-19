@@ -1,9 +1,15 @@
 #!/bin/bash
 
 read-false() {
+    no="$1"
+    yes="$2"
+    [ -z "$no" ] && no=-
+    [ -z "$yes" ] && yes=-
+    [[ "$no" == - ]] && no=' and skip.'
+    [[ "$yes" == - ]] && yes=' and continue.'
     _; _.
-    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o and skip.'; _.
-    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es and continue.'; _.
+    __;  _, '['; yellow Enter; _, ']'; _, ' '; yellow N; _, 'o'"$no"; _.
+    __;  _, '['; yellow Y; _, ']'; _, ' '; yellow Y; _, 'es'"$yes"; _.
     RCM_BOOLEAN=
     _; _.
     __ Press the yellow key to select.
