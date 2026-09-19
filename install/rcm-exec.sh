@@ -534,8 +534,14 @@ if [[ $# -gt 0 ]]; then
     last=$#
     last="${!last}"
     if [[ "${#last}" == 1 && -f "$last" ]];then
+        chapter Attention
+        _; _, We found the filename '"'$last'"' in the current directory.;_.
+        _; _, Do you want to use '"'$last'"' as the last of arguments?;_.
+        read-true - ' and continue use question mark (?).'
         # Shell expansion for character "question" (?).
-        last='?'
+        if [ -z "$RCM_BOOLEAN" ];then
+            last='?'
+        fi
     fi
 
     if [[ "$last" == '?' ]]; then
