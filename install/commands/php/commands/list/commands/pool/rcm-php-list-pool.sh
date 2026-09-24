@@ -10,6 +10,15 @@ PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool
 usage() {
     cat << EOF
 Usage: rcm php list pool
+
+Options:
+   --php-version=PHP_VERSION
+        Set the version of PHP FPM.
+        Values available from command: rcm(php list available --fpm).
+   --php-fpm-user=[USER]
+        Set the Unix user that used by PHP FPM.
+        Values available from command: rcm(system list user regular), or others.
+        If the user does not exists, it will be autocreate as reguler user.
 EOF
 }
 
