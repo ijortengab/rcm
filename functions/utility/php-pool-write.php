@@ -1,4 +1,12 @@
 <?php
+
+// The builtin function die() is not write error to stderr, we create
+// alternative function named _die().
+function _die($string='', $code = 1) {
+    fwrite(STDERR, $string.PHP_EOL);
+    exit($code);
+}
+
 // https://stackoverflow.com/questions/17316873/convert-array-to-an-ini-file
 // https://stackoverflow.com/a/17317168
 function clean(&$array) {
@@ -8,6 +16,7 @@ function clean(&$array) {
     unset($array['listen.owner']);
     unset($array['listen.group']);
 }
+
 function build_ini_string(array $a) {
     $out = '';
     $sectionless = '';
@@ -28,18 +37,18 @@ function build_ini_string(array $a) {
                         // add this line under the section heading
                         $out .= "{$key}[$subkey] = $subvalue" . PHP_EOL;
                     }
-                }else{
+                } else {
                     if($indexed_root){
                         // root level indexed array becomes sectionless
                         $sectionless .= "{$rootkey}[] = $value" . PHP_EOL;
-                    }else{
+                    } else {
                         // plain values within root level sections
                         $out .= "$key = $value" . PHP_EOL;
                     }
                 }
             }
 
-        }else{
+        } else {
             // root level sectionless values
             $sectionless .= "$rootkey = $rootvalue" . PHP_EOL;
         }
@@ -69,7 +78,24 @@ function array_diff_assoc_recursive(array $array1, array $array2) {
     return $difference;
 }
 
-$mode = $_SERVER['argv'][1];
+$mode = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1]: null;
+
+$php_version = isset($_SERVER['argv'][2]) ? $_SERVER['argv'][2]: null;
+
+$section_name = isset($_SERVER['argv'][3]) ? $_SERVER['argv'][3]: null;
+
+if (!isset($mode)) {
+    _die('Argument <mode> is required.');
+}
+
+if (!isset($php_version)) {
+    _die('Argument <php_version> is required.');
+}
+
+if (!isset($section_name)) {
+    _die('Argument <section_name> is required.');
+}
+
 switch ($mode) {
     case 'is_different':
     case 'save':
