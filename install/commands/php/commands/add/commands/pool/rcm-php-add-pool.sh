@@ -4,44 +4,46 @@
 
 # Define variables and constants.
 RCM_EXTENSION_VERSION=0.19.0-alpha.13
-PHP_FPM_POOL_DIRECTORY=${PHP_FPM_POOL_DIRECTORY:=/etc/php/[php-version]/fpm/pool.d}
 
 # Usage Functions.
 usage() {
-    nginx_user=
-    conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
-    if [ -f "$conf_nginx" ];then
-        nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
-    fi
-    [ -n "$nginx_user" ] && { nginx_user=" ${nginx_user},"; }
     cat << EOF
 Usage: rcm php add pool [options]
 
 Options:
-   --php-version *
-        Set the version of PHP. Available values: [a], [b], or other.
-        [a]: 8.2
-        [b]: 8.3
-   --php-fpm-user
-        Set the Unix user that used by PHP FPM. Default value is the user that used by web server. Available values:${nginx_user}`cut -d: -f1 /etc/passwd | while read line; do [ -d /home/$line ] && echo " ${line}"; done | tr $'\n' ','` or other. If the user does not exists, it will be autocreate as reguler user.
-   --section *
+   --php-version=PHP_VERSION
+        Set the version of PHP FPM.
+        Values available from command: rcm(php list available --fpm).
+   --web-server=HTTP
+        Select web server to fill the listen.owner directive in config.
+        The listen.owner should be set to the user that the web server
+        runs as.
+        Values available from command: rcm(plugin list web-server).
+   --section=SECTION
         Set the section name.
-   --file
+   --php-fpm-user=[USER]
+        Set the Unix user that used by PHP FPM.
+        Values available from command: rcm(system list user regular), or others.
+        If the user does not exists, it will be autocreate as reguler user.
+   --file=[FILENAME]
         Set the name of file config. The filename should has the .conf extension
-        to enable by daemon but you free to ignore it.
-        If omit, it will use the section name with .conf extension.
-   --without-autocreate-user ^
-        Skip autocreate Unix user while config is created. Default to --with-autocreate-user.
+        to enabled by PHP-FPM daemon but you free to ignore it.
+        If omit, it will use the section name with .conf extension or the main
+        configuration file.
+   --config-line=[LINE]...
+        Additional config in the pool.
+
+Other Options (For expert only):
+   --without-autocreate-user
+        Skip autocreate Unix user while config is created.
+        Default to --with-autocreate-user.
+        Useful if you prefer terminate process than autocreate the user.
 
 Global Options:
    --version
         Print version of this script.
    --help
         Show this help.
-
-Environment Variables:
-   PHP_FPM_POOL_DIRECTORY
-        Default to $PHP_FPM_POOL_DIRECTORY
 EOF
 }
 
@@ -65,6 +67,8 @@ while [[ $# -gt 0 ]]; do
         --section) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then section="$2"; shift; fi; shift ;;
         --with-autocreate-user) autocreate_user=1; shift ;;
         --without-autocreate-user) autocreate_user=0; shift ;;
+        --web-server=*) web_server="${1#*=}"; shift ;;
+        --web-server) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then web_server="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -99,15 +103,6 @@ require vendor/ijortengab/rcm/functions/utility/php-pool-write.sh
 # Requirement, validate, and populate value.
 chapter Variable dump.
 code 'command="'$command'"'
-nginx_user=
-conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
-if [ -f "$conf_nginx" ];then
-    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
-fi
-code 'nginx_user="'$nginx_user'"'
-if [ -z "$nginx_user" ];then
-    error "Variable \$nginx_user failed to populate."; x
-fi
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
@@ -133,8 +128,6 @@ config_file="$file"
 code 'config_file="'$config_file'"'
 find='[php-version]'
 replace="$php_version"
-PHP_FPM_POOL_DIRECTORY="${PHP_FPM_POOL_DIRECTORY/"$find"/"$replace"}"
-code 'PHP_FPM_POOL_DIRECTORY="'$PHP_FPM_POOL_DIRECTORY'"'
 [ -z "$autocreate_user" ] && autocreate_user=1
 [ "$autocreate_user" == 0 ] && autocreate_user=
 code 'config_line=('"${config_line[@]}"')'
@@ -300,6 +293,7 @@ exit 0
 # --php-fpm-user
 # --section
 # --file
+# --web-server
 # )
 # MULTIVALUE=(
 # --config-line
