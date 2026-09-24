@@ -250,7 +250,7 @@ ____
 path="${additional_config_file}"
 filename="${path##*/}"
 chapter Mengecek file '`'$filename'`'.
-code path='"'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 
@@ -264,7 +264,7 @@ ____
 # @todo support multiline.
 if [ -n "$found" ];then
     chapter Mengecek fqdn '`'$fqdn'`'.
-    code path='"'$path'"'
+    code path="$path"
 	if find-string "^${fqdn} " "$path" "$tempfile_output";then
         __ Verifikasi.
         if verifyKey - "$(<"$tempfile_output")";then

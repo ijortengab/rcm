@@ -123,7 +123,7 @@ ____
 path="$additional_config_file"
 filename="${path##*/}"
 chapter Mengecek file '`'$filename'`'.
-code path='"'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 

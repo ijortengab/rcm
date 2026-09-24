@@ -69,7 +69,7 @@ addRepositoryPpaOndrejPhp() {
     # Based on https://packages.sury.org/php/README.txt
     cd /etc/apt/sources.list.d
     string='https://packages.sury.org/php/'
-    code string='"'$string'"'
+    code string="$string"
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
     if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
         __ Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.
@@ -87,7 +87,7 @@ addRepositoryPpaOndrejPhp() {
         apt update -y
         cd /etc/apt/sources.list.d
         string='https://packages.sury.org/php/'
-        code string='"'$string'"'
+        code string="$string"
         string_quoted=$(sed "s/\./\\\./g" <<< "$string")
         if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
             __; green Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.; _.
@@ -105,7 +105,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
     # Based on https://launchpad.net/~ondrej/+archive/ubuntu/php
     cd /etc/apt/sources.list.d
     string='https://ppa.launchpadcontent.net/ondrej/php/ubuntu/'
-    code string='"'$string'"'
+    code string="$string"
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
     if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
         __ Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.
@@ -124,7 +124,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
         apt update -y
         cd /etc/apt/sources.list.d
         string='https://ppa.launchpadcontent.net/ondrej/php/ubuntu/'
-        code string='"'$string'"'
+        code string="$string"
         string_quoted=$(sed "s/\./\\\./g" <<< "$string")
         if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
             __; green Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.; _.
