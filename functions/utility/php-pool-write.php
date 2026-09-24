@@ -7,16 +7,6 @@ function _die($string='', $code = 1) {
     exit($code);
 }
 
-// https://stackoverflow.com/questions/17316873/convert-array-to-an-ini-file
-// https://stackoverflow.com/a/17317168
-function clean(&$array) {
-    unset($array['user']);
-    unset($array['group']);
-    unset($array['listen']);
-    unset($array['listen.owner']);
-    unset($array['listen.group']);
-}
-
 function build_ini_string(array $a) {
     $out = '';
     $sectionless = '';
@@ -54,6 +44,14 @@ function build_ini_string(array $a) {
         }
     }
     return $sectionless.$out;
+}
+
+function clean(&$array) {
+    unset($array['user']);
+    unset($array['group']);
+    unset($array['listen']);
+    unset($array['listen.owner']);
+    unset($array['listen.group']);
 }
 
 // Reference: https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Component%21Utility%21DiffArray.php/function/DiffArray%3A%3AdiffAssocRecursive/11.x
@@ -99,34 +97,38 @@ if (!isset($section_name)) {
 switch ($mode) {
     case 'is_different':
     case 'save':
+
         # Populate variable $is_different.
-        $file = $_SERVER['argv'][2];
-        $config_raw = parse_ini_file($file);
-        clean($config_raw, $config_cleaned);
-        $array_master_raw = unserialize($_SERVER['argv'][3]);
-        clean($array_master_raw, $array_master_cleaned);
+        $file = isset($_SERVER['argv'][4]) ? $_SERVER['argv'][4]: null;
+        $config = parse_ini_file($file, true);
+        $additional_config_ini = isset($_SERVER['argv'][5]) ? $_SERVER['argv'][5]: null;
+        if (!isset($additional_config_ini)) {
+            _die('Argument <additional_config_ini> is required.');
+        }
+        $additional_config = (array) parse_ini_string($additional_config_ini, true);
+        clean($additional_config[$section_name]);
         // Tidak seperti rcm-roundcube-autoinstaller-nginx karena array master
         // hanya tambahan terhadap config utama.
         # $is_different = !empty(array_diff_assoc(array_map('serialize',$array_master_cleaned), array_map('serialize',$config_cleaned)));
-        array_diff_assoc_recursive($array_master_cleaned, $config_cleaned, $result);
+        $result = array_diff_assoc_recursive($additional_config[$section_name], $config[$section_name]);
         $is_different = !empty($result);
         break;
+
     case 'create':
-        $file = $_SERVER['argv'][2];
-        $default_config = $_SERVER['argv'][3];
-        $additional_config = $_SERVER['argv'][4];
+        $config_file = isset($_SERVER['argv'][4]) ? $_SERVER['argv'][4]: null;
+        if (!isset($config_file)) {
+            _die('Argument <config_file> is required.');
+        }
+        $default_config_ini = isset($_SERVER['argv'][5]) ? $_SERVER['argv'][5]: null;
+        if (!isset($default_config_ini)) {
+            _die('Argument <default_config_ini> is required.');
+        }
+        $additional_config_ini = isset($_SERVER['argv'][6]) ? $_SERVER['argv'][6]: null;
+        $is_exists = file_exists($config_file);
         break;
 }
+
 switch ($mode) {
-    case 'serialized_ini_string':
-        // $sites_subdir = $_SERVER['argv'][2];
-        $stdin = '';
-        while (FALSE !== ($line = fgets(STDIN))) {
-           $stdin .= $line;
-        }
-        $array = parse_ini_string($stdin);
-        echo serialize($array);
-        break;
     case 'is_different':
         $is_different ? exit(0) : exit(1);
         break;
@@ -134,36 +136,33 @@ switch ($mode) {
         if (!$is_different) {
             exit(0);
         }
-        $section_name = $_SERVER['argv'][4];
-        $config_new = array_replace_recursive($config_raw, $result);
-        $config_new = array( $section_name => $config_new);
+        $result_new = array($section_name => $result);
+        $config_new = array_replace_recursive($config, $result_new);
         $contents = build_ini_string($config_new);
+
         file_put_contents($file, $contents);
         break;
+
     case 'create':
-        $file = $_SERVER['argv'][2];
-        $section_name = $_SERVER['argv'][3];
-        $default_config = $_SERVER['argv'][4];
-        $additional_config = $_SERVER['argv'][5];
-        $config = unserialize($default_config);
-        if (!empty($additional_config)) {
-            $additional_config_raw = unserialize($additional_config);
-            clean($additional_config_raw, $additional_config);
+        // Execute.
+        $config = (array) parse_ini_string($default_config_ini, true);
+
+        if (isset($additional_config_ini)) {
+            $additional_config = (array) parse_ini_string($additional_config_ini, true);
+            clean($additional_config[$section_name]);
+
+            // Cleaning.
             $config = array_replace_recursive($config, $additional_config);
+
         }
-        $config = array( $section_name => $config);
         $content = build_ini_string($config);
-        file_put_contents($file, trim($content)."\n");
-        break;
-    case 'is_exists':
-        $file = $_SERVER['argv'][2];
-        $section_name = $_SERVER['argv'][3];
-        if (file_exists($file)) {
-            $array = parse_ini_file($file, true);
-            if (array_key_exists($section_name, $array)) {
-                exit(0);
-            }
+
+        if ($is_exists) {
+            file_put_contents($config_file, trim($content)."\n", FILE_APPEND);
         }
-        exit(1);
+        else {
+            file_put_contents($config_file, trim($content)."\n");
+        }
         break;
+        ;;
 }
