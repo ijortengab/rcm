@@ -56,12 +56,12 @@ require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'BASENAME="'$BASENAME'"'
+code BASENAME="$BASENAME"
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;
     *) is_cygwin= ;;
 esac
-code 'is_cygwin="'$is_cygwin'"'
+code is_cygwin="$is_cygwin"
 ____
 
 if [ -z "$is_cygwin" ];then

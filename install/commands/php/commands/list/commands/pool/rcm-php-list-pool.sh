@@ -72,8 +72,8 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code 'php_version="'$php_version'"'
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_version="$php_version"
+code php_fpm_user="$php_fpm_user"
 ____
 
 if [ "$EUID" -ne 0 ];then

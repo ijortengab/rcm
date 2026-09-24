@@ -76,16 +76,16 @@ chapter Variable dump.
 if [ -z "$filename" ];then
     error "Argument --filename required."; x
 fi
-code 'filename="'$filename'"'
+code filename="$filename"
 if [ -z "$root" ];then
     error "Argument --root required."; x
 fi
-code 'root="'$root'"'
+code root="$root"
 if [[ ${#server_name[@]} -eq 0 ]];then
     error "Argument --server-name required."; x
 fi
 code 'server_name=('"${server_name[@]}"')'
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 ____
 
 file_config="/etc/nginx/sites-available/$filename"

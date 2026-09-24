@@ -69,26 +69,26 @@ chapter Variable dump.
 if [ -z "$host_port" ];then
     error "Argument --host-port required."; x
 fi
-code 'host_port="'$host_port'"'
+code host_port="$host_port"
 if [ -z "$guest_port" ];then
     error "Argument --guest-port required."; x
 fi
-code 'guest_port="'$guest_port'"'
-code 'BASENAME="'$BASENAME'"'
+code guest_port="$guest_port"
+code BASENAME="$BASENAME"
 find='[HOST_PORT]'
 replace="$host_port"
 BASENAME="${BASENAME/"$find"/"$replace"}"
 find='[GUEST_PORT]'
 replace="$guest_port"
 BASENAME="${BASENAME/"$find"/"$replace"}"
-code 'BASENAME="'$BASENAME'"'
+code BASENAME="$BASENAME"
 basename_string="$BASENAME"
-code 'basename_string="'$basename_string'"'
+code basename_string="$basename_string"
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;
     *) is_cygwin= ;;
 esac
-code 'is_cygwin="'$is_cygwin'"'
+code is_cygwin="$is_cygwin"
 ____
 
 if [ -z "$is_cygwin" ];then

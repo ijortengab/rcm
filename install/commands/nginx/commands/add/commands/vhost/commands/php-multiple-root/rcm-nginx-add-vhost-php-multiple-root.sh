@@ -515,28 +515,28 @@ chapter Variable dump.
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code 'url="'$url'"'
+code url="$url"
 url-complete-component
-code 'url="'$url'"'
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
-code 'url_path="'$url_path'"'
-code 'url_path_clean="'$url_path_clean'"'
-code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+code url="$url"
+code url_scheme="$url_scheme"
+code url_host="$url_host"
+code url_port="$url_port"
+code url_path="$url_path"
+code url_path_clean="$url_path_clean"
+code url_path_clean_trailing="$url_path_clean_trailing"
 
 if [ -z "$nginx_config_root" ];then
     error "Argument --nginx-config-root required."; x
 fi
-code 'nginx_config_root="'$nginx_config_root'"'
+code nginx_config_root="$nginx_config_root"
 if [ -z "$nginx_config_file" ];then
     error "Argument --nginx-config-file required."; x
 fi
-code 'nginx_config_file="'$nginx_config_file'"'
+code nginx_config_file="$nginx_config_file"
 if [ -z "$nginx_config_dir" ];then
     error "Argument --nginx-config-dir required."; x
 fi
-code 'nginx_config_dir="'$nginx_config_dir'"'
+code nginx_config_dir="$nginx_config_dir"
 if [ -z "$fastcgi_pass" ];then
     error "Argument --fastcgi-pass required."; x
 fi
@@ -550,30 +550,30 @@ else
     slave_dirname="$nginx_config_dir"
     slave_filename="${url_path_clean//\//.}"
 fi
-code 'slave_filename="'$slave_filename'"'
-code 'slave_dirname="'$slave_dirname'"'
+code slave_filename="$slave_filename"
+code slave_dirname="$slave_dirname"
 rcm-dir "$slave_dirname" terminateIfNotExists
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
 master_include="${nginx_config_dir}/*"
-code 'master_include="'$master_include'"'
+code master_include="$master_include"
 if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
     master_filename="$url_host"
 else
     master_filename="${url_host}.${url_port}"
 fi
-code 'master_filename="'$master_filename'"'
-code 'web_root="'$web_root'"'
-code 'fastcgi_pass="'$fastcgi_pass'"'
-code 'nginx_reload="'$nginx_reload'"'
-code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
-# code 'tls_certificate="'$tls_certificate'"'
-# code 'tls_certificate_key="'$tls_certificate_key'"'
+code master_filename="$master_filename"
+code web_root="$web_root"
+code fastcgi_pass="$fastcgi_pass"
+code nginx_reload="$nginx_reload"
+code tempfile_trigger_reload="$tempfile_trigger_reload"
+# code tls_certificate="$tls_certificate"
+# code tls_certificate_key="$tls_certificate_key"
 # If not set in argument, try load from environment.
 # [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 # [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
-# code 'tls_certificate="'$tls_certificate'"'
-# code 'tls_certificate_key="'$tls_certificate_key'"'
+# code tls_certificate="$tls_certificate"
+# code tls_certificate_key="$tls_certificate_key"
 rcm_nginx_reload=
 tempfile=
 validate_existing_certificate=
@@ -592,14 +592,14 @@ if [[ "$url_scheme" == https ]];then
     ssl_certificate="$tls_certificate"
     ssl_certificate_key="$tls_certificate_key"
 fi
-code 'ssl_certificate="'$ssl_certificate'"'
-code 'ssl_certificate_key="'$ssl_certificate_key'"'
+code ssl_certificate="$ssl_certificate"
+code ssl_certificate_key="$ssl_certificate_key"
 ____
 
 path="/etc/nginx/sites-available/$master_filename"
 filename="$master_filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
-code 'path="'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 
 ____
@@ -625,7 +625,7 @@ if [ -n "$create_new" ];then
     path="/etc/nginx/sites-available/$master_filename"
     filename="$master_filename"
     chapter Membuat nginx config file: '`'$filename'`'.
-    code 'path="'$path'"'
+    code path="$path"
     if [ -f "$path" ];then
         __ Backup file: '`'"$filename"'`'.
         backup-file move "$path"
@@ -728,7 +728,7 @@ ____
 path="${slave_dirname}/${slave_filename}"
 filename="$slave_filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
-code 'path="'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 
@@ -746,7 +746,7 @@ if [ -n "$create_new" ];then
     path="${slave_dirname}/${slave_filename}"
     filename="$slave_filename"
     chapter Membuat nginx config file: '`'$filename'`'.
-    code 'path="'$path'"'
+    code path="$path"
     if [ -f "$path" ];then
         __ Backup file: '`'"$filename"'`'.
         backup-file move "$path" parent
@@ -798,7 +798,7 @@ fi
 path="/etc/nginx/sites-available/${master_filename}-redirect"
 filename="${master_filename}-redirect"
 chapter Mengecek nginx config file: '`'$filename'`'.
-code 'path="'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 
@@ -816,7 +816,7 @@ if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
         path="/etc/nginx/sites-available/${master_filename}-redirect"
         filename="${master_filename}-redirect"
         chapter Membuat nginx config file: '`'$filename'`'.
-        code 'path="'$path'"'
+        code path="$path"
         if [ -f "$path" ];then
             __ Backup file: '`'"$filename"'`'.
             backup-file move "$path"

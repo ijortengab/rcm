@@ -76,17 +76,17 @@ require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'SSH_DIRECTORY="'$SSH_DIRECTORY'"'
-code 'SSHD_CONFIG="'$SSHD_CONFIG'"'
-code 'SSHD_CONFIG_DIRECTORY="'$SSHD_CONFIG_DIRECTORY'"'
-code 'RCM_CONF="'$RCM_CONF'"'
+code SSH_DIRECTORY="$SSH_DIRECTORY"
+code SSHD_CONFIG="$SSHD_CONFIG"
+code SSHD_CONFIG_DIRECTORY="$SSHD_CONFIG_DIRECTORY"
+code RCM_CONF="$RCM_CONF"
 [ -z "$config_file" ] && config_file="$SSHD_CONFIG"
-code 'config_file="'$config_file'"'
+code config_file="$config_file"
 code 'enable="'"${enable[@]}"'"'
 code 'disable="'"${disable[@]}"'"'
 ____
 
-code 'listen_port="'$listen_port'"'
+code listen_port="$listen_port"
 ____
 
 chapter Memeriksa file SSH Daemon Config.

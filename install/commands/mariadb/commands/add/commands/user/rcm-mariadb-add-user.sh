@@ -66,15 +66,15 @@ chapter Variable dump.
 if [ -z "$db_user" ];then
     error "Argument --db-user required."; x
 fi
-code 'db_user="'$db_user'"'
+code db_user="$db_user"
 if [ -z "$db_user_password" ];then
     error "Argument --db-user-password required."; x
 fi
-code 'db_user_password="'$db_user_password'"'
+code db_user_password="$db_user_password"
 if [ -z "$db_user_host" ];then
     db_user_host=localhost
 fi
-code 'db_user_host="'$db_user_host'"'
+code db_user_host="$db_user_host"
 ____
 
 chapter Mengecek database user '`'$db_user'`'.

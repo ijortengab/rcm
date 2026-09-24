@@ -102,14 +102,14 @@ vercomp() {
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'PREFIX_DIRECTORY="'$PREFIX_DIRECTORY'"'
+code PREFIX_DIRECTORY="$PREFIX_DIRECTORY"
 prefix_directory=${PREFIX_DIRECTORY%/} # remove suffix.
-code 'prefix_directory="'$prefix_directory'"'
+code prefix_directory="$prefix_directory"
 if [ -z "$pattern" ];then
     error "Argument --pattern required."; x
 fi
-code 'pattern="'$pattern'"'
-code 'timeout_trigger_command="'$timeout_trigger_command'"'
+code pattern="$pattern"
+code timeout_trigger_command="$timeout_trigger_command"
 if [ -n "$autorun" ];then
     case "$autorun" in
         cron|systemd) ;;
@@ -125,12 +125,12 @@ if [ -n "$autorun" ];then
     done
 
 fi
-code 'autorun="'$autorun'"'
+code autorun="$autorun"
 case `uname` in
     CYGWIN*) is_cygwin=1 ;;
     *) is_cygwin= ;;
 esac
-code 'is_cygwin="'$is_cygwin'"'
+code is_cygwin="$is_cygwin"
 vercomp `stat --version | head -1 | grep -o -E '\S+$'` 8.31
 if [[ $? -lt 2 ]];then
     stat_cached=' --cached=never'
@@ -152,7 +152,7 @@ fi
 
 chapter Memeriksa full path dari command '`'ssh-keep-alive-symlink-reference.sh'`'.
 full_path=$(command -v ssh-keep-alive-symlink-reference.sh)
-code 'full_path="'$full_path'"'
+code full_path="$full_path"
 ____
 
 filename_string="${prefix_directory}/${pattern}.sh"

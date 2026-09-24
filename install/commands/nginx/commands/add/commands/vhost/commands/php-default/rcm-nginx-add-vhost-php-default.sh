@@ -185,16 +185,16 @@ chapter Variable dump.
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code 'url="'$url'"'
+code url="$url"
 
 url-complete-component
-code 'url="'$url'"'
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
-code 'url_path="'$url_path'"'
-code 'url_path_clean="'$url_path_clean'"'
-code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+code url="$url"
+code url_scheme="$url_scheme"
+code url_host="$url_host"
+code url_port="$url_port"
+code url_path="$url_path"
+code url_path_clean="$url_path_clean"
+code url_path_clean_trailing="$url_path_clean_trailing"
 if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
     filename="$url_host"
 else
@@ -208,18 +208,18 @@ if [ -z "$fastcgi_pass" ];then
 fi
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
-code 'filename="'$filename'"'
-code 'root="'$root'"'
-code 'fastcgi_pass="'$fastcgi_pass'"'
-code 'nginx_reload="'$nginx_reload'"'
-code 'tempfile_trigger_reload="'$tempfile_trigger_reload'"'
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+code filename="$filename"
+code root="$root"
+code fastcgi_pass="$fastcgi_pass"
+code nginx_reload="$nginx_reload"
+code tempfile_trigger_reload="$tempfile_trigger_reload"
+code tls_certificate="$tls_certificate"
+code tls_certificate_key="$tls_certificate_key"
 # If not set in argument, try load from environment.
 [ -z "$tls_certificate" ] && tls_certificate="$TLS_CERTIFICATE"
 [ -z "$tls_certificate_key" ] && tls_certificate_key="$TLS_CERTIFICATE_KEY"
-code 'tls_certificate="'$tls_certificate'"'
-code 'tls_certificate_key="'$tls_certificate_key'"'
+code tls_certificate="$tls_certificate"
+code tls_certificate_key="$tls_certificate_key"
 rcm_nginx_reload=
 tempfile=
 validate_existing_certificate=
@@ -235,7 +235,7 @@ ____
 
 path="/etc/nginx/sites-available/$filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
-code 'path="'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 
@@ -244,8 +244,8 @@ if [[ "$url_scheme" == https ]];then
     ssl_certificate="$tls_certificate"
     ssl_certificate_key="$tls_certificate_key"
 fi
-code 'ssl_certificate="'$ssl_certificate'"'
-code 'ssl_certificate_key="'$ssl_certificate_key'"'
+code ssl_certificate="$ssl_certificate"
+code ssl_certificate_key="$ssl_certificate_key"
 ____
 
 create_new=
@@ -268,7 +268,7 @@ fi
 if [ -n "$create_new" ];then
     path="/etc/nginx/sites-available/$filename"
     chapter Membuat nginx config file: '`'$filename'`'.
-    code 'path="'$path'"'
+    code path="$path"
     if [ -f "$path" ];then
         __ Backup file "$filename".
         backup-file move "$path"
@@ -364,7 +364,7 @@ if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
         path="/etc/nginx/sites-available/${filename}-redirect"
         filename_redirect="${filename}-redirect"
         chapter Membuat nginx config file: '`'$filename_redirect'`'.
-        code 'path="'$path'"'
+        code path="$path"
         if [ -f "$path" ];then
             __ Backup file: '`'"$filename_redirect"'`'.
             backup-file move "$path"

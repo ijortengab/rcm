@@ -138,8 +138,8 @@ EOF
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$debug" ] && code 'domain="'$domain'"'
-[ -n "$debug" ] && code 'name_server="'$name_server'"'
+[ -n "$debug" ] && code domain="$domain"
+[ -n "$debug" ] && code name_server="$name_server"
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -147,18 +147,18 @@ fi
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
 type=txt
-[ -n "$debug" ] && code 'type="'$type'"'
+[ -n "$debug" ] && code type="$type"
 type_uppercase=${type^^}
 
 value=
 if [ -n "$1" ];then
     value="$1"
 fi
-[ -n "$debug" ] && code 'type_uppercase="'$type_uppercase'"'
-[ -n "$debug" ] && code 'hostname="'$hostname'"'
-[ -n "$debug" ] && code 'value="'$value'"'
-[ -n "$debug" ] && code 'label="'$label'"'
-[ -n "$debug" ] && code 'colorize="'$colorize'"'
+[ -n "$debug" ] && code type_uppercase="$type_uppercase"
+[ -n "$debug" ] && code hostname="$hostname"
+[ -n "$debug" ] && code value="$value"
+[ -n "$debug" ] && code label="$label"
+[ -n "$debug" ] && code colorize="$colorize"
 [ -n "$debug" ] && ____
 
 if [ -z "$name_exists_sure" ];then

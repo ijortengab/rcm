@@ -79,7 +79,7 @@ makeSureRunning() {
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 ____
 
 chapter Memerikasa apakah mesin ini merupakan WSL.

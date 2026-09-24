@@ -102,9 +102,9 @@ chapter Variable dump.
 if [ -z "$project_name" ];then
     error "Argument --project-name required."; x
 fi
-code 'project_name="'$project_name'"'
-code 'project_parent_name="'$project_parent_name'"'
-code 'db_suffix_name="'$db_suffix_name'"'
+code project_name="$project_name"
+code project_parent_name="$project_parent_name"
+code db_suffix_name="$db_suffix_name"
 db_user="$project_name"
 db_user_host="localhost"
 db_name="$project_name"
@@ -115,13 +115,13 @@ db_name="$project_name"
 [ -n "$db_suffix_name" ] && {
     db_name="${db_name}__${db_suffix_name}"
 }
-code 'db_user="'$db_user'"'
-code 'db_user_host="'$db_user_host'"'
-code 'db_name="'$db_name'"'
+code db_user="$db_user"
+code db_user_host="$db_user_host"
+code db_name="$db_name"
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
-code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
+code MARIADB_PREFIX_MASTER="$MARIADB_PREFIX_MASTER"
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
-code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+code MARIADB_USERS_CONTAINER_MASTER="$MARIADB_USERS_CONTAINER_MASTER"
 [ -z "$autocreate_db" ] && autocreate_db=1
 [ "$autocreate_db" == 0 ] && autocreate_db=
 ____

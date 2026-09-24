@@ -90,42 +90,42 @@ databaseCredentialPhpmyadmin() {
 # Requirement, validate, and populate value.
 chapter Variable dump.
 [ -n "$fast" ] && isfast=' --fast' || isfast=''
-code 'PHPMYADMIN_FQDN_LOCALHOST="'$PHPMYADMIN_FQDN_LOCALHOST'"'
-code 'MARIADB_PREFIX_MASTER="'$MARIADB_PREFIX_MASTER'"'
-code 'MARIADB_USERS_CONTAINER_MASTER="'$MARIADB_USERS_CONTAINER_MASTER'"'
+code PHPMYADMIN_FQDN_LOCALHOST="$PHPMYADMIN_FQDN_LOCALHOST"
+code MARIADB_PREFIX_MASTER="$MARIADB_PREFIX_MASTER"
+code MARIADB_USERS_CONTAINER_MASTER="$MARIADB_USERS_CONTAINER_MASTER"
 if [ -z "$phpmyadmin_version" ];then
     error "Argument --phpmyadmin-version required."; x
 fi
-code 'phpmyadmin_version="'$phpmyadmin_version'"'
+code phpmyadmin_version="$phpmyadmin_version"
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 nginx_user=
 conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
 if [ -f "$conf_nginx" ];then
     nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
 fi
-code 'nginx_user="'$nginx_user'"'
+code nginx_user="$nginx_user"
 if [ -z "$nginx_user" ];then
     error "Variable \$nginx_user failed to populate."; x
 fi
 php_fpm_user="$nginx_user"
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user="$php_fpm_user"
 prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
-code 'prefix="'$prefix'"'
+code prefix="$prefix"
 project_container="$PHPMYADMIN_FQDN_LOCALHOST"
-code 'project_container="'$project_container'"'
+code project_container="$project_container"
 php_project_name=www
-code 'php_project_name="'$php_project_name'"'
+code php_project_name="$php_project_name"
 mariadb_project_name=phpmyadmin
-code 'mariadb_project_name="'$mariadb_project_name'"'
+code mariadb_project_name="$mariadb_project_name"
 root="$prefix/${project_container}/web"
-code 'root="'$root'"'
+code root="$root"
 root_source="$prefix/${project_container}/${phpmyadmin_version}"
-code 'root_source="'$root_source'"'
+code root_source="$root_source"
 php_fpm_section="$php_project_name"
-code 'php_fpm_section="'$php_fpm_section'"'
+code php_fpm_section="$php_fpm_section"
 ____
 
 target_project_container="${prefix}/${project_container}"
@@ -151,7 +151,7 @@ fi
 code socket_filename="$socket_filename"
 code root="$root"
 url="http://${PHPMYADMIN_FQDN_LOCALHOST}"
-code 'url="'$url'"'
+code url="$url"
 ____
 
 chapter Mengecek '$PATH'.
@@ -272,12 +272,12 @@ rcm-mariadb-setup-project-database $isfast \
 chapter Prepare arguments.
 db_name="$mariadb_project_name"
 db_user="$mariadb_project_name"
-code 'db_name="'$db_name'"'
-code 'db_user="'$db_user'"'
+code db_name="$db_name"
+code db_user="$db_user"
 databaseCredentialPhpmyadmin
-code 'db_user_password="'$db_user_password'"'
+code db_user_password="$db_user_password"
 db_user_host=localhost
-code 'db_user_host="'$db_user_host'"'
+code db_user_host="$db_user_host"
 ____
 
 chapter Mengecek apakah PHPMyAdmin sudah imported SQL.

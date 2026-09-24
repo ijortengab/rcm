@@ -65,7 +65,7 @@ fi
 if [ -z "$which" ];then
     which=common
 fi
-code 'which="'$which'"'
+code which="$which"
 ____
 
 glob="php*${which}"

@@ -138,7 +138,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 code 'extension=('"${extension[@]}"')'
 php_extension=
 for each in "${extension[@]}"; do
@@ -152,8 +152,8 @@ else
     if [ -f /etc/os-release ];then
         . /etc/os-release
     fi
-    code 'ID="'$ID'"'
-    code 'VERSION_ID="'$VERSION_ID'"'
+    code ID="$ID"
+    code VERSION_ID="$VERSION_ID"
     if [ -z "$ID" ];then
         error OS not supported; x;
     fi

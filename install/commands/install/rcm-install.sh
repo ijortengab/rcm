@@ -100,11 +100,11 @@ chapter Variable dump.
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code 'url="'$url'"'
+code url="$url"
 if [ -z "$extension_version" ];then
     extension_version=latest
 fi
-code 'extension_version="'$extension_version'"'
+code extension_version="$extension_version"
 tempfile=
 url-complete-component
 if [ ! "$url_host" == github.com ];then
@@ -169,11 +169,11 @@ ____
 
 chapter Memeriksa direktori commands.
 target="${RCM_LIB}/commands"
-code 'target="'$target'"'
+code target="$target"
 rcm-dir "$target" terminateIfNotExists
 
 source="${cache_directory}/rcm/install/commands"
-code 'source="'$source'"'
+code source="$source"
 rcm-dir "$source" isExists
 if [ -n "$found" ];then
     __ Copy commands directory.
@@ -186,11 +186,11 @@ ____
 
 chapter Memeriksa direktori interfaces.
 target="${RCM_LIB}/interfaces"
-code 'target="'$target'"'
+code target="$target"
 rcm-dir "$target" terminateIfNotExists
 
 source="${cache_directory}/rcm/install/interfaces"
-code 'source="'$source'"'
+code source="$source"
 rcm-dir "$source" isExists
 if [ -n "$found" ];then
     __ Copy interfaces directory.
@@ -203,7 +203,7 @@ ____
 
 chapter Memeriksa direktori lainnya.
 target="${RCM_LIB}/vendor/$github_owner_repo"
-code 'target="'$target'"'
+code target="$target"
 mkdir -p "$target"
 source="${cache_directory}"
 while IFS= read -r line; do
@@ -220,7 +220,7 @@ ____
 
 chapter Memeriksa file '`'require.txt'`'.
 path="${cache_directory}/rcm/install/require.txt"
-code 'path="'$path'"'
+code path="$path"
 rcm-file "$path" isExists
 ____
 

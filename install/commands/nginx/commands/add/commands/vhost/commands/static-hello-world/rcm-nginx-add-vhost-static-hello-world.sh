@@ -62,7 +62,7 @@ chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code 'domain="'$domain'"'
+code domain="$domain"
 ____
 
 chapter Prepare arguments.

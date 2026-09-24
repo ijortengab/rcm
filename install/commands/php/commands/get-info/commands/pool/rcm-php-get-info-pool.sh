@@ -85,15 +85,15 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 if [ -z "$pool_name" ];then
     error "Argument --pool-name required."; x
 fi
-code 'pool_name="'$pool_name'"'
+code pool_name="$pool_name"
 if [ -z "$key" ];then
     error "Argument --key required."; x
 fi
-code 'key="'$key'"'
+code key="$key"
 ____
 
 if [ "$EUID" -ne 0 ];then

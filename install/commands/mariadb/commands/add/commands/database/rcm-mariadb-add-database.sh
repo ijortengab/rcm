@@ -58,7 +58,7 @@ chapter Variable dump.
 if [ -z "$db_name" ];then
     error "Argument --db-name required."; x
 fi
-code 'db_name="'$db_name'"'
+code db_name="$db_name"
 ____
 
 chapter Mengecek database '`'$db_name'`'.

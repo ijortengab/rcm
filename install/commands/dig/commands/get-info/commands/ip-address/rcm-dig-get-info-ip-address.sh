@@ -85,8 +85,8 @@ if [ -z "$fqdn" ];then
     get-ipv4
     exit 0
 fi
-code 'fqdn="'$fqdn'"'
-code 'ip_address="'$ip_address'"'
+code fqdn="$fqdn"
+code ip_address="$ip_address"
 if [ -z "$ip_address" ];then
     code rcm dig get-info a --domain="$fqdn"
     rcm dig get-info a --domain="$fqdn"
@@ -96,9 +96,9 @@ fi
 
 chapter Variable dump.
 fqdn_raw="$fqdn"
-code 'fqdn_raw="'$fqdn_raw'"'
-code 'fqdn="'$fqdn'"'
-code 'ip_address="'$ip_address'"'
+code fqdn_raw="$fqdn_raw"
+code fqdn="$fqdn"
+code ip_address="$ip_address"
 tempfile=$(mktemp -p /dev/shm -t rcm-dig-get-info-ip-address.XXXXXX)
 ____
 

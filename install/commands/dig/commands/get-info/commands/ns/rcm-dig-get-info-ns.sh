@@ -74,8 +74,8 @@ require command dig
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$debug" ] && code 'domain="'$domain'"'
-[ -n "$debug" ] && code 'name_server="'$name_server'"'
+[ -n "$debug" ] && code domain="$domain"
+[ -n "$debug" ] && code name_server="$name_server"
 if [[ "$name_server" == - ]];then
     name_server=
 fi

@@ -55,7 +55,7 @@ if [ -z "$dbms" ];then
 fi
 
 [ -n "$RCM_DEBUG" ] && chapter Variable dump.
-[ -n "$RCM_DEBUG" ] && code 'dbms="'$dbms'"'
+[ -n "$RCM_DEBUG" ] && code dbms="$dbms"
 [ -n "$RCM_DEBUG" ] && ____
 
 apt-install dovecot-core dovecot-imapd dovecot-pop3d dovecot-sieve dovecot-lmtpd

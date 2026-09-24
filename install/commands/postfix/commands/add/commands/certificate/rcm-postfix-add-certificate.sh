@@ -120,24 +120,24 @@ verifyKey() {
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'POSTFIX_CONFIG_DIR="'$POSTFIX_CONFIG_DIR'"'
-code 'POSTFIX_CONFIG_FILE_MAIN="'$POSTFIX_CONFIG_FILE_MAIN'"'
+code POSTFIX_CONFIG_DIR="$POSTFIX_CONFIG_DIR"
+code POSTFIX_CONFIG_FILE_MAIN="$POSTFIX_CONFIG_FILE_MAIN"
 if [ -z "$additional_config_file" ];then
     error "Argument --additional-config-file required."; x
 fi
-code 'additional_config_file="'$additional_config_file'"'
+code additional_config_file="$additional_config_file"
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi
-code 'fqdn="'$fqdn'"'
+code fqdn="$fqdn"
 if [ -z "$ssl_cert" ];then
     error "Argument --ssl-cert required."; x
 fi
-code 'ssl_cert="'$ssl_cert'"'
+code ssl_cert="$ssl_cert"
 if [ -z "$ssl_key" ];then
     error "Argument --ssl-key required."; x
 fi
-code 'ssl_key="'$ssl_key'"'
+code ssl_key="$ssl_key"
 rcm-file "$ssl_cert" terminateIfNotExists
 rcm-file "$ssl_key" terminateIfNotExists
 # Exit code sama-sama bernilai 0 pada unknown parameter, sehingga perlu kita gunakan output.
@@ -212,7 +212,7 @@ ____
 key=tls_server_sni_maps
 chapter Memastikan key '`'$key'`' enabled.
 path="${additional_config_file}"
-code 'path="'$path'"'
+code path="$path"
 postconf -n $key 2> $tempfile_error > $tempfile_output
 error="$(<"$tempfile_error")"
 if [ -n "$error" ];then

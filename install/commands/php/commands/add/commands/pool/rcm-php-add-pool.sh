@@ -108,32 +108,32 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code 'php_version="'$php_version'"'
+code php_version="$php_version"
 php_version_fpm="php${php_version}-fpm"
-code 'php_version_fpm="'$php_version_fpm'"'
+code php_version_fpm="$php_version_fpm"
 if [ -z "$web_server" ];then
     error "Argument --web-server required."; x
 fi
-code 'web_server="'$web_server'"'
+code web_server="$web_server"
 if [ -z "$section" ];then
     error "Argument --section required."; x
 fi
-code 'section="'$section'"'
+code section="$section"
 if [ -z "$php_fpm_user" ];then
     error "Argument --php-fpm-user required."; x
 fi
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user="$php_fpm_user"
 # Rename variable.
 section_name="$section"
-code 'section_name="'$section_name'"'
+code section_name="$section_name"
 if [ -z "$file" ];then
     file="$section_name"
     file+=".conf"
 fi
-code 'file="'$file'"'
+code file="$file"
 # Rename variable.
 config_file="$file"
-code 'config_file="'$config_file'"'
+code config_file="$config_file"
 find='[php-version]'
 replace="$php_version"
 [ -z "$autocreate_user" ] && autocreate_user=1

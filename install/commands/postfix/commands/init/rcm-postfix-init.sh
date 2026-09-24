@@ -98,9 +98,9 @@ if [ -n "$public_domain" ];then
 fi
 
 [ -n "$RCM_DEBUG" ] && chapter Variable dump.
-[ -n "$RCM_DEBUG" ] && code 'mailname="'$mailname'"'
-[ -n "$RCM_DEBUG" ] && code 'main_mailer_type="'$main_mailer_type'"'
-[ -n "$RCM_DEBUG" ] && code 'dbms="'$dbms'"'
+[ -n "$RCM_DEBUG" ] && code mailname="$mailname"
+[ -n "$RCM_DEBUG" ] && code main_mailer_type="$main_mailer_type"
+[ -n "$RCM_DEBUG" ] && code dbms="$dbms"
 [ -n "$RCM_DEBUG" ] && ____
 
 debconf-set-selections <<< "postfix postfix/mailname string ${mailname}"

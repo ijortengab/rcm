@@ -72,17 +72,17 @@ chapter Variable dump.
 if [ -z "$db_name" ];then
     error "Argument --db-name required."; x
 fi
-code 'db_name="'$db_name'"'
+code db_name="$db_name"
 if [ -z "$db_user" ];then
     error "Argument --db-user required."; x
 fi
-code 'db_user="'$db_user'"'
+code db_user="$db_user"
 if [ -z "$db_user_host" ];then
     db_user_host=localhost
 fi
-code 'db_user_host="'$db_user_host'"'
-code 'database_exists_sure="'$database_exists_sure'"'
-code 'user_exists_sure="'$user_exists_sure'"'
+code db_user_host="$db_user_host"
+code database_exists_sure="$database_exists_sure"
+code user_exists_sure="$user_exists_sure"
 ____
 
 if [ -z "$database_exists_sure" ];then

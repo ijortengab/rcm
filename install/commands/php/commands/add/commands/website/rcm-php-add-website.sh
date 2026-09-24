@@ -146,7 +146,7 @@ if [ -f /proc/sys/kernel/osrelease ];then
         is_wsl=1
     fi
 fi
-code 'is_wsl="'$is_wsl'"'
+code is_wsl="$is_wsl"
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
@@ -154,15 +154,15 @@ code php_version="$php_version"
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code 'url="'$url'"'
+code url="$url"
 urlCompleteComponent
-code 'url="'$url'"'
-code 'url_scheme="'$url_scheme'"'
-code 'url_host="'$url_host'"'
-code 'url_port="'$url_port'"'
-code 'url_path="'$url_path'"'
-code 'url_path_clean="'$url_path_clean'"'
-code 'url_path_clean_trailing="'$url_path_clean_trailing'"'
+code url="$url"
+code url_scheme="$url_scheme"
+code url_host="$url_host"
+code url_port="$url_port"
+code url_path="$url_path"
+code url_path_clean="$url_path_clean"
+code url_path_clean_trailing="$url_path_clean_trailing"
 if [ -n "$is_wsl" ];then
     # Jika mesin menggunakan WSL2, maka tambahkan max_execution_time (waktu proses)
     php_fpm_config=(pm=ondemand php_value[max_execution_time]=60 "${php_fpm_config[@]}")
@@ -186,19 +186,19 @@ code 'certificate_name="'$certificate_name
 if [ -z "$php_fpm_section" ];then
     error "Argument --php-fpm-section required."; x
 fi
-code 'php_fpm_section="'$php_fpm_section'"'
+code php_fpm_section="$php_fpm_section"
 [ -z "$certbot_obtain" ] && certbot_obtain=1
 [ "$certbot_obtain" == 0 ] && certbot_obtain=
-code 'certbot_obtain="'$certbot_obtain'"'
+code certbot_obtain="$certbot_obtain"
 if [ -n "$is_tld_special" ];then
     certbot_obtain=
 fi
-code 'certbot_obtain="'$certbot_obtain'"'
+code certbot_obtain="$certbot_obtain"
 [ -n "$certbot_obtain" ] && is_certbot_obtain=' --with-certbot-obtain' || is_certbot_obtain=' --without-certbot-obtain'
-code 'is_certbot_obtain="'$is_certbot_obtain'"'
-code 'root="'$root'"'
-code 'prefix="'$prefix'"'
-code 'container="'$container'"'
+code is_certbot_obtain="$is_certbot_obtain"
+code root="$root"
+code prefix="$prefix"
+code container="$container"
 if [ -n "$root" ];then
     if [ -d "$root" ];then
         if [ ! "${root:0:1}" == / ];then
@@ -223,8 +223,8 @@ else
         fi
     fi
 fi
-code 'prefix="'$prefix'"'
-code 'index_php="'$index_php'"'
+code prefix="$prefix"
+code index_php="$index_php"
 rcm_nginx_reload=
 ____
 
@@ -241,14 +241,14 @@ conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && ngin
 if [ -f "$conf_nginx" ];then
     nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
 fi
-code 'nginx_user="'$nginx_user'"'
+code nginx_user="$nginx_user"
 if [ -z "$nginx_user" ];then
     error "Variable \$nginx_user failed to populate."; x
 fi
 if [ -z "$php_fpm_user" ];then
     php_fpm_user="$nginx_user"
 fi
-code 'php_fpm_user="'$php_fpm_user'"'
+code php_fpm_user="$php_fpm_user"
 nginx_user_home=$(getent passwd "$nginx_user" | cut -d: -f6 )
 if [ -z "$prefix" ];then
     prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
@@ -269,15 +269,15 @@ if [ -z "$container" ];then
         container=public_html
     fi
 fi
-code 'prefix="'$prefix'"'
-code 'container="'$container'"'
+code prefix="$prefix"
+code container="$container"
 socket_filename=$(rcm-php-fpm-setup-project-config get --php-fpm-user="$php_fpm_user" --php-version="$php_version" --section="$php_fpm_section" --key=listen)
 if [ -z "$socket_filename" ];then
     __; red Socket Filename of PHP-FPM not found.; x
 fi
-code 'socket_filename="'$socket_filename'"'
+code socket_filename="$socket_filename"
 fastcgi_pass="unix:${socket_filename}"
-code 'fastcgi_pass="'$fastcgi_pass'"'
+code fastcgi_pass="$fastcgi_pass"
 
 if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
     additional_path_custom_port=
@@ -286,11 +286,11 @@ else
 fi
 
 root="${prefix}/${container}/${url_host}${additional_path_custom_port}/web${url_path_clean_trailing}"
-code 'root="'$root'"'
+code root="$root"
 server_name="$url_host"
 code server_name="$server_name"
 root_parent=$(dirname "$root")
-code 'root_parent="'$root_parent'"'
+code root_parent="$root_parent"
 ____
 
 chapter Mengecek direktori root parent '`'$root_parent'`'.
@@ -331,13 +331,13 @@ fi
 # `/var/www`.
 chapter Populate variable.
 nginx_config_root="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx"
-code 'nginx_config_root="'$nginx_config_root'"'
+code nginx_config_root="$nginx_config_root"
 nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf.d"
-code 'nginx_config_dir="'$nginx_config_dir'"'
+code nginx_config_dir="$nginx_config_dir"
 nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
-code 'nginx_config_file="'$nginx_config_file'"'
+code nginx_config_file="$nginx_config_file"
 adjustNginxConfigRoot "$url_path"
-code 'nginx_config_root="'$nginx_config_root'"'
+code nginx_config_root="$nginx_config_root"
 ____
 
 chapter Mengecek direktori nginx config root '`'$nginx_config_root'`'.
@@ -358,7 +358,7 @@ target="$nginx_config_root"
 if [ -n "$url_path_clean" ];then
     target+="/${url_path_clean}"
 fi
-code 'target="'$target'"'
+code target="$target"
 chapter Memeriksa direktori target '`'$target'`'
 create=
 if [[ "$target" == "$nginx_config_root" ]];then
@@ -395,12 +395,12 @@ web_root=
 if [ -z "$url_path" ];then
     web_root="$root"
 fi
-code 'nginx_config_root="'$nginx_config_root'"'
-code 'nginx_config_dir="'$nginx_config_dir'"'
-code 'nginx_config_file="'$nginx_config_file'"'
-code 'url="'$url'"'
-code 'web_root="'$web_root'"'
-code 'fastcgi_pass="'$fastcgi_pass'"'
+code nginx_config_root="$nginx_config_root"
+code nginx_config_dir="$nginx_config_dir"
+code nginx_config_file="$nginx_config_file"
+code url="$url"
+code web_root="$web_root"
+code fastcgi_pass="$fastcgi_pass"
 ____
 
 if [ -z "$tempfile" ];then
@@ -469,7 +469,7 @@ else
 fi
 
 chapter Mempersiapkan file"$is_temporary_string" '`'index.php'`'.
-code 'path="'$path'"'
+code path="$path"
 filename=$(basename "$path")
 isFileExists "$path"
 if [ -n "$found" ];then

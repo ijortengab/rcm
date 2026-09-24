@@ -79,24 +79,24 @@ require vendor/ijortengab/rcm/functions/utility/find-string.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code 'DOVECOT_CONFIG_DIR="'$DOVECOT_CONFIG_DIR'"'
-code 'DOVECOT_CONFIG_FILE_MAIN="'$DOVECOT_CONFIG_FILE_MAIN'"'
+code DOVECOT_CONFIG_DIR="$DOVECOT_CONFIG_DIR"
+code DOVECOT_CONFIG_FILE_MAIN="$DOVECOT_CONFIG_FILE_MAIN"
 if [ -z "$additional_config_file" ];then
     error "Argument --additional-config-file required."; x
 fi
-code 'additional_config_file="'$additional_config_file'"'
+code additional_config_file="$additional_config_file"
 if [ -z "$fqdn" ];then
     error "Argument --fqdn required."; x
 fi
-code 'fqdn="'$fqdn'"'
+code fqdn="$fqdn"
 if [ -z "$ssl_cert" ];then
     error "Argument --ssl-cert required."; x
 fi
-code 'ssl_cert="'$ssl_cert'"'
+code ssl_cert="$ssl_cert"
 if [ -z "$ssl_key" ];then
     error "Argument --ssl-key required."; x
 fi
-code 'ssl_key="'$ssl_key'"'
+code ssl_key="$ssl_key"
 rcm-file "$ssl_cert" terminateIfNotExists
 rcm-file "$ssl_key" terminateIfNotExists
 rcm-file "$DOVECOT_CONFIG_FILE_MAIN" terminateIfNotExists
@@ -111,7 +111,7 @@ chapter Memastikan string include tersedia pada file config '`'$filename'`'.
 string="!include_try ${source_relative}"
 code string="'"$string"'"
 path="$DOVECOT_CONFIG_FILE_MAIN"
-code 'path="'$path'"'
+code path="$path"
 code grep -F '"'\$string'"' '"'\$path'"'
 if grep -q -F "$string" "$path";then
 	__ String ditemukan.
