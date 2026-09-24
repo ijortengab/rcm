@@ -79,6 +79,9 @@ makeSureRunning() {
 
 # Require, validate, and populate value.
 chapter Variable dump.
+if [ -z "$php_version" ];then
+    error PHP Version is required.; x
+fi
 code php_version="$php_version"
 ____
 
