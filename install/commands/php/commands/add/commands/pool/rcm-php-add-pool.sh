@@ -21,9 +21,9 @@ Options:
         Values available from command: rcm(plugin list web-server).
    --section=SECTION
         Set the section name.
-   --php-fpm-user=[USER]
+   --php-fpm-user=USER
         Set the Unix user that used by PHP FPM.
-        Values available from command: rcm(system list user regular), or others.
+        Values available from command: rcm(system list user regular --with-web-server=[--web-server]), or others.
         If the user does not exists, it will be autocreate as reguler user.
    --file=[FILENAME]
         Set the name of file config. The filename should has the .conf extension
