@@ -26,6 +26,7 @@ ____() { echo >&2; [ -n "$RCM_DELAY" ] && sleep "$RCM_DELAY"; }
 ----() { echo -n "$RCM_INDENT"; }
 
 require() {
+    # global RCM_REQUIRE_LOADED
     if [ -z "$1" ];then
         return 1
     fi
@@ -51,37 +52,41 @@ require() {
         PATH="$OLDPATH"
         return 0
     fi
-    local filename="$1"
-    if [[ ! "${filename:0:1}" == / ]];then
-        filename="${RCM_LIB}/${filename}"
+    local path_source="$1"
+    if [[ ! "${path_source:0:1}" == / ]];then
+        path_source="${RCM_LIB}/${path_source}"
     fi
-    # local basename=$(basename "$filename")
-    # local dirname=$(dirname "$filename")
-    local basename="${filename##*/}"
-    local dirname=${filename%/*}
+    # local filename=$(basename "$path_source")
+    local filename="${path_source##*/}"
 
-    if [ ! -f "$filename" ];then
-        code "${filename}"
-        _ 'File is not found: '; yellow "$basename"; _, .; red ' Process terminated.'; x
+    if [ ! -f "$path_source" ];then
+        code "${path_source}"
+        _ 'File is not found: '; yellow "$filename"; _, .; red ' Process terminated.'; x
     fi
-    # Create global variable.
-    __FILE__="$filename"
-    __DIR__="$dirname"
-    . "$filename"
+
+    if ! grep -q -F "<${path_source}>" <<< "$RCM_REQUIRE_LOADED";then
+        # Create global variable.
+        __FILE__="$path_source"
+        # __DIR__=$(dirname "$path_source")
+        __DIR__=${path_source%/*}
+        . "$path_source"
+        RCM_REQUIRE_LOADED+="<${path_source}>"$'\n'
+    fi
 }
 
 include() {
-    local filename="$1"
-    if [ -z "$filename" ];then
-        e Error 'include()' function: require argument:' '; magenta "<filename>"; _, '. ';
+    local path_source="$1"
+    if [ -z "$path_source" ];then
+        e Error 'include()' function: require argument:' '; magenta "<path_source>"; _, '. ';
         red 'Process terminated.'; x
     fi
 
-    INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
-    if [ ! -f "$filename" ];then
-        e Require:' '; magenta "${filename}"; _, '.'; _.
-        red 'Process terminated.'; _, ' File is not found: '; yellow "$basename"; _, .; x
+    local filename="${path_source##*/}"
+    if [ ! -f "$path_source" ];then
+        e Require:' '; magenta "${path_source}"; _, '.'; _.
+        red 'Process terminated.'; _, ' File is not found: '; yellow "$filename"; _, .; x
     fi
-    . "$filename"
+    INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
+    . "$path_source"
     INDENT="${INDENT::-${#RCM_INDENT}}"
 }
