@@ -95,26 +95,34 @@ title rcm php add pool
 ____
 
 # Dependency.
+
 require command nginx
-require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require command adduser
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+require vendor/ijortengab/rcm/functions/utility/php-pool.sh
 require vendor/ijortengab/rcm/functions/utility/php-pool-write.sh
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code 'command="'$command'"'
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
 code 'php_version="'$php_version'"'
-if [ -z "$php_fpm_user" ];then
-    error "Argument --php-fpm-user required."; x
+php_version_fpm="php${php_version}-fpm"
+code 'php_version_fpm="'$php_version_fpm'"'
+if [ -z "$web_server" ];then
+    error "Argument --web-server required."; x
 fi
-code 'php_fpm_user="'$php_fpm_user'"'
+code 'web_server="'$web_server'"'
 if [ -z "$section" ];then
     error "Argument --section required."; x
 fi
 code 'section="'$section'"'
+if [ -z "$php_fpm_user" ];then
+    error "Argument --php-fpm-user required."; x
+fi
+code 'php_fpm_user="'$php_fpm_user'"'
 # Rename variable.
 section_name="$section"
 code 'section_name="'$section_name'"'
@@ -144,23 +152,54 @@ done
 magenta ')'; _.
 ____
 
-chapter Mengecek file '*.conf' yang mengandung section '`'$section_name'`'
+chapter Check PHP-FPM
+code systemctl list-unit-files "${php_version_fpm}.service"
+if systemctl list-unit-files "${php_version_fpm}.service" &>/dev/null; then
+    __ "PHP-FPM $php_version service exists in systemd."
+else
+    error "PHP-FPM $php_version service does NOT exist."; x
+fi
+code systemctl is-active "$php_version_fpm"
+run=
+if systemctl is-active --quiet "$php_version_fpm"; then
+    __ "PHP-FPM $php_version is running."
+    run=1
+else
+    __ "PHP-FPM $php_version is NOT running!"
+fi
+____
+
+chapter Membaca PHP-FPM Unit Service
+code systemctl cat "${php_version_fpm}.service"
+exec_start=`systemctl cat "${php_version_fpm}.service" | sed -n '/\[Service]/,/^\s*$/p' | php-pool get-info Service ExecStart`
+code exec_start="$exec_start"
+fpm_config=`echo "$exec_start" | grep -Po -- '--fpm-config \K.*'`
+code fpm_config="$fpm_config"
+include=`cat "${fpm_config}" | php-pool get-info 'global' include`
+code include="$include"
+____
+
+if [ -n "$include" ];then
+    files=("$fpm_config" $include)
+    # Diasumsikan include itu adalah path dengan wildcard, contoh:
+    # include="/etc/php/8.3/fpm/pool.d/*.conf", maka:
+    config_dir=$(dirname "$include")
+else
+    files=("$fpm_config")
+    config_file="$fpm_config"
+    config_dir=$(dirname "$fpm_config")
+fi
+
+chapter Mengecek file config yang mengandung section '`'$section_name'`'
 found=
 found_file=
-while read file; do
-    # Ternyata lebih cepat menggunakan grep.
-    # if php -r "$php" is_exists "$file" "$section_name";then
-        # found=1
-        # found_file="$file"
-        # break;
-    # fi
-    if grep -q -F "[$section_name]" "$file";then
+for each in "${files[@]}";do
+    if grep -q "^\[$section_name\]" "$each";then
         found=1
-        found_file="$file"
-        break;
+        found_file="$each"
+        break
     fi
-done <<< `ls "$PHP_FPM_POOL_DIRECTORY"/*.conf`
-
+done
 if [ -n "$found" ];then
     __ Ditemukan section '`'"$section_name"'`' pada file "$found_file"
 else
@@ -171,18 +210,22 @@ ____
 restart=
 if [ -n "$found" ];then
     if [ "${#config_line[@]}" -gt 0 ];then
-        config_lines=
+        additional_config_ini=$(cat - << EOF
+[$section_name]
+EOF
+)
+        additional_config_ini+=$'\n'
         for each in "${config_line[@]}";do
-            config_lines+="$each"$'\n'
+            additional_config_ini+="$each"$'\n'
         done
 
         chapter Mengecek informasi file config.
+        code additional_config_ini="$additional_config_ini"
         path="$found_file"
-        code path='"'$path'"'
+        code path="$path"
         filename="${found_file##*/}"
-        reference="$(php -r "$php" serialized_ini_string <<< "$config_lines")"
         is_different=
-        if php -r "$php" is_different "$path" "$reference";then
+        if php-pool-write is_different "$php_version" "$section_name" "$path" "$additional_config_ini";then
             is_different=1
             __ Diperlukan modifikasi file '`'$filename'`'.
         else
@@ -194,8 +237,9 @@ if [ -n "$found" ];then
             chapter Memodifikasi file '`'$filename'`'.
             __ Backup file "$filename"
             backup-file copy "$path"
+            php-pool-write save "$php_version" "$section_name" "$path" "$additional_config_ini"
             php -r "$php" save "$path" "$reference" "$section_name"
-            if php -r "$php" is_different "$path" "$reference";then
+            if php-pool-write is_different "$php_version" "$section_name" "$path" "$additional_config_ini";then
                 __; red Modifikasi file '`'$filename'`' gagal.; x
             else
                 __; green Modifikasi file '`'$filename'`' berhasil.; _.
@@ -206,37 +250,52 @@ if [ -n "$found" ];then
     fi
     [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$found_file" ; _. ; }
 else
-    default_config="$(php -r "echo serialize([
-        'user' => '$php_fpm_user',
-        'group' => '$php_fpm_user',
-        'listen' => '/run/php/php${php_version}-fpm-${section_name}.sock',
-        'listen.owner' => '$nginx_user',
-        'listen.group' => '$nginx_user',
-        'pm' => 'dynamic',
-        'pm.max_children' => '5',
-        'pm.start_servers' => '2',
-        'pm.min_spare_servers' => '1',
-        'pm.max_spare_servers' => '3',
-    ]);")"
-
-    additional_config=
+    RCM_WEB_SERVER_USER=
+    include `rcm plugin run-method web-server $web_server get-user-process`
+    if [ -z "$RCM_WEB_SERVER_USER" ];then
+        error "Variable \$RCM_WEB_SERVER_USER failed to populate."; x
+    fi
+    default_config_ini=$(cat - << EOF
+[$section_name]
+user = $php_fpm_user
+group = $php_fpm_user
+listen = /run/php/php${php_version}-fpm-${section_name}.sock
+listen.owner = $RCM_WEB_SERVER_USER
+listen.group = $RCM_WEB_SERVER_USER
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+EOF
+)
+    additional_config_ini=
     if [ "${#config_line[@]}" -gt 0 ];then
-        config_lines=
+        additional_config_ini=$(cat - << EOF
+[$section_name]
+EOF
+)
+        additional_config_ini+=$'\n'
         for each in "${config_line[@]}";do
-            config_lines+="$each"$'\n'
+            additional_config_ini+="$each"$'\n'
         done
-        additional_config="$(php -r "$php" serialized_ini_string <<< "$config_lines")"
     fi
 
-    chapter Membuat file PHP-FPM config.
-    config_file="${PHP_FPM_POOL_DIRECTORY}/${config_file}"
-    code 'config_file="'$config_file'"'
+    chapter Membuat pool PHP-FPM config.
+    code config_dir="$config_dir"
+    if [[ ! "${config_file:0:1}" == / ]];then
+        config_file="${config_dir}/${config_file}"
+    fi
+    code config_file="${config_file}"
     if [ -f "$config_file" ];then
         __ Backup file "$config_file".
-        backup-file move "$config_file"
+        backup-file copy "$config_file"
+        __ Mengedit file '`'"$config_file"'`'.
+    else
+        __ Membuat file '`'"$config_file"'`'.
     fi
-    __ Membuat file '`'"$config_file"'`'.
-    php -r "$php" create "$config_file" "$section_name" "$default_config" "$additional_config"
+    code php-pool-write create '"'"$php_version"'"' '"'"$section_name"'"' '"'"$config_file"'"' '"'"$default_config_ini"'"' '"'"$additional_config_ini"'"'
+    php-pool-write create "$php_version" "$section_name" "$config_file" "$default_config_ini" "$additional_config_ini"
     rcm-file "$config_file" mustExists
     found_file="$config_file"
     restart=1
