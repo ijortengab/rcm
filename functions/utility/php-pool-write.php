@@ -1,13 +1,12 @@
 <?php
 // https://stackoverflow.com/questions/17316873/convert-array-to-an-ini-file
 // https://stackoverflow.com/a/17317168
-function clean($array, &$array_cleaned) {
-    $array_cleaned = $array;
-    unset($array_cleaned['user']);
-    unset($array_cleaned['group']);
-    unset($array_cleaned['listen']);
-    unset($array_cleaned['listen.owner']);
-    unset($array_cleaned['listen.group']);
+function clean(&$array) {
+    unset($array['user']);
+    unset($array['group']);
+    unset($array['listen']);
+    unset($array['listen.owner']);
+    unset($array['listen.group']);
 }
 function build_ini_string(array $a) {
     $out = '';
