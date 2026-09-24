@@ -47,43 +47,27 @@ function build_ini_string(array $a) {
     }
     return $sectionless.$out;
 }
-function array_diff_assoc_recursive($array_master, $array_compare, &$array_diff = array()) {
-    $array_diff = (array) $array_diff;
 
-    // Pisah dulu yang array.
-    $array_master_keys_is_array = array();
-    $array_master_keys_is_non_array = array();
-    foreach ($array_master as $key => $value) {
-        if (is_array($array_master[$key])) {
-            $array_master_keys_is_array[$key] = $value;
-        }
-        else {
-            $array_master_keys_is_non_array[$key] = $value;
-        }
-    }
-    $array_compare_keys_is_array = array();
-    $array_compare_keys_is_non_array = array();
-    foreach ($array_compare as $key => $value) {
-        if (is_array($array_compare[$key])) {
-            $array_compare_keys_is_array[$key] = $value;
-        }
-        else {
-            $array_compare_keys_is_non_array[$key] = $value;
-        }
-    }
-    $array_diff += array_diff_assoc($array_master_keys_is_non_array, $array_compare_keys_is_non_array);
-    foreach ($array_master_keys_is_array as $key => $value) {
-        if (array_key_exists($key, $array_compare_keys_is_array)) {
-            $result = array();
-            array_diff_assoc_recursive($value, $array_compare_keys_is_array[$key], $result);
-            if (!empty($array)) {
-                $array_diff[$key] = $result;
+// Reference: https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Component%21Utility%21DiffArray.php/function/DiffArray%3A%3AdiffAssocRecursive/11.x
+function array_diff_assoc_recursive(array $array1, array $array2) {
+    $difference = [];
+    foreach ($array1 as $key => $value) {
+        if (is_array($value)) {
+            if (!array_key_exists($key, $array2) || !is_array($array2[$key])) {
+                $difference[$key] = $value;
+            }
+            else {
+                $new_diff = array_diff_assoc_recursive($value, $array2[$key]);
+                if (!empty($new_diff)) {
+                    $difference[$key] = $new_diff;
+                }
             }
         }
-        else {
-            $array_diff[$key] = $value;
+        elseif (!array_key_exists($key, $array2) || $array2[$key] !== $value) {
+            $difference[$key] = $value;
         }
     }
+    return $difference;
 }
 
 $mode = $_SERVER['argv'][1];
