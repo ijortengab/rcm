@@ -7,34 +7,13 @@ RCM_EXTENSION_VERSION=0.19.0-alpha.13
 
 # Usage Functions.
 usage() {
-    unset count
-    declare -i count
-    count=0
-    single_line=
-    multi_line=
-    while read line;do
-        if [ -d /etc/php/$line/fpm ];then
-            if [ $count -gt 0 ];then
-                single_line+=", "
-            fi
-            count+=1
-            single_line+="[${count}]"
-            multi_line+=$'\n''        '"[${count}]: "${line}
-        fi
-    done <<< `ls /etc/php/`
-    if [ -n "$single_line" ];then
-        single_line=" Available values: ${single_line}, or other."
-    fi
-    if [ -n "$multi_line" ];then
-        multi_line="$multi_line"
-    fi
-
     cat << EOF
 Usage: rcm wsl run lemp-stack [options]
 
 Options:
-   --php-version *
-        Set the version of PHP FPM.${single_line}${multi_line}
+   --php-version=PHP_VERSION
+        Set the version of PHP FPM.
+        Values available from command: rcm(php list available --fpm).
 
 Global Options:
    --version
