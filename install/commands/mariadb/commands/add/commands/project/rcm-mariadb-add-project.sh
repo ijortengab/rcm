@@ -3,7 +3,7 @@
 [ -f "$0" ] || { echo "Cannot run as dot command." >&2; kill -INT $$; }
 
 # Define variables and constants.
-RCM_EXTENSION_VERSION=0.19.0-alpha.13
+RCM_EXTENSION_VERSION=0.19.0-alpha.14
 MARIADB_PREFIX_MASTER=${MARIADB_PREFIX_MASTER:=/usr/local/share/mariadb}
 MARIADB_USERS_CONTAINER_MASTER=${MARIADB_USERS_CONTAINER_MASTER:=users}
 

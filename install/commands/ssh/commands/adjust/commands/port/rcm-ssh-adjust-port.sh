@@ -3,7 +3,7 @@
 [ -f "$0" ] || { echo "Cannot run as dot command." >&2; kill -INT $$; }
 
 # Define variables and constants.
-RCM_EXTENSION_VERSION=0.19.0-alpha.13
+RCM_EXTENSION_VERSION=0.19.0-alpha.14
 SSH_DIRECTORY=${SSH_DIRECTORY:=/etc/ssh}
 SSHD_CONFIG=${SSHD_CONFIG:=$SSH_DIRECTORY/sshd_config}
 SSHD_CONFIG_DIRECTORY=${SSHD_CONFIG_DIRECTORY:=$SSHD_CONFIG.d}
