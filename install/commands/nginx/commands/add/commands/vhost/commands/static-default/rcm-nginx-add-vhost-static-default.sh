@@ -75,7 +75,7 @@ code root="$root"
 if [[ ${#server_name[@]} -eq 0 ]];then
     error "Argument --server-name required."; x
 fi
-code 'server_name=('"${server_name[@]}"')'
+code server_name=@
 ____
 
 file_config="/etc/nginx/sites-available/$filename"

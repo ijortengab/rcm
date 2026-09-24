@@ -43,12 +43,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# If set in environment, set to variable.
-[ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
-[ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
-[ -n "$RCM_LOUDER" ] && louder="$RCM_LOUDER"
-[ -n "$RCM_DEBUG" ] && debug="$RCM_DEBUG"
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
@@ -65,19 +59,19 @@ require rcm dig get-info cname
 require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
 
 # Requirement, validate, and populate value.
-[ -n "$debug" ] && chapter Variable dump.
+[ -n "$RCM_DEBUG" ] && chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$debug" ] && code domain="$domain"
+[ -n "$RCM_DEBUG" ] && code domain="$domain"
 if [ -z "$waiting_time" ];then
     waiting_time=60
 fi
 if [[ "$waiting_time" =~ [^0-9] ]];then
     waiting_time=60
 fi
-[ -n "$debug" ] && code waiting_time="$waiting_time"
-[ -n "$debug" ] && ____
+[ -n "$RCM_DEBUG" ] && code waiting_time="$waiting_time"
+[ -n "$RCM_DEBUG" ] && ____
 
 chapter Watching Begin
 __ Make sure the DNS Record '(A or CNAME)' of '`'$domain'`' is exist.

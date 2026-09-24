@@ -170,18 +170,11 @@ fi
 is_config_line=
 is_config_line_array=()
 # Dump array dengan single quote.
-e; magenta 'php_fpm_config=('
-first=1
+code php_fpm_config=@
 for each in "${php_fpm_config[@]}";do
-    if [ -n "$first" ];then
-        magenta "'""$each""'"; first=
-    else
-        magenta " '""$each""'";
-    fi
     [[ "$each" =~ ' ' ]] && is_config_line+=" --config-line='${each}'" || is_config_line+=" --config-line=${each}"
     is_config_line_array+=("--config-line=${each}")
 done
-magenta ')'; _.
 code 'certificate_name="'$certificate_name
 if [ -z "$php_fpm_section" ];then
     error "Argument --php-fpm-section required."; x

@@ -66,21 +66,8 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# If set in environment, set to variable.
-[ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
-[ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
-[ -n "$RCM_LOUDER" ] && louder="$RCM_LOUDER"
-[ -n "$RCM_DEBUG" ] && debug="$RCM_DEBUG"
-
 # Boolean default to TRUE.
 [ -z "$colorize" ] && colorize=1; [ "$colorize" == 0 ] && colorize=
-
-# Verbosity.
-quiet=; loud=; louder=; debug=;
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
@@ -113,7 +100,7 @@ isRecordExist() {
     name_dot="${name}."
     name_dot_escape=${name_dot//\./\\.}
     stdout=$(<"$tempfile")
-    [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
+    [ -n "$RCM_DEBUG" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
     if grep -q -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" <<< "$stdout";then
         echo "$stdout" | grep -E --ignore-case ^"$name_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'"$type"'\s+'\".*\" > "$tempfile"
         stdout=$(<"$tempfile")
@@ -134,12 +121,12 @@ EOF
 }
 
 # Require, validate, and populate value.
-[ -n "$debug" ] && chapter Variable dump.
+[ -n "$RCM_DEBUG" ] && chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$debug" ] && code domain="$domain"
-[ -n "$debug" ] && code name_server="$name_server"
+[ -n "$RCM_DEBUG" ] && code domain="$domain"
+[ -n "$RCM_DEBUG" ] && code name_server="$name_server"
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -147,19 +134,19 @@ fi
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
 type=txt
-[ -n "$debug" ] && code type="$type"
+[ -n "$RCM_DEBUG" ] && code type="$type"
 type_uppercase=${type^^}
 
 value=
 if [ -n "$1" ];then
     value="$1"
 fi
-[ -n "$debug" ] && code type_uppercase="$type_uppercase"
-[ -n "$debug" ] && code hostname="$hostname"
-[ -n "$debug" ] && code value="$value"
-[ -n "$debug" ] && code label="$label"
-[ -n "$debug" ] && code colorize="$colorize"
-[ -n "$debug" ] && ____
+[ -n "$RCM_DEBUG" ] && code type_uppercase="$type_uppercase"
+[ -n "$RCM_DEBUG" ] && code hostname="$hostname"
+[ -n "$RCM_DEBUG" ] && code value="$value"
+[ -n "$RCM_DEBUG" ] && code label="$label"
+[ -n "$RCM_DEBUG" ] && code colorize="$colorize"
+[ -n "$RCM_DEBUG" ] && ____
 
 if [ -z "$name_exists_sure" ];then
     INDENT+="    " \

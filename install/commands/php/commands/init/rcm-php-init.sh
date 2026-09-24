@@ -139,7 +139,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 # Requirement, validate, and populate value.
 chapter Variable dump.
 code php_version="$php_version"
-code 'extension=('"${extension[@]}"')'
+code extension=@
 php_extension=
 for each in "${extension[@]}"; do
     php_extension+=" php${php_version}-${each}"

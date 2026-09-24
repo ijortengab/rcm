@@ -76,14 +76,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-if [ -n "$RCM_VERBOSE" ];then
-    verbose="$RCM_VERBOSE"
-fi
-[[ -z "$verbose" || "$verbose" -lt 1 ]] && quiet=1 || quiet=
-[[ "$verbose" -gt 0 ]] && loud=1
-[[ "$verbose" -gt 1 ]] && loud=1 && louder=1
-[[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
@@ -95,7 +87,6 @@ title rcm php add pool
 ____
 
 # Dependency.
-
 require command nginx
 require command adduser
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
@@ -138,18 +129,7 @@ find='[php-version]'
 replace="$php_version"
 [ -z "$autocreate_user" ] && autocreate_user=1
 [ "$autocreate_user" == 0 ] && autocreate_user=
-code 'config_line=('"${config_line[@]}"')'
-e; magenta 'config_line=('
-first=1
-for each in "${config_line[@]}";do
-    if [ -n "$first" ];then
-        magenta "'""$each""'";
-        first=
-    else
-        magenta " '""$each""'";
-    fi
-done
-magenta ')'; _.
+code config_line=@
 ____
 
 chapter Check PHP-FPM
@@ -248,7 +228,7 @@ EOF
             ____
         fi
     fi
-    [ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$found_file" ; _. ; }
+    [ -n "$RCM_DEBUG" ] && { while IFS= read -r line; do e "$line"; _.; done < "$found_file" ; _. ; }
 else
     RCM_WEB_SERVER_USER=
     include `rcm plugin run-method web-server $web_server get-user-process`

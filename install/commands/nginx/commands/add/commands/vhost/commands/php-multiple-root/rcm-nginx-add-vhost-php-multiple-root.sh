@@ -330,30 +330,30 @@ nginxGrep(){
     if [ ! -t 0 ]; then
         i=0
         _ Mencari directive: '`'${directive}'`'; _.
-        [ -n "$debug" ] && { _; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
+        [ -n "$RCM_DEBUG" ] && { _; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
         while IFS= read line; do
             i=$(( i + 1 ))
             if [ "${#line}" -eq 0 ];then
-                [ -n "$debug" ] && { __; }
+                [ -n "$RCM_DEBUG" ] && { __; }
             else
-                [ -n "$debug" ] && { _; yellow "$line"; _, ' # Line:' $i; }
+                [ -n "$RCM_DEBUG" ] && { _; yellow "$line"; _, ' # Line:' $i; }
             fi
             if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
-                [ -n "$debug" ] && { _, ' '; green Baris ditemukan.; }
+                [ -n "$RCM_DEBUG" ] && { _, ' '; green Baris ditemukan.; }
                 lines_directive+=("$line")
             fi
-            [ -n "$debug" ] && { _.; }
+            [ -n "$RCM_DEBUG" ] && { _.; }
         done </dev/stdin
     fi
     if [ "${#lines_directive[@]}" -eq 0 ];then
         return 1
     fi
-    [ -n "$debug" ] && { _; _.; }
-    [ -n "$debug" ] && { _ Variable dump '`'\$condition'`'.; _.; }
-    [ -n "$debug" ] && { e; magenta $condition; _.; }
-    [ -n "$debug" ] && { _; _.; }
-    [ -n "$debug" ] && { _ Variable dump '`'\$token_list'`'.; _.; }
-    [ -n "$debug" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
+    [ -n "$RCM_DEBUG" ] && { _; _.; }
+    [ -n "$RCM_DEBUG" ] && { _ Variable dump '`'\$condition'`'.; _.; }
+    [ -n "$RCM_DEBUG" ] && { e; magenta $condition; _.; }
+    [ -n "$RCM_DEBUG" ] && { _; _.; }
+    [ -n "$RCM_DEBUG" ] && { _ Variable dump '`'\$token_list'`'.; _.; }
+    [ -n "$RCM_DEBUG" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
     # _; _.
     # Directive bisa berulang.
     # Contoh: directive listen bisa berulang sebanyak dua kali.
@@ -366,9 +366,9 @@ nginxGrep(){
         resolved=$(resolveCondition "$condition" "$token_list" "$directive_reverse")
         # e '"$resolved"' "$resolved" ; _.
         if [ "$resolved" == 1 ];then
-            [ -n "$debug" ] && { _; _.; }
+            [ -n "$RCM_DEBUG" ] && { _; _.; }
             _ Condition solved pada baris:' '; yellow  "$line"; _.
-            [ -n "$debug" ] && { _; _.; }
+            [ -n "$RCM_DEBUG" ] && { _; _.; }
             return 0
         fi
     done

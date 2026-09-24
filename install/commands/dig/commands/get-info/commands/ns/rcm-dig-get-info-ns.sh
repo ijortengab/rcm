@@ -50,12 +50,6 @@ done
 set -- "${_new_arguments[@]}"
 unset _new_arguments
 
-# If set in environment, set to variable.
-[ -n "$RCM_QUIET" ] && quiet="$RCM_QUIET"
-[ -n "$RCM_LOUD" ] && loud="$RCM_LOUD"
-[ -n "$RCM_LOUDER" ] && louder="$RCM_LOUDER"
-[ -n "$RCM_DEBUG" ] && debug="$RCM_DEBUG"
-
 # Help and Version.
 [ -n "$help" ] && { usage; exit 0; }
 [ -n "$version" ] && { e $RCM_EXTENSION_VERSION; x; }
@@ -70,12 +64,12 @@ ____
 require command dig
 
 # Require, validate, and populate value.
-[ -n "$debug" ] && chapter Variable dump.
+[ -n "$RCM_DEBUG" ] && chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$debug" ] && code domain="$domain"
-[ -n "$debug" ] && code name_server="$name_server"
+[ -n "$RCM_DEBUG" ] && code domain="$domain"
+[ -n "$RCM_DEBUG" ] && code name_server="$name_server"
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -84,13 +78,13 @@ fi
 tempfile=$(mktemp -p /dev/shm -t rcm-dig-get-info-ns.XXXXXX)
 domain_dot="${domain}."
 domain_dot_escape=${domain_dot//\./\\.}
-[ -n "$debug" ] && ____
+[ -n "$RCM_DEBUG" ] && ____
 
 chapter Mengecek Name Server domain '`'$domain'`'
 code dig NS ${domain}${add_name_server}
 dig NS $domain $add_name_server > "$tempfile"
 stdout=$(<"$tempfile")
-[ -n "$debug" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
+[ -n "$RCM_DEBUG" ] && { while IFS= read -r line; do e "$line"; _.; done < "$tempfile" ; _. ; }
 found=
 if grep -q -E --ignore-case ^"$domain_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'NS'\s+' <<< "$stdout";then
     code grep -E --ignore-case "'"^"$domain_dot_escape"'\s+''[0-9]+''\s+'IN'\s+'NS'\s+'"'"
