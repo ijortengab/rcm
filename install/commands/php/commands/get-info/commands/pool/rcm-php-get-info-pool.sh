@@ -13,7 +13,8 @@ Usage: rcm php get-info pool [options]
 
 Options:
    --php-version=VERSION
-        Set version of PHP.
+        Set the version of PHP FPM.
+        Values available from command: rcm(php list available --fpm).
    --pool-name=NAME
         Set the pool name.
    --key=KEY
