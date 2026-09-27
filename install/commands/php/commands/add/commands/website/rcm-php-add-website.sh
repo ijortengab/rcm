@@ -16,29 +16,46 @@ Options:
    --url=URL
         Set the URL. The value can be public or private domain, or URL.
         Example: \`example.org\`, \`example.org/path/to/drupal/\`, or \`https://sub.example.org:8080/\`.
+   --public-domain
+        Make sure that --url is public domain, this will trigger TLS request and DNS verification.
         Special top level domain such us .local, .example, etc will pretend as private domain.
+   --acme-client=TLS
+        Select acme client to obtain TLS Certificate.
+        Values available from command: rcm(plugin list acme-client).
+        Conditional: Bypass if --public-domain is not added.
    --web-server=HTTP
         Select web server to build up virtual host.
         Values available from command: rcm(plugin list web-server).
    --php-version=PHP_VERSION
         Set the version of PHP FPM.
-        Values available from command: rcm(php list available --fpm).
+        Values available from command: rcm(php list available).
    --php-fpm-user=[USER]
         Set the Unix user that used by PHP FPM.
         Default value is the user that used by web server (the common name is www-data).
-        Values available from command: rcm(system list user regular), or others.
+        Values available from command: rcm(system list user regular --with-web-server=[--web-server]), or others.
         If the user does not exists, it will be autocreate as reguler user.
-   --php-fpm-section=SECTION
+   --php-fpm-section=[SECTION]
         Set the PHP-FPM section.
+        Default value is the first found section from the --php-fpm-user.
+        Usually is www section.
         The section must exists before.
         Create new PHP FPM section with \`rcm php add pool\`.
         Values available from command: rcm(php list pool [--php-version] [--php-fpm-user]).
    --root=[DIR]
         Set the web root pointing the URL.
+        if omit, it will user the \$HOME directory with proper container.
    --index-php[=CONTENT]
         Auto create index.php file.
         Can have value. The value is string that will be printed.
         Example: --index-php="Foo bar" will create contents \`<?= "Foo bar"; ?>\`.
+        Shortcut value is: 2, 3, and 4.
+        For --index-php=1 is equals to --index-php.
+        For --index-php=2 will create contents \`<?php phpinfo(); ?>\`.
+        For --index-php=3 will create contents \`<?= 'Hello World'; ?>\`.
+        For --index-php=4 will create contents \`<pre><?php print_r(\$_SERVER); ?></pre>\`.
+
+Additional Options:
+   rcm(-p plugin prompt acme-client [--acme-client] obtain)
 
 Other options (For expert only):
    --phpinfo
@@ -61,15 +78,6 @@ Other options (For expert only):
         [6]: php_admin_value[post_max_size]=1024M
         [7]: php_admin_flag[log_errors]=on
         Multivalue.
-   --without-certbot-obtain ^
-        The dafault value is \`--with-certbot-obtain\`, it will check the value of
-        \`--url\`. The URL that contains https scheme is will automatically obtain.
-        The URL that not contains http or https, it means using https excepts special top level domain such us .local, .example, etc.
-        Use this option to force certbot to use existing certificate if the \`--url\`
-        contains https.
-   --certificate-name
-        Use the existing certificate name that issued by Let's encrypt or set a
-        new name of certificate that to be obtained.
 
 Global Options:
    --version
@@ -94,6 +102,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --acme-client=*) acme_client="${1#*=}"; shift ;;
+        --acme-client) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then acme_client="$2"; shift; fi; shift ;;
         --hello) index_php=3; shift ;;
         --index-php=*) index_php="${1#*=}"; shift ;;
         --index-php) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then index_php="$2"; shift; else index_php=1; fi; shift ;;
@@ -108,6 +118,7 @@ while [[ $# -gt 0 ]]; do
         --php-fpm-user) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_fpm_user="$2"; shift; fi; shift ;;
         --php-version=*) php_version="${1#*=}"; shift ;;
         --php-version) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then php_version="$2"; shift; fi; shift ;;
+        --public-domain) public_domain=1; shift ;;
         --root=*) root="${1#*=}"; shift ;;
         --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --url=*) url="${1#*=}"; shift ;;
@@ -155,7 +166,9 @@ if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
 code url="$url"
-urlCompleteComponent
+code public_domain="$public_domain"
+[ -n "$public_domain" ] && arg_https='--https' || arg_https=
+url-complete-component $arg_https
 code url="$url"
 code url_scheme="$url_scheme"
 code url_host="$url_host"
@@ -163,6 +176,21 @@ code url_port="$url_port"
 code url_path="$url_path"
 code url_path_clean="$url_path_clean"
 code url_path_clean_trailing="$url_path_clean_trailing"
+if [ -n "$public_domain" ];then
+    if [ -z "$acme_client" ];then
+        error "Argument --acme-client required."; x
+    fi
+fi
+code acme_client="$acme_client"
+if [ -z "$web_server" ];then
+    error "Argument --web-server required."; x
+fi
+code web_server="$web_server"
+code php_fpm_user="$php_fpm_user"
+code php_fpm_section="$php_fpm_section"
+code root="$root"
+code index_php="$index_php"
+code php_fpm_config=@
 if [ -n "$is_wsl" ];then
     # Jika mesin menggunakan WSL2, maka tambahkan max_execution_time (waktu proses)
     php_fpm_config=(pm=ondemand php_value[max_execution_time]=60 "${php_fpm_config[@]}")
@@ -542,15 +570,16 @@ exit 0
 # --version
 # --help
 # --no-auto-add-group
+# --public-domain
 # )
 # VALUE=(
 # --url
 # --php-version
 # --php-fpm-user
 # --php-fpm-section
-# --prefix
-# --container
 # --root
+# --web-server
+# --acme-client
 # )
 # MULTIVALUE=(
 # --php-fpm-config
