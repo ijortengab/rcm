@@ -357,13 +357,6 @@ rcm-prompt-options-option() {
             fi
         fi
 
-        while [[ $# -gt 0 ]]; do
-            ArrayRemove "$1" available_values[@]
-            available_values=("${_return[@]}")
-            unset _return
-            shift
-        done
-
         while true; do
             if [ "${#available_values[@]}" -eq 0 ];then
                 if [[ -n "$command" && -z "$or_other" ]];then
@@ -1642,14 +1635,39 @@ rcm-prompt-options-option() {
                 done <<< "$description"
             fi
 
-            # Cara dibawah ini simple, tapi lambat.
-            # ```
-            #     rcm-yaml find parameter "${parameter}" then get prepopulate values
-            #     values=("${_return_array[@]}")
-            # ```
-            # Gunakan saja variable $yaml_prepopulate_values yang sudah kita
-            # definisikan diatas.
-            if [ "${#yaml_prepopulate_values[@]}" -eq 0 ];then
+            if [ "${#yaml_values[@]}" -gt 0 ];then
+                if [ "${#available_values[@]}" -gt 0 ];then
+                    array-diff available_values[@] yaml_values[@]
+                    available_values=("${_return[@]}")
+                    unset _return
+                fi
+            fi
+
+            if [ "${#available_values[@]}" -gt 0 ];then
+                # Reset.
+                value=
+                print-available-values-dialog
+                if [ -n "$value" ];then
+                    # Cara dibawah ini simple, tapi lambat.
+                    # ```
+                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                    # ```
+                    # Solusinya dengan direct langsung ke RCM_YAML manual.
+                    if [ -z "$yaml_values_key" ];then
+                        RCM_YAML+='  values:'$'\n'
+                        yaml_values_key=1
+                    fi
+                    RCM_YAML+='    - '"$value"$'\n'
+                    yaml_values+=("$value")
+
+                    # Remove.
+                    ArrayRemove "$value" available_values[@]
+                    available_values=("${_return[@]}")
+                    unset _return
+                fi
+            fi
+
+            if [ "${#yaml_values[@]}" -eq 0 ];then
                 if [ -z "$is_required" ];then
                     print-fill-a-value-dialog
                     if [ -z "$value" ];then
@@ -1678,6 +1696,7 @@ rcm-prompt-options-option() {
                     yaml_values+=("$value")
                 fi
             fi
+
             while true;do
                 _; _.
                 __ Add another value?
@@ -1685,20 +1704,44 @@ rcm-prompt-options-option() {
                 if [ -z "$RCM_BOOLEAN" ];then
                     break
                 fi
-                __; read -p "Type the value or leave blank to skip: " value
-                sanitize-value
-                if [ -n "$value" ];then
-                    _; _.
-                    echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
-                    # Cara dibawah ini simple, tapi lambat.
-                    # ```
-                    #     rcm-yaml find parameter "${parameter}" then append values "$value"
-                    # ```
-                    # Solusinya dengan direct langsung ke RCM_YAML manual.
-                    RCM_YAML+='    - '"$value"$'\n'
-                    yaml_values+=("$value")
+                if [ "${#available_values[@]}" -gt 0 ];then
+                    # Reset.
+                    value=
+                    print-available-values-dialog
+                    if [ -n "$value" ];then
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        if [ -z "$yaml_values_key" ];then
+                            RCM_YAML+='  values:'$'\n'
+                            yaml_values_key=1
+                        fi
+                        RCM_YAML+='    - '"$value"$'\n'
+                        yaml_values+=("$value")
+
+                        # Remove.
+                        ArrayRemove "$value" available_values[@]
+                        available_values=("${_return[@]}")
+                        unset _return
+                    fi
                 else
-                    break
+                    __; read -p "Type the value or leave blank to skip: " value
+                    sanitize-value
+                    if [ -n "$value" ];then
+                        _; _.
+                        echo-wrap-color "Argument <magenta>${parameter}</magenta> filled again with value <yellow>$value</yellow> manually." green
+                        # Cara dibawah ini simple, tapi lambat.
+                        # ```
+                        #     rcm-yaml find parameter "${parameter}" then append values "$value"
+                        # ```
+                        # Solusinya dengan direct langsung ke RCM_YAML manual.
+                        RCM_YAML+='    - '"$value"$'\n'
+                        yaml_values+=("$value")
+                    else
+                        break
+                    fi
                 fi
             done
             break
