@@ -208,6 +208,8 @@ rcm-prompt-options-option() {
                     available_values_arguments="${available_values_arguments/"$find"/"$replace"}"
                 done <<< "$RCM_ARGUMENT_PLACEHOLDERS"
             fi
+            # Cleaning.
+            available_values_arguments=$(echo "$available_values_arguments" | sed -E 's,\[--[^]]+\],,g')
         fi
     }
 
