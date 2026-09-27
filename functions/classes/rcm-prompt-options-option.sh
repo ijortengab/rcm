@@ -359,7 +359,7 @@ rcm-prompt-options-option() {
 
         while true; do
             if [ "${#available_values[@]}" -eq 0 ];then
-                if [[ -n "$command" && -z "$or_other" ]];then
+                if [[ -n "$command" && -z "$or_other" && -n "$is_required" ]];then
                     __; _, No value available,' '; red Process Terminated; _, .; x
                 fi
                 break
