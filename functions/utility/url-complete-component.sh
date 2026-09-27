@@ -4,6 +4,13 @@ require vendor/ijortengab/bash/functions/array-search.sh
 require vendor/ijortengab/rcm/functions/utility/parse-url.sh
 
 url-complete-component() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --https) https=1; shift ;;
+            *) shift ;;
+        esac
+    done
+
     local tld_special _url_port _tld _url_path_correct
     [[ $(type -t parse-url) == function ]] || { error Function parse-url not found.; x; }
     [[ $(type -t array-search) == function ]] || { error Function array-search not found.; x; }
@@ -14,6 +21,8 @@ url-complete-component() {
         error Argument --url is not valid: '`'"$url"'`'.; x
     fi
     [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=http
+    [ -n "$https" ] && url_scheme=https
+
     if [ -z "$PHP_URL_PORT" ];then
         case "$url_scheme" in
             http) url_port=80;;
