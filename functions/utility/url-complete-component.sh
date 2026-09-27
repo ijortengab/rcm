@@ -13,7 +13,7 @@ url-complete-component() {
     if [ -z "$PHP_URL_HOST" ];then
         error Argument --url is not valid: '`'"$url"'`'.; x
     fi
-    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=https
+    [ -n "$PHP_URL_SCHEME" ] && url_scheme="$PHP_URL_SCHEME" || url_scheme=http
     if [ -z "$PHP_URL_PORT" ];then
         case "$url_scheme" in
             http) url_port=80;;
