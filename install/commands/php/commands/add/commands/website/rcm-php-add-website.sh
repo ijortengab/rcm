@@ -148,6 +148,7 @@ require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
 require vendor/ijortengab/rcm/functions/utility/backup-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -190,6 +191,9 @@ code web_server="$web_server"
 code php_fpm_user="$php_fpm_user"
 code php_fpm_section="$php_fpm_section"
 code root="$root"
+add_container=
+[ -z "$root" ] && add_container=1
+code add_container="$add_container"
 code index_php="$index_php"
 code php_fpm_config=@
 if [ -n "$is_wsl" ];then
@@ -227,53 +231,75 @@ run rcm php switch \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
 
+chapter Populate variables.
 if [ -z "$php_fpm_user" ];then
     php_fpm_user="$webserver_user"
 fi
 code php_fpm_user="$php_fpm_user"
-
-nginx_user_home=$(getent passwd "$nginx_user" | cut -d: -f6 )
-if [ -z "$prefix" ];then
-    prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
+webserver_user_home=$(getent passwd "$webserver_user" | cut -d: -f6 )
+code webserver_user_home="$webserver_user_home"
+if [ -z "$root" ];then
+    root=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
 fi
-# Jika $php_fpm_user adalah nginx, maka $HOME nya adalah /nonexistent, maka
-# perlu kita verifikasi lagi.
-if [ ! -d "$prefix" ];then
-    prefix=
+code root="$root"
+# Jika $HOME nya adalah /nonexistent, maka perlu kita verifikasi lagi.
+if [ ! -d "$root" ];then
+    root=
 fi
-if [ -z "$prefix" ];then
-    prefix=/usr/local/share
-    container=www
+if [ -z "$root" ];then
+    root=/usr/local/share/www
+    add_container=
 fi
-if [ -z "$container" ];then
-    if [ "$php_fpm_user" == "$nginx_user" ];then
-        container=.
+code root="$root"
+if [ -n "$add_container" ];then
+    list_user=()
+    while read line; do
+        list_user+=($line)
+    done <<< `rcm system list user regular 2>/dev/null`
+    # Jika user $php_fpm_user adalah reguler, maka tambahkan container public_html
+    if array-search "$php_fpm_user" list_user[@];then
+        root+=/public_html
     else
-        container=public_html
+        root+=/php
     fi
 fi
-code prefix="$prefix"
-code container="$container"
-socket_filename=$(rcm-php-fpm-setup-project-config get --php-fpm-user="$php_fpm_user" --php-version="$php_version" --section="$php_fpm_section" --key=listen)
+code root="$root"
+if [ -z "$php_fpm_section" ];then
+    __ Get the list of section.
+    code rcm php list pool "$php_version" "$php_fpm_user"
+    list_section=()
+    while read line; do
+        list_section+=($line)
+    done <<< `rcm php list pool "$php_version" "$php_fpm_user" 2>/dev/null`
+    code list_section=@
+    if [ "${#list_section}" -gt 0 ];then
+        php_fpm_section="${list_section[0]}"
+    else
+        error "Variable \$php_fpm_section failed to populate."; x
+    fi
+fi
+code php_fpm_section="$php_fpm_section"
+socket_filename=$( rcm php get-info pool "$php_version" "$php_fpm_section" listen 2>/dev/null)
 if [ -z "$socket_filename" ];then
-    __; red Socket Filename of PHP-FPM not found.; x
+    error "Variable \$socket_filename failed to populate."; x
 fi
 code socket_filename="$socket_filename"
 fastcgi_pass="unix:${socket_filename}"
 code fastcgi_pass="$fastcgi_pass"
-
-if [[ "$url_port" == 80 || "$url_port" == 443 ]];then
+if [[ "$url_scheme" == http || "$url_port" == 80 ]];then
+    additional_path_custom_port=
+elif [[ "$url_scheme" == https || "$url_port" == 443 ]];then
     additional_path_custom_port=
 else
     additional_path_custom_port="/${url_port}"
 fi
-
-root="${prefix}/${container}/${url_host}${additional_path_custom_port}/web${url_path_clean_trailing}"
+root="${root}/${url_host}${additional_path_custom_port}/web${url_path_clean_trailing}"
 code root="$root"
 server_name="$url_host"
 code server_name="$server_name"
-root_parent=$(dirname "$root")
+root_parent=${root%/*}
 code root_parent="$root_parent"
+
 ____
 
 chapter Mengecek direktori root parent '`'$root_parent'`'.
@@ -283,7 +309,7 @@ ____
 if [ -n "$notfound" ];then
     chapter Membuat direktori root parent.
     code sudo -u $php_fpm_user mkdir -p '"'$root_parent'"'
-    sudo -u $php_fpm_user mkdir -p "$root_parent" || {
+    sudo -u $php_fpm_user mkdir -p "$root_parent" 2>/dev/null || {
         code mkdir -p "$root_parent"
         code chown $php_fpm_user:$php_fpm_user '"'$root_parent'"'
         mkdir -p "$root_parent"
@@ -294,7 +320,7 @@ if [ -n "$notfound" ];then
 fi
 
 chapter Mengecek direktori root '`'$root'`'.
-rcm-dir "$root" mustExists
+rcm-dir "$root" isExists
 ____
 
 if [ -n "$notfound" ];then
