@@ -13,6 +13,7 @@ Usage: rcm php switch [options]
 Options:
    --php-version=VERSION
         Set the version of PHP.
+        Values available from command: rcm(php list available --installed).
 
 Global Options.
    --version
@@ -51,6 +52,7 @@ title rcm php switch
 ____
 
 # Dependency.
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # Require, validate, and populate value.
 chapter Variable dump.
@@ -58,6 +60,14 @@ if [ -z "$php_version" ];then
     error "Argument --php-version is required."; x
 fi
 code php_version="$php_version"
+php_installed=()
+while read line; do
+    php_installed+=($line)
+done <<< `rcm php list available --installed 2>/dev/null`
+# code php_installed=@
+if ! array-search "$php_version" php_installed[@];then
+    error "Argument --php-version is not installed."; x
+fi
 ____
 
 update=
