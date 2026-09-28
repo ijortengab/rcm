@@ -162,7 +162,7 @@ RCM_QUIET=; RCM_LOUD=; RCM_LOUDER=; RCM_DEBUG=;
 
 # Define variables and constants.
 [ -z "$RCM_LOG" ] && { [ "$EUID" -ne 0 ] && RCM_LOG=$HOME/rcm.log || RCM_LOG=/var/log/rcm.log; }
-RCM_INDENT='    '; command -v tput &>/dev/null  && [[ -n "$(tput cols)" ]] && [ "$(tput cols)" -le 80 ] && RCM_INDENT='  '
+command -v tput &>/dev/null  && { cols=$(tput cols 2>/dev/null) && [ "$cols" -le 80 ] && RCM_INDENT='  '; }
 RCM_DELAY=${RCM_DELAY:=.5}; [ -n "$fast" ] && unset RCM_DELAY
 question_mark=
 tempfile=
