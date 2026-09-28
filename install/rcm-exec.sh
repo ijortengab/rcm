@@ -566,6 +566,14 @@ if [[ $# -gt 0 ]]; then
 fi
 
 if [ -n "$question_mark" ];then
+    if [ -z "$is_intro_printed" ];then
+
+        title rcm
+        ____
+
+        chapter Prepare argument for command '`'$command'`'.
+        is_intro_printed=1
+    fi
     _; _.
     _; _, There are no more arguments available.; _.
     build-options
