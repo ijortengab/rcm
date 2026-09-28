@@ -13,6 +13,7 @@ Usage: rcm php init [options]
 Options:
    --php-version=[VERSION]
         Set version of PHP.
+        Values available from command: rcm(php list available).
    --extension=[EXT]...
         Add the extension.
 
@@ -60,6 +61,7 @@ ____
 
 # Dependency.
 require vendor/ijortengab/rcm/functions/utility/apt-install.sh
+require vendor/ijortengab/bash/functions/array-search.sh
 
 # Functions.
 addRepositoryPpaOndrejPhp() {
@@ -139,26 +141,32 @@ addRepositoryPpaOndrejPhpUbuntu() {
 # Requirement, validate, and populate value.
 chapter Variable dump.
 code php_version="$php_version"
+php_available=()
+while read line; do
+    php_available+=($line)
+done <<< `rcm php list available 2>/dev/null`
+# code php_available=@
+if ! array-search "$php_version" php_available[@];then
+    error "Argument --php-version is not available."; x
+fi
 code extension=@
 php_extension=
 for each in "${extension[@]}"; do
     php_extension+=" php${php_version}-${each}"
 done
+if [ -f /etc/os-release ];then
+    . /etc/os-release
+fi
+code ID="$ID"
+code VERSION_ID="$VERSION_ID"
+if [ -z "$ID" ];then
+    error OS not supported; x;
+fi
 ____
 
 if [ -z "$php_version" ];then
     apt-install php $php_extension
 else
-    if [ -f /etc/os-release ];then
-        . /etc/os-release
-    fi
-    code ID="$ID"
-    code VERSION_ID="$VERSION_ID"
-    if [ -z "$ID" ];then
-        error OS not supported; x;
-    fi
-    ____
-
     eligible=
     case "$ID" in
         debian)
