@@ -1,5 +1,8 @@
 #!/bin/bash
 
+require vendor/ijortengab/rcm/functions/utility/backup-dir.sh
+require vendor/ijortengab/rcm/functions/utility/backup-file.sh
+
 link-symbolic-dir() {
     local source="$1"
     local target="$2"
