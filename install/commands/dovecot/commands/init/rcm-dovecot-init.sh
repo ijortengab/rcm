@@ -60,7 +60,7 @@ fi
 
 apt-install dovecot-core dovecot-imapd dovecot-pop3d dovecot-sieve dovecot-lmtpd
 
-include `rcm plugin run-method dovecot/dbms $dbms init`
+include rcm plugin run-method dovecot/dbms $dbms init
 
 # Wajib exit 0 jika success.
 exit 0

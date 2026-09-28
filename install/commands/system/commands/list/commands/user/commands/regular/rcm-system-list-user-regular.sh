@@ -49,7 +49,7 @@ ____
 
 if [ -n "$with_web_server" ];then
     RCM_WEB_SERVER_USER=
-    include `rcm plugin run-method web-server $web_server get-user-process`
+    include rcm plugin run-method web-server $web_server get-user-process
     if [ -z "$RCM_WEB_SERVER_USER" ];then
         error "Variable \$RCM_WEB_SERVER_USER failed to populate."; x
     fi
