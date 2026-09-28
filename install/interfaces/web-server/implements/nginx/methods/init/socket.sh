@@ -1,5 +1,8 @@
 #!/bin/bash
 
+require vendor/ijortengab/rcm/functions/utility/apt-install.sh
+require rcm nginx init
+
 # apache2-utils dibutuhkan untuk htpasswd.
 apt-install apache2-utils
 
