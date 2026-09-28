@@ -78,12 +78,15 @@ require() {
 }
 
 include() {
-    local path_source="$1"
+    local command="$1"; shift
+    if [ -z "$command" ];then
+        error "Argument <command> is required."; x
+    fi
+    path_source=$(INDENT+="$RCM_INDENT" $command "$@")
     if [ -z "$path_source" ];then
         e Error 'include()' function: require argument:' '; magenta "<path_source>"; _, '. ';
         red 'Process terminated.'; x
     fi
-
     local filename="${path_source##*/}"
     if [ ! -f "$path_source" ];then
         e Require:' '; magenta "${path_source}"; _, '.'; _.
@@ -92,4 +95,13 @@ include() {
     INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
     . "$path_source"
     INDENT="${INDENT::-${#RCM_INDENT}}"
+}
+
+run() {
+    local command="$1"; shift
+    if [ -z "$command" ];then
+        error "Argument <command> is required."; x
+    fi
+    INDENT+="$RCM_INDENT" $command "$@"
+    return $?
 }
