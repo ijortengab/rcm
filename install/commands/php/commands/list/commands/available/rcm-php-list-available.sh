@@ -11,14 +11,17 @@ usage() {
 Usage: rcm php list available
 
 Options:
+   --installed
+        Filter to list installed only.
    --which=[VALUE]
+        Conditional: Bypass if --installed is not added.
         Select which package that available. If omit, common is used.
 
 Other Options (For expert only):
    --fpm
-        Alias of --which=fpm
+        Alias of --installed --which=fpm
    --cli
-        Alias of --which=cli
+        Alias of --installed --which=cli
 EOF
 }
 
@@ -32,6 +35,7 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --cli) cli=1; shift ;;
         --fpm) fpm=1; shift ;;
+        --installed) installed=1; shift ;;
         --which=*) which="${1#*=}"; shift ;;
         --which) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then which="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
@@ -53,28 +57,36 @@ ____
 
 # Dependency.
 require command dpkg-query
+require command apt-cache
 
 # Require, validate, and populate value.
 chapter Variable dump.
+code installed="$installed"
 binary=
-[ -n "$fpm" ] && { binary+=1; which=fpm; }
-[ -n "$cli" ] && { binary+=1; which=cli; }
+[ -n "$fpm" ] && { installed=1; binary+=1; which=fpm; }
+[ -n "$cli" ] && { installed=1; binary+=1; which=cli; }
 if [ ${#binary} -gt 1 ];then
     error "Argument --fpm or --cli cannot both be present."; x
 fi
-if [ -z "$which" ];then
-    which=common
+if [ -n "$installed" ];then
+    if [ -z "$which" ];then
+        which=common
+    fi
 fi
+code installed="$installed"
 code which="$which"
 ____
 
-glob="php*${which}"
-regex="php(.+)-${which}"
-
-dpkg-query -W -f='${Status}${binary:Package}\n' "$glob" | \
-    grep '^install ok installed' | \
-    sed 's,^install ok installed,,' | \
-    sed -nE 's,'"$regex"',\1,p'
+if [ -n "$installed" ];then
+    glob="php*${which}"
+    regex="php(.+)-${which}"
+    dpkg-query -W -f='${Status}${binary:Package}\n' "$glob" | \
+        grep '^install ok installed' | \
+        sed 's,^install ok installed,,' | \
+        sed -nE 's,'"$regex"',\1,p'
+else
+    apt-cache search '^php[0-9.]+$' | sed -E 's/^php([0-9]+\.[0-9]+).*/\1/' | sort
+fi
 
 exit 0
 
@@ -91,6 +103,7 @@ exit 0
 # --help
 # --fpm
 # --cli
+# --installed
 # )
 # VALUE=(
 # --which
