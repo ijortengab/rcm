@@ -54,9 +54,6 @@ Options:
         For --index-php=3 will create contents \`<?= 'Hello World'; ?>\`.
         For --index-php=4 will create contents \`<pre><?php print_r(\$_SERVER); ?></pre>\`.
 
-Additional Options:
-   rcm(-p plugin prompt acme-client [--acme-client] obtain)
-
 Other options (For expert only):
    --phpinfo
         Shortcut of \`--index-php=2\`.
@@ -78,6 +75,10 @@ Other options (For expert only):
         [6]: php_admin_value[post_max_size]=1024M
         [7]: php_admin_flag[log_errors]=on
         Multivalue.
+
+Additional Options:
+   rcm(-p plugin prompt acme-client [--acme-client] obtain)
+   rcm(-p plugin prompt web-server [--web-server] init)
 
 Global Options:
    --version
@@ -195,81 +196,42 @@ if [ -n "$is_wsl" ];then
     # Jika mesin menggunakan WSL2, maka tambahkan max_execution_time (waktu proses)
     php_fpm_config=(pm=ondemand php_value[max_execution_time]=60 "${php_fpm_config[@]}")
 fi
+
 is_config_line=
 is_config_line_array=()
-# Dump array dengan single quote.
 code php_fpm_config=@
 for each in "${php_fpm_config[@]}";do
     [[ "$each" =~ ' ' ]] && is_config_line+=" --config-line='${each}'" || is_config_line+=" --config-line=${each}"
     is_config_line_array+=("--config-line=${each}")
 done
-code 'certificate_name="'$certificate_name
-if [ -z "$php_fpm_section" ];then
-    error "Argument --php-fpm-section required."; x
-fi
-code php_fpm_section="$php_fpm_section"
-[ -z "$certbot_obtain" ] && certbot_obtain=1
-[ "$certbot_obtain" == 0 ] && certbot_obtain=
-code certbot_obtain="$certbot_obtain"
-if [ -n "$is_tld_special" ];then
-    certbot_obtain=
-fi
-code certbot_obtain="$certbot_obtain"
-[ -n "$certbot_obtain" ] && is_certbot_obtain=' --with-certbot-obtain' || is_certbot_obtain=' --without-certbot-obtain'
-code is_certbot_obtain="$is_certbot_obtain"
-code root="$root"
-code prefix="$prefix"
-code container="$container"
-if [ -n "$root" ];then
-    if [ -d "$root" ];then
-        if [ ! "${root:0:1}" == / ];then
-            root=$(resolve_relative_path "$root")
-        fi
-    else
-        error Directory root is not exists; x
-    fi
-    # Input dari user selesai, sekarang kembalikan ke semula.
-    # root adalah prefix.
-    prefix="$root"
-    container=.
-else
-    # Verifikasi prefix dari user.
-    if [ -n "$prefix" ];then
-        if [ -d "$prefix" ];then
-            if [ ! "${prefix:0:1}" == / ];then
-                prefix=$(resolve_relative_path "$prefix")
-            fi
-        else
-            error Directory prefix is not exists; x
-        fi
-    fi
-fi
-code prefix="$prefix"
-code index_php="$index_php"
 rcm_nginx_reload=
 ____
 
-INDENT+="    " \
-rcm-php-setup-adjust-cli-version $isfast \
+include rcm plugin run-method web-server $web_server init
+
+include rcm plugin run-method web-server $web_server get-user-process
+
+chapter Populate variables.
+webserver_user="$RCM_WEB_SERVER_USER"
+if [ -z "$webserver_user" ];then
+    error "Variable \$webserver_user failed to populate."; x
+fi
+code webserver_user="$webserver_user"
+____
+
+run rcm php init \
+    --php-version="$php_version" \
+    --extension="fpm" \
+    &&
+run rcm php switch \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
 
-# Code below from
-# rcm-drupal-setup-wrapper-nginx-virtual-host-autocreate-php-multiple-root.sh
-chapter Populate variables.
-nginx_user=
-conf_nginx=`command -v nginx > /dev/null && command -v nginx > /dev/null && nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
-if [ -f "$conf_nginx" ];then
-    nginx_user=`grep -o -P '^user\s+\K([^;]+)' "$conf_nginx"`
-fi
-code nginx_user="$nginx_user"
-if [ -z "$nginx_user" ];then
-    error "Variable \$nginx_user failed to populate."; x
-fi
 if [ -z "$php_fpm_user" ];then
-    php_fpm_user="$nginx_user"
+    php_fpm_user="$webserver_user"
 fi
 code php_fpm_user="$php_fpm_user"
+
 nginx_user_home=$(getent passwd "$nginx_user" | cut -d: -f6 )
 if [ -z "$prefix" ];then
     prefix=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
