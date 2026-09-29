@@ -62,16 +62,16 @@ chapter Variable dump.
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-code domain="$domain"
+code domain=$
 ____
 
 chapter Prepare arguments.
 root="/var/www/$domain/web"
-code root="$root"
+code root=$
 filename="$domain"
-code filename="$filename"
+code filename=$
 server_name="$domain"
-code server_name="$server_name"
+code server_name=$
 ____
 
 INDENT+="    " \

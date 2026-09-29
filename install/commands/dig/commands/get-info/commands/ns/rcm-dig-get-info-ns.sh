@@ -68,8 +68,8 @@ require command dig
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$RCM_DEBUG" ] && code domain="$domain"
-[ -n "$RCM_DEBUG" ] && code name_server="$name_server"
+[ -n "$RCM_DEBUG" ] && code domain=$
+[ -n "$RCM_DEBUG" ] && code name_server=$
 if [[ "$name_server" == - ]];then
     name_server=
 fi

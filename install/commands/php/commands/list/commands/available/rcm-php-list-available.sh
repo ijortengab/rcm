@@ -61,7 +61,7 @@ require command apt-cache
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code installed="$installed"
+code installed=$
 binary=
 [ -n "$fpm" ] && { installed=1; binary+=1; which=fpm; }
 [ -n "$cli" ] && { installed=1; binary+=1; which=cli; }
@@ -73,8 +73,8 @@ if [ -n "$installed" ];then
         which=common
     fi
 fi
-code installed="$installed"
-code which="$which"
+code installed=$
+code which=$
 ____
 
 if [ -n "$installed" ];then

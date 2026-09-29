@@ -125,8 +125,8 @@ EOF
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$RCM_DEBUG" ] && code domain="$domain"
-[ -n "$RCM_DEBUG" ] && code name_server="$name_server"
+[ -n "$RCM_DEBUG" ] && code domain=$
+[ -n "$RCM_DEBUG" ] && code name_server=$
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -134,18 +134,18 @@ fi
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
 type=txt
-[ -n "$RCM_DEBUG" ] && code type="$type"
+[ -n "$RCM_DEBUG" ] && code type=$
 type_uppercase=${type^^}
 
 value=
 if [ -n "$1" ];then
     value="$1"
 fi
-[ -n "$RCM_DEBUG" ] && code type_uppercase="$type_uppercase"
-[ -n "$RCM_DEBUG" ] && code hostname="$hostname"
-[ -n "$RCM_DEBUG" ] && code value="$value"
-[ -n "$RCM_DEBUG" ] && code label="$label"
-[ -n "$RCM_DEBUG" ] && code colorize="$colorize"
+[ -n "$RCM_DEBUG" ] && code type_uppercase=$
+[ -n "$RCM_DEBUG" ] && code hostname=$
+[ -n "$RCM_DEBUG" ] && code value=$
+[ -n "$RCM_DEBUG" ] && code label=$
+[ -n "$RCM_DEBUG" ] && code colorize=$
 [ -n "$RCM_DEBUG" ] && ____
 
 if [ -z "$name_exists_sure" ];then

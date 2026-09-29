@@ -111,8 +111,8 @@ isRecordExist() {
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$RCM_DEBUG" ] && code domain="$domain"
-[ -n "$RCM_DEBUG" ] && code name_server="$name_server"
+[ -n "$RCM_DEBUG" ] && code domain=$
+[ -n "$RCM_DEBUG" ] && code name_server=$
 if [[ "$name_server" == - ]];then
     name_server=
 fi
@@ -120,16 +120,16 @@ fi
 [ -n "$name_server" ] && add_name_server=' @'"$name_server" || add_name_server=''
 [ -n "$name_server" ] && label_name_server=' in DNS '"$name_server" || label_name_server=''
 type=a
-[ -n "$RCM_DEBUG" ] && code type="$type"
+[ -n "$RCM_DEBUG" ] && code type=$
 type_uppercase=${type^^}
 ip_address=
 if [ -n "$1" ];then
     ip_address="$1"
 fi
-[ -n "$RCM_DEBUG" ] && code type_uppercase="$type_uppercase"
-[ -n "$RCM_DEBUG" ] && code ip_address="$ip_address"
-[ -n "$RCM_DEBUG" ] && code hostname="$hostname"
-[ -n "$RCM_DEBUG" ] && code colorize="$colorize"
+[ -n "$RCM_DEBUG" ] && code type_uppercase=$
+[ -n "$RCM_DEBUG" ] && code ip_address=$
+[ -n "$RCM_DEBUG" ] && code hostname=$
+[ -n "$RCM_DEBUG" ] && code colorize=$
 [ -n "$RCM_DEBUG" ] && ____
 
 if [ -z "$name_exists_sure" ];then

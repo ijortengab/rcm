@@ -42,9 +42,9 @@ unset _new_arguments
 
 # Require, validate, and populate value.
 chapter Variable dump.
-code with_web_server="$with_web_server"
+code with_web_server=$
 web_server="$with_web_server"
-code web_server="$web_server"
+code web_server=$
 ____
 
 if [ -n "$with_web_server" ];then

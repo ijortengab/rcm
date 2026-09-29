@@ -75,8 +75,8 @@ require vendor/ijortengab/bash/functions/array-search.sh
 # Requirement, validate, and populate value.
 chapter Variable dump.
 command="rcm plugin list"
-code plugin_name_interactive="$plugin_name_interactive"
-code method_interactive="$method_interactive"
+code plugin_name_interactive=$
+code method_interactive=$
 interface="$1"
 plugin_name="$2"
 prefix="$RCM_LIB"/interfaces

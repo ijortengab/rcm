@@ -71,7 +71,7 @@ addRepositoryPpaOndrejPhp() {
     # Based on https://packages.sury.org/php/README.txt
     cd /etc/apt/sources.list.d
     string='https://packages.sury.org/php/'
-    code string="$string"
+    code string=$
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
     if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
         __ Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.
@@ -89,7 +89,7 @@ addRepositoryPpaOndrejPhp() {
         apt update -y
         cd /etc/apt/sources.list.d
         string='https://packages.sury.org/php/'
-        code string="$string"
+        code string=$
         string_quoted=$(sed "s/\./\\\./g" <<< "$string")
         if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
             __; green Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.; _.
@@ -107,7 +107,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
     # Based on https://launchpad.net/~ondrej/+archive/ubuntu/php
     cd /etc/apt/sources.list.d
     string='https://ppa.launchpadcontent.net/ondrej/php/ubuntu/'
-    code string="$string"
+    code string=$
     string_quoted=$(sed "s/\./\\\./g" <<< "$string")
     if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
         __ Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.
@@ -126,7 +126,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
         apt update -y
         cd /etc/apt/sources.list.d
         string='https://ppa.launchpadcontent.net/ondrej/php/ubuntu/'
-        code string="$string"
+        code string=$
         string_quoted=$(sed "s/\./\\\./g" <<< "$string")
         if grep --no-filename -R -E "$string_quoted" | grep -q -v -E '^\s*#';then
             __; green Sudah terdapat di direktori '`'/etc/apt/sources.list.d'`'.; _.
@@ -140,7 +140,7 @@ addRepositoryPpaOndrejPhpUbuntu() {
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
-code php_version="$php_version"
+code php_version=$
 php_available=()
 while read line; do
     php_available+=($line)
@@ -157,8 +157,8 @@ done
 if [ -f /etc/os-release ];then
     . /etc/os-release
 fi
-code ID="$ID"
-code VERSION_ID="$VERSION_ID"
+code ID=$
+code VERSION_ID=$
 if [ -z "$ID" ];then
     error OS not supported; x;
 fi

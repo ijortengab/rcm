@@ -59,7 +59,7 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error "Argument --php-version is required."; x
 fi
-code php_version="$php_version"
+code php_version=$
 php_installed=()
 while read line; do
     php_installed+=($line)
@@ -73,11 +73,11 @@ ____
 update=
 chapter Check PHP CLI version
 current_value=$(update-alternatives --query php | grep -o -P 'Value: \K(.*)')
-code current_value="$current_value"
+code current_value=$
 major=`echo "$php_version" | cut -d. -f1`
 minor=`echo "$php_version" | cut -d. -f2`
 expected_value=$(command -v php)"${major}.${minor}"
-code expected_value="$expected_value"
+code expected_value=$
 if [[ "$current_value" == "$expected_value" ]];then
     __ PHP CLI version tidak perlu diubah.
 else

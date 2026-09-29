@@ -51,9 +51,9 @@ fi
 if [[ ! "$package" =~ / ]];then
     error "The format of --package is not correct."; x
 fi
-code package="$package"
+code package=$
 url="https://github.com/${package}"
-code url="$url"
+code url=$
 ____
 
 INDENT+="    " \

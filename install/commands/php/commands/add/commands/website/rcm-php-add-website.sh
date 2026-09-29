@@ -159,42 +159,42 @@ if [ -f /proc/sys/kernel/osrelease ];then
         is_wsl=1
     fi
 fi
-code is_wsl="$is_wsl"
+code is_wsl=$
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code php_version="$php_version"
+code php_version=$
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
-code url="$url"
-code public_domain="$public_domain"
+code url=$
+code public_domain=$
 [ -n "$public_domain" ] && arg_https='--https' || arg_https=
 url-complete-component $arg_https
-code url="$url"
-code url_scheme="$url_scheme"
-code url_host="$url_host"
-code url_port="$url_port"
-code url_path="$url_path"
-code url_path_clean="$url_path_clean"
-code url_path_clean_trailing="$url_path_clean_trailing"
+code url=$
+code url_scheme=$
+code url_host=$
+code url_port=$
+code url_path=$
+code url_path_clean=$
+code url_path_clean_trailing=$
 if [ -n "$public_domain" ];then
     if [ -z "$acme_client" ];then
         error "Argument --acme-client required."; x
     fi
 fi
-code acme_client="$acme_client"
+code acme_client=$
 if [ -z "$web_server" ];then
     error "Argument --web-server required."; x
 fi
-code web_server="$web_server"
-code php_fpm_user="$php_fpm_user"
-code php_fpm_section="$php_fpm_section"
-code root="$root"
+code web_server=$
+code php_fpm_user=$
+code php_fpm_section=$
+code root=$
 add_container=
 [ -z "$root" ] && add_container=1
-code add_container="$add_container"
-code index_php="$index_php"
+code add_container=$
+code index_php=$
 code php_fpm_config=@
 if [ -n "$is_wsl" ];then
     # Jika mesin menggunakan WSL2, maka tambahkan max_execution_time (waktu proses)
@@ -220,7 +220,7 @@ webserver_user="$RCM_WEB_SERVER_USER"
 if [ -z "$webserver_user" ];then
     error "Variable \$webserver_user failed to populate."; x
 fi
-code webserver_user="$webserver_user"
+code webserver_user=$
 ____
 
 run rcm php init \
@@ -235,13 +235,13 @@ chapter Populate variables.
 if [ -z "$php_fpm_user" ];then
     php_fpm_user="$webserver_user"
 fi
-code php_fpm_user="$php_fpm_user"
+code php_fpm_user=$
 webserver_user_home=$(getent passwd "$webserver_user" | cut -d: -f6 )
-code webserver_user_home="$webserver_user_home"
+code webserver_user_home=$
 if [ -z "$root" ];then
     root=$(getent passwd "$php_fpm_user" | cut -d: -f6 )
 fi
-code root="$root"
+code root=$
 # Jika $HOME nya adalah /nonexistent, maka perlu kita verifikasi lagi.
 if [ ! -d "$root" ];then
     root=
@@ -250,7 +250,7 @@ if [ -z "$root" ];then
     root=/usr/local/share/www
     add_container=
 fi
-code root="$root"
+code root=$
 if [ -n "$add_container" ];then
     list_user=()
     while read line; do
@@ -263,7 +263,7 @@ if [ -n "$add_container" ];then
         root+=/php
     fi
 fi
-code root="$root"
+code root=$
 if [ -z "$php_fpm_section" ];then
     __ Get the list of section.
     code rcm php list pool "$php_version" "$php_fpm_user"
@@ -278,14 +278,14 @@ if [ -z "$php_fpm_section" ];then
         error "Variable \$php_fpm_section failed to populate."; x
     fi
 fi
-code php_fpm_section="$php_fpm_section"
+code php_fpm_section=$
 socket_filename=$( rcm php get-info pool "$php_version" "$php_fpm_section" listen 2>/dev/null)
 if [ -z "$socket_filename" ];then
     error "Variable \$socket_filename failed to populate."; x
 fi
-code socket_filename="$socket_filename"
+code socket_filename=$
 fastcgi_pass="unix:${socket_filename}"
-code fastcgi_pass="$fastcgi_pass"
+code fastcgi_pass=$
 if [[ "$url_scheme" == http || "$url_port" == 80 ]];then
     additional_path_custom_port=
 elif [[ "$url_scheme" == https || "$url_port" == 443 ]];then
@@ -294,11 +294,11 @@ else
     additional_path_custom_port="/${url_port}"
 fi
 root="${root}/${url_host}${additional_path_custom_port}/web${url_path_clean_trailing}"
-code root="$root"
+code root=$
 server_name="$url_host"
-code server_name="$server_name"
+code server_name=$
 root_parent=${root%/*}
-code root_parent="$root_parent"
+code root_parent=$
 
 ____
 
@@ -340,13 +340,13 @@ fi
 # `/var/www`.
 chapter Populate variable.
 nginx_config_root="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx"
-code nginx_config_root="$nginx_config_root"
+code nginx_config_root=$
 nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf.d"
-code nginx_config_dir="$nginx_config_dir"
+code nginx_config_dir=$
 nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
-code nginx_config_file="$nginx_config_file"
+code nginx_config_file=$
 adjustNginxConfigRoot "$url_path"
-code nginx_config_root="$nginx_config_root"
+code nginx_config_root=$
 ____
 
 chapter Mengecek direktori nginx config root '`'$nginx_config_root'`'.
@@ -367,7 +367,7 @@ target="$nginx_config_root"
 if [ -n "$url_path_clean" ];then
     target+="/${url_path_clean}"
 fi
-code target="$target"
+code target=$
 chapter Memeriksa direktori target '`'$target'`'
 create=
 if [[ "$target" == "$nginx_config_root" ]];then
@@ -404,12 +404,12 @@ web_root=
 if [ -z "$url_path" ];then
     web_root="$root"
 fi
-code nginx_config_root="$nginx_config_root"
-code nginx_config_dir="$nginx_config_dir"
-code nginx_config_file="$nginx_config_file"
-code url="$url"
-code web_root="$web_root"
-code fastcgi_pass="$fastcgi_pass"
+code nginx_config_root=$
+code nginx_config_dir=$
+code nginx_config_file=$
+code url=$
+code web_root=$
+code fastcgi_pass=$
 ____
 
 if [ -z "$tempfile" ];then
@@ -417,7 +417,7 @@ if [ -z "$tempfile" ];then
 fi
 
 chapter Mengecek '$PATH'.
-code PATH="$PATH"
+code PATH=$
 if grep -q '/snap/bin' <<< "$PATH";then
     __ '$PATH' sudah lengkap.
 else
@@ -478,7 +478,7 @@ else
 fi
 
 chapter Mempersiapkan file"$is_temporary_string" '`'index.php'`'.
-code path="$path"
+code path=$
 filename=$(basename "$path")
 isFileExists "$path"
 if [ -n "$found" ];then

@@ -63,14 +63,14 @@ require vendor/ijortengab/rcm/functions/utility/sleep-extended.sh
 if [ -z "$domain" ];then
     error "Argument --domain required."; x
 fi
-[ -n "$RCM_DEBUG" ] && code domain="$domain"
+[ -n "$RCM_DEBUG" ] && code domain=$
 if [ -z "$waiting_time" ];then
     waiting_time=60
 fi
 if [[ "$waiting_time" =~ [^0-9] ]];then
     waiting_time=60
 fi
-[ -n "$RCM_DEBUG" ] && code waiting_time="$waiting_time"
+[ -n "$RCM_DEBUG" ] && code waiting_time=$
 [ -n "$RCM_DEBUG" ] && ____
 
 chapter Watching Begin

@@ -99,32 +99,32 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error "Argument --php-version required."; x
 fi
-code php_version="$php_version"
+code php_version=$
 php_version_fpm="php${php_version}-fpm"
-code php_version_fpm="$php_version_fpm"
+code php_version_fpm=$
 if [ -z "$web_server" ];then
     error "Argument --web-server required."; x
 fi
-code web_server="$web_server"
+code web_server=$
 if [ -z "$section" ];then
     error "Argument --section required."; x
 fi
-code section="$section"
+code section=$
 if [ -z "$php_fpm_user" ];then
     error "Argument --php-fpm-user required."; x
 fi
-code php_fpm_user="$php_fpm_user"
+code php_fpm_user=$
 # Rename variable.
 section_name="$section"
-code section_name="$section_name"
+code section_name=$
 if [ -z "$file" ];then
     file="$section_name"
     file+=".conf"
 fi
-code file="$file"
+code file=$
 # Rename variable.
 config_file="$file"
-code config_file="$config_file"
+code config_file=$
 find='[php-version]'
 replace="$php_version"
 [ -z "$autocreate_user" ] && autocreate_user=1
@@ -152,11 +152,11 @@ ____
 chapter Membaca PHP-FPM Unit Service
 code systemctl cat "${php_version_fpm}.service"
 exec_start=`systemctl cat "${php_version_fpm}.service" | sed -n '/\[Service]/,/^\s*$/p' | php-pool get-info Service ExecStart`
-code exec_start="$exec_start"
+code exec_start=$
 fpm_config=`echo "$exec_start" | grep -Po -- '--fpm-config \K.*'`
-code fpm_config="$fpm_config"
+code fpm_config=$
 include=`cat "${fpm_config}" | php-pool get-info 'global' include`
-code include="$include"
+code include=$
 ____
 
 if [ -n "$include" ];then
@@ -200,9 +200,9 @@ EOF
         done
 
         chapter Mengecek informasi file config.
-        code additional_config_ini="$additional_config_ini"
+        code additional_config_ini=$
         path="$found_file"
-        code path="$path"
+        code path=$
         filename="${found_file##*/}"
         is_different=
         if php-pool-write is_different "$php_version" "$section_name" "$path" "$additional_config_ini";then
@@ -262,7 +262,7 @@ EOF
     fi
 
     chapter Membuat pool PHP-FPM config.
-    code config_dir="$config_dir"
+    code config_dir=$
     if [[ ! "${config_file:0:1}" == / ]];then
         config_file="${config_dir}/${config_file}"
     fi

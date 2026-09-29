@@ -82,14 +82,14 @@ chapter Variable dump.
 if [ -z "$php_version" ];then
     error PHP Version is required.; x
 fi
-code php_version="$php_version"
+code php_version=$
 ____
 
 chapter Memerikasa apakah mesin ini merupakan WSL.
 wsl=
 if [ -f /proc/sys/kernel/osrelease ];then
     read osrelease </proc/sys/kernel/osrelease
-    code osrelease=$osrelease
+    code osrelease=$
     # debian: osrelease=5.10.0-19-amd64
     # wsl2: 4.4.0-19041-Microsoft
     # wsl2: 4.19.128-microsoft-standard
