@@ -188,6 +188,8 @@ build-command-non-interactive() {
     local rcm_options=
     local rcm_options_array=()
     local words_array=()
+    local parameter
+    local value
     # Jika non interactive, maka dipaksa tidak ada -i dan otomatis
     # tidak ada -y
     # [ -n "$interactive" ] && rcm_options_array+=(i)
@@ -206,7 +208,24 @@ build-command-non-interactive() {
     [ -n "$rcm_options" ] && rcm_options="-${rcm_options}"
     words_array+=(rcm $rcm_options)
     words_array+=("${RCM_EXTENSION_CHAIN[@]}")
-    words_array+=("${RCM_ARGUMENT_PASS_QUOTED[@]}")
+
+    # Kita perlu meng-quote prepopulate arguments jika terdapat karakter spasi
+    RCM_PREPOPULATE_ARGUMENTS_QUOTED=()
+    for each in "${RCM_PREPOPULATE_ARGUMENTS[@]}"; do
+        parameter=${each%=*} # sama kayak dirname
+        value=${each##*=} # sama kayak basename
+        if [[ "$value" == "$parameter" ]];then
+            [[ "$value" =~ ' ' ]] && value="'$value'"
+            RCM_PREPOPULATE_ARGUMENTS_QUOTED+=("$value")
+        else
+            [[ "$value" =~ ' ' ]] && value="'$value'"
+            RCM_PREPOPULATE_ARGUMENTS_QUOTED+=("${parameter}=${value}")
+        fi
+    done
+    ArrayDiff RCM_PREPOPULATE_ARGUMENTS_QUOTED[@] RCM_ARGUMENT_PASS_QUOTED[@]
+    RCM_PREPOPULATE_ARGUMENTS_QUOTED=("${_return[@]}")
+    words_array+=("${RCM_PREPOPULATE_ARGUMENTS_QUOTED[@]}" "${RCM_ARGUMENT_PASS_QUOTED[@]}")
+
     echo-wrap-multiline
 }
 
@@ -601,7 +620,7 @@ if [ -n "$question_mark" ];then
             interactive=1
             build-options
             _; _.
-            _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}}; _.
+            _; _, Execute' '; magenta ${command/rcm/rcm ${rcm_options}} "$@"; _.
             ;;
         h)
             set -- "$@" --help
