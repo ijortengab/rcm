@@ -14,9 +14,10 @@ success() { echo -n "$INDENT" >&2; green '#' "$@" >&2; echo >&2; }
 chapter() { echo -n "$INDENT" >&2; yellow '#' "$@" >&2; echo >&2; }
 title() { echo -n "$INDENT" >&2; blue '#' "$@" >&2; echo >&2; }
 code() {
-    code-set() { [ "${1#*=}" == @ ] && { code-set-array "${1%%=*}"; } || { magenta "${1%%=*}"; _, =; yellow \"; purple "${1#*=}"; yellow \"; } }
-    code-set-array() { local a="${1}[@]"; magenta "$1"; _, '=( '; _.;for i in "${!a}"; do echo -n "${INDENT}${RCM_INDENT}" >&2; yellow \"; purple "$i"; yellow \"; _.; done; e ')'; }
-    echo -n "$INDENT" >&2; [[ $# -eq 1 && "$1" =~ ^[0-9a-zA-Z_]+= ]] && { code-set "$1"; } || magenta "$@" >&2; echo >&2;
+    code-set() { [ "$2" == '$' ] && { code-set-self "$1"; return; }; [ "$2" == @ ] && { code-set-array "$1" "${1}[@]"; return; }; magenta "$1"; _, =; yellow \"; purple "$2"; yellow \"; }
+    code-set-self() { magenta "$1"; _, =; yellow \"; purple "${!1}"; yellow \"; }
+    code-set-array() { magenta "$1"; _, '=( '; _.;for i in "${!2}"; do echo -n "${INDENT}${RCM_INDENT}" >&2; yellow \"; purple "$i"; yellow \"; _.; done; e ')'; }
+    echo -n "$INDENT" >&2; [[ $# -eq 1 && "$1" =~ ^[0-9a-zA-Z_]+= ]] && { code-set "${1%%=*}" "${1#*=}"; } || magenta "$@" >&2; echo >&2;
 }
 x() { echo "$@" >&2; exit 1; }
 e() { echo -n "$INDENT" >&2; echo -n "$@" >&2; }
