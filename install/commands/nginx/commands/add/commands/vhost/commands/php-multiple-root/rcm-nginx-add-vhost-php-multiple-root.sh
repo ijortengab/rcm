@@ -94,377 +94,70 @@ require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
 require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
 require vendor/ijortengab/rcm/functions/utility/backup-file.sh
 require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
+require vendor/ijortengab/rcm/functions/utility/find-string.sh
+require vendor/ijortengab/rcm/functions/nginx/rcm-nginx-grep.sh
 
 # Functions.
-ArraySearch() {
-    local index match="$1"
-    local source=("${!2}")
-    for index in "${!source[@]}"; do
-       if [[ "${source[$index]}" == "${match}" ]]; then
-           _return=$index; return 0
-       fi
-    done
-    return 1
-}
-# Required function: ArraySearch.
-# Karakter operator yang berlaku adalah: = != < > <= >= ~ !~
-tokenToBinary () {
-    local token=$1; shift;
-    [ -z "$token" ] && { error 'Argument <token> is empty. '; x; }
-    local token_list=$1; shift;
-    [ -z "$token_list" ] && { error 'Argument <token_list> is empty. '; x; }
-    local string=$1; shift;
-    [ -z "$string" ] && { error 'Argument <string> is empty. '; x; }
-    [[ $(type -t ArraySearch) == function ]] || { error Function ArraySearch not found.; x; }
-    local array
-    # Jika terjadi pengulangan, contoh:
-    # a contains 80  a contains 8080
-    # Maka kita ambil yang paling akhir.
-    local token_list_last=$(echo "$token_list" | grep "^[$token]\s" | tail -1)
-    local operator=$(echo "$token_list_last" | cut -d' ' -f2 )
-    local value=$(echo "$token_list_last" | cut -d' ' -f3- )
-    case "$operator" in
-        =)
-            if [[ "$string" == "$value" ]];then echo 1; else echo 0; fi
-            ;;
-        '<>')
-            if [[ "$string" == "$value" ]];then echo 0; else echo 1; fi
-            ;;
-        '<')
-            if [[ "$string" -lt "$value" ]];then echo 1; else echo 0; fi
-            ;;
-        '>')
-            if [[ "$string" -gt "$value" ]];then echo 1; else echo 0; fi
-            ;;
-        '<=')
-            if [[ "$string" -le "$value" ]];then echo 1; else echo 0; fi
-            ;;
-        '>=')
-            if [[ "$string" -ge "$value" ]];then echo 1; else echo 0; fi
-            ;;
-        '[]')
-            read -ra array -d '' <<< "$string"
-            if ArraySearch "$value" array[@];then echo 1; else echo 0; fi
-            ;;
-        '![]')
-            read -ra array -d '' <<< "$string"
-            if ArraySearch "$value" array[@];then echo 0; else echo 1; fi
-            ;;
-        '~')
-            if grep -q -E "$value" <<< "$string";then echo 1; else echo 0; fi
-            ;;
-        '!~')
-            if grep -q -E "$value" <<< "$string";then echo 0; else echo 1; fi
-            ;;
-        *)
-            echo 0
-            error Operator is not valid: '`'$operator'`'; x
-    esac
-}
-# Required function: tokenToBinary.
-# Reference: https://github.com/parsecsv/parsecsv-for-php/blob/main/src/Csv.php#L1055
-resolveCondition() {
-    local condition=$1; shift;
-    local token_list=$1; shift;
-    local string=$1; shift;
-    local i
-    i=0
-    binary="$condition"
-    conditionToBinary() {
-        local condition=$1; shift;
-        [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
-        local token_list=$1; shift;
-        local string=$1; shift;
-        local each array
-        local or=
-        local and=
-        conditionToBinaryOr () {
-            local condition=$1; shift;
-            [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
-            local token_list=$1; shift;
-            local string=$1; shift;
-            local each array
-            local or=
-            IFS='|' read -ra array <<< "$condition"
-            for each in "${array[@]}"; do
-                if [ -n "$token_list" ];then
-                    or+=$(conditionToBinaryAnd "$each" "$token_list" "$string")
-                else
-                    or+=$(conditionToBinaryAnd "$each")
-                fi
-            done
-            [[ "$or" =~ 1 ]] && echo 1 || echo 0
-        }
-        conditionToBinaryAnd () {
-            local condition=$1; shift;
-            [ -z "$condition" ] && { error 'Argument <condition> is empty. '; x; }
-            local token_list=$1; shift;
-            local string=$1; shift;
-            local each array
-            local and=
-            IFS='&' read -ra array <<< "$condition"
-            for each in "${array[@]}"; do
-                if [ -n "$token_list" ];then
-                    and+=$(tokenToBinary "$each" "$token_list" "$string")
-                else
-                    and+="$each"
-                fi
-            done
-            [[ "$and" =~ 0 ]] && echo 0 || echo 1
-        }
-        conditionToBinaryOr "$condition" "$token_list" "$string"
-    }
-    until [[ "$binary" =~ ^(0|1)$ ]];do
-        i=$(( i + 1 ))
-        # e 'Looping ke-' "$i" ; _.
-        # e '< "$binary"' "$binary" ; _.
-        if [[ $(echo "$binary" | grep -i -o -E '\([^\(\)]+\)' | grep -o -E '[^\(\)]+' | wc -l) -eq 0 ]];then
-            if [[ "$binary" =~ ^[a-z]$ ]];then
-                # e '< "$binary"' "$binary"; _.
-                binary=$(conditionToBinary "$binary" "$token_list" "$string")
-                # e '> "$binary"' "$binary"; _.
-            else
-                # error Token tidak valid: '`'$token'`'; x
-                # e '< "$binary"' "$binary"; _.
-                binary=$(conditionToBinary "$binary")
-                # e '> "$binary"' "$binary"; _.
-            fi
-        else
-            while IFS= read insideBraces; do
-                find="(${insideBraces})"
-                # e '"$find"' "$find" ; _.
-                replace=$(conditionToBinary "$insideBraces" "$token_list" "$string")
-                # e '"$replace"' "$replace" ; _.
-                # _ Jangan gunakan replace all, karena bisa jadi ada tanda kurung yang sama.
-                # _ Contoh: binary='(a&b)|c|(a&c)|((m&r|(a&b)))'
-                # e '< "$binary"' "$binary" ; _.
-                binary="${binary/"$find"/"$replace"}"
-                # e '> "$binary"' "$binary" ; _.
-            done <<< `echo "$binary" | grep -o -E '\([^\(\)]+\)' | grep -o -E   '[^\(\)]+'`
-        fi
-        # e '> "$binary"' "$binary"; _.
-        # __ Limit adalah 100 ya gaes.
-        # __ 100 lopping belum ketemu juga, artinya set error dan kembalikan false
-        if [[ $i == 100 ]];then
-            error Kesalahan Logic.
-            binary=0
-        fi
-    done
-    echo "$binary"
-}
-# Required function: resolveCondition.
-nginxGrep(){
-    validateToken() {
-        # global token
-        if [[ ! "$token" =~ ^[a-z]$ ]];then
-            error Token tidak valid: '`'$token'`'; x
-        fi
-    }
-    # Mengubah operator dari text string menjadi simbol, sekaligus validasi.
-    # Karakter operator yang berlaku adalah: = != < > <= >= ~ !~
-    validateOperator() {
-        # global operator
-        case "$operator" in
-            is|equals|=)
-                operator='=' ;;
-            '!='|'is not'|'<>')
-                operator='<>' ;;
-            '<'|'is less than')
-                operator='<' ;;
-            '>'|'is greater than')
-                operator='>' ;;
-            '<='|'is less than or equals')
-                operator='<=' ;;
-            '>='|'is greater than or equals')
-                operator='>=' ;;
-            '[]'|'contains')
-                operator='[]' ;;
-            '![]'|'does not contain')
-                operator='![]' ;;
-            '~'|'match')
-                operator='~' ;;
-            '!~'|'does not match')
-                operator='!~' ;;
-            *)
-                error Operator is not valid: '`'$operator'`'; x
-        esac
-    }
-    [[ $(type -t resolveCondition) == function ]] || { error Function resolveCondition not found.; x; }
-    local i token operator
-    local directive=$1; shift
-    # Jika total argument setelah directive adalah 7, 10, 13, dst.,
-    # maka berarti conditional complex. Contohnya.
-    # nginxGrep listen '(a&b)' a contains 8080 b contains ssl < a.txt
-    # nginxGrep listen '(a&b)|c' a contain6s 8080 b contains ssl c contains ipv6only=on < a.txt
-    token_list=
-    if [[ $# -gt 6 && $(( $# % 3 )) == 1 ]];then
-        condition=$1; shift
-        while [ $# -gt 0 ];do
-            token=$1
-            validateToken
-            operator=$2
-            validateOperator
-            token_list+="${token} ${operator} $3"
-            token_list+=$'\n'
-            shift 3;
-        done
-    # Jika total argument setelah directive adalah 1, maka mencari fix value.
-    # Contohnya:
-    # nginxGrep listen 8080
-    elif [[ $# -eq 1 ]];then
-        condition=a
-        token_list+="a = $1"
-        token_list+=$'\n'
-    # Jika total argument setelah directive adalah 2, maka berarti conditional
-    # sederhana. Contohnya.
-    # nginxGrep listen contains ssl
-    # nginxGrep listen 'is not contain' ssl
-    elif [[ $# -eq 2 ]];then
-        condition=a
-        operator=$1
-        validateOperator
-        token_list+="a ${operator} $2"
-        token_list+=$'\n'
-    fi
-    lines_directive=()
-    if [ ! -t 0 ]; then
-        i=0
-        _ Mencari directive: '`'${directive}'`'; _.
-        [ -n "$RCM_DEBUG" ] && { _; magenta grep -E "^\s*${directive}\s+[^;]+;\s*\$"; _.; }
-        while IFS= read line; do
-            i=$(( i + 1 ))
-            if [ "${#line}" -eq 0 ];then
-                [ -n "$RCM_DEBUG" ] && { __; }
-            else
-                [ -n "$RCM_DEBUG" ] && { _; yellow "$line"; _, ' # Line:' $i; }
-            fi
-            if grep -q -E "^\s*${directive}\s+[^;]+;\s*\$" <<< "$line";then
-                [ -n "$RCM_DEBUG" ] && { _, ' '; green Baris ditemukan.; }
-                lines_directive+=("$line")
-            fi
-            [ -n "$RCM_DEBUG" ] && { _.; }
-        done </dev/stdin
-    fi
-    if [ "${#lines_directive[@]}" -eq 0 ];then
-        return 1
-    fi
-    [ -n "$RCM_DEBUG" ] && { _; _.; }
-    [ -n "$RCM_DEBUG" ] && { _ Variable dump '`'\$condition'`'.; _.; }
-    [ -n "$RCM_DEBUG" ] && { e; magenta $condition; _.; }
-    [ -n "$RCM_DEBUG" ] && { _; _.; }
-    [ -n "$RCM_DEBUG" ] && { _ Variable dump '`'\$token_list'`'.; _.; }
-    [ -n "$RCM_DEBUG" ] && { while IFS= read line; do [ -n "$line" ] || continue; e; magenta "$line"; _. ; done <<< "$token_list"; }
-    # _; _.
-    # Directive bisa berulang.
-    # Contoh: directive listen bisa berulang sebanyak dua kali.
-    # Jadi jika satu saja sudah solve, maka langsung break saja.
-    local resolved
-    for line in "${lines_directive[@]}"; do
-        # e '"$line"' "$line" ; _.
-        directive_reverse=$(echo "$line" | sed -E -e "s;\s*${directive}\s+(.*);\1;" -e 's|;\s*$||')
-        # e '"$directive_reverse"' "$directive_reverse" ; _.
-        resolved=$(resolveCondition "$condition" "$token_list" "$directive_reverse")
-        # e '"$resolved"' "$resolved" ; _.
-        if [ "$resolved" == 1 ];then
-            [ -n "$RCM_DEBUG" ] && { _; _.; }
-            _ Condition solved pada baris:' '; yellow  "$line"; _.
-            [ -n "$RCM_DEBUG" ] && { _; _.; }
-            return 0
-        fi
-    done
-    return 1
-}
-findString() {
-    # global debug
-    # global find_quoted
-    # $find_quoted agar bisa di gunakan oleh sed.
-    local find="$1" string path="$2" tempfile="$3" deletetempfile
-    if [ -z "$tempfile" ];then
-        tempfile=$(mktemp -p /dev/shm)
-        deletetempfile=1
-    fi
-    _; _, Memeriksa baris dengan kalimat: '`'$find'`'.;_.
-    find_quoted="$find"
-    find_quoted=$(sed -E "s/\s+/\\\s\+/g" <<< "$find_quoted")
-    find_quoted=$(sed "s/\./\\\./g" <<< "$find_quoted")
-    find_quoted=$(sed "s/\*/\\\*/g" <<< "$find_quoted")
-    find_quoted=$(sed "s/;$/\\\s\*;/g" <<< "$find_quoted")
-    if [[ ! "${find_quoted:0:1}" == '^' ]];then
-        find_quoted="^\s*${find_quoted}"
-    fi
-    _; magenta grep -E '"'"${find_quoted}"'"' '"'"\$path"'"'; _.
-    if grep -E "${find_quoted}" "$path" > "$tempfile";then
-        string="$(< "$tempfile")"
-        while read -r line; do e "$line"; _.; done <<< "$string"
-        __ Baris ditemukan.
-        [ -n "$deletetempfile" ] && rm "$tempfile"
-        return 0
-    else
-        __ Baris tidak ditemukan.
-        [ -n "$deletetempfile" ] && rm "$tempfile"
-        return 1
-    fi
-}
 validateContentMaster() {
     local path="$1"
     # listen
     if [ "$url_scheme" == https ];then
-        if ! nginxGrep listen '(a&b)|(a&b&c)' a contains "$url_port" b contains ssl c contains ipv6only=on < "$path";then
+        if ! rcm-nginx-grep listen '(a&b)|(a&b&c)' a contains "$url_port" b contains ssl c contains ipv6only=on < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     else
-        if ! nginxGrep listen contains "$url_port" < "$path";then
+        if ! rcm-nginx-grep listen contains "$url_port" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     fi
     # server_name
-    if ! nginxGrep server_name contains "$url_host" < "$path";then
+    if ! rcm-nginx-grep server_name contains "$url_host" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
 
     if [ "$url_scheme" == https ];then
         # ssl_certificate
-        if ! nginxGrep ssl_certificate is "$ssl_certificate" < "$path";then
+        if ! rcm-nginx-grep ssl_certificate is "$ssl_certificate" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        if ! nginxGrep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
+        if ! rcm-nginx-grep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # include
-        if ! nginxGrep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
+        if ! rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # include
-        if ! nginxGrep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
+        if ! rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
     fi
     if [ "$url_scheme" == http ];then
         # ssl_certificate
-        if nginxGrep ssl_certificate is "$ssl_certificate" < "$path";then
+        if rcm-nginx-grep ssl_certificate is "$ssl_certificate" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # ssl_certificate_key
-        if nginxGrep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
+        if rcm-nginx-grep ssl_certificate_key is "$ssl_certificate_key" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # include
-        if nginxGrep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
+        if rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
         # include
-        if nginxGrep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
+        if rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -474,13 +167,13 @@ validateContentMaster() {
 validateContentSlave() {
     local path="$1"
     # fastcgi_pass
-    if ! nginxGrep fastcgi_pass is "$fastcgi_pass" < "$path";then
+    if ! rcm-nginx-grep fastcgi_pass is "$fastcgi_pass" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
     if [ -z "$url_path" ];then
         # root
-        if ! nginxGrep root is "$web_root" < "$path";then
+        if ! rcm-nginx-grep root is "$web_root" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -490,12 +183,12 @@ validateContentSlave() {
 validateContentRedirect() {
     local path="$1"
     # listen
-    if ! nginxGrep listen contains 80 < "$path";then
+    if ! rcm-nginx-grep listen contains 80 < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
     # server_name
-    if ! nginxGrep server_name contains "$url_host" < "$path";then
+    if ! rcm-nginx-grep server_name contains "$url_host" < "$path";then
         __; yellow File akan dibuat ulang.; _.
         return 1
     fi
@@ -705,21 +398,21 @@ chapter Enable the line to include sub nginx config file: '`'$filename'`'.
 if [ -z "$url_path" ];then
     template="    include __NGINX_CONFIG_FILE__;"
     find=$(echo "$template" | sed "s|__NGINX_CONFIG_FILE__|${nginx_config_file}|g")
-    if findString "# ${find}" "$path";then
+    if find-string "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
         sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
     fi
-    if ! nginxGrep include is "$nginx_config_file" < "$path";then
+    if ! rcm-nginx-grep include is "$nginx_config_file" < "$path";then
         error Enable gagal.; x
     fi
 else
     template="    include __MASTER_INCLUDE__;"
     find=$(echo "$template" | sed "s|__MASTER_INCLUDE__|${master_include}|g")
-    if findString "# ${find}" "$path";then
+    if find-string "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
         sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
     fi
-    if ! nginxGrep include is "$master_include" < "$path";then
+    if ! rcm-nginx-grep include is "$master_include" < "$path";then
         error Enable gagal.; x
     fi
 fi
@@ -864,11 +557,11 @@ if [[ "$url_scheme" == https && ! "$url_port" == 443 ]];then
     chapter Redirect to https if accessed with http
     path="/etc/nginx/sites-available/$master_filename"
     find="    error_page 497"
-    if findString "# ${find}" "$path";then
+    if find-string "# ${find}" "$path";then
         code sed -i -E "'"'s|'"${find_quoted}"'|'"${find}"'|g'"'" "$path"
         sed -i -E 's|'"${find_quoted}"'|'"${find}"'|g' "$path"
     fi
-    if ! nginxGrep error_page contains 497 < "$path";then
+    if ! rcm-nginx-grep error_page contains 497 < "$path";then
         error Enable gagal.; x
     fi
     ____
