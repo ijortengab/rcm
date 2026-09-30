@@ -28,7 +28,7 @@ Options:
         Values available from command: rcm(plugin list web-server).
    --php-version=PHP_VERSION
         Set the version of PHP FPM.
-        Values available from command: rcm(php list available).
+        Values available from command: rcm(php list available --fpm).
    --php-fpm-user=[USER]
         Set the Unix user that used by PHP FPM.
         Default value is the user that used by web server (the common name is www-data).
@@ -286,9 +286,9 @@ fi
 code socket_filename=$
 fastcgi_pass="unix:${socket_filename}"
 code fastcgi_pass=$
-if [[ "$url_scheme" == http || "$url_port" == 80 ]];then
+if [[ "$url_scheme" == http && "$url_port" == 80 ]];then
     additional_path_custom_port=
-elif [[ "$url_scheme" == https || "$url_port" == 443 ]];then
+elif [[ "$url_scheme" == https && "$url_port" == 443 ]];then
     additional_path_custom_port=
 else
     additional_path_custom_port="/${url_port}"
@@ -350,7 +350,7 @@ code nginx_config_root=$
 ____
 
 chapter Mengecek direktori nginx config root '`'$nginx_config_root'`'.
-isDirExists "$nginx_config_root"
+rcm-dir "$nginx_config_root" isExists
 ____
 
 if [ -n "$notfound" ];then
@@ -359,7 +359,7 @@ if [ -n "$notfound" ];then
     mkdir -p "$nginx_config_root"
     code chown -R $nginx_user:$nginx_user '"'$nginx_config_root'"'
     chown -R $nginx_user:$nginx_user "$nginx_config_root"
-    dirMustExists "$nginx_config_root"
+    rcm-dir "$nginx_config_root" mustExists
     ____
 fi
 
@@ -385,7 +385,7 @@ fi
 
 if [ -n "$url_path" ];then
     chapter Mengecek direktori nginx additional config '`'$nginx_config_dir'`'.
-    isDirExists "$nginx_config_dir"
+    rcm-dir "$nginx_config_dir" isExists
     ____
 
     if [ -n "$notfound" ];then
@@ -394,7 +394,7 @@ if [ -n "$url_path" ];then
         mkdir -p "$nginx_config_dir"
         code chown -R $nginx_user:$nginx_user '"'$nginx_config_dir'"'
         chown -R $nginx_user:$nginx_user "$nginx_config_dir"
-        dirMustExists "$nginx_config_dir"
+        rcm-dir "$nginx_config_dir" mustExists
         ____
     fi
 fi
@@ -480,7 +480,7 @@ fi
 chapter Mempersiapkan file"$is_temporary_string" '`'index.php'`'.
 code path=$
 filename=$(basename "$path")
-isFileExists "$path"
+rcm-file "$path" isExists
 if [ -n "$found" ];then
     read existing_contents < "$path"
     if [[ ! "$existing_contents" == "$contents" ]];then
@@ -491,12 +491,12 @@ fi
 if [ -n "$notfound" ];then
     if [ -f "$path" ];then
         __ Backup file "$path".
-        backupFile move "$path"
+        backup-file move "$path"
     fi
     __ Membuat file"$is_temporary_string" '`'index.php'`'.
     echo "$contents" > "$path"
     chown $php_fpm_user:$php_fpm_user "$path"
-    fileMustExists "$path"
+    rcm-file "$path" mustExists
 fi
 ____
 
