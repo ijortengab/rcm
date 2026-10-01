@@ -85,13 +85,6 @@ Global Options:
         Print version of this script.
    --help
         Show this help.
-
-Dependency:
-   curl
-   rcm-php-fpm-setup-project-config
-   rcm-php-setup-adjust-cli-version
-   rcm-nginx-virtual-host-autocreate-php-multiple-root
-   rcm-nginx-reload
 EOF
 }
 
@@ -271,7 +264,6 @@ if [ -z "$php_fpm_section" ];then
     while read line; do
         list_section+=($line)
     done <<< `rcm php list pool "$php_version" "$php_fpm_user" 2>/dev/null`
-    code list_section=@
     if [ "${#list_section}" -gt 0 ];then
         php_fpm_section="${list_section[0]}"
     else
@@ -299,7 +291,6 @@ server_name="$url_host"
 code server_name=$
 root_parent=${root%/*}
 code root_parent=$
-
 ____
 
 chapter Mengecek direktori root parent '`'$root_parent'`'.
@@ -336,128 +327,16 @@ if [ -n "$notfound" ];then
     ____
 fi
 
-# User yang digunakan sudah pasti adalah user nginx, karena akan dibuat di
-# `/var/www`.
-chapter Populate variable.
-nginx_config_root="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx"
-code nginx_config_root=$
-nginx_config_dir="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf.d"
-code nginx_config_dir=$
-nginx_config_file="${nginx_user_home}/${url_host}${additional_path_custom_port}/nginx.conf"
-code nginx_config_file=$
-adjustNginxConfigRoot "$url_path"
-code nginx_config_root=$
-____
+RCM_WEB_SERVER=$web_server
+RCM_WEB_SERVER_VHOST_TAGS=( php subdirectory-safe )
+RCM_WEB_SERVER_VHOST_METADATA_YAML=$(cat - <<EOF
+fastcgi_pass: $fastcgi_pass
+url: $url
+root: $root
+EOF
+)
 
-chapter Mengecek direktori nginx config root '`'$nginx_config_root'`'.
-rcm-dir "$nginx_config_root" isExists
-____
-
-if [ -n "$notfound" ];then
-    chapter Membuat direktori nginx config root '`'$nginx_config_root'`'.
-    code mkdir -p '"'$nginx_config_root'"'
-    mkdir -p "$nginx_config_root"
-    code chown -R $nginx_user:$nginx_user '"'$nginx_config_root'"'
-    chown -R $nginx_user:$nginx_user "$nginx_config_root"
-    rcm-dir "$nginx_config_root" mustExists
-    ____
-fi
-
-target="$nginx_config_root"
-if [ -n "$url_path_clean" ];then
-    target+="/${url_path_clean}"
-fi
-code target=$
-chapter Memeriksa direktori target '`'$target'`'
-create=
-if [[ "$target" == "$nginx_config_root" ]];then
-    __ Target sama dengan nginx config root. Symbolic link tidak diperlukan.
-else
-    __ Target tidak sama dengan nginx config root. Symbolic link diperlukan.
-    create=1
-fi
-____
-
-if [ -n "$create" ];then
-    source="$root"
-    link_symbolic_dir "$source" "$target" "$nginx_user" absolute
-fi
-
-if [ -n "$url_path" ];then
-    chapter Mengecek direktori nginx additional config '`'$nginx_config_dir'`'.
-    rcm-dir "$nginx_config_dir" isExists
-    ____
-
-    if [ -n "$notfound" ];then
-        chapter Membuat direktori nginx config root '`'$nginx_config_dir'`'.
-        code mkdir -p '"'$nginx_config_dir'"'
-        mkdir -p "$nginx_config_dir"
-        code chown -R $nginx_user:$nginx_user '"'$nginx_config_dir'"'
-        chown -R $nginx_user:$nginx_user "$nginx_config_dir"
-        rcm-dir "$nginx_config_dir" mustExists
-        ____
-    fi
-fi
-
-chapter Prepare Arguments.
-web_root=
-if [ -z "$url_path" ];then
-    web_root="$root"
-fi
-code nginx_config_root=$
-code nginx_config_dir=$
-code nginx_config_file=$
-code url=$
-code web_root=$
-code fastcgi_pass=$
-____
-
-if [ -z "$tempfile" ];then
-    tempfile=$(mktemp -p /dev/shm -t rcm-php-add-website.XXXXXX)
-fi
-
-chapter Mengecek '$PATH'.
-code PATH=$
-if grep -q '/snap/bin' <<< "$PATH";then
-    __ '$PATH' sudah lengkap.
-else
-    __ '$PATH' belum lengkap.
-    __ Memperbaiki '$PATH'
-    PATH=/snap/bin:$PATH
-    if grep -q '/snap/bin' <<< "$PATH";then
-        __; green '$PATH' sudah lengkap.; _.
-        __; magenta PATH="$PATH"; _.
-    else
-        __; red '$PATH' belum lengkap.; x
-    fi
-fi
-____
-
-INDENT+="    " \
-PATH=$PATH \
-RCM_TLD_SPECIAL="$RCM_TLD_SPECIAL" \
-rcm-nginx-virtual-host-autocreate-php-multiple-root $isfast \
-    $is_certbot_obtain \
-    --without-nginx-reload \
-    --tempfile-trigger-reload="$tempfile" \
-    --url="$url" \
-    --nginx-config-root="$nginx_config_root" \
-    --nginx-config-file="$nginx_config_file" \
-    --nginx-config-dir="$nginx_config_dir" \
-    --web-root="$web_root" \
-    --fastcgi-pass="$fastcgi_pass" \
-    --certbot-certificate-name="$certificate_name" \
-    ; [ ! $? -eq 0 ] && x
-
-if [ -s "$tempfile" ];then
-    rcm_nginx_reload=1
-fi
-
-if [ -n "$rcm_nginx_reload" ];then
-    INDENT+="    " \
-    rcm-nginx-reload \
-        ; [ ! $? -eq 0 ] && x
-fi
+include rcm plugin run-method web-server $web_server add-vhost
 
 if [ -n "$index_php" ];then
     path="${root}/index.php"

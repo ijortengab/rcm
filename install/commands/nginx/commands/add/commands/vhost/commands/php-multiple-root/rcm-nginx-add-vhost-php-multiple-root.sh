@@ -16,7 +16,7 @@ Options:
         Set the URL.
    --nginx-config-root=VALUE
         Set the NGINX config Root.
-   --web-root=[DIR]
+   --root=[DIR]
         Required if --url is empty of path component.
    --fastcgi-pass=VALUE
         Set the value of fastcgi_pass directive.
@@ -52,12 +52,8 @@ while [[ $# -gt 0 ]]; do
         --version) version=1; shift ;;
         --fastcgi-pass=*) fastcgi_pass="${1#*=}"; shift ;;
         --fastcgi-pass) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then fastcgi_pass="$2"; shift; fi; shift ;;
-        --nginx-config-dir=*) nginx_config_dir="${1#*=}"; shift ;;
-        --nginx-config-dir) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_dir="$2"; shift; fi; shift ;;
-        --nginx-config-file=*) nginx_config_file="${1#*=}"; shift ;;
-        --nginx-config-file) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_file="$2"; shift; fi; shift ;;
-        --nginx-config-root=*) nginx_config_root="${1#*=}"; shift ;;
-        --nginx-config-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then nginx_config_root="$2"; shift; fi; shift ;;
+        --root=*) root="${1#*=}"; shift ;;
+        --root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then root="$2"; shift; fi; shift ;;
         --tempfile-trigger-reload=*) tempfile_trigger_reload="${1#*=}"; shift ;;
         --tempfile-trigger-reload) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then tempfile_trigger_reload="$2"; shift; fi; shift ;;
         --tls-certificate-key=*) tls_certificate_key="${1#*=}"; shift ;;
@@ -68,8 +64,6 @@ while [[ $# -gt 0 ]]; do
         --url) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then url="$2"; shift; fi; shift ;;
         --with-nginx-reload) nginx_reload=1; shift ;;
         --without-nginx-reload) nginx_reload=0; shift ;;
-        --web-root=*) web_root="${1#*=}"; shift ;;
-        --web-root) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then web_root="$2"; shift; fi; shift ;;
         --[^-]*) shift ;;
         *) _new_arguments+=("$1"); shift ;;
     esac
@@ -96,6 +90,8 @@ require vendor/ijortengab/rcm/functions/utility/backup-file.sh
 require vendor/ijortengab/rcm/functions/utility/link-symbolic.sh
 require vendor/ijortengab/rcm/functions/utility/find-string.sh
 require vendor/ijortengab/rcm/functions/nginx/rcm-nginx-grep.sh
+require vendor/ijortengab/bash/functions/array-pop.sh
+require vendor/ijortengab/rcm/functions/utility/link-symbolic-dir.sh
 
 # Functions.
 validateContentMaster() {
@@ -173,7 +169,7 @@ validateContentSlave() {
     fi
     if [ -z "$url_path" ];then
         # root
-        if ! rcm-nginx-grep root is "$web_root" < "$path";then
+        if ! rcm-nginx-grep root is "$root" < "$path";then
             __; yellow File akan dibuat ulang.; _.
             return 1
         fi
@@ -203,12 +199,20 @@ fi
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
+include rcm plugin run-static-method web-server nginx get-user-process
+nginx_user="$RCM_WEB_SERVER_USER"
+
 # Require, validate, and populate value.
 chapter Variable dump.
+code nginx_user=$
+files_used=()
+files_created=()
+files_symlink=()
 if [ -z "$url" ];then
     error "Argument --url required."; x
 fi
 code url=$
+code root=$
 url-complete-component
 code url=$
 code url_scheme=$
@@ -218,33 +222,86 @@ code url_path=$
 code url_path_clean=$
 code url_path_clean_trailing=$
 
-if [ -z "$nginx_config_root" ];then
-    error "Argument --nginx-config-root required."; x
+if [[ "$url_scheme" == http && "$url_port" == 80 ]];then
+    additional_path_custom_port=
+elif [[ "$url_scheme" == https && "$url_port" == 443 ]];then
+    additional_path_custom_port=
+else
+    additional_path_custom_port="/${url_port}"
+fi
+
+code additional_path_custom_port=$
+
+conf_nginx=`nginx -V 2>&1 | grep -o -P -- '--conf-path=\K(\S+)'`
+code conf_nginx=$
+config_dir=$(dirname "$conf_nginx")
+code config_dir=$
+nginx_config_root="${config_dir}/rcm/sites/${url_host}${additional_path_custom_port}/root"
+nginx_config_dir="${config_dir}/rcm/sites/${url_host}${additional_path_custom_port}/location.conf.d"
+nginx_config_file="${config_dir}/rcm/sites/${url_host}${additional_path_custom_port}/location.conf"
+code nginx_config_root=$
+code nginx_config_dir=$
+code nginx_config_file=$
+if [[ "$url_path_clean" =~ / ]];then
+    # Explode by space.
+    # read -ra array -d '' <<< "$string"
+    # Explode by slash.
+    IFS='/' read -ra array <<< "$url_path_clean"
+    array-pop array[@]
+    array=("${_return_array[@]}"); unset _return_array
+    for each in "${array[@]}"; do nginx_config_root+="/${each}.d"; done;
 fi
 code nginx_config_root=$
-if [ -z "$nginx_config_file" ];then
-    error "Argument --nginx-config-file required."; x
+____
+
+rcm-dir "$nginx_config_root" createIfNotExists \
+    --label="nginx config root" \
+    --owner="$nginx_user"
+
+if [ -n "$url_path" ];then
+    rcm-dir "$nginx_config_dir" createIfNotExists \
+        --label="nginx additional config" \
+        --owner="$nginx_user"
 fi
-code nginx_config_file=$
-if [ -z "$nginx_config_dir" ];then
-    error "Argument --nginx-config-dir required."; x
+
+target="$nginx_config_root"
+if [ -n "$url_path_clean" ];then
+    target+="/${url_path_clean}"
 fi
-code nginx_config_dir=$
+chapter Memeriksa direktori simulasi.
+code path="$target"
+create=
+if [[ "$target" == "$nginx_config_root" ]];then
+    __ Direktori simulasi sama dengan nginx config root. Symbolic link tidak diperlukan.
+else
+    __ Direktori simulasi tidak sama dengan nginx config root. Symbolic link diperlukan.
+    create=1
+fi
+____
+
+if [ -n "$create" ];then
+    source="$root"
+    link-symbolic-dir "$source" "$target" "$nginx_user" absolute
+fi
+
 if [ -z "$fastcgi_pass" ];then
     error "Argument --fastcgi-pass required."; x
 fi
+
+chapter Populate variable.
+web_root=
 if [ -z "$url_path" ];then
-    if [ -z "$web_root" ];then
-        error "Argument --web-root required."; x
-    fi
+    web_root="$root"
     slave_dirname="${nginx_config_file%/*}"
     slave_filename="${nginx_config_file##*/}"
 else
     slave_dirname="$nginx_config_dir"
     slave_filename="${url_path_clean//\//.}"
 fi
+slave_filename+=.conf
 code slave_filename=$
 code slave_dirname=$
+
 rcm-dir "$slave_dirname" terminateIfNotExists
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
@@ -278,9 +335,6 @@ if [[ "$url_scheme" == https ]];then
         error "Argument --tls-certificate-key required."; x
     fi
 fi
-____
-
-chapter Populate variable.
 if [[ "$url_scheme" == https ]];then
     ssl_certificate="$tls_certificate"
     ssl_certificate_key="$tls_certificate_key"
@@ -294,7 +348,6 @@ filename="$master_filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
 code path=$
 rcm-file "$path" isExists
-
 ____
 
 create_new=
@@ -457,7 +510,7 @@ location / {
     }
 }
 EOF
-        sed -i "s|__WEB_ROOT__|${web_root}|g" "$path"
+        sed -i "s|__WEB_ROOT__|${root}|g" "$path"
         sed -i "s|__FASTCGI_PASS__|${fastcgi_pass}|g" "$path"
     else
         cat <<'EOF' > "$path"
@@ -600,10 +653,7 @@ exit 0
 # )
 # VALUE=(
 # --url
-# --nginx-config-root
-# --nginx-config-file
-# --nginx-config-dir
-# --web-root
+# --root
 # --fastcgi-pass
 # --tempfile-trigger-reload
 # --tls-certificate
