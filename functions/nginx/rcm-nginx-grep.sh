@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Required function: rcm-resolve-condition.
+require vendor/ijortengab/rcm/functions/classes/rcm-resolve-condition.sh
+
 rcm-nginx-grep(){
     validateToken() {
         # global token
