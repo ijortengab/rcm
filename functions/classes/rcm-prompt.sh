@@ -15,6 +15,7 @@ rcm-prompt() {
     local each
     local usage_string usage_array
     local command_chain
+    local command_file
 
     build-command() {
         local each
@@ -293,6 +294,19 @@ rcm-prompt() {
     fi
 
     if [ -n "$RCM_YAML" ];then
+        # Gunakan cara cepat.
+        command_file=rcm-
+        for each in "${command_chain[@]}"; do
+            command_file+="${each}-"
+        done
+        # Trim last karakter dash.
+        command_file="${command_file%*-}"
+        RCM_PROMPT_YAML+="$command_file":$'\n'
+        for each in "${RCM_ARGUMENT_PASS[@]}"; do
+            RCM_PROMPT_YAML+="${default_indent}- ${each}"$'\n'
+        done
+
+        # Cara lambat dibawah dipertahankan untuk backward compatibility.
         indent=''
         for each in "${command_chain[@]}"; do
             RCM_PROMPT_YAML+="${indent}${each}:"$'\n'
