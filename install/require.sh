@@ -21,7 +21,7 @@ code() {
     code-set() { [ "$2" == '$' ] && { code-set-self "$1"; return; }; [ "$2" == @ ] && { code-set-array "$1" "${1}[@]"; return; }; [ "$2" == + ] && { code-set-heredoc "$1" "${!1}"; return; }; code-set-plain "$1" "$2"; }
     code-set-self() { magenta "$1"; _, =; yellow \"; purple "${!1}"; yellow \"; }
     code-set-array() { magenta "$1"; _, '=( '; _.;for i in "${!2}"; do echo -n "${INDENT}${RCM_INDENT}" >&2; yellow \"; purple "$i"; yellow \"; _.; done; e ')'; }
-    code-set-heredoc() { magenta "$1"; _, '=$(cat << '"'EOF'"; _.; while read line; do purple "$line"; _.; done <<< "$2"; _, 'EOF'; _.; e ')'; }
+    code-set-heredoc() { magenta "$1"; _, '=$(cat << '"'EOF'"; _.; while IFS= read -r line; do purple "$line"; _.; done <<< "$2"; _, 'EOF'; _.; e ')'; }
     code-set-plain() { magenta "$1"; _, =; yellow \"; purple "$2"; yellow \"; }
     echo -n "$INDENT" >&2; [[ $# -eq 1 && "$1" =~ ^[0-9a-zA-Z_]+= ]] && { code-set "${1%%=*}" "${1#*=}"; } || magenta "$@" >&2; echo >&2;
 }
