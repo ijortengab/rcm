@@ -2,18 +2,19 @@
 
 # Usage Functions.
 usage() {
-    title Rapid Construct Massive
-    _ 'Version '; yellow $RCM_VERSION; _.
-    _ 'URL '; yellow git.io/rcm; _.
-    _.
 cat << EOF
+Rapid Construct Massive
+=======================
+
+URL  : git.io/rcm
 Usage: rcm [rcm's options] [?]
        rcm <extension> [extension's options] [?]
        rcm [rcm's options] <extension> [extension's options] [?]
        rcm [rcm's options] <extension> [command]... [command's options] [?]
 
 [?]: If you put question mark at last of command, it is means shortcut of rcm's
-     --interactive option and also provide ability to view the help.
+     --interactive option and also provide ability to view the help of the
+     command/subcommand.
 
 Options:
    --version
@@ -461,7 +462,10 @@ fi
 
 if [ $# -eq 0 ];then
     if [ -z "$interactive" ];then
-        usage >/dev/null | head -3
+        title Rapid Construct Massive
+        _ 'Version: '; yellow $RCM_VERSION; _.
+        _ 'URL    : '; yellow git.io/rcm; _.
+        _.
         _ Try:; _.
         _; blue rcm' '; magenta '? '; _, for getting started, or; _.
         _; blue rcm' '; magenta --help' '; _, for more information.; _.
