@@ -356,6 +356,16 @@ parse-prompt-yaml() {
     trap x SIGTERM
     spinning-dot 'Config loading' &
     pid=$!
+
+    # Gunakan cara cepat.
+    array "$command_file"
+    kill $pid
+    printf "\r\033[K" >&2
+    RCM_ARGUMENT_PASS=("${_return_array[@]}")
+    RCM_ARGUMENT_PASS+=("${RCM_PREPOPULATE_ARGUMENTS[@]}")
+    return
+
+    # Cara lambat dibawah biarlah tetap menjadi legacy.
     array "${RCM_EXTENSION_CHAIN[@]}"
     kill $pid
     printf "\r\033[K" >&2
