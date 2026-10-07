@@ -1,36 +1,46 @@
 #!/bin/bash
 
 # How to use?
-# rcm-dir "$path" isExists
-# rcm-dir "$path" mustExists
-# rcm-dir "$path" terminateIfNotExists
+# rcm-dir isExists "$path"
+# rcm-dir mustExists "$path"
+# rcm-dir terminateIfNotExists "$path"
+# rcm-dir createIfNotExists "$path"
 rcm-dir() {
-    local path="$1"
-    local method="$2"
+    [ "$1" == --help ] && {
+        e Usage: rcm-dir '<method>' '<path>'; _.;
+        e Method available: isExists, mustExists, terminateIfNotExists, createIfNotExists.; _.;
+        e Global variable used: \$found, \$notfound.; _.;
+        return;
+    }
+    local method="$1"
+    local path="$2"
+    [ -z "$method" ] && { error Argument '<method>' is required.; x; }
+    [ -z "$path" ] && { error Argument '<path>' is required.; x; }
     shift 2
+    local dirname="${path##*/}"
 
     case "$method" in
         isExists)
             found=
             notfound=
             if [ -d "$path" ];then
-                __ Direktori '`'"${path##*/}"'`' ditemukan.
+                __ Direktori '`'"$dirname"'`' ditemukan.
                 found=1
             else
-                __ Direktori '`'"${path##*/}"'`' tidak ditemukan.
+                __ Direktori '`'"$dirname"'`' tidak ditemukan.
                 notfound=1
             fi
             ;;
         mustExists)
             if [ -d "$path" ];then
-                __; green Direktori '`'"${path##*/}"'`' ditemukan.; _.
+                __; green Direktori '`'"$dirname"'`' ditemukan.; _.
             else
-                __; red Direktori '`'"${path##*/}"'`' tidak ditemukan.; x
+                __; red Direktori '`'"$dirname"'`' tidak ditemukan.; x
             fi
             ;;
         terminateIfNotExists)
             if [ ! -d "$path" ];then
-                __; red Direktori '`'"${path##*/}"'`' tidak ditemukan.; x
+                __; red Direktori '`'"$dirname"'`' tidak ditemukan.; x
             fi
             ;;
         createIfNotExists)
@@ -48,10 +58,10 @@ rcm-dir() {
             chapter Create "$label" if not exists.
             code path=$
             if [ -d "$path" ];then
-                __ Direktori '`'"${path##*/}"'`' ditemukan.
+                __ Direktori '`'"$dirname"'`' ditemukan.
             else
-                __ Direktori '`'"${path##*/}"'`' tidak ditemukan.
-                __ Membuat "$label" '`'$nginx_config_dir'`'.
+                __ Direktori '`'"$dirname"'`' tidak ditemukan.
+                __ Membuat "$label".
                 code mkdir -p '"'$path'"'
                 mkdir -p "$path"
                 if [ -n "$owner" ];then
@@ -59,9 +69,9 @@ rcm-dir() {
                     chown -R $owner:$owner "$path"
                 fi
                 if [ -d "$path" ];then
-                    __; green Direktori '`'"${path##*/}"'`' ditemukan.; _.
+                    __; green Direktori '`'"$dirname"'`' ditemukan.; _.
                 else
-                    __; red Direktori '`'"${path##*/}"'`' tidak ditemukan.; x
+                    __; red Direktori '`'"$dirname"'`' tidak ditemukan.; x
                 fi
             fi
             ____
@@ -82,9 +92,9 @@ rcm-dir() {
     # global modified:
     # function used: __, success, error, x
     # if [ -d "$path" ];then
-        # __; green Direktori '`'"${path##*/}"'`' ditemukan.; _.
+        # __; green Direktori '`'"$dirname"'`' ditemukan.; _.
     # else
-        # __; red Direktori '`'"${path##*/}"'`' tidak ditemukan.; x
+        # __; red Direktori '`'"$dirname"'`' tidak ditemukan.; x
     # fi
 # }
 # isDirExists() {
@@ -95,10 +105,10 @@ rcm-dir() {
     # found=
     # notfound=
     # if [ -d "$path" ];then
-        # __ Direktori '`'"${path##*/}"'`' ditemukan.
+        # __ Direktori '`'"$dirname"'`' ditemukan.
         # found=1
     # else
-        # __ Direktori '`'"${path##*/}"'`' tidak ditemukan.
+        # __ Direktori '`'"$dirname"'`' tidak ditemukan.
         # notfound=1
     # fi
 # }

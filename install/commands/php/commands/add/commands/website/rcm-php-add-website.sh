@@ -294,7 +294,7 @@ code root_parent=$
 ____
 
 chapter Mengecek direktori root parent '`'$root_parent'`'.
-rcm-dir "$root_parent" isExists
+rcm-dir isExists "$root_parent"
 ____
 
 if [ -n "$notfound" ];then
@@ -306,12 +306,12 @@ if [ -n "$notfound" ];then
         mkdir -p "$root_parent"
         chown $php_fpm_user:$php_fpm_user "$root_parent"
     }
-    rcm-dir "$root_parent" mustExists
+    rcm-dir mustExists "$root_parent"
     ____
 fi
 
 chapter Mengecek direktori root '`'$root'`'.
-rcm-dir "$root" isExists
+rcm-dir isExists "$root"
 ____
 
 if [ -n "$notfound" ];then
@@ -323,7 +323,7 @@ if [ -n "$notfound" ];then
         mkdir -p "$root"
         chown $php_fpm_user:$php_fpm_user "$root"
     }
-    rcm-dir "$root" mustExists
+    rcm-dir mustExists "$root"
     ____
 fi
 

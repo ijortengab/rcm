@@ -254,12 +254,12 @@ fi
 code nginx_config_root=$
 ____
 
-rcm-dir "$nginx_config_root" createIfNotExists \
+rcm-dir createIfNotExists "$nginx_config_root" \
     --label="nginx config root" \
     --owner="$nginx_user"
 
 if [ -n "$url_path" ];then
-    rcm-dir "$nginx_config_dir" createIfNotExists \
+    rcm-dir createIfNotExists "$nginx_config_dir" \
         --label="nginx additional config" \
         --owner="$nginx_user"
 fi
@@ -302,7 +302,7 @@ slave_filename+=.conf
 code slave_filename=$
 code slave_dirname=$
 
-rcm-dir "$slave_dirname" terminateIfNotExists
+rcm-dir terminateIfNotExists "$slave_dirname"
 [ -z "$nginx_reload" ] && nginx_reload=1
 [ "$nginx_reload" == 0 ] && nginx_reload=
 master_include="${nginx_config_dir}/*"

@@ -50,8 +50,7 @@ title rcm openssl create certificate
 ____
 
 # Dependency.
-use ijortengab/rcm rcm-dir
-require command openssl
+use ijortengab/rcm rcm-dir command require openssl
 
 # Requirement, validate, and populate value.
 chapter Variable dump.
@@ -65,7 +64,7 @@ fi
 code prefix=$
 ____
 
-rcm-dir "${prefix}/${domain}" createIfNotExists
+rcm-dir createIfNotExists "${prefix}/${domain}"
 
 chapter Generate a Self-Signed Certificate
 key_filename="${domain}.key"

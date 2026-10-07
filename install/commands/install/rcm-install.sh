@@ -170,11 +170,11 @@ ____
 chapter Memeriksa direktori commands.
 target="${RCM_LIB}/commands"
 code target=$
-rcm-dir "$target" terminateIfNotExists
+rcm-dir terminateIfNotExists "$target"
 
 source="${cache_directory}/rcm/install/commands"
 code source=$
-rcm-dir "$source" isExists
+rcm-dir isExists "$source"
 if [ -n "$found" ];then
     __ Copy commands directory.
     while IFS= read -r line; do
@@ -187,11 +187,11 @@ ____
 chapter Memeriksa direktori interfaces.
 target="${RCM_LIB}/interfaces"
 code target=$
-rcm-dir "$target" terminateIfNotExists
+rcm-dir terminateIfNotExists "$target"
 
 source="${cache_directory}/rcm/install/interfaces"
 code source=$
-rcm-dir "$source" isExists
+rcm-dir isExists "$source"
 if [ -n "$found" ];then
     __ Copy interfaces directory.
     while IFS= read -r line; do

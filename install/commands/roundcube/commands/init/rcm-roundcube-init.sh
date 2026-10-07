@@ -131,7 +131,7 @@ ____
 
 target_project_container="${prefix}/${project_container}"
 chapter Mengecek direktori project container '`'$target_project_container'`'.
-rcm-dir "$target_project_container" isExists
+rcm-dir isExists "$target_project_container"
 ____
 
 if [ -n "$notfound" ];then
@@ -140,7 +140,7 @@ if [ -n "$notfound" ];then
     code chown $php_fpm_user:$php_fpm_user '"'$target_project_container'"'
     mkdir -p "$target_project_container"
     chown $php_fpm_user:$php_fpm_user "$target_project_container"
-    rcm-dir "$target_project_container" mustExists
+    rcm-dir mustExists "$target_project_container"
     ____
 fi
 
@@ -250,7 +250,7 @@ fi
 rcm-file "$path" terminateIfNotExists
 
 source="${root_source}/public_html"
-rcm-dir "$source" terminateIfNotExists
+rcm-dir terminateIfNotExists "$source"
 target="$root"
 link-symbolic-dir "$source" "$target" "$php_fpm_user"
 
