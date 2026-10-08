@@ -352,6 +352,16 @@ do-interactive() {
 }
 
 parse-prompt-yaml() {
+    # Gunakan cara lebih cepat lagi.
+    # Membutuhkan export RCM_EVAL=1
+    if [ -n "$RCM_EVAL" ];then
+        local eval
+        eval=$(echo "$RCM_PROMPT_YAML" | grep -o -P ^"${command_file_sh}"': \K(.*)')
+        [ -n "$eval" ] && eval "$eval"
+        RCM_ARGUMENT_PASS=("${rcm_argument_pass_local[@]}" "${RCM_PREPOPULATE_ARGUMENTS[@]}")
+        return
+    fi
+
     array="$RCM_PROMPT_YAML"
     trap x SIGTERM
     spinning-dot 'Config loading' &
