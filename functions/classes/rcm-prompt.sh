@@ -16,6 +16,8 @@ rcm-prompt() {
     local usage_string usage_array
     local command_chain
     local command_file
+    local command_file_sh
+    local rcm_argument_pass_local
 
     build-command() {
         local each
@@ -305,6 +307,13 @@ rcm-prompt() {
         for each in "${RCM_ARGUMENT_PASS[@]}"; do
             RCM_PROMPT_YAML+="${default_indent}- ${each}"$'\n'
         done
+
+        # Gunakan cara lebih cepat lagi.
+        command_file_sh="${command_file}.sh"
+        rcm_argument_pass_local=("${RCM_ARGUMENT_PASS[@]}")
+        RCM_PROMPT_YAML+="${command_file_sh}: "
+        RCM_PROMPT_YAML+="$(declare -p rcm_argument_pass_local)"
+        RCM_PROMPT_YAML+=$'\n'
 
         # Cara lambat dibawah dipertahankan untuk backward compatibility.
         indent=''
