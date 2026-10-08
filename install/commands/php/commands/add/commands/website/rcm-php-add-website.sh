@@ -271,6 +271,7 @@ if [ -z "$php_fpm_section" ];then
     fi
 fi
 code php_fpm_section=$
+
 socket_filename=$( rcm php get-info pool "$php_version" "$php_fpm_section" listen 2>/dev/null)
 if [ -z "$socket_filename" ];then
     error "Variable \$socket_filename failed to populate."; x
@@ -335,6 +336,31 @@ url: $url
 root: $root
 EOF
 )
+if [ -n "$public_domain" ];then
+
+    RCM_FQDN="$url_host"
+
+    include rcm plugin run-method acme-client $acme_client init
+
+    include rcm plugin run-method acme-client $acme_client obtain
+
+    include rcm plugin run-method acme-client $acme_client define
+
+    [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
+    [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
+
+    code RCM_TLS_CERTIFICATE=$
+    code RCM_TLS_CERTIFICATE_KEY=$
+
+    RCM_WEB_SERVER_VHOST_METADATA_YAML+=$'\n'
+    RCM_WEB_SERVER_VHOST_METADATA_YAML+=$(cat - <<EOF
+tls_certificate: $RCM_TLS_CERTIFICATE
+tls_certificate_key: $RCM_TLS_CERTIFICATE_KEY
+EOF
+    )
+fi
+
+code RCM_WEB_SERVER_VHOST_METADATA_YAML=+
 
 include rcm plugin run-method web-server $web_server add-vhost
 
