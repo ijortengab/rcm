@@ -81,7 +81,7 @@ databaseCredentialRoundcube() {
     # global MARIADB_PREFIX_MASTER MARIADB_USERS_CONTAINER_MASTER db_user
     local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
     local DB_USER DB_USER_PASSWORD
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     # Populate.
     . "$path"
     db_user=$DB_USER
@@ -205,7 +205,7 @@ fi
 
 chapter Mengecek file '`'composer.json'`' untuk project '`'roundcube/roundcubemail'`'
 path="${root_source}/composer.json"
-rcm-file "$path" isExists "$path"
+rcm-file isExists "$path" "$path"
 ____
 
 if [ -n "$notfound" ];then
@@ -215,26 +215,26 @@ if [ -n "$notfound" ];then
     cd $root_source
     __ Mendownload RoundCube
     path="${root_source}/roundcubemail-${roundcube_version}-complete.tar.gz"
-    rcm-file "$path" isExists "$path"
+    rcm-file isExists "$path" "$path"
     if [ -n "$notfound" ];then
         code sudo -u $php_fpm_user wget "https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version}/roundcubemail-${roundcube_version}-complete.tar.gz"
         sudo -u $php_fpm_user wget "https://github.com/roundcube/roundcubemail/releases/download/${roundcube_version}/roundcubemail-${roundcube_version}-complete.tar.gz"
-        rcm-file "$path" mustExists
+        rcm-file mustExists "$path"
     fi
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     __ Extract File.
     path_tar_gz="$path"
     path="${root_source}/roundcubemail-${roundcube_version}/composer.json"
-    rcm-file "$path" isExists "$path"
+    rcm-file isExists "$path" "$path"
     if [ -n "$notfound" ];then
         code sudo -u $php_fpm_user tar xfz "$path_tar_gz"
         sudo -u $php_fpm_user tar xfz "$path_tar_gz"
-        rcm-file "$path" mustExists
+        rcm-file mustExists "$path"
         __ Memindahkan hasil download ke parent.
         code sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
         sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
     fi
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     __ Memindahkan codebase.
     code mv "${root_source}/roundcubemail-${roundcube_version}/"'*' -t '"'$root_source'"'
     code mv "${root_source}/roundcubemail-${roundcube_version}/"'.[!.]*' -t '"'$root_source'"'
@@ -243,11 +243,11 @@ if [ -n "$notfound" ];then
     mv "${root_source}/roundcubemail-${roundcube_version}/".[!.]* -t "$root_source"
     rmdir "${root_source}/roundcubemail-${roundcube_version}"
     path="${root_source}/composer.json"
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
     cd - >/dev/null
     ____
 fi
-rcm-file "$path" terminateIfNotExists
+rcm-file terminateIfNotExists "$path"
 
 source="${root_source}/public_html"
 rcm-dir terminateIfNotExists "$source"
@@ -256,13 +256,13 @@ link-symbolic-dir "$source" "$target" "$php_fpm_user"
 
 chapter Mengecek file konfigurasi RoundCube.
 path="${root_source}/config/config.inc.php"
-rcm-file "$path" isExists "$path"
+rcm-file isExists "$path" "$path"
 if [ -n "$notfound" ];then
     source="${root_source}/config/config.inc.php.sample"
-    rcm-file "$source" mustExists
+    rcm-file mustExists "$source"
     code sudo -u $php_fpm_user cp "$source" "$path"
     sudo -u $php_fpm_user cp "$source" "$path"
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
     __ Mengosongkan variable '`''$'"config['des_key']"'`'
     if grep -q -E "\\\$config\\['des_key'\]\s+=\s+'.*';" < "$path";then
         __ Variable '`''$'"config['des_key']"'`' ditemukan.
@@ -276,7 +276,7 @@ if [ -n "$notfound" ];then
         __; red Variable '`''$'"config['des_key']"'`' tidak ditemukan.; x
     fi
 fi
-rcm-file "$path" terminateIfNotExists
+rcm-file terminateIfNotExists "$path"
 ____
 
 INDENT+="    " \
@@ -311,7 +311,7 @@ ____
 
 if [ -n "$notfound" ];then
     chapter RoundCube Import SQL
-    rcm-file "${root_source}/SQL/mysql.initial.sql" terminateIfNotExists
+    rcm-file terminateIfNotExists "${root_source}/SQL/mysql.initial.sql"
     mysql \
         --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
         $db_name < "${root_source}/SQL/mysql.initial.sql"

@@ -70,17 +70,17 @@ fi
 
 filename_string="/var/log/${BASENAME}.log"
 chapter Mengecek file log '`'$filename_string'`'
-rcm-file "$filename_string" isExists
+rcm-file isExists "$filename_string"
 if [ -n "$notfound" ];then
     __ Membuat file.
     touch "$filename_string"
-    rcm-file "$filename_string" mustExists
+    rcm-file mustExists "$filename_string"
 fi
 ____
 
 filename_string="/usr/local/${BASENAME}.sh"
 chapter Mengecek shell script '`'$filename_string'`'
-rcm-file "$filename_string" isExists
+rcm-file isExists "$filename_string"
 if [ -n "$notfound" ];then
     __ Membuat file.
     mkdir -p "${filename_string%/*}"
@@ -120,7 +120,7 @@ hours=$((duration / 3600)); minutes=$(( (duration % 3600) / 60 )); seconds=$(( (
 runtime=`printf "%02d:%02d:%02d" $hours $minutes $seconds`
 echo -n Duration: $runtime; if [ $duration -gt 60 ];then echo -n " (${duration} seconds)"; fi; echo -n '.'; echo
 EOF
-    rcm-file "$filename_string" mustExists
+    rcm-file mustExists "$filename_string"
 fi
 ____
 

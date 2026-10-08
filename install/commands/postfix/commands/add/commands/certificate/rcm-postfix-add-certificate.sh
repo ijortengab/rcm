@@ -138,8 +138,8 @@ if [ -z "$ssl_key" ];then
     error "Argument --ssl-key required."; x
 fi
 code ssl_key=$
-rcm-file "$ssl_cert" terminateIfNotExists
-rcm-file "$ssl_key" terminateIfNotExists
+rcm-file terminateIfNotExists "$ssl_cert"
+rcm-file terminateIfNotExists "$ssl_key"
 # Exit code sama-sama bernilai 0 pada unknown parameter, sehingga perlu kita gunakan output.
 tempfile_error=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
 tempfile_output=$(mktemp -p /dev/shm -t rcm-postfix-add-certificate.XXXXXX)
@@ -168,8 +168,8 @@ done
 
 key=smtpd_tls_chain_files
 chapter Memastikan key '`'$key'`' enabled.
-rcm-file "${POSTFIX_CONFIG_DIR}/smtpd.key" terminateIfNotExists
-rcm-file "${POSTFIX_CONFIG_DIR}/smtpd.cert" terminateIfNotExists
+rcm-file terminateIfNotExists "${POSTFIX_CONFIG_DIR}/smtpd.key"
+rcm-file terminateIfNotExists "${POSTFIX_CONFIG_DIR}/smtpd.cert"
 
 postconf -n $key 2> $tempfile_error > $tempfile_output
 error="$(<"$tempfile_error")"
@@ -251,7 +251,7 @@ path="${additional_config_file}"
 filename="${path##*/}"
 chapter Mengecek file '`'$filename'`'.
 code path=$
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 # Saat ini tidak support untuk format multiline. Contoh:

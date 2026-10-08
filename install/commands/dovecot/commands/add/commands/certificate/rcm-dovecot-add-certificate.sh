@@ -97,9 +97,9 @@ if [ -z "$ssl_key" ];then
     error "Argument --ssl-key required."; x
 fi
 code ssl_key=$
-rcm-file "$ssl_cert" terminateIfNotExists
-rcm-file "$ssl_key" terminateIfNotExists
-rcm-file "$DOVECOT_CONFIG_FILE_MAIN" terminateIfNotExists
+rcm-file terminateIfNotExists "$ssl_cert"
+rcm-file terminateIfNotExists "$ssl_key"
+rcm-file terminateIfNotExists "$DOVECOT_CONFIG_FILE_MAIN"
 ____
 
 target="$DOVECOT_CONFIG_FILE_MAIN"
@@ -124,7 +124,7 @@ path="$additional_config_file"
 filename="${path##*/}"
 chapter Mengecek file '`'$filename'`'.
 code path=$
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 restart=

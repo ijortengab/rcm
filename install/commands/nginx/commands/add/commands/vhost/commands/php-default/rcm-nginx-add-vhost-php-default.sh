@@ -236,7 +236,7 @@ ____
 path="/etc/nginx/sites-available/$filename"
 chapter Mengecek nginx config file: '`'$filename'`'.
 code path=$
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 chapter Populate variable.
@@ -260,8 +260,8 @@ fi
 
 if [[ -n "$create_new" && "$url_scheme" == https ]];then
     chapter Memeriksa certificate SSL.
-    rcm-file "$ssl_certificate" terminateIfNotExists
-    rcm-file "$ssl_certificate_key" terminateIfNotExists
+    rcm-file terminateIfNotExists "$ssl_certificate"
+    rcm-file terminateIfNotExists "$ssl_certificate_key"
     ____
 fi
 
@@ -306,7 +306,7 @@ server {
     # error_page 497 301 =307 https://$host:$server_port$request_uri;
 }
 EOF
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
 
     sed -i "s|__ROOT__|${root}|g" "$path"
     sed -i "s|__URL_HOST__|${url_host}|g" "$path"
@@ -347,7 +347,7 @@ link-symbolic "$source" "$target"
 path="/etc/nginx/sites-available/${filename}-redirect"
 filename_redirect="${filename}-redirect"
 chapter Mengecek nginx config file: '`'$filename_redirect'`'.
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 if [[ "$url_scheme" == https && "$url_port" == 443 ]];then
@@ -381,7 +381,7 @@ server {
     return 404;
 }
 EOF
-        rcm-file "$path" mustExists
+        rcm-file mustExists "$path"
         sed -i "s|__URL_HOST__|${url_host}|g" "$path"
         ____
 

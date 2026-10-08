@@ -1,36 +1,45 @@
 #!/bin/bash
 
 # How to use?
-# rcm-file "$path" isExists
-# rcm-file "$path" mustExists
-# rcm-file "$path" terminateIfNotExists
+# rcm-file isExists "$path"
+# rcm-file mustExists "$path"
+# rcm-file terminateIfNotExists "$path"
 rcm-file() {
-    local path="$1"
-    local method="$2"
+    [ "$1" == --help ] && {
+        e Usage: rcm-file '<method>' '<path>'; _.;
+        e Method available: isExists, mustExists, terminateIfNotExists.; _.;
+        e Global variable used: \$found, \$notfound.; _.;
+        return;
+    }
+    local method="$1"
+    local path="$2"
+    [ -z "$method" ] && { error Argument '<method>' is required.; x; }
+    [ -z "$path" ] && { error Argument '<path>' is required.; x; }
     shift 2
+    local filename="${path##*/}"
 
     case "$method" in
         isExists)
             found=
             notfound=
             if [ -f "$path" ];then
-                __ File '`'"${path##*/}"'`' ditemukan.
+                __ File '`'"$filename"'`' ditemukan.
                 found=1
             else
-                __ File '`'"${path##*/}"'`' tidak ditemukan.
+                __ File '`'"$filename"'`' tidak ditemukan.
                 notfound=1
             fi
             ;;
         mustExists)
             if [ -f "$path" ];then
-                __; green File '`'"${path##*/}"'`' ditemukan.; _.
+                __; green File '`'"$filename"'`' ditemukan.; _.
             else
-                __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
+                __; red File '`'"$filename"'`' tidak ditemukan.; x
             fi
             ;;
         terminateIfNotExists)
             if [ ! -f "$path" ];then
-                __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
+                __; red File '`'"$filename"'`' tidak ditemukan.; x
             fi
             ;;
     esac
@@ -38,9 +47,9 @@ rcm-file() {
 
 # Class ini menggantikan function isFileExists() dan fileMustExists()
 # Legacy:
-# `isFileExists "$file"` digantikan dengan `rcm-file "$file" isExists`
-# `[ -f "$file" ] || fileMustExists "$file"` digantikan dengan `rcm-file "$file" terminateIfNotExists`
-# `fileMustExists "$file"` digantikan dengan `rcm-file "$file" mustExists`
+# `isFileExists "$file"` digantikan dengan `rcm-file isExists` "$file"
+# `[ -f "$file" ] || fileMustExists "$file"` digantikan dengan `rcm-file terminateIfNotExists` "$file"
+# `fileMustExists "$file"` digantikan dengan `rcm-file mustExists` "$file"
 # ``
 # fileMustExists() {
     # local path="$1"
@@ -48,9 +57,9 @@ rcm-file() {
     # global modified:
     # function used: __, success, error, x
     # if [ -f "$path" ];then
-        # __; green File '`'"${path##*/}"'`' ditemukan.; _.
+        # __; green File '`'"$filename"'`' ditemukan.; _.
     # else
-        # __; red File '`'"${path##*/}"'`' tidak ditemukan.; x
+        # __; red File '`'"$filename"'`' tidak ditemukan.; x
     # fi
 # }
 # isFileExists() {
@@ -61,10 +70,10 @@ rcm-file() {
     # found=
     # notfound=
     # if [ -f "$path" ];then
-        # __ File '`'"${path##*/}"'`' ditemukan.
+        # __ File '`'"$filename"'`' ditemukan.
         # found=1
     # else
-        # __ File '`'"${path##*/}"'`' tidak ditemukan.
+        # __ File '`'"$filename"'`' tidak ditemukan.
         # notfound=1
     # fi
 # }

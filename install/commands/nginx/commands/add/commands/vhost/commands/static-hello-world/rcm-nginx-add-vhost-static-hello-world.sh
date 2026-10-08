@@ -120,7 +120,7 @@ if [ -n "$notfound" ];then
     __ Membuat file '`'index.html'`'.
     echo Hello World > "$path"
 fi
-rcm-file "$path" mustExists
+rcm-file mustExists "$path"
 ____
 
 chapter Mengecek HTTP Response Code.

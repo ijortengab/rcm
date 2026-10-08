@@ -206,11 +206,11 @@ if [[ "$autorun" == cron ]];then
         filename_string="${prefix_directory}/${pattern}.log"
     fi
     chapter Mengecek file log '`'$filename_string'`'
-    rcm-file "$filename_string" isExists
+    rcm-file isExists "$filename_string"
     if [ -n "$notfound" ];then
         __ Membuat file.
         touch "$filename_string"
-        rcm-file "$filename_string" mustExists
+        rcm-file mustExists "$filename_string"
     fi
     ____
 
@@ -258,7 +258,7 @@ if [[ "$autorun" == systemd ]];then
     service_name="${service_name//./--}"
     filename_string="/etc/systemd/system/${service_name}.service"
     chapter Mengecek file service '`'$filename_string'`'
-    rcm-file "$filename_string" isExists
+    rcm-file isExists "$filename_string"
     if [ -n "$notfound" ];then
         __ Membuat file.
         string=$(cat << 'EOF'
@@ -274,7 +274,7 @@ EOF
         )
         string=$(sed "s|__SHELL_SCRIPT__|$shell_script|" <<< "$string")
         echo "$string" > "$filename_string"
-        rcm-file "$filename_string" mustExists
+        rcm-file mustExists "$filename_string"
     fi
     ____
 

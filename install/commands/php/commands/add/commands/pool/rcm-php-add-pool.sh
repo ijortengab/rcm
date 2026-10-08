@@ -276,7 +276,7 @@ EOF
     fi
     code php-pool-write create '"'"$php_version"'"' '"'"$section_name"'"' '"'"$config_file"'"' '"'"$default_config_ini"'"' '"'"$additional_config_ini"'"'
     php-pool-write create "$php_version" "$section_name" "$config_file" "$default_config_ini" "$additional_config_ini"
-    rcm-file "$config_file" mustExists
+    rcm-file mustExists "$config_file"
     found_file="$config_file"
     restart=1
     ____

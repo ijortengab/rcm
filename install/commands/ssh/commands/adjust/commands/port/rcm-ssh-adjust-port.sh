@@ -90,7 +90,7 @@ code listen_port=$
 ____
 
 chapter Memeriksa file SSH Daemon Config.
-rcm-file "$config_file" mustExists
+rcm-file mustExists "$config_file"
 ____
 
 string_added=

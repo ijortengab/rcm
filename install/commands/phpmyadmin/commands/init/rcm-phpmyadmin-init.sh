@@ -80,7 +80,7 @@ databaseCredentialPhpmyadmin() {
     # global MARIADB_PREFIX_MASTER MARIADB_USERS_CONTAINER_MASTER db_user
     local path="${MARIADB_PREFIX_MASTER}/${MARIADB_USERS_CONTAINER_MASTER}/${db_user}"
     local DB_USER DB_USER_PASSWORD
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     # Populate.
     . "$path"
     db_user=$DB_USER
@@ -204,7 +204,7 @@ fi
 
 chapter Mengecek file '`'composer.json'`' untuk project '`'phpmyadmin/phpmyadmin'`'
 path="${root_source}/composer.json"
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 if [ -n "$notfound" ];then
@@ -214,25 +214,25 @@ if [ -n "$notfound" ];then
     cd $root_source
     __ Mendownload PHPMyAdmin
     path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
-    rcm-file "$path" isExists
+    rcm-file isExists "$path"
     if [ -n "$notfound" ];then
         sudo -u $php_fpm_user wget "https://files.phpmyadmin.net/phpMyAdmin/${phpmyadmin_version}/phpMyAdmin-${phpmyadmin_version}-all-languages.tar.gz"
-        rcm-file "$path" mustExists
+        rcm-file mustExists "$path"
     fi
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     __ Extract File.
     path_tar_gz="$path"
     path="${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/composer.json"
-    rcm-file "$path" isExists
+    rcm-file isExists "$path"
     if [ -n "$notfound" ];then
         code sudo -u $php_fpm_user tar xfz "$path_tar_gz"
         sudo -u $php_fpm_user tar xfz "$path_tar_gz"
-        rcm-file "$path" mustExists
+        rcm-file mustExists "$path"
         __ Memindahkan hasil download ke parent.
         code sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
         sudo -u $php_fpm_user mv "$path_tar_gz" -t ..
     fi
-    rcm-file "$path" terminateIfNotExists
+    rcm-file terminateIfNotExists "$path"
     __ Memindahkan codebase.
     code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'*' -t '"'$root_source'"'
     code mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/"'.[!.]*' -t '"'$root_source'"'
@@ -241,11 +241,11 @@ if [ -n "$notfound" ];then
     mv "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages/".[!.]* -t "$root_source"
     rmdir "${root_source}/phpMyAdmin-${phpmyadmin_version}-all-languages"
     path="${root_source}/composer.json"
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
     cd - >/dev/null
     ____
 fi
-rcm-file "$path" terminateIfNotExists
+rcm-file terminateIfNotExists "$path"
 
 source="$root_source"
 target="$root"
@@ -253,15 +253,15 @@ link-symbolic_dir "$source" "$target" "$php_fpm_user"
 
 chapter Mengecek file konfigurasi PHPMyAdmin.
 path="${root_source}/config.inc.php"
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 if [ -n "$notfound" ];then
     source="${root_source}/config.sample.inc.php"
-    rcm-file "$source" mustExists
+    rcm-file mustExists "$source"
     code sudo -u $php_fpm_user cp "$source" "$path"
     sudo -u $php_fpm_user cp "$source" "$path"
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
 fi
-rcm-file "$path" terminateIfNotExists
+rcm-file terminateIfNotExists "$path"
 ____
 
 INDENT+="    " \
@@ -296,7 +296,7 @@ ____
 
 if [ -n "$notfound" ];then
     chapter PHPMyAdmin Import SQL
-    rcm-file "${root_source}/sql/create_tables.sql" terminateIfNotExists
+    rcm-file terminateIfNotExists "${root_source}/sql/create_tables.sql"
     mysql \
         --defaults-extra-file=<(printf "[client]\nuser = %s\npassword = %s" "${db_user}" "${db_user_password}") \
         $db_name < "${root_source}/sql/create_tables.sql"

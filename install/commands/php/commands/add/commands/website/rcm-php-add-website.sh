@@ -385,7 +385,7 @@ fi
 chapter Mempersiapkan file"$is_temporary_string" '`'index.php'`'.
 code path=$
 filename=$(basename "$path")
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 if [ -n "$found" ];then
     read existing_contents < "$path"
     if [[ ! "$existing_contents" == "$contents" ]];then
@@ -401,7 +401,7 @@ if [ -n "$notfound" ];then
     __ Membuat file"$is_temporary_string" '`'index.php'`'.
     echo "$contents" > "$path"
     chown $php_fpm_user:$php_fpm_user "$path"
-    rcm-file "$path" mustExists
+    rcm-file mustExists "$path"
 fi
 ____
 

@@ -108,17 +108,17 @@ fi
 
 filename_string="/var/log/${basename_string}.log"
 chapter Mengecek file log '`'$filename_string'`'
-rcm-file "$filename_string" isExists
+rcm-file isExists "$filename_string"
 if [ -n "$notfound" ];then
     __ Membuat file.
     touch "$filename_string"
-    rcm-file "$filename_string" mustExists
+    rcm-file mustExists "$filename_string"
 fi
 ____
 
 filename_string="/usr/local/${basename_string}.sh"
 chapter Mengecek shell script '`'$filename_string'`'
-rcm-file "$filename_string" isExists
+rcm-file isExists "$filename_string"
 if [ -n "$notfound" ];then
     __ Membuat file.
     mkdir -p "${filename_string%/*}"
@@ -180,7 +180,7 @@ EOF
     )
     string=$(sed -e "s,__HOST_PORT__,$host_port," -e "s,__GUEST_PORT__,$guest_port," <<< "$string" )
     echo "$string" > "$filename_string"
-    rcm-file "$filename_string" mustExists
+    rcm-file mustExists "$filename_string"
 fi
 ____
 

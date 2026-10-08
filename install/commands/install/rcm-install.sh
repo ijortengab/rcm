@@ -221,7 +221,7 @@ ____
 chapter Memeriksa file '`'require.txt'`'.
 path="${cache_directory}/rcm/install/require.txt"
 code path=$
-rcm-file "$path" isExists
+rcm-file isExists "$path"
 ____
 
 if [ -n "$found" ];then

@@ -58,7 +58,7 @@ makeSureRunning() {
     local service="$1"
     chapter Memeriksa apakah daemon "$service" is running
     __ Memeriksa System V script '`'/etc/init.d/"$service"'`'
-    rcm-file "/etc/init.d/${service}" isExists
+    rcm-file isExists "/etc/init.d/${service}"
     if [ -n "$notfound" ];then
         __; red File '`'/etc/init.d/"$service"'`' tidak ditemukan.; x
     fi
