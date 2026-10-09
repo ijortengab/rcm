@@ -20,14 +20,14 @@ link-symbolic-dir() {
     [[ $(type -t backup-file) == function ]] || { error Function backup-file not found.; x; }
     [[ $(type -t backup-dir) == function ]] || { error Function backup-dir not found.; x; }
     chapter Membuat symbolic link directory.
-    __ source: '`'$source'`'
-    __ target: '`'$target'`'
+    code source=$
+    code target=$
     if [ -d "$target" ];then
         if [ -h "$target" ];then
-            __ Path target saat ini sudah merupakan directory symbolic link: '`'$target'`'
+            __ Path \$target saat ini sudah merupakan directory symbolic link.
             local _readlink=$(readlink "$target")
-            __; magenta readlink "$target"; _.
-            _ $_readlink; _.
+            __; magenta 'result=$(readlink $target)'; _.
+            code result="$_readlink"
             if [[ "$_readlink" =~ ^[^/\.] ]];then
                 local target_parent="${target%/*}"
                 local _dereference="${target_parent}/${_readlink}"
@@ -38,7 +38,7 @@ link-symbolic-dir() {
             else
                 _dereference="$_readlink"
             fi
-            __; _, Mengecek apakah link merujuk ke '`'$source'`':' '
+            __; _, Mengecek apakah \$target merujuk ke \$source:' '
             if [[ "$source" == "$_dereference" ]];then
                 _, merujuk.; _.
             else
@@ -60,7 +60,7 @@ link-symbolic-dir() {
         create=1
     fi
     if [ -n "$create" ];then
-        __ Membuat symbolic link: '`'$target'`'.
+        __ Membuat symbolic link.
         local target_parent="${target%/*}"
         if [ -n "$sudo" ];then
             code sudo -u '"'$sudo'"' mkdir -p '"'$target_parent'"'
@@ -73,10 +73,10 @@ link-symbolic-dir() {
             source=$(realpath -s --relative-to="$target_parent" "$source")
         fi
         if [ -n "$sudo" ];then
-            code sudo -u '"'$sudo'"' ln -s '"'$source'"' '"'$target'"'
+            code sudo -u '"$sudo"' ln -s '"$source"' '"$target"'
             sudo -u "$sudo" ln -s "$source" "$target"
         else
-            code ln -s '"'$source'"' '"'$target'"'
+            code ln -s '"$source"' '"$target"'
             ln -s "$source" "$target"
         fi
         if [ $? -eq 0 ];then
