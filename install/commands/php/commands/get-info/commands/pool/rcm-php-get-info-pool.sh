@@ -113,8 +113,9 @@ if [ "$EUID" -ne 0 ];then
     ; [ ! $? -eq 0 ] && x
 else
     # Dependency.
-    require command php-fpm$php_version
-    php-fpm$php_version -tt 2>&1 | sed -E 's/.*NOTICE:[[:blank:]]+//' | sed '$d' | php-pool get-info $pool_name $key \
+    php_fpm_command="php-fpm${php_version}"
+    require command $php_fpm_command
+    $php_fpm_command -tt 2>&1 | sed -E 's/.*NOTICE:[[:blank:]]+//' | sed '$d' | php-pool get-info $pool_name $key \
     ; [ ! $? -eq 0 ] && x
 fi
 
