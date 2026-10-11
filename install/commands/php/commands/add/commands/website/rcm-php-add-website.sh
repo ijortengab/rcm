@@ -28,7 +28,7 @@ Options:
         Values available from command: rcm(plugin list web-server).
    --php-version=PHP_VERSION
         Set the version of PHP FPM.
-        Values available from command: rcm(php list available --fpm).
+        Values available from command: rcm(php list available), or other.
    --php-fpm-user=[USER]
         Set the Unix user that used by PHP FPM.
         Default value is the user that used by web server (the common name is www-data).
@@ -223,6 +223,13 @@ run rcm php init \
 run rcm php switch \
     --php-version="$php_version" \
     ; [ ! $? -eq 0 ] && x
+
+php_fpm_command="php-fpm${php_version}"
+require command $php_fpm_command
+if ! pgrep -x php-fpm"$php_version" > /dev/null; then
+    $php_fpm_command
+    sleep 1
+fi
 
 chapter Populate variables.
 if [ -z "$php_fpm_user" ];then
