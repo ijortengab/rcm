@@ -13,6 +13,8 @@ Usage: rcm php list available
 Options:
    --installed
         Filter to list installed only.
+   --cached
+        Filter to list cached in repository only.
    --which=[VALUE]
         Conditional: Bypass if --installed is not added.
         Select which package that available. If omit, common is used.
@@ -33,6 +35,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --help) help=1; shift ;;
         --version) version=1; shift ;;
+        --cached) cached=1; shift ;;
         --cli) cli=1; shift ;;
         --fpm) fpm=1; shift ;;
         --installed) installed=1; shift ;;
@@ -62,6 +65,7 @@ require command apt-cache
 # Require, validate, and populate value.
 chapter Variable dump.
 code installed=$
+code cached=$
 binary=
 [ -n "$fpm" ] && { installed=1; binary+=1; which=fpm; }
 [ -n "$cli" ] && { installed=1; binary+=1; which=cli; }
@@ -75,18 +79,33 @@ if [ -n "$installed" ];then
 fi
 code installed=$
 code which=$
+if [ -n "$installed" ];then
+    mode=installed
+elif [ -n "$cached" ];then
+    mode=cached
+else
+    mode=all
+fi
+code mode=$
 ____
 
-if [ -n "$installed" ];then
-    glob="php*${which}"
-    regex="php(.+)-${which}"
-    dpkg-query -W -f='${Status}${binary:Package}\n' "$glob" | \
-        grep '^install ok installed' | \
-        sed 's,^install ok installed,,' | \
-        sed -nE 's,'"$regex"',\1,p'
-else
-    apt-cache search '^php[0-9.]+$' | sed -E 's/^php([0-9]+\.[0-9]+).*/\1/' | sort
-fi
+case "$mode" in
+    installed)
+        glob="php*${which}"
+        regex="php(.+)-${which}"
+        dpkg-query -W -f='${Status}${binary:Package}\n' "$glob" | \
+            grep '^install ok installed' | \
+            sed 's,^install ok installed,,' | \
+            sed -nE 's,'"$regex"',\1,p'
+        ;;
+    cached)
+        apt-cache search '^php[0-9.]+$' | sed -E 's/^php([0-9]+\.[0-9]+).*/\1/' | sort
+        ;;
+    *)
+        printf '5.6\n'
+        printf '7.0\n7.1\n7.2\n7.3\n7.4\n'
+        printf '8.0\n8.1\n8.2\n8.3\n8.4\n8.5\n'
+esac
 
 exit 0
 
@@ -104,6 +123,7 @@ exit 0
 # --fpm
 # --cli
 # --installed
+# --cached
 # )
 # VALUE=(
 # --which
