@@ -164,6 +164,7 @@ if [ -z "$ID" ];then
 fi
 ____
 
+apt-install curl lsb-release
 if [ -z "$php_version" ];then
     apt-install php $php_extension
 else
@@ -174,18 +175,24 @@ else
                 11)
                     case "$php_version" in
                         7.4) eligible=1 ;;
+                        8.0) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.1) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.2) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.3) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.4) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.5) eligible=1; addRepositoryPpaOndrejPhp ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
                 12)
                     case "$php_version" in
                         7.4) eligible=1 addRepositoryPpaOndrejPhp ;;
+                        8.0) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.1) eligible=1; addRepositoryPpaOndrejPhp ;;
                         8.2) eligible=1 ;;
                         8.3) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.4) eligible=1; addRepositoryPpaOndrejPhp ;;
+                        8.5) eligible=1; addRepositoryPpaOndrejPhp ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
@@ -198,15 +205,36 @@ else
                 22.04)
                     case "$php_version" in
                         7.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.0) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
                         8.1) eligible=1 ;;
                         8.2) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
                         8.3) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.5) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
                 24.04)
                     case "$php_version" in
+                        7.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.0) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.1) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.2) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
                         8.3) eligible=1 ;;
+                        8.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.5) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        *) error PHP Version "$php_version" not supported; x;
+                    esac
+                    ;;
+                26.04)
+                    case "$php_version" in
+                        7.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.0) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.1) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.2) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.3) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.4) eligible=1; addRepositoryPpaOndrejPhpUbuntu ;;
+                        8.5) eligible=1 ;;
                         *) error PHP Version "$php_version" not supported; x;
                     esac
                     ;;
