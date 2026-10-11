@@ -298,7 +298,6 @@ else
     slave_dirname="$nginx_config_dir"
     slave_filename="${url_path_clean//\//.}"
 fi
-slave_filename+=.conf
 code slave_filename=$
 code slave_dirname=$
 
