@@ -55,6 +55,9 @@ chapter Variable dump.
 ____
 
 chapter Reload nginx configuration.
+if ! pgrep -x nginx > /dev/null; then
+    nginx
+fi
 __ Cleaning broken symbolic link.
 code find /etc/nginx/sites-enabled -xtype l -print -delete
 find /etc/nginx/sites-enabled -xtype l -print
