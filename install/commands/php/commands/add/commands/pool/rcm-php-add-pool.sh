@@ -133,27 +133,34 @@ code config_line=@
 ____
 
 chapter Check PHP-FPM
+__ Mencari config di System D.
 code systemctl list-unit-files "${php_version_fpm}.service"
+fpm_config=
 if systemctl list-unit-files "${php_version_fpm}.service" &>/dev/null; then
     __ "PHP-FPM $php_version service exists in systemd."
-else
-    error "PHP-FPM $php_version service does NOT exist."; x
+    code systemctl is-active "$php_version_fpm"
+    if systemctl is-active --quiet "$php_version_fpm"; then
+        __ "PHP-FPM $php_version is running with SystemD."
+        exec_start=`systemctl cat "${php_version_fpm}.service" | sed -n '/\[Service]/,/^\s*$/p' | php-pool get-info Service ExecStart`
+        fpm_config=`echo "$exec_start" | grep -Po -- '--fpm-config \K.*'`
+    fi
 fi
-code systemctl is-active "$php_version_fpm"
-run=
-if systemctl is-active --quiet "$php_version_fpm"; then
-    __ "PHP-FPM $php_version is running."
-    run=1
-else
-    __ "PHP-FPM $php_version is NOT running!"
+if [ -z "$fpm_config" ];then
+    __ Mencari config di System V init.
+    path="/etc/init.d/${php_version_fpm}"
+    rcm-file isExists "$path"
+    if [ -n "$found" ];then
+        fpm_config=$(sed -n 's/^CONFFILE=//p' "$path")
+    fi
 fi
+code fpm_config=$
 ____
 
-chapter Membaca PHP-FPM Unit Service
-code systemctl cat "${php_version_fpm}.service"
-exec_start=`systemctl cat "${php_version_fpm}.service" | sed -n '/\[Service]/,/^\s*$/p' | php-pool get-info Service ExecStart`
-code exec_start=$
-fpm_config=`echo "$exec_start" | grep -Po -- '--fpm-config \K.*'`
+if [ -z "$fpm_config" ];then
+    error "Variable \$fpm_config failed to populate."; x
+fi
+
+chapter Membaca PHP-FPM Config
 code fpm_config=$
 include=`cat "${fpm_config}" | php-pool get-info 'global' include`
 code include=$
