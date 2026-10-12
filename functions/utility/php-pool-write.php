@@ -77,10 +77,13 @@ function array_diff_assoc_recursive(array $array1, array $array2) {
 }
 
 $mode = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1]: null;
+$mode !== '' or $mode = null;
 
 $php_version = isset($_SERVER['argv'][2]) ? $_SERVER['argv'][2]: null;
+$php_version !== '' or $php_version = null;
 
 $section_name = isset($_SERVER['argv'][3]) ? $_SERVER['argv'][3]: null;
+$section_name !== '' or $section_name = null;
 
 if (!isset($mode)) {
     _die('Argument <mode> is required.');
@@ -100,8 +103,10 @@ switch ($mode) {
 
         # Populate variable $is_different.
         $file = isset($_SERVER['argv'][4]) ? $_SERVER['argv'][4]: null;
+        $file !== '' or $file = null;
         $config = parse_ini_file($file, true);
         $additional_config_ini = isset($_SERVER['argv'][5]) ? $_SERVER['argv'][5]: null;
+        $additional_config_ini !== '' or $additional_config_ini = null;
         if (!isset($additional_config_ini)) {
             _die('Argument <additional_config_ini> is required.');
         }
@@ -116,14 +121,17 @@ switch ($mode) {
 
     case 'create':
         $config_file = isset($_SERVER['argv'][4]) ? $_SERVER['argv'][4]: null;
+        $config_file !== '' or $config_file = null;
         if (!isset($config_file)) {
             _die('Argument <config_file> is required.');
         }
         $default_config_ini = isset($_SERVER['argv'][5]) ? $_SERVER['argv'][5]: null;
+        $default_config_ini !== '' or $default_config_ini = null;
         if (!isset($default_config_ini)) {
             _die('Argument <default_config_ini> is required.');
         }
         $additional_config_ini = isset($_SERVER['argv'][6]) ? $_SERVER['argv'][6]: null;
+        $additional_config_ini !== '' or $additional_config_ini = null;
         $is_exists = file_exists($config_file);
         break;
 }
