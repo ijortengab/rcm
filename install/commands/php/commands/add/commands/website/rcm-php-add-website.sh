@@ -38,7 +38,6 @@ Options:
         Set the PHP-FPM section.
         Default value is the first found section from the --php-fpm-user.
         Usually is www section.
-        The section must exists before.
         Create new PHP FPM section with \`rcm php add pool\`.
         Values available from command: rcm(php list pool [--php-version] [--php-fpm-user]).
    --root=[DIR]
@@ -273,12 +272,33 @@ if [ -z "$php_fpm_section" ];then
     done <<< `rcm php list pool "$php_version" "$php_fpm_user" 2>/dev/null`
     if [ "${#list_section}" -gt 0 ];then
         php_fpm_section="${list_section[0]}"
-    else
-        error "Variable \$php_fpm_section failed to populate."; x
     fi
 fi
 code php_fpm_section=$
+____
 
+if [ -z "$php_fpm_section" ];then
+    list_user=()
+    while read line; do
+        list_user+=($line)
+    done <<< `rcm system list user regular 2>/dev/null`
+    # Jika user $php_fpm_user adalah reguler, maka
+    if array-search "$php_fpm_user" list_user[@];then
+        php_fpm_section="$php_fpm_user"
+    else
+        php_fpm_section=www
+    fi
+    run rcm php add pool \
+        --php-version="$php_version" \
+        --web-server="$web_server" \
+        --section="$php_fpm_section" \
+        --php-fpm-user="$php_fpm_user" \
+        ; [ $? -eq 0 ] || x
+
+fi
+code php_fpm_section=$
+
+chapter Populate variables.
 socket_filename=$( rcm php get-info pool "$php_version" "$php_fpm_section" listen 2>/dev/null)
 if [ -z "$socket_filename" ];then
     error "Variable \$socket_filename failed to populate."; x
