@@ -126,14 +126,18 @@ validateContentMaster() {
             return 1
         fi
         # include
-        if ! rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
+        if [ -f /etc/letsencrypt/options-ssl-nginx.conf ];then
+            if ! rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
+                __; yellow File akan dibuat ulang.; _.
+                return 1
+            fi
         fi
-        # include
-        if ! rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
+        # ssl_dhparam
+        if [ -f /etc/letsencrypt/ssl-dhparams.pem ];then
+            if ! rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
+                __; yellow File akan dibuat ulang.; _.
+                return 1
+            fi
         fi
     fi
     if [ "$url_scheme" == http ];then
@@ -148,14 +152,18 @@ validateContentMaster() {
             return 1
         fi
         # include
-        if rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
+        if [ -f /etc/letsencrypt/options-ssl-nginx.conf ];then
+            if rcm-nginx-grep include is /etc/letsencrypt/options-ssl-nginx.conf < "$path";then
+                __; yellow File akan dibuat ulang.; _.
+                return 1
+            fi
         fi
-        # include
-        if rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
-            __; yellow File akan dibuat ulang.; _.
-            return 1
+        # ssl_dhparam
+        if [ -f /etc/letsencrypt/ssl-dhparams.pem ];then
+            if rcm-nginx-grep ssl_dhparam is /etc/letsencrypt/ssl-dhparams.pem < "$path";then
+                __; yellow File akan dibuat ulang.; _.
+                return 1
+            fi
         fi
     fi
     return 0
@@ -420,8 +428,12 @@ EOF
         fi
         sed -i -E 's|^(\s*)# ssl_certificate (.*);|\1ssl_certificate \2;|g' "$path"
         sed -i -E 's|^(\s*)# ssl_certificate_key (.*);|\1ssl_certificate_key \2;|g' "$path"
-        sed -i -E 's|^(\s*)# include /etc/letsencrypt/options-ssl-nginx.conf;|\1include /etc/letsencrypt/options-ssl-nginx.conf;|g' "$path"
-        sed -i -E 's|^(\s*)# ssl_dhparam (.*);|\1ssl_dhparam \2;|g' "$path"
+        if [ -f /etc/letsencrypt/options-ssl-nginx.conf ];then
+            sed -i -E 's|^(\s*)# include /etc/letsencrypt/options-ssl-nginx.conf;|\1include /etc/letsencrypt/options-ssl-nginx.conf;|g' "$path"
+        fi
+        if [ -f /etc/letsencrypt/ssl-dhparams.pem ];then
+            sed -i -E 's|^(\s*)# ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;|\1ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;|g' "$path"
+        fi
     else
         sed -i "s|__SSL__||g" "$path"
         sed -i "s|__IPV6ONLY__||g" "$path"
