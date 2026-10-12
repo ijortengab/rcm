@@ -8,6 +8,7 @@ function _die($string='', $code = 1) {
 }
 
 $mode = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1]: null;
+$mode !== '' or $mode = null;
 
 switch ($mode) {
     case 'list':
@@ -17,6 +18,7 @@ switch ($mode) {
         }
         $array_master = parse_ini_string($stdin, true);
         $filter_user = isset($_SERVER['argv'][2]) ? $_SERVER['argv'][2]: null;
+        $filter_user !== '' or $filter_user = null;
         if (isset($filter_user)) {
             $array_master = array_filter($array_master, function ($value) use ($filter_user) {
                 return isset($value['user']) && $value['user'] == $filter_user;
@@ -32,10 +34,12 @@ switch ($mode) {
 
     case 'get-info':
         $pool_name = isset($_SERVER['argv'][2]) ? $_SERVER['argv'][2]: null;
+        $pool_name !== '' or $pool_name = null;
         if (!isset($pool_name)) {
             _die('Argument <pool_name> is required.');
         }
         $key = isset($_SERVER['argv'][3]) ? $_SERVER['argv'][3]: null;
+        $key !== '' or $key = null;
         if (!isset($key)) {
             _die('Argument <key> is required.');
         }
