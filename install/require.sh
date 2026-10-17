@@ -117,6 +117,7 @@ run() {
     INDENT+="$RCM_INDENT" $command "$@"
     return $?
 }
+
 use () {
     # global RCM_USE_NEXT_LIST_DIR
     # global RCM_USE_LIST_FILES
@@ -178,6 +179,7 @@ use () {
         RCM_USE_NEXT_LIST_DIR+=("${prefix}")
     fi
     list_dir=("${RCM_USE_NEXT_LIST_DIR[@]}")
+
     # Reset.
     RCM_USE_NEXT_LIST_DIR=()
     for each in "${list_dir[@]}";do
@@ -195,4 +197,5 @@ use () {
         RCM_USE_CACHED+="${command} ${path}"$'\n'
         require "$path"
     fi
+    require command "$command"
 }
