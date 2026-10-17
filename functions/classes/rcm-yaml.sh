@@ -126,11 +126,10 @@ rcm-yaml() {
 
         find='^- '"$key"': '"$parameter"'$'
         line_number_found=$(grep -n -- "$find" <<< "$RCM_YAML" | head -1 | cut -d: -f1)
-
         if [ -z "$line_number_found" ];then
             return 1
         fi
-        find='^- '"$key"': '
+        find='^- .'
         unset count; declare -i count; count=$line_number_found
         while true; do
             count+=1
