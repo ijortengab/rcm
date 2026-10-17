@@ -1,5 +1,7 @@
 #!/bin/bash
 
+use ijortengab/rcm array
+
 rcm-yaml() {
     # global _return_value
 
