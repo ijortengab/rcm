@@ -23,8 +23,8 @@ rcm-plugin () {
                 *) shift ;;
             esac
         done
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin set --interface=<interface> --plugin-name=<plugin_name>"; x; }
-        [ -n "$plugin_name" ] || { error "Options --plugin-name is required."; __ "Command: rcm-plugin set --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin set --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$plugin_name" ] || { error "Option --plugin-name is required."; __ "Command: rcm-plugin set --interface=<interface> --plugin-name=<plugin_name>"; x; }
 
         RCM_PLUGIN_YAML+='- interface: '"$interface"$'\n'
         RCM_PLUGIN_YAML+='  plugin_name: '"$plugin_name"$'\n'
@@ -49,8 +49,8 @@ rcm-plugin () {
             esac
         done
 
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin set --interface=<interface> --method=<method>"; x; }
-        [ -n "$method" ] || { error "Options --method is required."; __ "Command: rcm-plugin set --interface=<interface> --method=<method>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin run-method --interface=<interface> --method=<method>"; x; }
+        [ -n "$method" ] || { error "Option --method is required."; __ "Command: rcm-plugin run-method --interface=<interface> --method=<method>"; x; }
 
         # Get the plugin_name from YAML.
         RCM_YAML="$RCM_PLUGIN_YAML"
@@ -69,7 +69,6 @@ rcm-plugin () {
         local plugin_parent_name
         local plugin_name
         local interface
-        local method
 
         INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
         title rcm-plugin extends "$@"
@@ -85,16 +84,13 @@ rcm-plugin () {
                 --plugin-parent-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then plugin_parent_name="$2"; shift; fi; shift ;;
                 --plugin-name=*) plugin_name="${1#*=}"; shift ;;
                 --plugin-name) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then plugin_name="$2"; shift; fi; shift ;;
-                --method=*) method="${1#*=}"; shift ;;
-                --method) if [[ ! $2 == "" && ! $2 =~ (^--$|^-[^-]|^--[^-]) ]]; then method="$2"; shift; fi; shift ;;
                 *) shift ;;
             esac
         done
 
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$method" ] || { error "Options --method is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$plugin_name" ] || { error "Options --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
-        [ -n "$plugin_parent_name" ] || { error "Options --plugin-parent-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name> --plugin-parent-name=<plugin_parent_name>"; x; }
+        [ -n "$plugin_name" ] || { error "Option --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name> --plugin-parent-name=<plugin_parent_name>"; x; }
+        [ -n "$plugin_parent_name" ] || { error "Option --plugin-parent-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name> --plugin-parent-name=<plugin_parent_name>"; x; }
 
         RCM_PLUGIN_YAML+='- fully_qualified_plugin_name: '"${interface}/${plugin_name}"$'\n'
         RCM_PLUGIN_YAML+='  interface: '"$interface"$'\n'
@@ -123,9 +119,9 @@ rcm-plugin () {
             esac
         done
 
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$method" ] || { error "Options --method is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$plugin_name" ] || { error "Options --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin run-parent-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
+        [ -n "$method" ] || { error "Option --method is required."; __ "Command: rcm-plugin run-parent-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
+        [ -n "$plugin_name" ] || { error "Option --plugin-name is required."; __ "Command: rcm-plugin run-parent-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
 
         # Get the plugin_name from YAML.
         RCM_YAML="$RCM_PLUGIN_YAML"
@@ -145,10 +141,6 @@ rcm-plugin () {
         local interface
         local method
 
-        INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
-        title rcm-plugin run-static-method "$@"
-        ____
-
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --interface=*) interface="${1#*=}"; shift ;;
@@ -161,9 +153,13 @@ rcm-plugin () {
             esac
         done
 
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$method" ] || { error "Options --method is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$plugin_name" ] || { error "Options --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin run-static-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
+        [ -n "$method" ] || { error "Option --method is required."; __ "Command: rcm-plugin run-static-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
+        [ -n "$plugin_name" ] || { error "Option --plugin-name is required."; __ "Command: rcm-plugin run-static-method --interface=<interface> --plugin-name=<plugin_name> --method=<method>"; x; }
+
+        INDENT+="$RCM_INDENT"; export INDENT="$INDENT"
+        title rcm-plugin run-static-method --interface="$interface" --plugin-name="$plugin_name" --method="$method"
+        ____
 
         path="${RCM_LIB}/interfaces/${interface}/implements/${plugin_name}/methods/${method}/socket.sh"
         if [ ! -f "$path" ];then
@@ -194,19 +190,18 @@ rcm-plugin () {
             esac
         done
 
-        [ -n "$interface" ] || { error "Options --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$method" ] || { error "Options --method is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
-        [ -n "$plugin_name" ] || { error "Options --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
+        [ -n "$interface" ] || { error "Option --interface is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
+        [ -n "$method" ] || { error "Option --method is required."; __ "Command: rcm-plugin extends --interface=<interface> --method=<method>"; x; }
+        [ -n "$plugin_name" ] || { error "Option --plugin-name is required."; __ "Command: rcm-plugin extends --interface=<interface> --plugin-name=<plugin_name>"; x; }
 
         # Suffix with trait.
-        method+=-trait
-        path="${RCM_LIB}/interfaces/${interface}/implements/${plugin_name}/methods/${method}/socket.sh"
+        method_dirname_trait="${method}-trait"
+        path="${RCM_LIB}/interfaces/${interface}/implements/${plugin_name}/methods/${method_dirname_trait}/socket.sh"
         if [ ! -f "$path" ];then
             error Socket file is not found.; code path=$; x
         fi
         . "$path" --interface="$interface" --plugin-name="$plugin_name" --method="$method"
         INDENT="${INDENT::-${#RCM_INDENT}}"
-
     }
 
     local mode="$1"; shift
