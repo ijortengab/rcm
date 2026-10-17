@@ -136,6 +136,7 @@ title rcm php add website
 ____
 
 # Dependency.
+use ijortengab/rcm rcm-plugin
 require vendor/ijortengab/rcm/functions/utility/url-complete-component.sh
 require vendor/ijortengab/rcm/functions/utility/backup-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
@@ -203,9 +204,11 @@ done
 rcm_nginx_reload=
 ____
 
-include rcm plugin run-method web-server $web_server init
+rcm-plugin set --interface=web-server --plugin-name="$web_server"
 
-include rcm plugin run-method web-server $web_server get-user-process
+rcm-plugin run-method --interface=web-server --method=init
+
+rcm-plugin run-method --interface=web-server --method=get-user-process
 
 chapter Populate variables.
 webserver_user="$RCM_WEB_SERVER_USER"
@@ -367,11 +370,11 @@ if [ -n "$public_domain" ];then
 
     RCM_FQDN="$url_host"
 
-    include rcm plugin run-method acme-client $acme_client init
+    rcm-plugin run-method --interface=acme-client --method=init
 
-    include rcm plugin run-method acme-client $acme_client obtain
+    rcm-plugin run-method --interface=acme-client --method=obtain
 
-    include rcm plugin run-method acme-client $acme_client define
+    rcm-plugin run-method --interface=acme-client --method=define
 
     [ -n "$RCM_TLS_CERTIFICATE" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE is empty."; x; }
     [ -n "$RCM_TLS_CERTIFICATE_KEY" ] || { red "Unable to proceed, variable \$RCM_TLS_CERTIFICATE_KEY is empty."; x; }
@@ -389,7 +392,7 @@ fi
 
 code RCM_WEB_SERVER_VHOST_METADATA_YAML=+
 
-include rcm plugin run-method web-server $web_server add-vhost
+rcm-plugin run-method --interface=web-server --method=add-vhost
 
 if [ -n "$index_php" ];then
     path="${root}/index.php"

@@ -1,3 +1,5 @@
 #!/bin/bash
 
-include rcm plugin run-parent-method os-setup debian init
+rcm-plugin extends --plugin-parent-name=debian "$@"
+
+rcm-plugin run-parent-method "$@"

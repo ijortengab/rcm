@@ -76,6 +76,7 @@ title rcm postfix init
 ____
 
 # Dependency.
+use ijortengab/rcm rcm-plugin
 require command debconf-set-selections
 require vendor/ijortengab/rcm/functions/utility/apt-install.sh
 
@@ -108,15 +109,19 @@ debconf-set-selections <<< "postfix postfix/main_mailer_type string '${main_mail
 
 apt-install postfix postfix-doc
 
-include rcm plugin run-method postfix/dbms $dbms init
+rcm-plugin set --interface=postfix/dbms --plugin-name="$dbms"
+
+rcm-plugin run-method --interface=postfix/dbms --method=init
 
 if [ -n "$public_domain" ];then
 
     RCM_FQDN=$(</etc/mailname)
 
-    include rcm plugin run-method acme-client $acme_client init
+    rcm-plugin set --interface=acme-client --plugin-name="$acme_client"
 
-    include rcm plugin run-method acme-client $acme_client obtain
+    rcm-plugin run-method --interface=acme-client --method=init
+
+    rcm-plugin run-method --interface=acme-client --method=obtain
 
 fi
 

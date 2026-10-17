@@ -82,6 +82,7 @@ title rcm nginx add vhost php-multiple-root
 ____
 
 # Dependency.
+use ijortengab/rcm rcm-plugin
 require rcm nginx reload
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
 require vendor/ijortengab/rcm/functions/classes/rcm-dir.sh
@@ -207,7 +208,8 @@ fi
 [[ "$verbose" -gt 1 ]] && loud=1 && louder=1
 [[ "$verbose" -gt 2 ]] && loud=1 && louder=1 && debug=1
 
-include rcm plugin run-static-method web-server nginx get-user-process
+rcm-plugin run-static-method --interface=web-server --plugin-name=nginx --method=get-user-process
+
 nginx_user="$RCM_WEB_SERVER_USER"
 
 # Require, validate, and populate value.

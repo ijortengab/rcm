@@ -1,6 +1,8 @@
 #!/bin/bash
 
-include rcm plugin run-parent-method os-setup base init
+rcm-plugin extends --plugin-parent-name=base "$@"
+
+rcm-plugin run-parent-method "$@"
 
 chapter Mengecek timezone.
 timezone="$RCM_OS_TIMEZONE"

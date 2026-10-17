@@ -48,6 +48,7 @@ title rcm dovecot init
 ____
 
 # Dependency.
+use ijortengab/rcm rcm-plugin
 require vendor/ijortengab/rcm/functions/utility/apt-install.sh
 
 if [ -z "$dbms" ];then
@@ -60,7 +61,9 @@ fi
 
 apt-install dovecot-core dovecot-imapd dovecot-pop3d dovecot-sieve dovecot-lmtpd
 
-include rcm plugin run-method dovecot/dbms $dbms init
+rcm-plugin set --interface=dovecot/dbms --plugin-name="$dbms"
+
+rcm-plugin run-method --interface=dovecot/dbms --method=init
 
 # Wajib exit 0 jika success.
 exit 0

@@ -87,6 +87,7 @@ title rcm php add pool
 ____
 
 # Dependency.
+use ijortengab/rcm rcm-plugin
 require command nginx
 require command adduser
 require vendor/ijortengab/rcm/functions/classes/rcm-file.sh
@@ -238,7 +239,11 @@ EOF
     [ -n "$RCM_DEBUG" ] && { while IFS= read -r line; do e "$line"; _.; done < "$found_file" ; _. ; }
 else
     RCM_WEB_SERVER_USER=
-    include rcm plugin run-method web-server $web_server get-user-process
+
+    rcm-plugin set --interface=web-server --plugin-name="$web_server"
+
+    rcm-plugin run-method --interface=web-server --method=get-user-process
+
     if [ -z "$RCM_WEB_SERVER_USER" ];then
         error "Variable \$RCM_WEB_SERVER_USER failed to populate."; x
     fi

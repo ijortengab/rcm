@@ -1,4 +1,6 @@
 #!/bin/bash
 
 # mariadb extend mysql
-include rcm plugin run-parent-method dovecot/dbms mysql init
+rcm-plugin extends --plugin-parent-name=mysql "$@"
+
+rcm-plugin run-parent-method "$@"

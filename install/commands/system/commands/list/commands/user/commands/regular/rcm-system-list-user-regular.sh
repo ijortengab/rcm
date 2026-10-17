@@ -40,6 +40,8 @@ unset _new_arguments
 
 # ------------------------------------------------------------------------------
 
+use ijortengab/rcm rcm-plugin
+
 # Require, validate, and populate value.
 chapter Variable dump.
 code with_web_server=$
@@ -49,7 +51,11 @@ ____
 
 if [ -n "$with_web_server" ];then
     RCM_WEB_SERVER_USER=
-    include rcm plugin run-method web-server $web_server get-user-process
+
+    rcm-plugin set --interface=web-server --plugin-name="$web_server"
+
+    rcm-plugin run-method --interface=web-server --method=get-user-process
+
     if [ -z "$RCM_WEB_SERVER_USER" ];then
         error "Variable \$RCM_WEB_SERVER_USER failed to populate."; x
     fi

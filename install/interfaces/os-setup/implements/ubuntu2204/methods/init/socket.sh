@@ -1,6 +1,8 @@
 #!/bin/bash
 
-include rcm plugin run-parent-method os-setup ubuntu init
+rcm-plugin extends --plugin-parent-name=ubuntu "$@"
+
+rcm-plugin run-parent-method "$@"
 
 # Dependency.
 require command find-string
